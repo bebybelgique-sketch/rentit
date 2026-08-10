@@ -1,9 +1,21 @@
-import React, { lazy, Suspense, useState } from 'react'
-import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import React from 'react'
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
+// ИМПОРТ ДЛЯ TanStack Query
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuth } from './context/AuthContext'
-import { supabase } from './supabase'
+import { supabase } from './lib/supabase'
 import { getLang, setLang, t } from './i18n'
 import CookieBanner from './components/CookieBanner'
+
+// Создаем клиент для TanStack Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 минут
+      cacheTime: 10 * 60 * 1000, // 10 минут
+    },
+  },
+})
 
 const Home             = lazy(() => import('./pages/Home'))
 const ItemDetail       = lazy(() => import('./pages/ItemDetail'))
@@ -86,44 +98,51 @@ export default function App() {
   const { pathname } = useLocation()
 
   return (
-    <>
-      <Navbar />
-      <CookieBanner />
-      <Suspense fallback={null}>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/browse" element={<Home />} />
-        <Route path="/item/:id" element={<ItemDetail />} />
-        <Route path="/list-item" element={loading ? null : user ? <ListItem /> : <Navigate to="/login" />} />
-        <Route path="/my-items" element={loading ? null : user ? <MyItems /> : <Navigate to="/login" />} />
-        <Route path="/my-rentals" element={loading ? null : user ? <MyRentals /> : <Navigate to="/login" />} />
-        <Route path="/profile" element={loading ? null : user ? <Profile /> : <Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/pro" element={<Pro />} />
-        <Route path="/business" element={<Business />} />
-        <Route path="/business/dashboard" element={loading ? null : user ? <BusinessDashboard /> : <Navigate to="/login" />} />
-        <Route path="/admin" element={loading ? null : user ? <Admin /> : <Navigate to="/login" />} />
-        <Route path="/pay/:bookingId" element={loading ? null : user ? <PayBooking /> : <Navigate to="/login" />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="*" element={
-          <div className="page" style={{ textAlign: 'center', paddingTop: '120px' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', color: 'var(--muted)', marginBottom: '16px' }}>404</div>
-            <h1 style={{ fontSize: '48px', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '16px' }}>Page introuvable</h1>
-            <p style={{ color: 'var(--muted)', marginBottom: '32px' }}>Cette page n'existe pas ou a été supprimée.</p>
-            <Link to="/browse" className="btn btn-primary">Parcourir les outils →</Link>
+    // Оборачиваем приложение в QueryClientProvider
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <div className="flex flex-col min-h-screen">
+            <Navbar />
+            <CookieBanner />
+            <Suspense fallback={null}>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/browse" element={<Home />} />
+              <Route path="/item/:id" element={<ItemDetail />} />
+              <Route path="/list-item" element={loading ? null : user ? <ListItem /> : <Navigate to="/login" />} />
+              <Route path="/my-items" element={loading ? null : user ? <MyItems /> : <Navigate to="/login" />} />
+              <Route path="/my-rentals" element={loading ? null : user ? <MyRentals /> : <Navigate to="/login" />} />
+              <Route path="/profile" element={loading ? null : user ? <Profile /> : <Navigate to="/login" />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/pro" element={<Pro />} />
+              <Route path="/business" element={<Business />} />
+              <Route path="/business/dashboard" element={loading ? null : user ? <BusinessDashboard /> : <Navigate to="/login" />} />
+              <Route path="/admin" element={loading ? null : user ? <Admin /> : <Navigate to="/login" />} />
+              <Route path="/pay/:bookingId" element={loading ? null : user ? <PayBooking /> : <Navigate to="/login" />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="*" element={
+                <div className="page" style={{ textAlign: 'center', paddingTop: '120px' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', color: 'var(--muted)', marginBottom: '16px' }}>404</div>
+                  <h1 style={{ fontSize: '48px', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '16px' }}>Page introuvable</h1>
+                  <p style={{ color: 'var(--muted)', marginBottom: '32px' }}>Cette page n'existe pas ou a été supprimée.</p>
+                  <Link to="/browse" className="btn btn-primary">Parcourir les outils →</Link>
+                </div>
+              } />
+            </Routes>
+            </Suspense>
+            {pathname !== '/' && (
+              <footer style={{ textAlign: 'center', padding: '24px 16px', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
+                <a href="/business" style={{ fontSize: '12px', color: 'var(--muted)', textDecoration: 'none' }}>{t('forRentalShops')}</a>
+              </footer>
+            )}
           </div>
-        } />
-      </Routes>
-      </Suspense>
-      {pathname !== '/' && (
-        <footer style={{ textAlign: 'center', padding: '24px 16px', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
-          <a href="/business" style={{ fontSize: '12px', color: 'var(--muted)', textDecoration: 'none' }}>{t('forRentalShops')}</a>
-        </footer>
-      )}
-    </>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   )
 }

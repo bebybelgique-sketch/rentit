@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
-import { supabase } from '../supabase'
+import { supabase } from '../lib/supabase' // <-- Обновлённый путь
 
 interface AuthContextValue {
   user: User | null

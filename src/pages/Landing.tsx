@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
+import { useItems } from '../hooks/useItems'; // Импортируем новый хук
+import ItemCard from '../components/items/ItemCard'; // Импортируем новый компонент
 
 // ─── DESIGN PHILOSOPHY: "Negative Space Capitalism" ──────────────────────────
 // The luxury of emptiness. What is NOT on the page sells harder than what is.
@@ -263,19 +264,18 @@ export default function Landing() {
   const [searchWhat, setSearchWhat] = useState('')
   const [searchWhere, setSearchWhere] = useState('')
   const [toolCount, setToolCount] = useState<number | null>(null)
-  const [liveItems, setLiveItems] = useState<any[]>([])
   const navigate = useNavigate()
 
+  // Обновляем логику получения liveItems через useItems
+  const { data: liveItems, isLoading: liveItemsLoading, error } = useItems({ limit: 6, sortBy: 'created_at' });
+
   useEffect(() => {
-    supabase.from('items').select('id', { count: 'exact', head: true })
-      .eq('available', true)
-      .then(({ count }) => setToolCount(count))
-    supabase.from('items')
-      .select('id, title, category, price_per_day, photos, address')
-      .eq('available', true)
-      .order('created_at', { ascending: false })
-      .limit(6)
-      .then(({ data }) => setLiveItems(data || []))
+    // Логика получения toolCount остается, но использует новый путь к supabase
+    import('../lib/supabase').then(({ supabase }) => {
+        supabase.from('items').select('id', { count: 'exact', head: true })
+          .eq('available', true)
+          .then(({ count }) => setToolCount(count))
+    });
   }, [])
 
   useEffect(() => {
@@ -675,7 +675,20 @@ export default function Landing() {
       </section>
 
       {/* ── LIVE LISTINGS ────────────────────────────────────────────────── */}
-      {liveItems.length > 0 && (
+      {/* Обновляем условия отображения */}
+      {liveItemsLoading ? (
+        <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
+          <div className="L-wrap">
+            <p>Загрузка инструментов...</p>
+          </div>
+        </section>
+      ) : error ? (
+        <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
+          <div className="L-wrap">
+            <p>Ошибка загрузки инструментов: {error.message}</p>
+          </div>
+        </section>
+      ) : liveItems && liveItems.length > 0 && (
         <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
           <div className="L-wrap">
 
@@ -696,37 +709,9 @@ export default function Landing() {
             </div>
 
             <div style={{ gap: '8px' }} className="L-sm-col-2">
+              {/* Используем новый компонент ItemCard */}
               {liveItems.map(item => (
-                <Link key={item.id} to={`/item/${item.id}`} style={{ textDecoration: 'none', display: 'block', border: '1px solid var(--border)', transition: 'border-color 0.2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--muted)')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}>
-                  {item.photos?.[0] ? (
-                    <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}>
-                      <img src={item.photos[0]} alt={item.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.4s ease' }}
-                        onMouseEnter={e => ((e.currentTarget as HTMLImageElement).style.transform = 'scale(1.03)')}
-                        onMouseLeave={e => ((e.currentTarget as HTMLImageElement).style.transform = 'scale(1)')}
-                      />
-                    </div>
-                  ) : (
-                    <div style={{ aspectRatio: '4/3', background: 'var(--bg-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: '40px' }}>🔧</span>
-                    </div>
-                  )}
-                  <div style={{ padding: '16px 20px' }}>
-                    <div style={{ fontFamily: 'var(--sans)', fontSize: '15px', fontWeight: '600', color: 'var(--white)', marginBottom: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.title}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                        {item.address?.split(',')[0] || 'Bruxelles'}
-                      </span>
-                      <span className="L-mono" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500' }}>
-                        €{item.price_per_day}/jour
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                <ItemCard key={item.id} item={item} />
               ))}
             </div>
           </div>
