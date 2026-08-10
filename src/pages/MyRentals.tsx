@@ -2,6 +2,8 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRentals } from '../hooks/useRentals';
+import BookingStatusBadge from '../components/common/BookingStatusBadge';
+import EmptyState from '../components/common/EmptyState';
 import { useRentalsAsOwner } from '../hooks/useRentalsAsOwner';
 import { useApproveRental } from '../hooks/mutations/useApproveRental';
 import { useRejectRental } from '../hooks/mutations/useRejectRental';
@@ -80,14 +82,16 @@ const MyRentals: React.FC = () => {
           <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Mes locations (Locataire)</h2>
           {userRentalsLoading && <p>Chargement...</p>}
           {userRentalsError && <p>Erreur: {userRentalsError.message}</p>}
-          {userRentals && userRentals.length === 0 && <p>Vous n'avez aucune location en cours.</p>}
+          {userRentals && userRentals.length === 0 && (
+            <EmptyState title="Aucune location en cours" description="Vos demandes de location apparaîtront ici." actionLabel="Parcourir les outils" actionTo="/browse" />
+          )}
           {userRentals && userRentals.length > 0 && (
             <div>
               {userRentals.map(rental => (
                 <div key={rental.id} className="card" style={{ padding: '16px', marginBottom: '12px' }}>
                   <p><strong>Article:</strong> {rental.item?.title || 'N/A'}</p>
                   <p><strong>Dates:</strong> Du {rental.start_date} au {rental.end_date}</p>
-                  <p><strong>Status:</strong> {rental.status}</p>
+                  <p><strong>Statut :</strong> <BookingStatusBadge status={rental.status} /></p>
                   {/* Добавьте больше деталей аренды по мере необходимости */}
                 </div>
               ))}
@@ -100,7 +104,9 @@ const MyRentals: React.FC = () => {
           <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Demandes pour mes outils (Propriétaire)</h2>
           {ownerRentalsLoading && <p>Chargement...</p>}
           {ownerRentalsError && <p>Erreur: {ownerRentalsError.message}</p>}
-          {ownerRentals && ownerRentals.length === 0 && <p>Il n'y a aucune demande pour vos outils.</p>}
+          {ownerRentals && ownerRentals.length === 0 && (
+            <EmptyState title="Aucune demande" description="Les demandes de location pour vos outils apparaîtront ici." actionLabel="Déposer une annonce" actionTo="/list-item" />
+          )}
           {ownerRentals && ownerRentals.length > 0 && (
             <div>
               {ownerRentals.map(rental => (
@@ -108,7 +114,7 @@ const MyRentals: React.FC = () => {
                   <p><strong>Locataire:</strong> {rental.renter_id}</p> {/* Требуется получение профиля пользователя */}
                   <p><strong>Article:</strong> {rental.item?.title || 'N/A'}</p>
                   <p><strong>Dates:</strong> Du {rental.start_date} au {rental.end_date}</p>
-                  <p><strong>Status:</strong> {rental.status}</p>
+                  <p><strong>Statut :</strong> <BookingStatusBadge status={rental.status} /></p>
                   <p><strong>Message:</strong> {rental.message}</p>
                   {/* Кнопки Принять/Отклонить с интеграцией мутаций и улучшенным UX */}
                   <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
