@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useItems } from '../useItems';
-import { supabase } from '../../lib/supabase'; // Import the actual instance to mock
 
 // Hoist mock data and response config to module level
 const { mockRawItems, mockError } = vi.hoisted(() => ({

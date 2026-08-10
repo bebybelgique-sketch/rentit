@@ -19,7 +19,7 @@ let mockInvokeResponseError: any = null;
 vi.mock('../../../lib/supabase', () => ({
   supabase: {
     functions: {
-      invoke: vi.fn(async (fnName, options) => {
+      invoke: vi.fn(async (fnName: string) => {
         if (fnName === 'request-rental') {
           return Promise.resolve({ data: mockInvokeResponseData, error: mockInvokeResponseError });
         }

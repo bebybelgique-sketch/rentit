@@ -3,14 +3,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCreateItem } from '../useCreateItem';
-import { useUploadImage } from '../../../hooks/useUploadImage'; // Import to mock
 // import { supabase } from '../../../lib/supabase'; // Import to mock - not needed if we mock the whole export
 
 // Hoist mock data and response config to module level
-const { mockItemData, mockError, mockImageUrl } = vi.hoisted(() => ({
+const { mockItemData, mockError } = vi.hoisted(() => ({
   mockItemData: { id: 'item-1', title: 'New Drill', owner_id: 'user-1', price_per_day: 20, image_url: 'https://example.com/drill.jpg', created_at: '2023-01-01T00:00:00Z' },
   mockError: new Error('Insert failed'),
-  mockImageUrl: 'https://example.com/drill.jpg',
+
 }));
 
 // Global variables to control mocks

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { AuthProvider, useAuth } from '../../../context/AuthContext'; // Предполагаем, что AuthProvider экспортируется
+import { AuthProvider } from '../../../context/AuthContext'; // Предполагаем, что AuthProvider экспортируется
 import BookingForm from '../BookingForm';
 import { useCreateRental } from '../../../hooks/mutations/useCreateRental'; // Import hook to mock
 
