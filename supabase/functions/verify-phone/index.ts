@@ -8,7 +8,7 @@ const supabase = createClient(
 const TWILIO_SID = Deno.env.get('TWILIO_ACCOUNT_SID')!
 const TWILIO_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN')!
 const TWILIO_FROM = Deno.env.get('TWILIO_FROM_PHONE')!
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version' }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })

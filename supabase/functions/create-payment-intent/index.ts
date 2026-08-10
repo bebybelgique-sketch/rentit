@@ -11,7 +11,7 @@ const PAYMENT_WINDOW_MS = 2 * 60 * 60 * 1000 // 2 hours
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
 }
 
 serve(async (req) => {

@@ -16,7 +16,7 @@ const PLATFORM_FEE_PCT = 0.00  // BETA: 0% until 50 completed Stripe bookings (r
 const INSURANCE_PER_DAY = 0  // BETA: free protection until 50 Stripe transactions (will become €3/day)
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
 }
 
 serve(async (req) => {

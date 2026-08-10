@@ -12,7 +12,7 @@ const INSURANCE_PER_DAY = 0
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
 }
 
 serve(async (req) => {

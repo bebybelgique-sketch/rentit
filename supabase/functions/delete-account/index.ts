@@ -8,7 +8,7 @@ const supabase = createClient(
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
 }
 
 const json = (data: unknown, status = 200) =>

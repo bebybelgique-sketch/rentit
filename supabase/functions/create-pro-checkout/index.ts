@@ -17,7 +17,7 @@ const PRO_PRICE_ID = Deno.env.get('STRIPE_PRO_PRICE_ID')!  // создать в 
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
 }
 
 serve(async (req) => {

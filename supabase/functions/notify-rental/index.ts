@@ -9,7 +9,7 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'noreply@rentit.app'
 const APP_URL = Deno.env.get('APP_URL') || 'https://rentit.app'
 
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version' }
 
 async function sendEmail(to: string, subject: string, html: string) {
   await fetch('https://api.resend.com/emails', {
