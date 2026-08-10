@@ -1,65 +1,8 @@
-// src/types/database.types.ts
-// Это пример структуры, которая будет представлять вашу Supabase базу данных
-interface Database {
-  public: {
-    Tables: {
-      items: {
-        Row: {
-          id: string;
-          title: string;
-          description: string | null;
-          price_per_day: number;
-          image_url: string;
-          owner_id: string;
-          location: string | null;
-          latitude: number | null;
-          longitude: number | null;
-          is_available: boolean;
-          created_at: string;
-        };
-        Insert: {};
-        Update: {};
-      };
-      rentals: {
-        Row: {
-          id: string;
-          item_id: string;
-          renter_id: string;
-          start_date: string;
-          end_date: string;
-          total_price: number;
-          status: 'pending' | 'approved' | 'rejected' | 'completed' | 'canceled';
-          message?: string;
-          created_at: string;
-        };
-        Insert: {};
-        Update: {};
-      };
-      profiles: {
-        Row: {
-          id: string;
-          full_name: string;
-          avatar_url: string | null;
-          bio?: string;
-        };
-        Insert: {};
-        Update: {};
-      };
-    };
-    Enums: {
-      // Здесь будут перечисления из вашей базы данных
-    };
-  }
-}
-// Этот файл будет содержать типы, сгенерированные на основе вашей Supabase базы данных
-// Пример структуры, которая может быть заполнена автоматически:
-declare global {
-  type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
-  type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T];
-}
+// Здесь был выдуманный интерфейс Database с таблицами `rentals` и `profiles`.
+// Таких таблиц в базе НЕТ (проверено обращением к живой базе 10.08.2026:
+// оба имени отдают 404). Настоящие: items, bookings, users, reviews, payments,
+// events. Блок удалён, чтобы он больше никого не вводил в заблуждение.
 
-// Оставьте этот экспорт, чтобы сделать файл модулем
-export {};
 // src/types/supabase.ts пока заглушка (одни комментарии), поэтому импорта из него нет.
 
 // Определяем типы, которые могут быть переопределены или расширены сгенерированными типами
@@ -93,7 +36,8 @@ export interface Rental {
   start_date: string;
   end_date: string;
   total_price: number;
-  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'canceled'; // Пример статусов
+  // Значения строго из enum booking_status в базе (сверено 10.08.2026)
+  status: 'pending_approval' | 'pending_payment' | 'confirmed' | 'active' | 'completed' | 'cancelled' | 'disputed' | 'rejected' | 'expired' | 'payment_expired';
   message?: string;
   created_at: string;
   // Добавьте другие поля, если необходимо, или используйте тип из supabase.ts

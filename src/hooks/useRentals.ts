@@ -8,7 +8,7 @@ const fetchRentals = async (userId: string | undefined): Promise<Rental[]> => {
   if (!userId) return [];
 
   const { data, error } = await supabase
-    .from('rentals')
+    .from('bookings')
     .select('*, items(*)')
     .eq('renter_id', userId)
     .order('created_at', { ascending: false });

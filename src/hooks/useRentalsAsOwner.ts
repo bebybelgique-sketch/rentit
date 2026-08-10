@@ -11,7 +11,7 @@ const fetchRentalsAsOwner = async (userId: string | undefined): Promise<Rental[]
   // Запрос может быть сложнее, если связи между вещами и арендами не прямые
   // Псевдокод: SELECT * FROM rentals WHERE item_id IN (SELECT id FROM items WHERE owner_id = userId)
   const { data, error } = await supabase
-    .from('rentals')
+    .from('bookings')
     .select('*, items!inner(owner_id)') // Используем inner join, чтобы отфильтровать по владельцу вещи
     .eq('items.owner_id', userId);
 
