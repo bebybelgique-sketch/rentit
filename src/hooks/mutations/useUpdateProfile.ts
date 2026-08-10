@@ -1,7 +1,7 @@
 // src/hooks/mutations/useUpdateProfile.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../../lib/supabase'; // Корректируем путь
-import { Profile } from '../../../types'; // Корректируем путь
+import { supabase } from '../../lib/supabase'; // Корректируем путь
+import { Profile } from '../../types'; // Корректируем путь
 
 interface UpdateProfileParams {
   userId: string;

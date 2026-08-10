@@ -5,7 +5,11 @@ import { Item } from '../../types';
 
 interface UpdateItemParams {
   id: string;
-  updates: Partial<Omit<Item, 'id' | 'owner_id' | 'created_at'>>; // Поля, которые можно обновить, исключая id, owner_id и created_at
+  // Поля, которые можно обновить, исключая id, owner_id и created_at.
+  // Record<string, unknown> — потому что формы шлют имена КОЛОНОК базы
+  // (address, lat, lng, available), а Item описан в терминах приложения
+  // (location, latitude, longitude, is_available). Свести их — отдельная задача.
+  updates: Partial<Omit<Item, 'id' | 'owner_id' | 'created_at'>> & Record<string, unknown>;
   userId: string; // Владелец товара
 }
 

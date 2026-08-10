@@ -1,6 +1,6 @@
 // src/hooks/mutations/useDeleteAccount.ts
 import { useMutation } from '@tanstack/react-query';
-import { supabase } from '../../../lib/supabase'; // Корректируем путь
+import { supabase } from '../../lib/supabase'; // Корректируем путь
 
 const deleteAccount = async (userId: string): Promise<void> => {
   // Удаление аккаунта в Supabase - это комплексная операция.

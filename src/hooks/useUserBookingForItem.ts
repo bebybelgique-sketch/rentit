@@ -17,7 +17,7 @@ const fetchUserBookingForItem = async (itemId: string | undefined, userId: strin
 
   const { data, error } = await supabase
     .from('bookings')
-    .select('id')
+    .select('id, item_id, renter_id, status')
     .eq('item_id', itemId)
     .eq('renter_id', userId)
     .eq('status', 'completed') // Только завершенные бронирования дают право на отзыв

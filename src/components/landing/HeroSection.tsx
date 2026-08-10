@@ -1,7 +1,6 @@
 // src/components/landing/HeroSection.tsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase'; // Импортируем supabase для получения количества инструментов
 
 const HeroSection: React.FC = () => {
   const [toolCount, setToolCount] = useState<number | null>(null);

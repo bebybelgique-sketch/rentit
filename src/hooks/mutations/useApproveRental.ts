@@ -1,14 +1,14 @@
 // src/hooks/mutations/useApproveRental.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../../lib/supabase'; // Корректируем путь
-import { Rental } from '../../../types'; // Корректируем путь
+import { supabase } from '../../lib/supabase'; // Корректируем путь
+import { Rental } from '../../types'; // Корректируем путь
 
 interface ApproveRentalParams {
   rentalId: string;
   userId: string; // Владелец вещи, который подтверждает
 }
 
-const approveRental = async ({ rentalId, userId }: ApproveRentalParams): Promise<Rental> => {
+const approveRental = async ({ rentalId }: ApproveRentalParams): Promise<Rental> => {
   // Проверка авторизации (RLS в БД должна ограничивать)
   const { data, error } = await supabase
     .from('rentals')
@@ -29,7 +29,7 @@ export const useApproveRental = () => {
 
   return useMutation({
     mutationFn: approveRental,
-    onSuccess: (updatedRental) => {
+    onSuccess: () => {
       // Инвалидируем кэш для аренд, чтобы обновить список
       queryClient.invalidateQueries({ queryKey: ['rentals'] });
       queryClient.invalidateQueries({ queryKey: ['rentalsAsOwner'] });

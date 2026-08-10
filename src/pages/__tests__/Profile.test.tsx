@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { AuthProvider, useAuth } from '../../context/AuthContext'; // Предполагаем, что AuthProvider экспортируется
+import { AuthProvider } from '../../context/AuthContext'; // Предполагаем, что AuthProvider экспортируется
 import Profile from '../Profile';
 
 // Мокаем useAuth
@@ -58,7 +58,7 @@ describe('Profile Page', () => {
 
   it('calls mutateAsync on update profile form submit', async () => {
     const mockMutateAsync = vi.fn();
-    (require('../../hooks/mutations/useUpdateProfile').useUpdateProfile as vi.Mock).mockReturnValue({
+    (require('../../hooks/mutations/useUpdateProfile').useUpdateProfile as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false,
       isError: false,
@@ -87,7 +87,7 @@ describe('Profile Page', () => {
 
   it('calls mutateAsync on delete account button click with confirmation', async () => {
     const mockMutateAsync = vi.fn();
-    (require('../../hooks/mutations/useDeleteAccount').useDeleteAccount as vi.Mock).mockReturnValue({
+    (require('../../hooks/mutations/useDeleteAccount').useDeleteAccount as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false,
       isError: false,

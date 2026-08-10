@@ -60,7 +60,7 @@ declare global {
 
 // Оставьте этот экспорт, чтобы сделать файл модулем
 export {};
-import { Tables } from './supabase'; // Импортируем, если файл supabase.ts будет сгенерирован
+// src/types/supabase.ts пока заглушка (одни комментарии), поэтому импорта из него нет.
 
 // Определяем типы, которые могут быть переопределены или расширены сгенерированными типами
 // Если файл supabase.ts пуст или не содержит нужных типов, используются эти.
@@ -78,7 +78,11 @@ export interface Item {
   longitude: number | null;
   is_available: boolean;
   created_at: string;
-  // Добавьте другие поля, если необходимо, или используйте тип из supabase.ts
+  // Колонки, которые есть в таблице items и используются формами:
+  deposit?: number;
+  category?: string;
+  condition?: string;
+  photos?: string[];
 }
 
 // Тип для Rental. Может быть заменен на Tables<'rentals'>['Row'] из supabase.ts

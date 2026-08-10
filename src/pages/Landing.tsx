@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useItems } from '../hooks/useItems';
 import ItemCard from '../components/items/ItemCard';
-import ItemCardSkeleton from '../components/common/ItemCardSkeleton'; // Импортируем скелетон
 
 // Импортируем новые компоненты
 import HeroSection from '../components/landing/HeroSection';
@@ -264,9 +263,9 @@ const CSS = `
 `
 
 export default function Landing() {
-  const [scrollY, setScrollY] = useState(0)
-  const [isDark, setIsDark] = useState(true)
-  const navigate = useNavigate()
+
+  const [isDark] = useState(true)
+
 
   // Обновляем вызов useItems для получения isLoading и data
   const { data: liveItems, isLoading: liveItemsLoading, error } = useItems({ limit: 6, sortBy: 'created_at' });

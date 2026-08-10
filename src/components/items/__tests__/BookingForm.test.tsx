@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { AuthProvider, useAuth } from '../../../context/AuthContext'; // Предполагаем, что AuthProvider экспортируется
+import { AuthProvider } from '../../../context/AuthContext'; // Предполагаем, что AuthProvider экспортируется
 import BookingForm from '../BookingForm';
 
 // Мокаем useAuth
@@ -69,7 +69,7 @@ describe('BookingForm', () => {
 
   it('calls mutateAsync on submit with correct data', async () => {
     const mockMutateAsync = vi.fn();
-    (require('../../../hooks/mutations/useCreateRental').useCreateRental as vi.Mock).mockReturnValue({
+    (require('../../../hooks/mutations/useCreateRental').useCreateRental as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false,
       isError: false,
@@ -99,7 +99,7 @@ describe('BookingForm', () => {
 
   it('shows error message when mutation fails', async () => {
     const mockMutateAsync = vi.fn().mockRejectedValue(new Error('Network Error'));
-    (require('../../../hooks/mutations/useCreateRental').useCreateRental as vi.Mock).mockReturnValue({
+    (require('../../../hooks/mutations/useCreateRental').useCreateRental as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false,
       isError: true,

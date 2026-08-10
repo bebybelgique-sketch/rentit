@@ -41,7 +41,7 @@ export const useCreateRental = () => {
 
   return useMutation({
     mutationFn: createRental,
-    onSuccess: (newRental) => {
+    onSuccess: () => {
       // Инвалидируем и обновляем связанные данные, например, аренды пользователя
       queryClient.invalidateQueries({ queryKey: ['rentals'] }); // Общий ключ для всех аренд
       // queryClient.invalidateQueries({ queryKey: ['rentals', newRental.renter_id] }); // Конкретный пользователь

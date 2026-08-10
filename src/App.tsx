@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
-import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { lazy, Suspense, useState } from 'react'
+import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 // ИМПОРТЫ ДЛЯ TanStack Query и Toast
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import toast, { Toaster } from 'react-hot-toast' // Импортируем Toaster
 // --- НОВЫЕ ИМПОРТЫ ДЛЯ I18N ---
-import './i18n'; // Инициализация i18n
+import './i18n-next' // инициализация i18next (старая система живёт в ./i18n/)
 import { useTranslation } from 'react-i18next'
 // --------------------------
 import { useAuth } from './context/AuthContext'
@@ -16,7 +16,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 минут
-      cacheTime: 10 * 60 * 1000, // 10 минут
+      gcTime: 10 * 60 * 1000, // 10 минут (в react-query v5 cacheTime переименован)
     },
     mutations: {
       // Глобальная обработка ошибок для мутаций
@@ -112,6 +112,7 @@ function Navbar() {
 
 export default function App() {
   const { user, loading } = useAuth()
+  const { t } = useTranslation()
   const { pathname } = useLocation()
 
   return (

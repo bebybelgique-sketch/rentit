@@ -2,11 +2,8 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-interface UploadImageResult {
-  url: string | null;
-  error: string | null;
-  uploading: boolean;
-}
+// Хук возвращает кортеж (см. сигнатуру ниже), поэтому отдельный интерфейс
+// UploadImageResult, который тут был, ничего не описывал и удалён.
 
 export const useUploadImage = (): [(file: File, folder: string) => Promise<string>, boolean, string | null] => {
   const [uploading, setUploading] = useState(false);
