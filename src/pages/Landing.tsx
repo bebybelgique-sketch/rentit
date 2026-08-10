@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useItems } from '../hooks/useItems';
 import ItemCard from '../components/items/ItemCard';
+import ItemCardSkeleton from '../components/common/ItemCardSkeleton';
 
 // Импортируем новые компоненты
 import HeroSection from '../components/landing/HeroSection';
@@ -524,13 +525,17 @@ export default function Landing() {
       {liveItemsLoading ? (
         <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
           <div className="L-wrap">
-            <p>Загрузка инструментов...</p>
+            <div style={{ gap: '8px' }} className="L-sm-col-2">
+              {Array.from({ length: 6 }).map((_, i) => <ItemCardSkeleton key={i} />)}
+            </div>
           </div>
         </section>
       ) : error ? (
         <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
           <div className="L-wrap">
-            <p>Ошибка загрузки инструментов: {error.message}</p>
+            <p style={{ color: 'var(--muted)' }}>
+              Impossible de charger les outils pour le moment. Réessayez dans un instant.
+            </p>
           </div>
         </section>
       ) : liveItems && liveItems.length > 0 && (

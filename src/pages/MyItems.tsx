@@ -181,6 +181,7 @@ export default function MyItems() {
 
                     <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
                       <Link to={`/item/${item.id}`} className="btn btn-secondary btn-sm">Voir</Link>
+                      <Link to={`/edit-item/${item.id}`} className="btn btn-secondary btn-sm">Modifier</Link>
                       <button
                         onClick={() => toggleAvailable(item.id, item.available)}
                         className="btn btn-secondary btn-sm"

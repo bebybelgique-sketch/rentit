@@ -21,7 +21,7 @@ const queryClient = new QueryClient({
     mutations: {
       // Глобальная обработка ошибок для мутаций
       onError: (error) => {
-        toast.error(`Ошибка: ${error.message}`); // Показываем тост с сообщением об ошибке
+        toast.error(error.message || 'Une erreur est survenue'); // сообщение пользователю — по-французски
       },
     },
   },
@@ -30,6 +30,7 @@ const queryClient = new QueryClient({
 const Home             = lazy(() => import('./pages/Home'))
 const ItemDetail       = lazy(() => import('./pages/ItemDetail'))
 const ListItem         = lazy(() => import('./pages/ListItem'))
+const EditItem         = lazy(() => import('./pages/EditItem'))
 const MyItems          = lazy(() => import('./pages/MyItems'))
 const MyRentals        = lazy(() => import('./pages/MyRentals'))
 const Profile          = lazy(() => import('./pages/Profile'))
@@ -126,6 +127,7 @@ export default function App() {
             <Route path="/browse" element={<Home />} />
             <Route path="/item/:id" element={<ItemDetail />} />
             <Route path="/list-item" element={loading ? null : user ? <ListItem /> : <Navigate to="/login" />} />
+            <Route path="/edit-item/:id" element={loading ? null : user ? <EditItem /> : <Navigate to="/login" />} />
             <Route path="/my-items" element={loading ? null : user ? <MyItems /> : <Navigate to="/login" />} />
             <Route path="/my-rentals" element={loading ? null : user ? <MyRentals /> : <Navigate to="/login" />} />
             <Route path="/profile" element={loading ? null : user ? <Profile /> : <Navigate to="/login" />} />
