@@ -1,39 +1,32 @@
 // src/hooks/mutations/useCreateRental.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
-import { Rental } from '../../types';
 
+// Заявку на аренду НЕЛЬЗЯ создать из браузера: политика вставки в bookings
+// удалена миграцией 20260328000009_bookings_insert_lockdown. Брони создаёт
+// edge-функция request-rental сервисным ключом — она же проверяет, что вещь
+// не своя, что даты свободны, ставит статус pending_approval и шлёт письма.
+// Цену считает сервер, поэтому total_price с клиента не передаётся.
 interface CreateRentalParams {
   item_id: string;
-  start_date: string;
-  end_date: string;
-  total_price: number;
-  renter_id: string;
-  message?: string; // Добавляем опциональное поле сообщения
+  start_date: string; // YYYY-MM-DD
+  end_date: string;   // YYYY-MM-DD
+  message?: string;
 }
 
-const createRental = async (params: CreateRentalParams): Promise<Rental> => {
-  const { item_id, start_date, end_date, total_price, renter_id, message } = params;
-  const { data, error } = await supabase
-    .from('rentals') // Предполагаем, что таблица rentals
-    .insert([{
-      item_id,
-      start_date,
-      end_date,
-      total_price,
-      renter_id,
-      status: 'pending', // Устанавливаем статус по умолчанию
-      message: message || null, // Сохраняем сообщение, если есть
-    }])
-    .select()
-    .single();
+const createRental = async (params: CreateRentalParams): Promise<{ booking_id: string }> => {
+  const { data, error } = await supabase.functions.invoke<{ booking_id?: string; error?: string }>(
+    'request-rental',
+    { body: params }
+  );
 
-  if (error) throw error;
-  if (!data) throw new Error("Rental creation failed");
+  // Функция отвечает 4xx с телом { error }: supabase-js кладёт это в error,
+  // но текст причины лежит в теле, поэтому разбираем оба источника.
+  if (error) throw new Error(data?.error || error.message);
+  if (data?.error) throw new Error(data.error);
+  if (!data?.booking_id) throw new Error('request-rental не вернул booking_id');
 
-  // Здесь нужно будет преобразовать `data` к типу `Rental`, если `Rental` отличается от структуры ответа Supabase.
-  // Для простоты, предположим, что структура совпадает.
-  return data as unknown as Rental; // Явное приведение типа
+  return { booking_id: data.booking_id };
 };
 
 export const useCreateRental = () => {
@@ -42,10 +35,8 @@ export const useCreateRental = () => {
   return useMutation({
     mutationFn: createRental,
     onSuccess: () => {
-      // Инвалидируем и обновляем связанные данные, например, аренды пользователя
-      queryClient.invalidateQueries({ queryKey: ['rentals'] }); // Общий ключ для всех аренд
-      // queryClient.invalidateQueries({ queryKey: ['rentals', newRental.renter_id] }); // Конкретный пользователь
-      // queryClient.invalidateQueries({ queryKey: ['items'] }); // Список вещей может зависеть от аренд
+      queryClient.invalidateQueries({ queryKey: ['rentals'] });
+      queryClient.invalidateQueries({ queryKey: ['bookedDates'] });
     },
   });
 };

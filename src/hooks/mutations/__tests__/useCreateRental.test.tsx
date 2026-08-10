@@ -43,8 +43,6 @@ describe('useCreateRental', () => {
         item_id: 'item-1',
         start_date: '2023-10-01',
         end_date: '2023-10-05',
-        total_price: 100,
-        renter_id: 'user-1',
       });
     });
 
@@ -75,8 +73,6 @@ describe('useCreateRental', () => {
           item_id: 'item-1',
           start_date: '2023-10-01',
           end_date: '2023-10-05',
-          total_price: 100,
-          renter_id: 'user-1',
         });
       } catch (e) {
         // Ожидаем, что mutateAsync выбросит ошибку

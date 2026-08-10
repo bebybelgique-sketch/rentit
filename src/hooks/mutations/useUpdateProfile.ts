@@ -1,35 +1,34 @@
 // src/hooks/mutations/useUpdateProfile.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../lib/supabase'; // Корректируем путь
-import { Profile } from '../../types'; // Корректируем путь
+import { supabase } from '../../lib/supabase';
+import { Profile } from '../../types';
 
+// Профиль лежит в таблице users (её id = auth.uid()), а не в profiles —
+// такой таблицы в базе нет. Поля сверены со схемой: full_name, avatar_url,
+// phone, village. Поля bio в базе нет, поэтому из типа оно убрано.
 interface UpdateProfileParams {
   userId: string;
-  updates: Partial<Omit<Profile, 'id'>>; // Поля, которые можно обновить, исключая id
+  updates: Partial<Omit<Profile, 'id'>>;
 }
 
 const updateProfile = async ({ userId, updates }: UpdateProfileParams): Promise<Profile> => {
-  // Предполагаем, что профиль хранится в таблице 'profiles' с id, совпадающим с auth.user.id
   const { data, error } = await supabase
-    .from('profiles')
+    .from('users')
     .update(updates)
-    .eq('id', userId) // match по id пользователя
+    .eq('id', userId) // RLS дополнительно ограничивает строку своим auth.uid()
     .select()
     .single();
 
   if (error) throw error;
-  if (!data) throw new Error("Profile update failed");
+  if (!data) throw new Error('Profile update failed');
 
-  // Преобразование данных из Supabase к типу Profile
-  const mappedProfile: Profile = {
+  return {
     id: data.id,
     full_name: data.full_name,
     avatar_url: data.avatar_url,
-    bio: data.bio,
-    // Добавьте другие поля профиля по мере необходимости
+    phone: data.phone,
+    village: data.village,
   };
-
-  return mappedProfile;
 };
 
 export const useUpdateProfile = () => {
@@ -38,10 +37,7 @@ export const useUpdateProfile = () => {
   return useMutation({
     mutationFn: updateProfile,
     onSuccess: (updatedProfile) => {
-      // Инвалидируем кэш для профиля пользователя
       queryClient.invalidateQueries({ queryKey: ['profile', updatedProfile.id] });
-      // Обновляем данные в AuthContext, если это необходимо
-      // queryClient.setQueryData(['auth-user'], (oldData: any) => ({ ...oldData, user: { ...oldData.user, user_metadata: updatedProfile } }));
     },
   });
 };

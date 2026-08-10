@@ -1,27 +1,24 @@
 // src/hooks/mutations/useApproveRental.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../lib/supabase'; // Корректируем путь
-import { Rental } from '../../types'; // Корректируем путь
+import { supabase } from '../../lib/supabase';
 
+// Прямой update статуса из браузера технически прошёл бы (политика на update
+// есть), но обошёл бы edge-функцию respond-to-request, где живут: проверка,
+// что отвечает именно владелец вещи, повторная проверка занятости дат,
+// создание платёжного намерения Stripe, запись в payments, авто-отклонение
+// пересекающихся заявок и письма обеим сторонам. Поэтому — только функция.
 interface ApproveRentalParams {
-  rentalId: string;
-  userId: string; // Владелец вещи, который подтверждает
+  bookingId: string;
 }
 
-const approveRental = async ({ rentalId }: ApproveRentalParams): Promise<Rental> => {
-  // Проверка авторизации (RLS в БД должна ограничивать)
-  const { data, error } = await supabase
-    .from('rentals')
-    .update({ status: 'approved' }) // Предполагаем, что статус 'approved' существует
-    .match({ id: rentalId }) // Сопоставление с ID аренды
-    // .match({ 'items.owner_id': userId }) // Возможно, потребуется дополнительная проверка через join, если RLS не позволяет обновлять только по id аренды
-    .select()
-    .single();
+const approveRental = async ({ bookingId }: ApproveRentalParams): Promise<void> => {
+  const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>(
+    'respond-to-request',
+    { body: { booking_id: bookingId, action: 'approve' } }
+  );
 
-  if (error) throw error;
-  if (!data) throw new Error("Rental approval failed");
-
-  return data as unknown as Rental; // Явное приведение типа
+  if (error) throw new Error(data?.error || error.message);
+  if (data?.error) throw new Error(data.error);
 };
 
 export const useApproveRental = () => {
@@ -30,11 +27,9 @@ export const useApproveRental = () => {
   return useMutation({
     mutationFn: approveRental,
     onSuccess: () => {
-      // Инвалидируем кэш для аренд, чтобы обновить список
       queryClient.invalidateQueries({ queryKey: ['rentals'] });
       queryClient.invalidateQueries({ queryKey: ['rentalsAsOwner'] });
-      // queryClient.invalidateQueries({ queryKey: ['rentals', updatedRental.renter_id] });
-      // queryClient.setQueryData(['rental', updatedRental.id], updatedRental);
+      queryClient.invalidateQueries({ queryKey: ['bookedDates'] });
     },
   });
 };

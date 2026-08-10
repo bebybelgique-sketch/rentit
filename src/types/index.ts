@@ -45,13 +45,14 @@ export interface Rental {
   item?: Item;
 }
 
-// Тип для Profile. Может быть заменен на Tables<'profiles'>['Row'] из supabase.ts
+// Профиль = строка таблицы users (id совпадает с auth.uid()).
+// Поля сверены со схемой 10.08.2026; поля bio в базе нет.
 export interface Profile {
   id: string;
   full_name: string;
   avatar_url: string | null;
-  bio?: string;
-  // Другие поля профиля
+  phone?: string | null;
+  village?: string | null;
 }
 
 // Если файл supabase.ts содержит эквивалентные типы, их можно экспортировать напрямую:

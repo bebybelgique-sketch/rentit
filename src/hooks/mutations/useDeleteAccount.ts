@@ -1,37 +1,29 @@
 // src/hooks/mutations/useDeleteAccount.ts
 import { useMutation } from '@tanstack/react-query';
-import { supabase } from '../../lib/supabase'; // Корректируем путь
+import { supabase } from '../../lib/supabase';
 
-const deleteAccount = async (userId: string): Promise<void> => {
-  // Удаление аккаунта в Supabase - это комплексная операция.
-  // В реальности она может включать:
-  // 1. Пометку пользователя как удаленного (soft delete) с задержкой.
-  // 2. Удаление всех его данных (вещи, аренды и т.д.) в каскаде через RLS или триггеры.
-  // 3. Вызов специального RPC или Edge Function для безопасного удаления.
+// Здесь стоял вызов supabase.auth.admin.deleteUser() из браузера. Он не мог
+// работать: admin-API требует service_role-ключ, а положить его в клиент —
+// значит отдать полный доступ к базе любому, кто откроет исходники страницы.
+// Удаление делает edge-функция delete-account: она проверяет, что у человека
+// нет активных броней ни как у арендатора, ни как у владельца (иначе 409),
+// отвязывает историю и удаляет пользователя сервисным ключом.
+const deleteAccount = async (): Promise<void> => {
+  const { data, error } = await supabase.functions.invoke<{ error?: string }>(
+    'delete-account',
+    { body: {} }
+  );
 
-  // Для простоты, предположим, что есть RPC, который всё делает.
-  // const { error } = await supabase.rpc('delete_user_account', { user_id: userId });
+  if (error) throw new Error(data?.error || error.message);
+  if (data?.error) throw new Error(data.error);
 
-  // Или, если RLS настроены, можно попытаться удалить профиль, что может триггерить удаление связанных данных.
-  // const { error } = await supabase.from('profiles').delete().match({ id: userId });
-
-  // Наиболее распространенный способ - вызов метода аутентификации Supabase.
-  // Это требует, чтобы пользователь был залогинен.
-  const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-
-  if (authError) throw authError;
-
-  // Дополнительно, можно удалить данные из других таблиц, если RLS не справилась.
-  // const { error: profileError } = await supabase.from('profiles').delete().match({ id: userId });
-  // if (profileError) throw profileError;
+  // Сессия удалённого пользователя больше не действительна — гасим её здесь,
+  // чтобы интерфейс не остался с «призрачным» залогиненным состоянием.
+  await supabase.auth.signOut();
 };
 
 export const useDeleteAccount = () => {
   return useMutation({
     mutationFn: deleteAccount,
-    onSuccess: () => {
-      // После успешного удаления аккаунта, скорее всего, нужно разлогинить пользователя и перенаправить.
-      // Это должно происходить в компоненте, который вызывает мутацию.
-    },
   });
 };

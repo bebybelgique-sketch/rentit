@@ -39,7 +39,6 @@ const Profile: React.FC = () => {
         userId: user.id,
         updates: {
           full_name: profileData.full_name,
-          bio: profileData.bio,
           avatar_url: profileData.avatar_url,
         }
       });
@@ -56,7 +55,7 @@ const Profile: React.FC = () => {
     }
 
     try {
-      await deleteAccountMutation.mutateAsync(user.id);
+      await deleteAccountMutation.mutateAsync();
       toast.success(t('profile.deleteSuccess')); // Новая строка в i18n
       // Здесь нужно выполнить разлогин и перенаправление
       // await supabase.auth.signOut(); // Это может быть вызвано в AuthContext

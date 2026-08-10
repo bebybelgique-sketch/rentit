@@ -1,26 +1,23 @@
 // src/hooks/mutations/useRejectRental.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../lib/supabase'; // Корректируем путь
-import { Rental } from '../../types'; // Корректируем путь
+import { supabase } from '../../lib/supabase';
 
+// Как и одобрение — через respond-to-request: она проверяет, что отвечает
+// владелец, что заявка ещё в статусе pending_approval, ставит 'rejected' и
+// шлёт письмо арендатору. Поля «причина отказа» функция не принимает —
+// добавлять его нужно сначала на сервере, а не в клиенте.
 interface RejectRentalParams {
-  rentalId: string;
-  userId: string; // Владелец вещи, который отклоняет
+  bookingId: string;
 }
 
-const rejectRental = async ({ rentalId }: RejectRentalParams): Promise<Rental> => {
-  // Проверка авторизации (RLS в БД должна ограничивать)
-  const { data, error } = await supabase
-    .from('rentals')
-    .update({ status: 'rejected' }) // Предполагаем, что статус 'rejected' существует
-    .match({ id: rentalId }) // Сопоставление с ID аренды
-    .select()
-    .single();
+const rejectRental = async ({ bookingId }: RejectRentalParams): Promise<void> => {
+  const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>(
+    'respond-to-request',
+    { body: { booking_id: bookingId, action: 'reject' } }
+  );
 
-  if (error) throw error;
-  if (!data) throw new Error("Rental rejection failed");
-
-  return data as unknown as Rental; // Явное приведение типа
+  if (error) throw new Error(data?.error || error.message);
+  if (data?.error) throw new Error(data.error);
 };
 
 export const useRejectRental = () => {
@@ -29,11 +26,9 @@ export const useRejectRental = () => {
   return useMutation({
     mutationFn: rejectRental,
     onSuccess: () => {
-      // Инвалидируем кэш для аренд, чтобы обновить список
       queryClient.invalidateQueries({ queryKey: ['rentals'] });
       queryClient.invalidateQueries({ queryKey: ['rentalsAsOwner'] });
-      // queryClient.invalidateQueries({ queryKey: ['rentals', updatedRental.renter_id] });
-      // queryClient.setQueryData(['rental', updatedRental.id], updatedRental);
+      queryClient.invalidateQueries({ queryKey: ['bookedDates'] });
     },
   });
 };

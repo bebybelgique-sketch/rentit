@@ -24,7 +24,7 @@ const MyRentals: React.FC = () => {
   const handleApprove = async (rentalId: string) => {
     if (!user) return;
     try {
-      await approveRentalMutation.mutateAsync({ rentalId, userId: user.id });
+      await approveRentalMutation.mutateAsync({ bookingId: rentalId });
       // Уведомления об успехе через toast
       toast.success("La demande a été acceptée !");
     } catch (error: any) {
@@ -37,7 +37,7 @@ const MyRentals: React.FC = () => {
   const handleReject = async (rentalId: string) => {
     if (!user) return;
     try {
-      await rejectRentalMutation.mutateAsync({ rentalId, userId: user.id });
+      await rejectRentalMutation.mutateAsync({ bookingId: rentalId });
       // Уведомления об успехе через toast
       toast.success("La demande a été refusée.");
     } catch (error: any) {
@@ -132,8 +132,8 @@ const MyRentals: React.FC = () => {
                   {/* Отображение ошибки мутации для конкретной аренды, если есть */}
                   {(approveRentalMutation.isError || rejectRentalMutation.isError) && (
                      <p style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                       {(approveRentalMutation.isError && approveRentalMutation.variables?.rentalId === rental.id ? approveRentalMutation.error.message :
-                         rejectRentalMutation.isError && rejectRentalMutation.variables?.rentalId === rental.id ? rejectRentalMutation.error.message : '')}
+                       {(approveRentalMutation.isError && approveRentalMutation.variables?.bookingId === rental.id ? approveRentalMutation.error.message :
+                         rejectRentalMutation.isError && rejectRentalMutation.variables?.bookingId === rental.id ? rejectRentalMutation.error.message : '')}
                      </p>
                    )}
                 </div>
