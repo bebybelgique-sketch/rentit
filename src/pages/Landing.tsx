@@ -468,57 +468,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── BUSINESS ─────────────────────────────────────────────────────── */}
-      <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)', background: 'var(--bg-alt)' }}>
-        <div className="L-wrap">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'start' }} className="L-sm-col">
-
-            <div>
-              <div className="L-label" style={{ marginBottom: '20px' }}>Pour les professionnels</div>
-              <h2 className="L-title" style={{ fontSize: 'clamp(36px, 4vw, 56px)', color: 'var(--white)', marginBottom: '20px' }}>
-                Vous louez<br />du matériel ?
-              </h2>
-              <p className="L-body" style={{ fontSize: '15px', marginBottom: '32px', maxWidth: '340px' }}>
-                Abonnement mensuel fixe. Zéro commission par location. Import CSV en masse. Priorité dans les résultats.
-              </p>
-              <Link to="/business" className="L-btn-ghost">Voir les offres pro →</Link>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {[
-                { name: 'Starter', price: '€49', period: '/mois', desc: "Jusqu'à 50 annonces · Analytiques de base", featured: false },
-                { name: 'Growth', price: '€99', period: '/mois', desc: "Annonces illimitées · Priorité dans la recherche", featured: true },
-                { name: 'Enterprise', price: '€149', period: '/mois', desc: "Domaine personnalisé · Support dédié", featured: false },
-              ].map(plan => (
-                <div key={plan.name} className="L-plan" style={{
-                  background: plan.featured ? 'rgba(173,255,47,0.05)' : 'rgba(242,240,235,0.02)',
-                  border: `1px solid ${plan.featured ? 'rgba(173,255,47,0.2)' : 'var(--border)'}`,
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <span style={{ fontFamily: 'var(--sans)', fontSize: '15px', fontWeight: '600', color: plan.featured ? 'var(--accent)' : 'var(--white)' }}>
-                          {plan.name}
-                        </span>
-                        {plan.featured && (
-                          <span className="L-mono" style={{ fontSize: '9px', background: 'var(--accent)', color: 'var(--black)', padding: '2px 7px', borderRadius: '2px', letterSpacing: '0.08em' }}>
-                            POPULAIRE
-                          </span>
-                        )}
-                      </div>
-                      <div className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>{plan.desc}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span className="L-display" style={{ fontSize: '30px', color: plan.featured ? 'var(--accent)' : 'var(--white)' }}>{plan.price}</span>
-                      <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>{plan.period}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ── LIVE LISTINGS ────────────────────────────────────────────────── */}
       {/* Обновляем условия отображения */}

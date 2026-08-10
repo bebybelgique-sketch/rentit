@@ -429,12 +429,12 @@ export default function ItemDetail() {
                 {item.users?.phone && user && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
                     <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-                    <span style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>ou réserver et payer en ligne</span>
+                    <span style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>ou demander une réservation</span>
                     <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
                   </div>
                 )}
 
-                {/* === SECONDARY: Calendar + Stripe (только залогиненным) === */}
+                {/* === SECONDARY: Calendrier + demande de réservation (connecté) === */}
                 {user ? (
                   <>
                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '6px' }}>
@@ -549,7 +549,7 @@ export default function ItemDetail() {
                       {requestLoading ? 'Envoi en cours...' : !startDate || !endDate ? 'Choisissez les dates pour continuer' : 'Envoyer une demande de réservation'}
                     </button>
                     <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', textAlign: 'center', marginTop: '8px' }}>
-                      Aucun paiement maintenant — vous paierez après approbation du propriétaire
+                      Aucun paiement en ligne — le règlement se fait en espèces au propriétaire lors de la remise
                     </p>
                   </>
                 ) : (

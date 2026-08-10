@@ -39,13 +39,9 @@ const Register         = lazy(() => import('./pages/Register'))
 const ForgotPassword   = lazy(() => import('./pages/ForgotPassword'))
 const ResetPassword    = lazy(() => import('./pages/ResetPassword'))
 const Admin            = lazy(() => import('./pages/Admin'))
-const Pro              = lazy(() => import('./pages/Pro'))
-const Business         = lazy(() => import('./pages/Business'))
-const BusinessDashboard= lazy(() => import('./pages/BusinessDashboard'))
 const Landing          = lazy(() => import('./pages/Landing'))
 const Privacy          = lazy(() => import('./pages/Privacy'))
 const Terms            = lazy(() => import('./pages/Terms'))
-const PayBooking       = lazy(() => import('./pages/PayBooking'))
 
 function Navbar() {
   const { t, i18n } = useTranslation() // Используем хук i18next
@@ -135,11 +131,7 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/pro" element={<Pro />} />
-            <Route path="/business" element={<Business />} />
-            <Route path="/business/dashboard" element={loading ? null : user ? <BusinessDashboard /> : <Navigate to="/login" />} />
             <Route path="/admin" element={loading ? null : user ? <Admin /> : <Navigate to="/login" />} />
-            <Route path="/pay/:bookingId" element={loading ? null : user ? <PayBooking /> : <Navigate to="/login" />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="*" element={
@@ -154,7 +146,7 @@ export default function App() {
         </Suspense>
         {pathname !== '/' && (
           <footer style={{ textAlign: 'center', padding: '24px 16px', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
-            <a href="/business" style={{ fontSize: '12px', color: 'var(--muted)', textDecoration: 'none' }}>{t('forRentalShops')}</a>
+            <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{t('forRentalShops')}</span>
           </footer>
         )}
         <Toaster position="bottom-right" />
