@@ -3,34 +3,36 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { AuthProvider } from '../../context/AuthContext'; // Предполагаем, что AuthProvider экспортируется
+import { AuthProvider, useAuth } from '../../context/AuthContext'; // Предполагаем, что AuthProvider экспортируется
+
+// AuthProvider на монтировании зовёт supabase.auth.getSession() и подписку —
+// без заглушек рендер падает ещё до самой страницы.
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+    },
+  },
+}));
 import Profile from '../Profile';
+import { useUpdateProfile } from '../../hooks/mutations/useUpdateProfile'; // Import hook to mock
+import { useDeleteAccount } from '../../hooks/mutations/useDeleteAccount'; // Import hook to mock
 
 // Мокаем useAuth
-vi.mock('../../context/AuthContext', () => ({
-  useAuth: vi.fn(() => ({ user: { id: 'user-1', user_metadata: { full_name: 'John Doe', bio: 'Software Engineer' } } })),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('../../context/AuthContext', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...(actual as any),
+    useAuth: vi.fn(() => ({ user: { id: 'user-1', user_metadata: { full_name: 'John Doe', bio: 'Software Engineer' } } })),
+  };
+});
 
 // Мокаем useUpdateProfile
-vi.mock('../../hooks/mutations/useUpdateProfile', () => ({
-  useUpdateProfile: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-    isError: false,
-    error: null,
-  })),
-}));
+vi.mock('../../hooks/mutations/useUpdateProfile');
 
 // Мокаем useDeleteAccount
-vi.mock('../../hooks/mutations/useDeleteAccount', () => ({
-  useDeleteAccount: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-    isError: false,
-    error: null,
-  })),
-}));
+vi.mock('../../hooks/mutations/useDeleteAccount');
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,19 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 describe('Profile Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset default mock return values
+    vi.mocked(useUpdateProfile).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+      isError: false,
+      error: null,
+    } as never);
+    vi.mocked(useDeleteAccount).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+      isError: false,
+      error: null,
+    } as never);
   });
 
   it('renders the profile form when user is logged in', () => {
@@ -58,12 +73,12 @@ describe('Profile Page', () => {
 
   it('calls mutateAsync on update profile form submit', async () => {
     const mockMutateAsync = vi.fn();
-    (require('../../hooks/mutations/useUpdateProfile').useUpdateProfile as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+    vi.mocked(useUpdateProfile).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false,
       isError: false,
       error: null,
-    });
+    } as never);
 
     render(<Profile />, { wrapper });
 
@@ -74,11 +89,11 @@ describe('Profile Page', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
+      // Поля bio в таблице users нет — оно убрано и из типа, и из формы.
       expect(mockMutateAsync).toHaveBeenCalledWith({
         userId: 'user-1',
         updates: {
           full_name: 'Jane Doe',
-          bio: 'Software Engineer', // Не изменилось
           avatar_url: '', // Не изменилось
         }
       });
@@ -87,12 +102,12 @@ describe('Profile Page', () => {
 
   it('calls mutateAsync on delete account button click with confirmation', async () => {
     const mockMutateAsync = vi.fn();
-    (require('../../hooks/mutations/useDeleteAccount').useDeleteAccount as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+    vi.mocked(useDeleteAccount).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false,
       isError: false,
       error: null,
-    });
+    } as never);
 
     // Мокаем window.confirm
     const confirmMock = vi.spyOn(window, 'confirm').mockImplementation(() => true);
@@ -104,7 +119,9 @@ describe('Profile Page', () => {
 
     await waitFor(() => {
       expect(confirmMock).toHaveBeenCalledWith("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.");
-      expect(mockMutateAsync).toHaveBeenCalledWith('user-1');
+      // Удаление идёт через edge-функцию, пользователя она берёт из токена,
+      // поэтому аргументов у мутации нет.
+      expect(mockMutateAsync).toHaveBeenCalledWith();
     });
 
     confirmMock.mockRestore();

@@ -31,14 +31,16 @@ const BookingForm: React.FC<BookingFormProps> = ({ item, onBookingSuccess }) => 
 
     if (!user || !startDate || !endDate) return;
 
-    // Подготовка данных для мутации, включая сообщение
+    // Цену считает сервер (edge-функция request-rental), а арендатора он берёт
+    // из токена — поэтому total_price и renter_id с клиента не отправляем:
+    // на цифру с клиента всё равно никто не смотрит, а видимость обратного
+    // опаснее её отсутствия. totalPrice ниже показывается пользователю как
+    // предварительная оценка.
     const rentalData = {
       item_id: item.id,
       start_date: startDate,
       end_date: endDate,
-      total_price: totalPrice,
-      renter_id: user.id, // ID текущего пользователя
-      message: requestMessage.trim(), // Добавляем сообщение
+      message: requestMessage.trim(),
     };
 
     try {
