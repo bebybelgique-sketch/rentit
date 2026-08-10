@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080808" />
+    <title>RentIt — Location d'outils entre voisins en Brabant Wallon</title>
+    <meta name="description" content="Louez des outils professionnels à vos voisins en Brabant Wallon. Perceuses, kärcher, tondeuses — moins cher qu'acheter, disponible en minutes." />
+    <meta property="og:title" content="RentIt — Location d'outils en Brabant Wallon" />
+    <meta property="og:description" content="P2P location d'outils entre voisins en Belgique. Protection incluse." />
+    <meta property="og:image" content="/icons/og-image.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_BE" />
+    <meta property="og:locale:alternate" content="nl_BE" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="alternate" hreflang="fr" href="https://rentit.be/?lang=fr" />
+    <link rel="alternate" hreflang="nl" href="https://rentit.be/?lang=nl" />
+    <link rel="alternate" hreflang="en" href="https://rentit.be/?lang=en" />
+    <link rel="alternate" hreflang="x-default" href="https://rentit.be/" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "RentIt",
+      "url": "https://rentit.be",
+      "description": "Location d'outils P2P entre voisins en Belgique",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://rentit.be/browse?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

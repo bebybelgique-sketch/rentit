@@ -1,0 +1,542 @@
+# RentIt — Полное техническое задание (актуальная версия)
+
+> P2P маркетплейс аренды инструментов между соседями
+> Стек: React 18 + TypeScript + Vite + Supabase + Stripe
+> Последнее обновление: март 2026
+
+---
+
+## 0. Стратегическое позиционирование
+
+**Ниша:** инструменты и строительное оборудование (не универсальный маркетплейс)
+**Слоган:** "Your neighbor's garage, on demand"
+**Субслоган:** "Rent professional tools from people nearby — cheaper than buying, ready in minutes"
+**Целевой рынок:** Бельгия → DIY-энтузиасты, мелкие подрядчики, новосёлы
+**Монетизация:**
+- Комиссия платформы: **12%** от суммы аренды (поднять до 15% при росте трафика)
+- Страховка: **€3/день** с каждой аренды (покрытие ущерба до €500)
+- Pro-подписка: **€9.99/мес** — 0% комиссии (v2)
+- B2B Desk: **€49-149/мес** — для магазинов аренды инструментов (v2)
+
+---
+
+## 1. Статус реализации
+
+| Файл | Статус |
+|------|--------|
+| `src/App.tsx` | ✅ Роутинг, Navbar, защита маршрутов |
+| `src/main.tsx` | ✅ Entry point, BrowserRouter, AuthProvider, PWA SW |
+| `src/supabase.ts` | ✅ Supabase client |
+| `src/index.css` | ✅ Полная дизайн-система (CSS variables, все классы) |
+| `src/context/AuthContext.tsx` | ✅ Auth context, onAuthStateChange |
+| `src/components/CheckoutForm.tsx` | ✅ Stripe PaymentElement |
+| `src/pages/Home.tsx` | ✅ Листинг с поиском, категориями, геолокацией |
+| `src/pages/ItemDetail.tsx` | ✅ Страница товара, календарь, Stripe оплата, страховка, отзывы |
+| `src/pages/ListItem.tsx` | ✅ Создание листинга с загрузкой фото |
+| `src/pages/MyItems.tsx` | ✅ Управление объявлениями и бронированиями |
+| `src/pages/MyRentals.tsx` | ✅ История аренды для арендатора |
+| `src/pages/Profile.tsx` | ✅ Профиль, email/пароль, верификация телефона, реферал |
+| `src/pages/Login.tsx` | ✅ Форма входа |
+| `src/pages/Register.tsx` | ✅ Регистрация с реферальным кодом |
+| `src/pages/ForgotPassword.tsx` | ✅ Сброс пароля |
+| `src/pages/ResetPassword.tsx` | ✅ Новый пароль по ссылке |
+| `src/pages/Admin.tsx` | ✅ Панель администратора |
+| `supabase/functions/create-rental-intent/` | ✅ Stripe PI + страховка + 12% комиссия |
+| `supabase/functions/notify-rental/` | ✅ Email уведомления (заглушка → Resend в проде) |
+| `supabase/functions/verify-phone/` | ✅ OTP верификация (заглушка → Twilio в проде) |
+| `supabase/functions/stripe-webhook/` | ✅ Обработка Stripe событий |
+| `public/manifest.json` | ✅ PWA manifest |
+| `public/sw.js` | ✅ Service Worker |
+
+---
+
+## 2. Категории (актуальные)
+
+```typescript
+const CATEGORIES = [
+  { value: '',             label: 'All tools' },
+  { value: 'power_tools',  label: '🔌 Power Tools' },   // дрели, шуруповёрты, лобзики
+  { value: 'hand_tools',   label: '🔧 Hand Tools' },    // молотки, ключи, наборы
+  { value: 'garden',       label: '🌿 Garden Equipment' }, // газонокосилки, кусторезы
+  { value: 'construction', label: '🏗️ Construction' },  // леса, бетономешалки
+  { value: 'cleaning',     label: '🧹 Cleaning Equipment' }, // мойки высокого давления
+  { value: 'measuring',    label: '📐 Measuring & Detection' }, // лазерные уровни, детекторы
+]
+```
+
+**В DB schema (`items.category`):** `text NOT NULL` — хранит value из массива выше.
+Старые значения (`tools`, `sports` и т.д.) — не используются в новой версии.
+
+---
+
+## 3. База данных — актуальная SQL схема
+
+### Таблица: users
+
+```sql
+CREATE TABLE public.users (
+  id                uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name         text NOT NULL DEFAULT '',
+  role              text NOT NULL DEFAULT 'user',  -- 'user' | 'admin'
+  phone             text,
+  phone_verified    boolean NOT NULL DEFAULT false,
+  avatar_url        text,
+  village           text,
+  referral_code     text UNIQUE,
+  referred_by       uuid REFERENCES public.users(id),
+  rating_as_owner   numeric(3,2),
+  rating_as_renter  numeric(3,2),
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.users (id, full_name, referral_code)
+  VALUES (
+    new.id,
+    new.raw_user_meta_data->>'full_name',
+    upper(substring(md5(random()::text), 1, 6))
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+```
+
+### Таблица: items
+
+```sql
+CREATE TABLE public.items (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id      uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  title         text NOT NULL,
+  description   text,
+  category      text NOT NULL,
+  -- power_tools | hand_tools | garden | construction | cleaning | measuring
+  condition     text NOT NULL DEFAULT 'good', -- new | like_new | good | fair
+  price_per_day numeric(10,2) NOT NULL,
+  deposit       numeric(10,2) NOT NULL DEFAULT 0,
+  photos        text[] NOT NULL DEFAULT '{}',
+  lat           float8,
+  lng           float8,
+  address       text,
+  available     boolean NOT NULL DEFAULT true,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+```
+
+### Enum: booking_status
+
+```sql
+CREATE TYPE booking_status AS ENUM (
+  'pending_payment',
+  'confirmed',
+  'active',
+  'completed',
+  'cancelled',
+  'disputed'
+);
+```
+
+### Таблица: bookings
+
+```sql
+CREATE TABLE public.bookings (
+  id                        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  item_id                   uuid NOT NULL REFERENCES public.items(id) ON DELETE CASCADE,
+  renter_id                 uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  start_date                date NOT NULL,
+  end_date                  date NOT NULL,
+  total_days                int NOT NULL GENERATED ALWAYS AS (end_date - start_date + 1) STORED,
+  total_price               numeric(10,2) NOT NULL,   -- сумма аренды без депозита и страховки
+  deposit_amount            numeric(10,2) NOT NULL DEFAULT 0,
+  insurance_amount          numeric(10,2) NOT NULL DEFAULT 0,  -- €3/день
+  platform_fee              numeric(10,2) NOT NULL DEFAULT 0,  -- 12% от total_price
+  deposit_returned          boolean NOT NULL DEFAULT false,
+  status                    booking_status NOT NULL DEFAULT 'pending_payment',
+  stripe_payment_intent_id  text,
+  amount_paid               int,  -- в центах
+  created_at                timestamptz NOT NULL DEFAULT now(),
+  CHECK (end_date >= start_date)
+);
+```
+
+### Таблица: payments
+
+```sql
+CREATE TABLE public.payments (
+  id                        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  booking_id                uuid NOT NULL REFERENCES public.bookings(id) ON DELETE CASCADE,
+  stripe_payment_intent_id  text NOT NULL UNIQUE,
+  amount                    int NOT NULL,          -- центы: аренда + депозит + страховка
+  rental_amount             int NOT NULL,          -- центы
+  deposit_amount            int NOT NULL,          -- центы
+  platform_fee              int NOT NULL,          -- центы (12%)
+  insurance_amount          int NOT NULL DEFAULT 0, -- центы (€3/день)
+  status                    text NOT NULL DEFAULT 'pending'
+                            CHECK (status IN ('pending','succeeded','failed','refunded')),
+  created_at                timestamptz NOT NULL DEFAULT now()
+);
+```
+
+### Таблица: reviews
+
+```sql
+CREATE TABLE public.reviews (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  booking_id    uuid NOT NULL REFERENCES public.bookings(id),
+  from_user_id  uuid NOT NULL REFERENCES public.users(id),
+  to_user_id    uuid NOT NULL REFERENCES public.users(id),
+  item_id       uuid REFERENCES public.items(id),
+  review_type   text NOT NULL, -- item | owner | renter
+  rating        int NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment       text,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+```
+
+### Migration: добавить insurance_amount (если таблицы уже созданы)
+
+```sql
+-- 20260320000003_insurance.sql
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS insurance_amount numeric(10,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.payments ADD COLUMN IF NOT EXISTS insurance_amount int NOT NULL DEFAULT 0;
+```
+
+### RPC: get_booked_dates
+
+```sql
+CREATE OR REPLACE FUNCTION get_booked_dates(p_item_id uuid)
+RETURNS TABLE(start_date date, end_date date) AS $$
+  SELECT start_date, end_date
+  FROM bookings
+  WHERE item_id = p_item_id
+    AND status IN ('confirmed', 'active', 'pending_payment');
+$$ LANGUAGE sql STABLE;
+```
+
+### RLS политики
+
+```sql
+ALTER TABLE public.users    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.items    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews  ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "users_select" ON public.users FOR SELECT USING (true);
+CREATE POLICY "users_update" ON public.users FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "items_select" ON public.items FOR SELECT USING (true);
+CREATE POLICY "items_insert" ON public.items FOR INSERT WITH CHECK (auth.uid() = owner_id);
+CREATE POLICY "items_update" ON public.items FOR UPDATE USING (auth.uid() = owner_id);
+CREATE POLICY "items_delete" ON public.items FOR DELETE USING (auth.uid() = owner_id);
+
+CREATE POLICY "bookings_select" ON public.bookings FOR SELECT
+  USING (auth.uid() = renter_id);
+CREATE POLICY "bookings_insert" ON public.bookings FOR INSERT
+  WITH CHECK (auth.uid() = renter_id);
+CREATE POLICY "bookings_update" ON public.bookings FOR UPDATE
+  USING (auth.uid() = renter_id);
+
+CREATE POLICY "owner_bookings_select" ON public.bookings FOR SELECT
+  USING (EXISTS (SELECT 1 FROM public.items WHERE id = item_id AND owner_id = auth.uid()));
+CREATE POLICY "owner_bookings_update" ON public.bookings FOR UPDATE
+  USING (EXISTS (SELECT 1 FROM public.items WHERE id = item_id AND owner_id = auth.uid()));
+
+CREATE POLICY "payments_select" ON public.payments FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM public.bookings b
+    WHERE b.id = booking_id
+      AND (b.renter_id = auth.uid()
+           OR EXISTS (SELECT 1 FROM public.items WHERE id = b.item_id AND owner_id = auth.uid()))
+  ));
+
+CREATE POLICY "reviews_select" ON public.reviews FOR SELECT USING (true);
+CREATE POLICY "reviews_insert" ON public.reviews FOR INSERT
+  WITH CHECK (auth.uid() = from_user_id);
+```
+
+### Storage bucket
+
+```sql
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('item-photos', 'item-photos', true);
+
+CREATE POLICY "item_photos_upload" ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'item-photos' AND auth.role() = 'authenticated');
+
+CREATE POLICY "item_photos_select" ON storage.objects FOR SELECT
+  USING (bucket_id = 'item-photos');
+```
+
+---
+
+## 4. Edge Function: create-rental-intent (актуальная)
+
+**Путь:** `supabase/functions/create-rental-intent/index.ts`
+
+**Логика ценообразования:**
+```
+rentalPrice     = price_per_day × totalDays
+insuranceFee    = €3.00 × totalDays          ← €3/день страховка
+platformFee     = rentalPrice × 12%          ← комиссия (не берётся с клиента)
+deposit         = item.deposit
+totalCharged    = rentalPrice + deposit + insuranceFee
+```
+
+**Что возвращает клиенту:**
+```json
+{
+  "client_secret": "pi_xxx_secret_xxx",
+  "amount": 4500,           // центы — то что списывается с карты
+  "booking_id": "uuid",
+  "insurance_amount": 900   // центы — для отображения в UI
+}
+```
+
+---
+
+## 5. Ценообразование в UI (ItemDetail.tsx)
+
+```
+€15.00 × 3 дня          = €45.00
+Deposit (refundable)    = €25.00
+🛡️ Insurance (€3/day)   = €9.00
+────────────────────────────────
+Total                   = €79.00
+```
+
+`INSURANCE_PER_DAY = 3.00` — константа в `ItemDetail.tsx`
+
+---
+
+## 6. Флоу аренды (Happy Path)
+
+```
+1. Home → фильтр по категории инструментов → карточка товара
+2. ItemDetail → выбор дат в календаре
+3. "Pay €X" → handleRent() → Edge Function create-rental-intent
+   - проверяет даты на конфликты
+   - создаёт booking (status: pending_payment)
+   - считает: rental + deposit + insurance
+   - создаёт Stripe PaymentIntent
+   - возвращает { client_secret, amount, booking_id, insurance_amount }
+4. <CheckoutForm> внутри <Elements stripe={stripePromise}>
+5. Пользователь вводит карту → stripe.confirmPayment()
+6. Успех → booking.status = confirmed → /my-rentals
+7. Owner в MyItems видит бронирование → "Mark picked up"
+   → booking.status = active
+8. Owner → "Mark returned" → booking.status = completed
+9. Renter оставляет отзыв (canReview = true когда status = completed)
+```
+
+---
+
+## 7. Статусы бронирования
+
+| Статус | Когда | Кто меняет |
+|--------|-------|------------|
+| `pending_payment` | Создан, не оплачен | Edge Function |
+| `confirmed` | Оплата прошла | CheckoutForm → Supabase |
+| `active` | Вещь передана | MyItems — "Mark picked up" |
+| `completed` | Вещь возвращена | MyItems — "Mark returned" |
+| `cancelled` | Отменён | MyRentals / handlePaymentCancel |
+| `disputed` | Спор | Admin.tsx (вручную) |
+
+---
+
+## 8. Переменные окружения
+
+### .env (фронт)
+
+```env
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_STRIPE_PUBLISHABLE_KEY=pk_live_...
+```
+
+### Supabase Edge Functions secrets
+
+```bash
+supabase secrets set STRIPE_SECRET_KEY=sk_live_...
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY=eyJ...
+supabase secrets set TWILIO_ACCOUNT_SID=ACxxx      # для verify-phone в проде
+supabase secrets set TWILIO_AUTH_TOKEN=xxx
+supabase secrets set TWILIO_FROM_NUMBER=+1xxx
+supabase secrets set RESEND_API_KEY=re_xxx          # для notify-rental в проде
+```
+
+---
+
+## 9. Дизайн-система
+
+**CSS переменные (index.css):**
+```css
+--primary: #6c63ff
+--danger:  #dc3545
+--success: #28a745
+--border:  #e0e0e0
+--bg:      #f8f9ff
+--warning: #ffc107
+```
+
+**Готовые классы:** `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-sm`, `.card`,
+`.form-group`, `.tag`, `.tag-purple`, `.tag-green`, `.tag-gray`, `.tag-red`,
+`.loading`, `.error-msg`, `.success-msg`, `.rating`, `.cal`, `.cal-day`,
+`.item-card`, `.item-card-img`, `.item-card-body`, `.item-card-title`,
+`.item-card-price`, `.item-card-meta`, `.grid`, `.grid-3`, `.page`, `.photo-grid`, `.photo-thumb`
+
+Новые CSS классы — **не создавать**. Использовать существующие.
+
+---
+
+## 10. Структура проекта
+
+```
+rentit/
+├── public/
+│   ├── manifest.json          ✅ PWA
+│   ├── sw.js                  ✅ Service Worker
+│   └── favicon.svg
+├── src/
+│   ├── context/
+│   │   └── AuthContext.tsx    ✅
+│   ├── components/
+│   │   └── CheckoutForm.tsx   ✅ + отображает страховку
+│   ├── pages/
+│   │   ├── Home.tsx           ✅ категории инструментов, новый hero
+│   │   ├── ItemDetail.tsx     ✅ страховка в breakdown
+│   │   ├── ListItem.tsx       ✅ категории инструментов
+│   │   ├── MyItems.tsx        ✅
+│   │   ├── MyRentals.tsx      ✅
+│   │   ├── Profile.tsx        ✅
+│   │   ├── Login.tsx          ✅
+│   │   ├── Register.tsx       ✅
+│   │   ├── ForgotPassword.tsx ✅
+│   │   ├── ResetPassword.tsx  ✅
+│   │   └── Admin.tsx          ✅
+│   ├── App.tsx                ✅
+│   ├── main.tsx               ✅
+│   ├── supabase.ts            ✅
+│   ├── index.css              ✅
+│   └── vite-env.d.ts          ✅
+├── supabase/
+│   ├── migrations/
+│   │   ├── 20260319000001_01_initial_schema.sql   ✅
+│   │   ├── 20260319000002_02_availability.sql      ✅
+│   │   └── 20260320000003_insurance.sql            ✅
+│   └── functions/
+│       ├── create-rental-intent/index.ts  ✅ + insurance
+│       ├── notify-rental/index.ts         ✅
+│       ├── verify-phone/index.ts          ✅
+│       └── stripe-webhook/index.ts        ✅
+├── .env
+├── index.html                 ✅
+├── package.json               ✅
+├── tsconfig.json              ✅
+└── vite.config.ts             ✅
+```
+
+---
+
+## 11. Pro-подписка (реализовано)
+
+### Как работает
+- Пользователь заходит на `/pro`, нажимает "Start Pro"
+- Edge Function `create-pro-checkout` создаёт Stripe Checkout Session (mode: `subscription`)
+- После оплаты Stripe шлёт `customer.subscription.created` → webhook ставит `users.is_pro = true`
+- При отмене: `customer.subscription.deleted` → `is_pro = false`
+- В `create-rental-intent`: если `owner.is_pro = true` → `platformFee = 0` (0% комиссии)
+
+### Stripe настройка (вручную в Dashboard)
+1. Products → Create product: "RentIt Pro" → Price: €9.99/month recurring
+2. Скопировать `price_id` → добавить в Supabase secrets: `STRIPE_PRO_PRICE_ID=price_xxx`
+3. Webhook events добавить: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
+4. Secrets: `supabase secrets set APP_URL=https://rentit.be`
+
+### Файлы
+| Файл | Статус |
+|------|--------|
+| `supabase/migrations/20260320000004_pro_subscription.sql` | ✅ |
+| `supabase/functions/create-pro-checkout/index.ts` | ✅ |
+| `supabase/functions/stripe-webhook/index.ts` | ✅ + subscription events |
+| `supabase/functions/create-rental-intent/index.ts` | ✅ 0% для Pro |
+| `src/pages/Pro.tsx` | ✅ pricing page |
+| `src/App.tsx` | ✅ `/pro` route + ⚡ Pro в navbar |
+| `src/pages/Home.tsx` | ✅ Pro badge на карточках |
+| `src/pages/ItemDetail.tsx` | ✅ Pro badge на владельце |
+
+### Break-even
+`€9.99 / 12% = €83/мес` — при аренде на сумму выше €83/мес Pro окупается.
+
+---
+
+## 11c. B2B Desk (реализовано)
+
+### Тарифы
+| План | Цена | Лимит items | Особенности |
+|------|------|-------------|-------------|
+| Starter | €49/мес | 20 | 0% комиссия, бизнес-badge |
+| Growth | €99/мес | 100 | + приоритет в поиске, CSV upload |
+| Enterprise | €149/мес | ∞ | + аккаунт-менеджер, PEPPOL-инвойс |
+
+### Как работает
+- `/business` — лендинг с 3 тарифами и вводом business_name
+- Edge Function `create-business-checkout` → Stripe Checkout (subscription)
+- Webhook: `b2b_plan` в metadata → `users.business_plan = 'starter'|'growth'|'enterprise'`
+- `create-rental-intent`: если `owner.business_plan != null` → 0% комиссии (как Pro)
+- `/business/dashboard` — панель: статистика, список items, CSV upload (Growth+)
+
+### CSV upload формат
+```
+title,category,price_per_day,deposit,description
+Bosch Drill,power_tools,12.00,25,Professional 18V
+Pressure Washer,cleaning,18.00,50,Kärcher 2000W
+```
+
+### Stripe secrets (добавить)
+```bash
+supabase secrets set STRIPE_B2B_STARTER_PRICE_ID=price_xxx
+supabase secrets set STRIPE_B2B_GROWTH_PRICE_ID=price_xxx
+supabase secrets set STRIPE_B2B_ENTERPRISE_PRICE_ID=price_xxx
+```
+
+### Файлы
+| Файл | Статус |
+|------|--------|
+| `supabase/migrations/20260320000005_b2b.sql` | ✅ |
+| `supabase/functions/create-business-checkout/index.ts` | ✅ |
+| `supabase/functions/stripe-webhook/index.ts` | ✅ + b2b events |
+| `supabase/functions/create-rental-intent/index.ts` | ✅ 0% для B2B |
+| `src/pages/Business.tsx` | ✅ лендинг |
+| `src/pages/BusinessDashboard.tsx` | ✅ dashboard + CSV |
+| `src/App.tsx` | ✅ роуты + navbar |
+
+---
+
+## 11d. Roadmap v2 (после запуска)
+
+| Фича | Описание | Доход |
+|------|----------|-------|
+| **Pro-подписка** | €9.99/мес → 0% комиссии, badge "Pro owner" | Recurring |
+| **B2B Desk** | €49-149/мес → bulk listings для магазинов аренды | B2B SaaS |
+| **Deposit insurance** | Автоматический возврат депозита через фото AI | Trust |
+| **Real Twilio SMS** | Включить верификацию телефона в проде | Trust |
+| **Real email (Resend)** | Подтверждение аренды, напоминание о возврате | Retention |
+| **SEO landing** | Страницы под запросы "дрель в аренду Гент" и т.д. | Organic traffic |
+
+---
+
+## 12. Важные технические детали
+
+- **Supabase join синтаксис:** `users!owner_id(...)` и `users!renter_id(...)` — чтобы различать FK на одну таблицу
+- **Stripe:** `loadStripe(VITE_STRIPE_PUBLISHABLE_KEY)` вызывается один раз в `ItemDetail.tsx` — `CheckoutForm` только использует `useStripe()` / `useElements()`
+- **Edge Functions:** Deno TypeScript. Service Role Key обязателен для bypass RLS
+- **Комиссия:** 12% — не берётся с клиента, это доля платформы от выплаты владельцу. Хранится в `payments.platform_fee` для Admin аналитики
+- **Страховка:** €3/день берётся с арендатора поверх стоимости аренды. Хранится в `bookings.insurance_amount` и `payments.insurance_amount`
+- **Admin revenue:** суммирует `platform_fee + insurance_amount` по всем `succeeded` платежам

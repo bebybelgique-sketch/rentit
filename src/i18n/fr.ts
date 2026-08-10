@@ -1,0 +1,88 @@
+export const fr = {
+  // Navbar
+  browse: 'Parcourir',
+  listItem: '+ Déposer une annonce',
+  myItems: 'Mes outils',
+  myRentals: 'Mes locations',
+  profile: 'Profil',
+  login: 'Se connecter',
+  signup: "S'inscrire",
+  logout: 'Déconnexion',
+
+  // Home
+  heroTitle: 'Les outils de votre voisin,\nà portée de main',
+  heroSub: "Louez des outils professionnels près de chez vous — moins cher qu'acheter, disponible en minutes",
+  searchPlaceholder: 'Rechercher des outils...',
+  maxPrice: 'Max €/jour',
+  nearby: '📍 À proximité',
+  noResults: 'Aucun outil trouvé',
+  noResultsTitle: 'Aucun outil dans cette zone',
+  noResultsDesc: 'Soyez le premier à déposer une annonce ici.',
+  earlyLister: "Les premiers à s'inscrire apparaissent en tête des résultats.",
+  listFirstTool: 'Déposer votre premier outil →',
+  expandSearch: 'Élargir à 50 km',
+  toolsAvailable: (n: number) => `${n} outil${n > 1 ? 's' : ''} disponible${n > 1 ? 's' : ''}`,
+
+  // Item detail
+  contactWhatsApp: 'Contacter via WhatsApp',
+  contactViaBooking: 'Contacter via la réservation ci-dessous',
+  bookAndPayOnline: 'ou réserver et payer en ligne',
+  selectDates: 'Choisir les dates',
+  selectDatesHint: 'Cliquez sur une date de début, puis une date de fin',
+  bookAndPay: (price: string) => `Réserver et payer ${price}`,
+  loginToBook: 'Se connecter pour réserver et payer',
+  totalPrice: 'Total',
+  deposit: 'Caution (remboursable)',
+  protection: '🛡 RentIt Protection',
+  protectionNote: 'La protection couvre les dommages jusqu\'à 500€. Caution remboursée si retour en bon état.',
+  perDay: '/jour',
+  phoneVerified: '✓ Téléphone vérifié',
+  newOwner: '✦ Nouveau — soyez le premier !',
+  shareWhatsApp: 'Partager',
+  ownerLabel: 'Propriétaire',
+  payment: 'Paiement',
+  bookingConfirmed: 'Réservation confirmée ! Redirection...',
+
+  // Categories
+  categories: {
+    power_tools: '⚡ Électroportatif',
+    hand_tools: '🔧 Outillage manuel',
+    garden: '🌿 Jardinage',
+    construction: '🏗️ Construction',
+    cleaning: '🧹 Nettoyage',
+    measuring: '📐 Mesure & Détection',
+  },
+
+  // Auth — Register
+  joinRentIt: 'Rejoindre RentIt',
+  fullName: 'Nom complet',
+  email: 'Email',
+  passwordMin: 'Mot de passe (min. 8 caractères)',
+  createAccount: 'Créer un compte',
+  creatingAccount: 'Création du compte...',
+  alreadyAccount: 'Déjà un compte ?',
+  logInLink: 'Se connecter',
+  invitedMsg: '🎉 Vous avez été invité(e) ! Inscrivez-vous pour commencer.',
+
+  // Auth — Login
+  loginTitle: 'Se connecter à RentIt',
+  password: 'Mot de passe',
+  forgotPassword: 'Mot de passe oublié ?',
+  logIn: 'Se connecter',
+  loggingIn: 'Connexion...',
+  noAccount: 'Pas encore de compte ?',
+  signUpLink: "S'inscrire",
+
+  // List item
+  newListing: 'Nouvelle annonce',
+  listYourTool: 'Déposer votre outil',
+  addPhotoFirst: 'Ajoutez une photo de profil',
+  addPhotoDesc: 'Les locataires réservent 3× plus souvent auprès de propriétaires avec une vraie photo.',
+  addPhotoHint: 'Ça prend 10 secondes et renforce la confiance immédiatement.',
+  addPhotoBtn: 'Ajouter ma photo →',
+  publishListing: 'Publier l\'annonce',
+  publishing: 'Publication...',
+  yourListing: 'C\'est votre annonce',
+  manageIt: 'la gérer',
+  forRentalShops: 'Pour les loueurs professionnels →',
+}
