@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { useItemById } from '../hooks/useItemById'
+import { useItemReviews } from '../hooks/useItemReviews'
+import { useBookedDates } from '../hooks/useBookedDates'
+import { useUserBookingForItem } from '../hooks/useUserBookingForItem'
+import { supabase } from '../lib/supabase'
 import { t } from '../i18n'
+import BookingForm from '../components/items/BookingForm'
 
 const CATEGORY_EMOJI: Record<string, string> = {
   power_tools: '🔌', hand_tools: '🔧', garden: '🌿',
@@ -70,15 +75,17 @@ export default function ItemDetail() {
   const [photoIdx, setPhotoIdx] = useState(0)
   const [shared, setShared] = useState(false)
 
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [calMonth, setCalMonth] = useState(() => {
-    const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }
-  })
+  // Удаляем старые состояния, связанные с календарем и бронированием
+  // const [startDate, setStartDate] = useState('')
+  // const [endDate, setEndDate] = useState('')
+  // const [calMonth, setCalMonth] = useState(() => {
+  //   const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }
+  // })
+  // const [requestMessage, setRequestMessage] = useState('')
+  // const [requestLoading, setRequestLoading] = useState(false)
+  // const [error, setError] = useState('')
 
-  const [requestMessage, setRequestMessage] = useState('')
-  const [requestLoading, setRequestLoading] = useState(false)
-  const [error, setError] = useState('')
+  // Добавляем состояние для успеха бронирования
   const [requestSent, setRequestSent] = useState(false)
 
   const [reviews, setReviews] = useState<any[]>([])
@@ -88,43 +95,14 @@ export default function ItemDetail() {
   const [reviewLoading, setReviewLoading] = useState(false)
   const [reviewSuccess, setReviewSuccess] = useState(false)
 
-  useEffect(() => { if (itemId) fetchItem() }, [itemId])
 
-  const fetchItem = async () => {
-    try {
-      const [{ data: itemData }, { data: bookedData }, { data: reviewData }] = await Promise.all([
-        supabase
-          .from('items')
-          .select('*, users!owner_id(id, full_name, avatar_url, phone, phone_verified, rating_as_owner, is_pro)')
-          .eq('id', itemId!)
-          .single(),
-        supabase.rpc('get_booked_dates', { p_item_id: itemId }).then(r => ({ data: r.data ?? [], error: r.error })),
-        supabase
-          .from('reviews')
-          .select('*, users!from_user_id(full_name, avatar_url)')
-          .eq('item_id', itemId!)
-          .eq('review_type', 'item')
-          .order('created_at', { ascending: false }),
-      ])
-      if (itemData) setItem(itemData as unknown as Item)
-      setBookedRanges(bookedData || [])
-      setReviews(reviewData || [])
-      if (user && itemData) checkCanReview(itemData.id, itemData.owner_id)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
+  // Обновляем логику checkCanReview
+  useEffect(() => {
+    if (item && user && userBooking !== undefined && reviews !== undefined) { // Дожидаемся всех данных
+      const existingReview = reviews.find(r => r.from_user_id === user.id);
+      setCanReview(!!userBooking && !existingReview && user.id !== item.owner_id);
     }
-  }
-
-  const checkCanReview = async (iId: string, ownerId: string) => {
-    if (!user || user.id === ownerId) return
-    const [{ data: booking }, { data: existing }] = await Promise.all([
-      supabase.from('bookings').select('id').eq('item_id', iId).eq('renter_id', user.id).eq('status', 'completed').maybeSingle(),
-      supabase.from('reviews').select('id').eq('item_id', iId).eq('from_user_id', user.id).eq('review_type', 'item').maybeSingle(),
-    ])
-    setCanReview(!!booking && !existing)
-  }
+  }, [item, user, userBooking, reviews]);
 
   const handleShare = async () => {
     const url = window.location.href
@@ -136,67 +114,67 @@ export default function ItemDetail() {
     }
   }
 
-  const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
-  const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay()
+  // const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
+  // const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay()
 
-  const handleDayClick = (day: number) => {
-    const d = new Date(calMonth.year, calMonth.month, day)
-    if (d < new Date(new Date().toDateString())) return
-    if (isBooked(d, bookedRanges)) return
-    const ds = toISO(d)
-    if (!startDate || (startDate && endDate)) {
-      setStartDate(ds); setEndDate('')
-    } else if (ds < startDate) {
-      setStartDate(ds); setEndDate('')
-    } else {
-      let cur = fromISO(startDate)
-      let hasConflict = false
-      while (toISO(cur) <= ds) {
-        if (isBooked(cur, bookedRanges)) { hasConflict = true; break }
-        cur = addDays(cur, 1)
-      }
-      if (!hasConflict) setEndDate(ds)
-      else { setStartDate(ds); setEndDate('') }
-    }
-  }
+  // const handleDayClick = (day: number) => {
+  //   const d = new Date(calMonth.year, calMonth.month, day)
+  //   if (d < new Date(new Date().toDateString())) return
+  //   if (isBooked(d, bookedRanges)) return
+  //   const ds = toISO(d)
+  //   if (!startDate || (startDate && endDate)) {
+  //     setStartDate(ds); setEndDate('')
+  //   } else if (ds < startDate) {
+  //     setStartDate(ds); setEndDate('')
+  //   } else {
+  //     let cur = fromISO(startDate)
+  //     let hasConflict = false
+  //     while (toISO(cur) <= ds) {
+  //       if (isBooked(cur, bookedRanges)) { hasConflict = true; break }
+  //       cur = addDays(cur, 1)
+  //     }
+  //     if (!hasConflict) setEndDate(ds)
+  //     else { setStartDate(ds); setEndDate('') }
+  //   }
+  // }
 
-  const totalDays = startDate && endDate
-    ? Math.round((fromISO(endDate).getTime() - fromISO(startDate).getTime()) / 86400000) + 1
-    : 0
+  // const totalDays = startDate && endDate
+  //   ? Math.round((fromISO(endDate).getTime() - fromISO(startDate).getTime()) / 86400000) + 1
+  //   : 0
 
-  const insuranceFee = totalDays > 0 ? INSURANCE_PER_DAY * totalDays : 0
-  const totalPrice = totalDays > 0 && item
-    ? item.price_per_day * totalDays + item.deposit + insuranceFee
-    : 0
+  // const insuranceFee = totalDays > 0 ? INSURANCE_PER_DAY * totalDays : 0
+  // const totalPrice = totalDays > 0 && item
+  //   ? item.price_per_day * totalDays + item.deposit + insuranceFee
+  //   : 0
 
-  const handleRequest = async () => {
-    if (!user || !item || !startDate || !endDate) return
-    try {
-      setRequestLoading(true); setError('')
-      const res = await supabase.functions.invoke('request-rental', {
-        body: { item_id: item.id, start_date: startDate, end_date: endDate, message: requestMessage.trim() || null },
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-      })
-      if (res.error) throw res.error
-      setRequestSent(true)
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de l'envoi de la demande")
-    } finally {
-      setRequestLoading(false)
-    }
-  }
+  // const handleRequest = async () => {
+  //   if (!user || !item || !startDate || !endDate) return
+  //   try {
+  //     setRequestLoading(true); setError('')
+  //     const res = await supabase.functions.invoke('request-rental', {
+  //       body: { item_id: item.id, start_date: startDate, end_date: endDate, message: requestMessage.trim() || null },
+  //       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  //     })
+  //     if (res.error) throw res.error
+  //     setRequestSent(true)
+  //   } catch (err: any) {
+  //     setError(err.message || "Erreur lors de l'envoi de la demande")
+  //   } finally {
+  //     setRequestLoading(false)
+  //   }
+  // }
+
+  const handleBookingSuccess = () => {
+    setRequestSent(true);
+  };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || !item) return
+    if (!user || !item || !userBooking) return // userBooking теперь подтверждает возможность оставить отзыв
     setReviewLoading(true)
     try {
-      const { data: booking } = await supabase
-        .from('bookings').select('id').eq('item_id', item.id).eq('renter_id', user.id)
-        .eq('status', 'completed').maybeSingle()
-      if (!booking) return
       const { error } = await supabase.from('reviews').insert([{
-        booking_id: booking.id,
+        booking_id: userBooking.id, // Используем ID бронирования
         from_user_id: user.id,
         to_user_id: item.owner_id,
         item_id: item.id,
@@ -205,8 +183,8 @@ export default function ItemDetail() {
         comment: reviewComment.trim() || null,
       }])
       if (error) throw error
-      setReviewSuccess(true); setCanReview(false)
-      fetchItem()
+      setReviewSuccess(true); setCanReview(false);
+      // TODO: Инвалидировать кэш отзывов
     } catch (err) {
       console.error(err)
     } finally {
@@ -214,15 +192,16 @@ export default function ItemDetail() {
     }
   }
 
-  if (loading) return <div className="page"><div className="loading">Chargement...</div></div>
-  if (!item) return <div className="page"><div className="loading">Outil introuvable</div></div>
+  // Отображение состояния загрузки и ошибки для основного элемента
+  if (itemLoading) return <div className="page"><div className="loading">Chargement...</div></div>
+  if (itemError) return <div className="page"><div className="loading">Erreur: {itemError.message}</div></div>
 
   const photos = item.photos || []
-  const { year, month } = calMonth
-  const daysCount = daysInMonth(year, month)
-  const firstDay = firstDayOfMonth(year, month)
-  const monthLabel = new Date(year, month).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-  const avgRating = reviews.length > 0
+  // const { year, month } = calMonth
+  // const daysCount = daysInMonth(year, month)
+  // const firstDay = firstDayOfMonth(year, month)
+  // const monthLabel = new Date(year, month).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  const avgRating = reviews && reviews.length > 0
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
     : null
 
@@ -375,7 +354,8 @@ export default function ItemDetail() {
         {/* Booking calendar */}
         {user?.id !== item.owner_id && item.available && (
           <div className="card" style={{ marginBottom: '20px' }}>
-            {error && <div className="error-msg">{error}</div>}
+            {/* Убираем старое поле error, так как ошибка теперь внутри BookingForm */}
+            {/* {error && <div className="error-msg">{error}</div>} */}
 
             {requestSent ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
@@ -434,129 +414,11 @@ export default function ItemDetail() {
                   </div>
                 )}
 
-                {/* === SECONDARY: Calendar + Stripe (только залогиненным) === */}
-                {user ? (
-                  <>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '6px' }}>
-                      {t('selectDates')}
-                    </p>
-                    <p style={{ color: 'var(--muted)', fontSize: '13px', marginBottom: '20px' }}>
-                      {t('selectDatesHint')}
-                    </p>
-
-                    {/* Calendar nav */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                      <button
-                        onClick={() => setCalMonth(p => {
-                          const d = new Date(p.year, p.month - 1)
-                          return { year: d.getFullYear(), month: d.getMonth() }
-                        })}
-                        style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '4px 12px', cursor: 'pointer', fontSize: '16px' }}
-                      >
-                        ‹
-                      </button>
-                      <strong style={{ fontWeight: '700', fontSize: '14px' }}>{monthLabel}</strong>
-                      <button
-                        onClick={() => setCalMonth(p => {
-                          const d = new Date(p.year, p.month + 1)
-                          return { year: d.getFullYear(), month: d.getMonth() }
-                        })}
-                        style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '4px 12px', cursor: 'pointer', fontSize: '16px' }}
-                      >
-                        ›
-                      </button>
-                    </div>
-
-                    <div className="cal" style={{ marginBottom: '16px' }}>
-                      {['Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa'].map(d => (
-                        <div key={d} className="cal-header">{d}</div>
-                      ))}
-                      {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
-                      {Array.from({ length: daysCount }).map((_, i) => {
-                        const day = i + 1
-                        const d = new Date(year, month, day)
-                        const ds = toISO(d)
-                        const past = d < new Date(new Date().toDateString())
-                        const booked = isBooked(d, bookedRanges)
-                        const isStart = ds === startDate
-                        const isEnd = ds === endDate
-                        const inRange = startDate && endDate && ds >= startDate && ds <= endDate
-                        const isToday = ds === toISO(new Date())
-                        return (
-                          <div
-                            key={day}
-                            className={`cal-day ${booked || past ? 'booked' : 'available'}${isToday ? ' today' : ''}`}
-                            style={{
-                              background: isStart || isEnd ? '#080808' : inRange ? 'rgba(173,255,47,0.15)' : booked ? '#fde8ea' : past ? '#f5f5f5' : undefined,
-                              color: isStart || isEnd ? '#F2F0EB' : booked ? 'var(--danger)' : past ? '#ccc' : undefined,
-                              cursor: past || booked ? 'not-allowed' : 'pointer',
-                            }}
-                            onClick={() => !past && !booked && handleDayClick(day)}
-                          >
-                            {day}
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    {startDate && (
-                      <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>
-                        <div><span style={{ color: 'var(--muted)' }}>Du </span>{startDate}</div>
-                        {endDate && <div><span style={{ color: 'var(--muted)' }}>Au </span>{endDate}</div>}
-                        {totalDays > 0 && <div style={{ fontWeight: '700' }}>{totalDays} jour{totalDays > 1 ? 's' : ''}</div>}
-                      </div>
-                    )}
-
-                    {totalDays > 0 && (
-                      <div style={{ background: 'var(--bg)', borderRadius: 'var(--radius)', padding: '16px', marginBottom: '16px', fontSize: '14px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                          <span style={{ color: 'var(--muted)' }}>€{item.price_per_day.toFixed(2)} × {totalDays} jour{totalDays > 1 ? 's' : ''}</span>
-                          <span>€{(item.price_per_day * totalDays).toFixed(2)}</span>
-                        </div>
-                        {item.deposit > 0 && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: 'var(--muted)' }}>Caution (remboursable)</span>
-                            <span>€{item.deposit.toFixed(2)}</span>
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '20px', letterSpacing: '-0.03em', borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '4px' }}>
-                          <span>Total estimé</span>
-                          <span>€{totalPrice.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {totalDays > 0 && (
-                      <div className="form-group" style={{ marginBottom: '16px' }}>
-                        <label style={{ fontSize: '13px', color: 'var(--muted)' }}>Message au propriétaire (facultatif)</label>
-                        <textarea
-                          value={requestMessage}
-                          onChange={e => setRequestMessage(e.target.value)}
-                          placeholder="Expliquez brièvement votre usage prévu..."
-                          rows={2}
-                          maxLength={300}
-                          style={{ marginTop: '6px', fontSize: '14px' }}
-                        />
-                      </div>
-                    )}
-
-                    <button
-                      onClick={handleRequest}
-                      disabled={!startDate || !endDate || requestLoading}
-                      className="btn btn-primary"
-                      style={{ width: '100%', minHeight: '44px', fontSize: '15px' }}
-                    >
-                      {requestLoading ? 'Envoi en cours...' : !startDate || !endDate ? 'Choisissez les dates pour continuer' : 'Envoyer une demande de réservation'}
-                    </button>
-                    <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', textAlign: 'center', marginTop: '8px' }}>
-                      Aucun paiement maintenant — vous paierez après approbation du propriétaire
-                    </p>
-                  </>
-                ) : (
-                  <a href="/login" className="btn btn-secondary" style={{ width: '100%', display: 'block', textAlign: 'center', minHeight: '44px' }}>
-                    {t('loginToBook')}
-                  </a>
+                {/* === ВСТАВКА: Компонент BookingForm === */}
+                {user && (
+                  <BookingForm item={item} onBookingSuccess={handleBookingSuccess} />
                 )}
+                {/* === КОНЕЦ ВСТАВКИ === */}
               </>
             )}
           </div>
