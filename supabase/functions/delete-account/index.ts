@@ -1,10 +1,9 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createSupabaseServiceClient } from '../_shared/supabase.ts'
+import { handleOPTIONS } from '../_shared/cors.ts'
+import { getUserFromAuthHeader } from '../_shared/auth.ts'
 
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-)
+const supabase = createSupabaseServiceClient()
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -15,13 +14,10 @@ const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+  if (req.method === 'OPTIONS') return handleOPTIONS()
 
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader) return json({ error: 'Unauthorized' }, 401)
-
-  const { data: { user }, error: authErr } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
-  if (authErr || !user) return json({ error: 'Unauthorized' }, 401)
+  const user = await getUserFromAuthHeader(req)
+  if (user instanceof Response) return user
 
   const userId = user.id
 

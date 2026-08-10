@@ -1,23 +1,21 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createSupabaseServiceClient } from '../_shared/supabase.ts'
+import { handleOPTIONS } from '../_shared/cors.ts'
+import { getUserFromAuthHeader } from '../_shared/auth.ts'
 
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-)
+const supabase = createSupabaseServiceClient()
 const TWILIO_SID = Deno.env.get('TWILIO_ACCOUNT_SID')!
 const TWILIO_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN')!
 const TWILIO_FROM = Deno.env.get('TWILIO_FROM_PHONE')!
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version' }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+  if (req.method === 'OPTIONS') return handleOPTIONS()
 
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader) return new Response('Unauthorized', { status: 401 })
-
-  const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
-  if (!user) return new Response('Unauthorized', { status: 401 })
+  // Раньше здесь 401 отдавался без CORS-заголовков — из браузера это выглядело
+  // как сетевая ошибка, а не как «нужен вход».
+  const user = await getUserFromAuthHeader(req)
+  if (user instanceof Response) return user
 
   const { action, phone, otp } = await req.json()
 
