@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { supabase } from '../supabase'
+import { supabase } from '../lib/supabase'
 import { t, getLang } from '../i18n'
 import { translations } from '../i18n'
 

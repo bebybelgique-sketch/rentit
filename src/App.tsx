@@ -1,5 +1,5 @@
-import React from 'react'
-import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { lazy, Suspense, useState } from 'react'
+import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 // ИМПОРТ ДЛЯ TanStack Query
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuth } from './context/AuthContext'
@@ -12,7 +12,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 минут
-      cacheTime: 10 * 60 * 1000, // 10 минут
+      gcTime: 10 * 60 * 1000, // 10 минут (в react-query v5 cacheTime переименован в gcTime)
     },
   },
 })
@@ -52,7 +52,7 @@ function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner">
         <Link to="/" className="navbar-logo" onClick={close}>RentIt</Link>
-        <button className="navbar-burger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
+        <button className="navbar-burger" onClick={() => setMenuOpen((o: boolean) => !o)} aria-label="Menu">
           <span /><span /><span />
         </button>
         <div className={`navbar-links${menuOpen ? ' open' : ''}`}>
@@ -97,12 +97,11 @@ export default function App() {
   const { user, loading } = useAuth()
   const { pathname } = useLocation()
 
+  // Оборачиваем приложение в QueryClientProvider.
+  // BrowserRouter и AuthProvider уже стоят в main.tsx — второй Router роняет react-router.
   return (
-    // Оборачиваем приложение в QueryClientProvider
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen">
             <Navbar />
             <CookieBanner />
             <Suspense fallback={null}>
@@ -141,8 +140,6 @@ export default function App() {
               </footer>
             )}
           </div>
-        </AuthProvider>
-      </BrowserRouter>
     </QueryClientProvider>
   )
 }

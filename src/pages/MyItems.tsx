@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
 const CATEGORY_EMOJI: Record<string, string> = {
@@ -47,7 +47,6 @@ interface Item {
 
 export default function MyItems() {
   const { user, accessToken } = useAuth()
-  const navigate = useNavigate()
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'active' | 'all'>('active')

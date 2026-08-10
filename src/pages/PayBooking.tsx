@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
-import { supabase } from '../supabase'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import CheckoutForm from '../components/CheckoutForm'
 

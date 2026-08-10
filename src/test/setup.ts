@@ -1,6 +1,6 @@
 // src/test/setup.ts
-import '@testing-library/jest-dom/vitest'; // Импортируем матчеры Jest DOM
-import { vi } from 'vitest'; // Импортируем vi для мокирования
+import '@testing-library/jest-dom'; // Просто импортируем библиотеку, она автоматически расширяет expect
+import { vi } from 'vitest';
 
 // Мокаем window.matchMedia, так как он не доступен в jsdom по умолчанию
 Object.defineProperty(window, 'matchMedia', {

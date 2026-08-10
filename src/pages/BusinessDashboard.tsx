@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { supabase } from '../supabase'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
 const PLAN_LIMITS: Record<string, number | null> = {

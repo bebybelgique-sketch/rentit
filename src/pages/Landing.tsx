@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useItems } from '../hooks/useItems'; // Импортируем новый хук
 import ItemCard from '../components/items/ItemCard'; // Импортируем новый компонент
@@ -259,8 +259,8 @@ const CSS = `
 `
 
 export default function Landing() {
-  const [scrollY, setScrollY] = useState(0)
-  const [isDark, setIsDark] = useState(true)
+  const [, setScrollY] = useState(0)
+  const [isDark] = useState(true)
   const [searchWhat, setSearchWhat] = useState('')
   const [searchWhere, setSearchWhere] = useState('')
   const [toolCount, setToolCount] = useState<number | null>(null)
@@ -284,7 +284,6 @@ export default function Landing() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const navOpacity = Math.min(scrollY / 80, 1)
 
   return (
     <div className={isDark ? 'L' : 'L light'}>
