@@ -1,27 +1,24 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createSupabaseServiceClient } from '../_shared/supabase.ts'
+import { handleOPTIONS } from '../_shared/cors.ts'
+import { getUserFromAuthHeader } from '../_shared/auth.ts'
+import { json } from '../_shared/json.ts'
 
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-)
+const supabase = createSupabaseServiceClient()
 
+// Оставлено для строк ниже, ещё не переведённых на json(): те же заголовки,
+// что отдаёт _shared/cors.ts.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+  if (req.method === 'OPTIONS') return handleOPTIONS()
 
   try {
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return new Response('Unauthorized', { status: 401, headers: CORS })
-
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    )
-    if (authErr || !user) return new Response('Unauthorized', { status: 401, headers: CORS })
+    const user = await getUserFromAuthHeader(req)
+    if (user instanceof Response) return user
 
     const { item_id, start_date, end_date, message } = await req.json()
     if (!item_id || !start_date || !end_date) {
