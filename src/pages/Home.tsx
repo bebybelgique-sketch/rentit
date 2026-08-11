@@ -95,6 +95,17 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+/**
+ * Расстояние в том виде, в каком его читает человек: до километра — в метрах
+ * с шагом 50, дальше — километры. «0.8 km» и «1.24 km» одинаково неудобны,
+ * когда решаешь, дойти пешком или ехать.
+ */
+function formatDistance(km: number): string {
+  if (km < 1) return `à ${Math.max(50, Math.round(km * 1000 / 50) * 50)} m`
+  if (km < 10) return `à ${km.toFixed(1).replace('.', ',')} km`
+  return `à ${Math.round(km)} km`
+}
+
 function SkeletonCard() {
   return (
     <div className="skeleton-card">
@@ -149,7 +160,11 @@ export default function Home() {
 
       if (nearby && userPos) {
         result = result.filter(item => {
-          if (!item.lat || !item.lng) return false
+          // Сравнение с null, а не проверка на «ложность»: долгота 0 —
+          // гринвичский меридиан, он проходит по Франции и Испании, и
+          // отбрасывать вещь из-за нулевой координаты неверно. Для Брабанта
+          // это пока умозрительно, но ошибка настоящая и стоит одной строки.
+          if (item.lat == null || item.lng == null) return false
           return haversineKm(userPos.lat, userPos.lng, item.lat, item.lng) <= radius
         })
       }
@@ -411,6 +426,18 @@ export default function Home() {
                     <div className="item-card-meta">
                       {item.address && `📍 ${item.address}`}
                     </div>
+                    {/* Расстояние уже посчитано для фильтра по радиусу, но до
+                        сих пор не доходило до экрана. Близость — главное
+                        обещание витрины («Les outils de votre voisin»), и
+                        человеку важно видеть, идти ему 800 м или 12 км. */}
+                    {userPos && item.lat != null && item.lng != null && (
+                      <div style={{
+                        fontFamily: 'var(--font-mono)', fontSize: '11px',
+                        color: 'var(--muted)', marginTop: '4px',
+                      }}>
+                        {formatDistance(haversineKm(userPos.lat, userPos.lng, item.lat, item.lng))}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
                       {(item.users as any)?.rating_as_owner ? (
                         <span className="rating" style={{ fontSize: '12px' }}>

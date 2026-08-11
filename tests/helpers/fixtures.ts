@@ -103,7 +103,17 @@ export type CreatedItem = { id: string; href: string; title: string; pricePerDay
  */
 export async function createItem(
   page: Page,
-  opts: { title?: string; pricePerDay?: string; category?: string } = {},
+  opts: {
+    title?: string
+    pricePerDay?: string
+    category?: string
+    /**
+     * Нажать «📍 Ma position». По умолчанию НЕ нажимаем — и это осознанно:
+     * так объявление заводит человек, который просто напечатал адрес.
+     * Координат у такой вещи нет, и поиск «À proximité» её не покажет.
+     */
+    withPosition?: boolean
+  } = {},
 ): Promise<CreatedItem> {
   const title = opts.title ?? uniqueTitle()
   const pricePerDay = opts.pricePerDay ?? '12.00'
@@ -115,6 +125,12 @@ export async function createItem(
   await formField(page, UI.listItemPriceLabel).fill(pricePerDay)
   if (opts.category) {
     await page.locator('select').first().selectOption(opts.category)
+  }
+  if (opts.withPosition) {
+    await page.getByRole('button', { name: /Ma position/ }).click()
+    // Кнопка сама сообщает об успехе — ждём именно её, а не таймаут.
+    await expect(page.getByRole('button', { name: /Position définie/ }))
+      .toBeVisible({ timeout: 20000 })
   }
 
   // Дубль по заголовку спрашивают через confirm(); заголовок уникальный,

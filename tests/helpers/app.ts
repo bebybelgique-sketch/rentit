@@ -34,6 +34,7 @@ export const UI = {
 
   browseEmptyHeading: 'Aucun outil dans cette zone',
   browseSearchPlaceholder: 'Rechercher des outils...',
+  nearby: '📍 À proximité',
 
   myItemsHeading: 'Mes outils',
   myItemsEmpty: "Aucun outil pour l'instant",

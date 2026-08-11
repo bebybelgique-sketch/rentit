@@ -390,6 +390,16 @@ export default function ListItem() {
                 </span>
               )}
             </div>
+            {/* Адрес текстом и координаты — разные вещи, и человек об этом не
+                догадывается. Поиск «À proximité» отбрасывает вещи без координат
+                целиком: объявление просто не появляется, и владелец никогда не
+                узнает почему. Раз последствие невидимо — предупреждаем до него. */}
+            {lat === null && (
+              <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '8px', lineHeight: 1.5 }}>
+                Sans position, votre outil n'apparaîtra pas dans la recherche
+                «&nbsp;À proximité&nbsp;» — seulement dans la liste complète.
+              </p>
+            )}
           </div>
 
           {/* Photos */}
