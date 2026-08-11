@@ -44,4 +44,19 @@ describe('страж утверждений', () => {
   it('не срабатывает на кнопку «поделиться» без номера', () => {
     expect(checkText('href={`https://wa.me/?text=${encodeURIComponent(url)}`}')).toHaveLength(0);
   });
+
+  // Файлы приходят на диск то с LF, то с CRLF — зависит от того, как git
+  // их выдал. Страж, меняющий ответ от переносов строк, бесполезен: он
+  // был чист на ветке и выдал два нарушения на свои же комментарии сразу
+  // после checkout.
+  it('одинаково разбирает LF и CRLF', () => {
+    const comment = '// создание платёжного намерения Stripe, запись в payments';
+    expect(checkText(comment)).toHaveLength(0);
+    expect(checkText(comment + '\r')).toHaveLength(0);
+    expect(checkText('  ' + comment + '\r\n')).toHaveLength(0);
+
+    const real = "<p>une protection jusqu'à €500</p>";
+    expect(checkText(real)).not.toHaveLength(0);
+    expect(checkText(real + '\r')).not.toHaveLength(0);
+  });
 });
