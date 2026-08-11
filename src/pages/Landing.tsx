@@ -41,6 +41,20 @@ const CSS = `
   --nav-bg:   rgba(8,8,8,0.85);
   --bg-alt:   #050505;
   --earn-sep: rgba(242,240,235,0.1);
+
+  /* Тот же словарь, что в index.css, но со значениями тёмной темы.
+     Имена совпадают намеренно: компонент, написанный на --surface и
+     --text-primary, одинаково верно выглядит и здесь, и в приложении.
+     Прежние --black/--white остаются, пока разметка лендинга на них
+     опирается: снимать их надо отдельным шагом, а не заодно. */
+  --surface:        #080808;
+  --surface-raised: #101010;
+  --surface-sunken: #050505;
+  --text-primary:   #F2F0EB;
+  --text-secondary: rgba(242,240,235,0.7);
+  --text-on-accent: #080808;
+  --line:           rgba(242,240,235,0.1);
+  --line-strong:    rgba(242,240,235,0.28);
   background: var(--black); color: var(--white);
   font-family: var(--sans); -webkit-font-smoothing: antialiased;
   transition: background 0.35s, color 0.35s;

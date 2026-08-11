@@ -2,7 +2,18 @@ import React, { useState } from 'react'
 
 type Lang = 'en' | 'fr' | 'nl'
 
-const LAST_UPDATED = 'March 20, 2026'
+// Дата правится ВМЕСТЕ с текстом документа. 11.08 оба документа были
+// переписаны по существу (убраны страховка, Stripe, раздел платежей,
+// перенумерованы разделы), а дата осталась мартовской — при том что
+// сама политика обещает: «The \"Last updated\" date at the top of this
+// page will always reflect the most recent version».
+//
+// По языкам раздельно: строка показывается в трёх разделах, и
+// английское «March 20, 2026» стояло под французским «Dernière mise
+// à jour :» и нидерландским «Laatste update:».
+const LAST_UPDATED_EN = 'August 11, 2026'
+const LAST_UPDATED_FR = '11 août 2026'
+const LAST_UPDATED_NL = '11 augustus 2026'
 const COMPANY = 'RentIt'
 const EMAIL = 'privacy@rentit.be'
 const ADDRESS = 'Belgium'
@@ -41,7 +52,7 @@ function PrivacyEN() {
   return (
     <div>
       <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px' }}>Privacy Policy</h1>
-      <p style={{ color: '#666', marginBottom: '32px' }}>Last updated: {LAST_UPDATED}</p>
+      <p style={{ color: '#666', marginBottom: '32px' }}>Last updated: {LAST_UPDATED_EN}</p>
 
       <div className="card" style={{ marginBottom: '24px', background: '#f0f4ff', border: '1px solid #c7d2fe' }}>
         <p style={{ margin: 0, fontSize: '14px' }}>
@@ -182,7 +193,7 @@ function PrivacyFR() {
   return (
     <div>
       <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px' }}>Politique de confidentialité</h1>
-      <p style={{ color: '#666', marginBottom: '32px' }}>Dernière mise à jour : {LAST_UPDATED}</p>
+      <p style={{ color: '#666', marginBottom: '32px' }}>Dernière mise à jour : {LAST_UPDATED_FR}</p>
 
       <div className="card" style={{ marginBottom: '24px', background: '#f0f4ff', border: '1px solid #c7d2fe' }}>
         <p style={{ margin: 0, fontSize: '14px' }}>
@@ -322,7 +333,7 @@ function PrivacyNL() {
   return (
     <div>
       <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px' }}>Privacybeleid</h1>
-      <p style={{ color: '#666', marginBottom: '32px' }}>Laatste update: {LAST_UPDATED}</p>
+      <p style={{ color: '#666', marginBottom: '32px' }}>Laatste update: {LAST_UPDATED_NL}</p>
 
       <div className="card" style={{ marginBottom: '24px', background: '#f0f4ff', border: '1px solid #c7d2fe' }}>
         <p style={{ margin: 0, fontSize: '14px' }}>
