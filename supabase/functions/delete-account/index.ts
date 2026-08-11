@@ -51,7 +51,24 @@ serve(async (req) => {
     .update({ renter_id: null })
     .eq('renter_id', userId)
 
-  // Delete user's items (and their photos are orphaned — acceptable)
+  // Фотографии состояния убираем ДО удаления вещей: снос вещи каскадом
+  // уносит брони и строки booking_photos, и после этого узнать пути файлов
+  // уже не по чему — они останутся в бакете навсегда. Комментарий «их
+  // фотографии осиротеют, это приемлемо» стоял здесь до 11.08; приемлемым
+  // это не является: политика конфиденциальности обещает удаление данных.
+  const { data: ownPhotos } = await supabase
+    .from('booking_photos')
+    .select('storage_path, booking_id, bookings!inner(item_id, renter_id, items!inner(owner_id))')
+
+  const doomed = (ownPhotos || []).filter((p: any) =>
+    p.bookings?.renter_id === userId || p.bookings?.items?.owner_id === userId,
+  ).map((p: any) => p.storage_path as string)
+
+  if (doomed.length > 0) {
+    await supabase.storage.from('booking-photos').remove(doomed)
+  }
+
+  // Delete user's items (bookings, photos rows and reviews cascade)
   await supabase.from('items').delete().eq('owner_id', userId)
 
   // Delete avatar from storage
