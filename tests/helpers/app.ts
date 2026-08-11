@@ -1,0 +1,100 @@
+import { expect, type Page } from '@playwright/test'
+
+/**
+ * Видимый текст интерфейса — одним списком.
+ *
+ * Мартовский набор тестов сверялся с английскими подписями, вшитыми в каждый
+ * файл. Интерфейс с тех пор стал французским, и 10 проверок из 20 упавших
+ * 11.08 упали ровно на этом: `Browse` против `Parcourir`, `Log in` против
+ * `Se connecter`, `Page not found` против `Page introuvable`. Продукт при этом
+ * был исправен.
+ *
+ * Теперь подпись живёт в одном месте: правка копирайта — одна строка здесь,
+ * а не обход восьми файлов. Там, где можно опереться на роль, placeholder или
+ * href, тексту предпочитаем их — они переживают и смену языка.
+ */
+export const UI = {
+  // Баннер cookies. Внимание: он англоязычный и не переведён — это не описка
+  // теста, а состояние продукта на 11.08 (навбар при этом французский).
+  cookieAcceptAll: 'Accept all cookies',
+  cookieDeclineOptional: 'Decline optional',
+  cookieManage: 'Manage preferences',
+  cookieHeading: 'This site uses cookies',
+
+  navBrowse: 'Parcourir',
+  navLogin: 'Connexion',
+  navSignup: 'Inscription',
+  navLogout: 'Déconnexion',
+  navMyItems: 'Mes articles',
+
+  loginHeading: 'Se connecter à RentIt',
+  loginSubmit: 'Se connecter',
+
+  notFound: 'Page introuvable',
+
+  browseEmptyHeading: 'Aucun outil dans cette zone',
+  browseSearchPlaceholder: 'Rechercher des outils...',
+
+  myItemsHeading: 'Mes outils',
+  myItemsEmpty: "Aucun outil pour l'instant",
+  itemView: 'Voir',
+  itemDelete: 'Supprimer',
+
+  listItemTitleLabel: "Titre de l'outil *",
+  listItemPriceLabel: 'Prix par jour (€) *',
+  listItemSubmit: "Publier l'annonce",
+  listItemNeedsPhoto: 'Ajoutez une photo de profil',
+
+  profileAvatarLabel: "URL de l'avatar",
+  profileSubmit: 'Mettre à jour le profil',
+} as const
+
+/** Категории витрины: значение в базе → подпись на экране. */
+export const CATEGORY_LABEL = {
+  power_tools: '⚡ Électroportatif',
+  hand_tools: '🔧 Outillage manuel',
+  garden: '🌿 Jardinage',
+  construction: '🏗️ Construction',
+  cleaning: '🧹 Nettoyage',
+  measuring: '📐 Mesure & Détection',
+} as const
+
+/**
+ * Баннер cookies перекрывает меню (см. коммит 22c0f7e), поэтому его надо
+ * убрать до любого клика. Отсутствие баннера — не ошибка: на втором визите
+ * согласие уже лежит в localStorage.
+ */
+export async function dismissCookies(page: Page) {
+  const button = page.getByRole('button', { name: UI.cookieAcceptAll })
+  if (await button.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await button.click()
+    await expect(button).toBeHidden({ timeout: 5000 })
+  }
+}
+
+/**
+ * Проставляет согласие и выбранный профиль до загрузки страницы — так модалки
+ * не появляются вовсе и не воруют клики у теста.
+ */
+export async function skipModals(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'rentit_cookie_consent',
+      JSON.stringify({ necessary: true, functional: true, analytics: true }),
+    )
+    localStorage.setItem('rentit_profile_selected', 'individual')
+  })
+}
+
+/**
+ * Вход. Возврат только после того, как в навбаре появилась «Déconnexion»:
+ * до этого сессия ещё не установлена, и следующий переход уедет на /login.
+ */
+export async function login(page: Page, email: string, password: string) {
+  await page.goto('/login', { waitUntil: 'load' })
+  await dismissCookies(page)
+  await page.locator('input[type="email"]').fill(email)
+  await page.locator('input[type="password"]').fill(password)
+  await page.locator('button[type="submit"]').click()
+  await expect(page.getByRole('button', { name: UI.navLogout })).toBeVisible({ timeout: 20000 })
+}
