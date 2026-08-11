@@ -58,6 +58,24 @@ async function openOwnerDashboard(page: Page) {
   await page.getByRole('button', { name: /^Tous$/ }).click().catch(() => {})
 }
 
+/**
+ * «Мои аренды» открываются в два приёма: сначала каркас, потом обе выборки
+ * (свои брони и брони на свои вещи). Пока идёт вторая, на месте списка стоит
+ * «Chargement...». Проверять содержимое до её исчезновения — значит ловить
+ * пустоту и объявлять её отсутствием брони.
+ */
+async function openMyRentals(page: Page) {
+  await page.goto('/my-rentals', { waitUntil: 'load' })
+  await dismissCookies(page)
+  // Выборок две, и флаги загрузки гаснут по очереди: проверка «нет
+  // Chargement...» попадала в промежуток между ними и проходила рано.
+  // Ждём тишины в сети, а потом уже требуем отсутствия загрузки.
+  await expect(async () => {
+    await page.waitForLoadState('networkidle', { timeout: 15000 })
+    await expect(page.getByText('Chargement...')).toHaveCount(0)
+  }).toPass({ timeout: 45000 })
+}
+
 test.describe('цикл аренды', () => {
   test.skip(
     !OWNER_EMAIL || !OWNER_PASSWORD || !RENTER_EMAIL || !RENTER_PASSWORD,
@@ -88,8 +106,7 @@ test.describe('цикл аренды', () => {
 
     // Арендатор видит подтверждение и может ещё отменить.
     await login(page, RENTER_EMAIL, RENTER_PASSWORD)
-    await page.goto('/my-rentals', { waitUntil: 'load' })
-    await dismissCookies(page)
+    await openMyRentals(page)
     await expect(page.getByText(/Confirmé/i).first()).toBeVisible({ timeout: 15000 })
 
     await login(page, OWNER_EMAIL, OWNER_PASSWORD)
@@ -104,8 +121,7 @@ test.describe('цикл аренды', () => {
     await returned.click()
 
     await login(page, RENTER_EMAIL, RENTER_PASSWORD)
-    await page.goto('/my-rentals', { waitUntil: 'load' })
-    await dismissCookies(page)
+    await openMyRentals(page)
     await expect(page.getByText(/Terminé|completed/i).first()).toBeVisible({ timeout: 15000 })
   })
 
@@ -123,8 +139,7 @@ test.describe('цикл аренды', () => {
     await page.getByRole('button', { name: APPROVE_BUTTON }).first().click()
 
     await login(page, RENTER_EMAIL, RENTER_PASSWORD)
-    await page.goto('/my-rentals', { waitUntil: 'load' })
-    await dismissCookies(page)
+    await openMyRentals(page)
 
     // Причину спрашивают через prompt() — обработчик ставим до клика.
     page.on('dialog', dialog => {
@@ -139,8 +154,7 @@ test.describe('цикл аренды', () => {
 
     // Смысл проверки: причина доходит до второй стороны, а не теряется.
     await login(page, OWNER_EMAIL, OWNER_PASSWORD)
-    await page.goto('/my-rentals', { waitUntil: 'load' })
-    await dismissCookies(page)
+    await openMyRentals(page)
     await expect(page.getByText(reason)).toBeVisible({ timeout: 15000 })
   })
 })
