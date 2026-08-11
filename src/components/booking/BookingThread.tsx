@@ -3,13 +3,14 @@
 // Всё, что происходит вокруг одной брони после того, как стороны нашли друг
 // друга: переписка, фотографии при передаче и возврате, взаимный отзыв.
 //
-// Разметка здесь намеренно минимальная. Презентационные компоненты
-// (MessageList, MessageComposer, PhotoGrid, ReviewForm) строит Qwen отдельным
-// треком по контракту пропсов из брифа от 11.08. Когда они появятся, меняется
-// разметка внутри этих блоков — состав данных, права и порядок вызовов
-// остаются. Ждать их, не давая работать циклу, было бы хуже: цикл и есть
-// критерий готовности.
+// Контейнер знает про данные и права; как это выглядит — знают компоненты
+// в components/common. Разделение держится ради того, чтобы правило «кто
+// что вправе» жило в одном месте, а не размазывалось по разметке.
 import React, { useState } from 'react';
+import MessageList from '../common/MessageList';
+import MessageComposer from '../common/MessageComposer';
+import PhotoGrid from '../common/PhotoGrid';
+import ReviewForm from '../common/ReviewForm';
 import { useBookingMessages } from '../../hooks/useBookingMessages';
 import { useSendMessage } from '../../hooks/mutations/useSendMessage';
 import { useBookingPhotos, type BookingPhotoPhase } from '../../hooks/useBookingPhotos';
@@ -49,12 +50,13 @@ const PHOTO_PHASES: Record<string, BookingPhotoPhase> = {
   active: 'return',
 };
 
+// Переписка закрывается вместе со сделкой: писать в отменённую бронь
+// некуда — вторая сторона туда больше не заходит.
+const CLOSED_STATUSES = ['cancelled', 'rejected', 'expired', 'payment_expired'];
+
 const BookingThread: React.FC<BookingThreadProps> = ({
   bookingId, itemId, currentUserId, counterpartyId, counterpartyName, status, role,
 }) => {
-  const [draft, setDraft] = useState('');
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
   const { data: messages, isLoading: messagesLoading } = useBookingMessages(bookingId);
@@ -69,13 +71,10 @@ const BookingThread: React.FC<BookingThreadProps> = ({
   // соответствовать стороне: политика в базе отвергнет любое иное сочетание.
   const reviewType = role === 'renter' ? 'owner' : 'renter';
 
-  const handleSend = async () => {
-    const body = draft.trim();
-    if (!body) return;
+  const handleSend = async (body: string) => {
     setLocalError(null);
     try {
       await sendMessage.mutateAsync({ bookingId, senderId: currentUserId, body });
-      setDraft('');
     } catch (err: any) {
       setLocalError(err.message || "Le message n'a pas pu être envoyé");
     }
@@ -98,19 +97,21 @@ const BookingThread: React.FC<BookingThreadProps> = ({
     }
   };
 
-  const handleReview = async () => {
+  const handleReview = async ({ rating, comment }: { rating: number; comment: string }) => {
     setLocalError(null);
-    try {
-      await createReview.mutateAsync({
-        bookingId, itemId, fromUserId: currentUserId, toUserId: counterpartyId,
-        reviewType, rating, comment,
-      });
-      setRating(0);
-      setComment('');
-    } catch (err: any) {
-      setLocalError(err.message || "L'avis n'a pas pu être enregistré");
-    }
+    await createReview.mutateAsync({
+      bookingId, itemId, fromUserId: currentUserId, toUserId: counterpartyId,
+      reviewType, rating, comment,
+    });
   };
+
+  const photoItems = (photos || []).map((p) => ({
+    id: p.id,
+    url: p.url,
+    phase: p.phase,
+    uploadedAt: p.created_at,
+    canRemove: false,
+  }));
 
   return (
     <div>
@@ -120,53 +121,30 @@ const BookingThread: React.FC<BookingThreadProps> = ({
 
       <div style={box}>
         <h4 style={heading}>Messages</h4>
-        {messagesLoading && <p style={{ fontSize: '13px', color: '#666' }}>Chargement...</p>}
-        {!messagesLoading && messages && messages.length === 0 && (
-          <p style={{ fontSize: '13px', color: '#666' }}>
-            Aucun message. Convenez ici du lieu et de l'heure.
-          </p>
-        )}
-        {messages && messages.length > 0 && (
-          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {messages.map((m) => (
-              <li
-                key={m.id}
-                style={{
-                  alignSelf: m.sender_id === currentUserId ? 'flex-end' : 'flex-start',
-                  background: m.sender_id === currentUserId ? '#ede9ff' : '#f4f4f5',
-                  borderRadius: '10px', padding: '8px 12px', maxWidth: '80%',
-                }}
-              >
-                <div style={{ fontSize: '11px', color: '#666', marginBottom: '2px' }}>
-                  {m.sender_id === currentUserId ? 'Vous' : m.senderName}
-                </div>
-                <div style={{ fontSize: '14px', whiteSpace: 'pre-wrap' }}>{m.body}</div>
-              </li>
-            ))}
-          </ul>
+        {messagesLoading ? (
+          <p style={{ fontSize: '13px', color: '#666' }}>Chargement...</p>
+        ) : (
+          <MessageList
+            messages={(messages || []).map((m) => ({
+              id: m.id,
+              body: m.body,
+              createdAt: m.created_at,
+              senderId: m.sender_id,
+              senderName: m.senderName,
+            }))}
+            currentUserId={currentUserId}
+            emptyLabel="Aucun message. Convenez ici du lieu et de l'heure."
+          />
         )}
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input
-            type="text"
-            value={draft}
-            maxLength={2000}
-            placeholder="Votre message"
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            style={{ flex: 1, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
-          />
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={handleSend}
-            disabled={sendMessage.isPending || !draft.trim()}
-          >
-            {sendMessage.isPending ? '...' : 'Envoyer'}
-          </button>
-        </div>
+        <MessageComposer
+          onSend={handleSend}
+          sending={sendMessage.isPending}
+          disabled={CLOSED_STATUSES.includes(status)}
+        />
       </div>
 
-      {(photoPhase || (photos && photos.length > 0)) && (
+      {(photoPhase || photoItems.length > 0) && (
         <div style={box}>
           <h4 style={heading}>
             État de l'outil
@@ -174,22 +152,10 @@ const BookingThread: React.FC<BookingThreadProps> = ({
             {photoPhase === 'return' && ' — au retour'}
           </h4>
 
-          {photos && photos.length > 0 ? (
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
-              {photos.map((p) => (
-                <img
-                  key={p.id}
-                  src={p.url}
-                  alt={p.phase === 'handover' ? "État à la remise" : 'État au retour'}
-                  style={{ width: '84px', height: '84px', objectFit: 'cover', borderRadius: '8px' }}
-                />
-              ))}
-            </div>
-          ) : (
-            <p style={{ fontSize: '13px', color: '#666', marginBottom: '10px' }}>
-              Aucune photo. Photographier l'outil protège les deux parties.
-            </p>
-          )}
+          <PhotoGrid
+            photos={photoItems}
+            emptyLabel="Aucune photo. Photographier l'outil protège les deux parties."
+          />
 
           {photoPhase && (
             <input
@@ -197,7 +163,7 @@ const BookingThread: React.FC<BookingThreadProps> = ({
               accept="image/jpeg,image/png,image/webp,image/heic"
               onChange={handleUpload}
               disabled={uploadPhoto.isPending}
-              style={{ fontSize: '13px' }}
+              style={{ fontSize: '13px', marginTop: '10px' }}
             />
           )}
         </div>
@@ -205,44 +171,18 @@ const BookingThread: React.FC<BookingThreadProps> = ({
 
       {canReview && (
         <div style={box}>
-          <h4 style={heading}>
-            Votre avis sur {counterpartyName}
-          </h4>
-          <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                type="button"
-                aria-label={n === 1 ? '1 étoile' : `${n} étoiles`}
-                onClick={() => setRating(n)}
-                style={{
-                  border: 'none', background: 'transparent', cursor: 'pointer',
-                  fontSize: '20px', lineHeight: 1, padding: 0,
-                  color: n <= rating ? '#f59e0b' : '#d4d4d8',
-                }}
-              >
-                ★
-              </button>
-            ))}
-          </div>
-          <textarea
-            value={comment}
-            maxLength={1000}
-            placeholder="Votre commentaire (facultatif)"
-            onChange={(e) => setComment(e.target.value)}
-            style={{ width: '100%', minHeight: '60px', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', marginBottom: '8px' }}
-          />
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={handleReview}
-            disabled={rating === 0 || createReview.isPending}
-          >
-            {createReview.isPending ? '...' : "Envoyer l'avis"}
-          </button>
-          {createReview.isSuccess && (
-            <p style={{ fontSize: '13px', color: 'var(--success, #16a34a)', marginTop: '6px' }}>
+          {createReview.isSuccess ? (
+            <p style={{ fontSize: '13px', color: '#16a34a' }}>
               Merci, votre avis est enregistré.
             </p>
+          ) : (
+            <ReviewForm
+              title={`Votre avis sur ${counterpartyName}`}
+              submitLabel="Envoyer l'avis"
+              submitting={createReview.isPending}
+              error={createReview.isError ? createReview.error.message : null}
+              onSubmit={handleReview}
+            />
           )}
         </div>
       )}

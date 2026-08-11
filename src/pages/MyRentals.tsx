@@ -5,6 +5,8 @@ import { useRentals } from '../hooks/useRentals';
 import BookingStatusBadge from '../components/common/BookingStatusBadge';
 import EmptyState from '../components/common/EmptyState';
 import BookingThread from '../components/booking/BookingThread';
+import CancellationNotice from '../components/common/CancellationNotice';
+import UserRatingBadge from '../components/common/UserRatingBadge';
 import { useRentalsAsOwner } from '../hooks/useRentalsAsOwner';
 import { useApproveRental } from '../hooks/mutations/useApproveRental';
 import { useRejectRental } from '../hooks/mutations/useRejectRental';
@@ -84,16 +86,15 @@ const MyRentals: React.FC = () => {
     );
   }
 
-  const renderCancellation = (rental: Rental) => {
-    if (rental.status !== 'cancelled') return null;
+  const renderCancellation = (rental: Rental, otherPartyName: string) => {
+    if (rental.status !== 'cancelled' || !rental.cancelled_at) return null;
     const byMe = rental.cancelled_by === user.id;
     return (
-      <p style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
-        Annulée {byMe ? 'par vous' : "par l'autre partie"}
-        {rental.cancelled_at ? ` le ${formatDate(rental.cancelled_at)}` : ''}
-        {' — '}
-        {rental.cancellation_reason || 'aucune raison indiquée'}
-      </p>
+      <CancellationNotice
+        cancelledByName={byMe ? 'vous' : otherPartyName}
+        cancelledAt={rental.cancelled_at}
+        reason={rental.cancellation_reason ?? null}
+      />
     );
   };
 
@@ -132,10 +133,13 @@ const MyRentals: React.FC = () => {
                 return (
                   <div key={rental.id} className="card" style={{ padding: '16px', marginBottom: '12px' }}>
                     <p><strong>Article:</strong> {rental.item?.title || 'N/A'}</p>
-                    <p><strong>Propriétaire:</strong> {owner?.full_name || 'Utilisateur'}</p>
+                    <p>
+                      <strong>Propriétaire:</strong> {owner?.full_name || 'Utilisateur'}{' '}
+                      <UserRatingBadge rating={owner?.rating_as_owner ?? null} role="owner" />
+                    </p>
                     <p><strong>Dates:</strong> Du {formatDate(rental.start_date)} au {formatDate(rental.end_date)}</p>
                     <p><strong>Statut :</strong> <BookingStatusBadge status={rental.status} /></p>
-                    {renderCancellation(rental)}
+                    {renderCancellation(rental, owner?.full_name || "l'autre partie")}
 
                     {CANCELLABLE_BY_RENTER.includes(rental.status) && (
                       <div style={{ marginTop: '8px' }}>
@@ -182,14 +186,17 @@ const MyRentals: React.FC = () => {
                   {/* Здесь стоял rental.renter_id — владелец видел сырой UUID
                       вместо человека, к которому поедет. Профиль приходит
                       вместе с бронью (useRentalsAsOwner). */}
-                  <p><strong>Locataire:</strong> {rental.renter?.full_name || 'Utilisateur'}</p>
+                  <p>
+                    <strong>Locataire:</strong> {rental.renter?.full_name || 'Utilisateur'}{' '}
+                    <UserRatingBadge rating={rental.renter?.rating_as_renter ?? null} role="renter" />
+                  </p>
                   <p><strong>Article:</strong> {rental.item?.title || 'N/A'}</p>
                   <p><strong>Dates:</strong> Du {formatDate(rental.start_date)} au {formatDate(rental.end_date)}</p>
                   <p><strong>Statut :</strong> <BookingStatusBadge status={rental.status} /></p>
                   {/* Поля message в bookings нет: столбец называется
                       request_message, и страница показывала пустоту. */}
                   {rental.request_message && <p><strong>Message:</strong> {rental.request_message}</p>}
-                  {renderCancellation(rental)}
+                  {renderCancellation(rental, rental.renter?.full_name || "l'autre partie")}
 
                   {rental.status === 'pending_approval' && (
                     <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
