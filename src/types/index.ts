@@ -28,6 +28,17 @@ export interface Item {
   photos?: string[];
 }
 
+// Краткая карточка человека — то, что одна сторона сделки вправе знать о
+// другой: как зовут, как выглядит, как его оценивали. Телефон и почта сюда
+// не входят: договариваются стороны в переписке по броне.
+export interface PartyProfile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  rating_as_owner?: number | null;
+  rating_as_renter?: number | null;
+}
+
 // Тип для Rental. Может быть заменен на Tables<'rentals'>['Row'] из supabase.ts
 export interface Rental {
   id: string;
@@ -38,11 +49,19 @@ export interface Rental {
   total_price: number;
   // Значения строго из enum booking_status в базе (сверено 10.08.2026)
   status: 'pending_approval' | 'pending_payment' | 'confirmed' | 'active' | 'completed' | 'cancelled' | 'disputed' | 'rejected' | 'expired' | 'payment_expired';
-  message?: string;
+  // Столбец в базе называется request_message. Поля message в bookings нет
+  // и не было: страница выводила `rental.message` и показывала пустоту.
+  request_message?: string | null;
   created_at: string;
-  // Добавьте другие поля, если необходимо, или используйте тип из supabase.ts
-  // Также может включать вложенный объект item, если он возвращается из Supabase
-  item?: Item;
+  // Отмена: кто, когда и почему (миграция 20260811000011).
+  cancelled_by?: string | null;
+  cancelled_at?: string | null;
+  cancellation_reason?: string | null;
+  // Вещь приходит под псевдонимом item (в запросе: `item:items(...)`),
+  // вместе с профилем владельца — иначе арендатор не знает, к кому едет.
+  item?: Item & { owner?: PartyProfile | null };
+  // Вторая сторона сделки в списке владельца.
+  renter?: PartyProfile | null;
 }
 
 // Профиль = строка таблицы users (id совпадает с auth.uid()).

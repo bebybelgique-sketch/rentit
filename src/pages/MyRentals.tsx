@@ -4,11 +4,24 @@ import { useAuth } from '../context/AuthContext';
 import { useRentals } from '../hooks/useRentals';
 import BookingStatusBadge from '../components/common/BookingStatusBadge';
 import EmptyState from '../components/common/EmptyState';
+import BookingThread from '../components/booking/BookingThread';
 import { useRentalsAsOwner } from '../hooks/useRentalsAsOwner';
 import { useApproveRental } from '../hooks/mutations/useApproveRental';
 import { useRejectRental } from '../hooks/mutations/useRejectRental';
+import { useTransitionBooking } from '../hooks/mutations/useTransitionBooking';
+import type { Rental } from '../types';
 // Импортируем toast
 import toast from 'react-hot-toast';
+
+const dateFmt = new Intl.DateTimeFormat('fr-BE', { day: '2-digit', month: 'short', year: 'numeric' });
+const formatDate = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : dateFmt.format(d);
+};
+
+// Отменить можно, пока вещь не уехала. После передачи отменять нечего:
+// инструмент физически в чужих руках, и закрывается это возвратом.
+const CANCELLABLE_BY_RENTER = ['pending_approval', 'confirmed'];
 
 const MyRentals: React.FC = () => {
   const { user } = useAuth();
@@ -22,6 +35,7 @@ const MyRentals: React.FC = () => {
   // Инициализируем мутации
   const approveRentalMutation = useApproveRental();
   const rejectRentalMutation = useRejectRental();
+  const transitionMutation = useTransitionBooking();
 
   const handleApprove = async (rentalId: string) => {
     if (!user) return;
@@ -49,6 +63,19 @@ const MyRentals: React.FC = () => {
     }
   };
 
+  const handleCancel = async (rentalId: string) => {
+    const reason = prompt('Pourquoi annulez-vous ?');
+    if (reason === null) return;
+    try {
+      await transitionMutation.mutateAsync({ bookingId: rentalId, action: 'cancel', reason });
+      toast.success('La réservation est annulée.');
+    } catch (error: any) {
+      // 409 от сервера означает, что вторая сторона уже изменила бронь.
+      // Показываем как есть: тихо «успешно» здесь было бы враньём.
+      toast.error(error.message || "Erreur lors de l'annulation");
+    }
+  };
+
   if (!user) {
     return (
       <div className="page">
@@ -56,6 +83,19 @@ const MyRentals: React.FC = () => {
       </div>
     );
   }
+
+  const renderCancellation = (rental: Rental) => {
+    if (rental.status !== 'cancelled') return null;
+    const byMe = rental.cancelled_by === user.id;
+    return (
+      <p style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+        Annulée {byMe ? 'par vous' : "par l'autre partie"}
+        {rental.cancelled_at ? ` le ${formatDate(rental.cancelled_at)}` : ''}
+        {' — '}
+        {rental.cancellation_reason || 'aucune raison indiquée'}
+      </p>
+    );
+  };
 
   return (
     <div className="page">
@@ -87,14 +127,42 @@ const MyRentals: React.FC = () => {
           )}
           {userRentals && userRentals.length > 0 && (
             <div>
-              {userRentals.map(rental => (
-                <div key={rental.id} className="card" style={{ padding: '16px', marginBottom: '12px' }}>
-                  <p><strong>Article:</strong> {rental.item?.title || 'N/A'}</p>
-                  <p><strong>Dates:</strong> Du {rental.start_date} au {rental.end_date}</p>
-                  <p><strong>Statut :</strong> <BookingStatusBadge status={rental.status} /></p>
-                  {/* Добавьте больше деталей аренды по мере необходимости */}
-                </div>
-              ))}
+              {userRentals.map(rental => {
+                const owner = rental.item?.owner;
+                return (
+                  <div key={rental.id} className="card" style={{ padding: '16px', marginBottom: '12px' }}>
+                    <p><strong>Article:</strong> {rental.item?.title || 'N/A'}</p>
+                    <p><strong>Propriétaire:</strong> {owner?.full_name || 'Utilisateur'}</p>
+                    <p><strong>Dates:</strong> Du {formatDate(rental.start_date)} au {formatDate(rental.end_date)}</p>
+                    <p><strong>Statut :</strong> <BookingStatusBadge status={rental.status} /></p>
+                    {renderCancellation(rental)}
+
+                    {CANCELLABLE_BY_RENTER.includes(rental.status) && (
+                      <div style={{ marginTop: '8px' }}>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => handleCancel(rental.id)}
+                          disabled={transitionMutation.isPending}
+                        >
+                          Annuler la réservation
+                        </button>
+                      </div>
+                    )}
+
+                    {owner && (
+                      <BookingThread
+                        bookingId={rental.id}
+                        itemId={rental.item_id}
+                        currentUserId={user.id}
+                        counterpartyId={owner.id}
+                        counterpartyName={owner.full_name || 'Utilisateur'}
+                        status={rental.status}
+                        role="renter"
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
@@ -111,30 +179,39 @@ const MyRentals: React.FC = () => {
             <div>
               {ownerRentals.map(rental => (
                 <div key={rental.id} className="card" style={{ padding: '16px', marginBottom: '12px' }}>
-                  <p><strong>Locataire:</strong> {rental.renter_id}</p> {/* Требуется получение профиля пользователя */}
+                  {/* Здесь стоял rental.renter_id — владелец видел сырой UUID
+                      вместо человека, к которому поедет. Профиль приходит
+                      вместе с бронью (useRentalsAsOwner). */}
+                  <p><strong>Locataire:</strong> {rental.renter?.full_name || 'Utilisateur'}</p>
                   <p><strong>Article:</strong> {rental.item?.title || 'N/A'}</p>
-                  <p><strong>Dates:</strong> Du {rental.start_date} au {rental.end_date}</p>
+                  <p><strong>Dates:</strong> Du {formatDate(rental.start_date)} au {formatDate(rental.end_date)}</p>
                   <p><strong>Statut :</strong> <BookingStatusBadge status={rental.status} /></p>
-                  <p><strong>Message:</strong> {rental.message}</p>
-                  {/* Кнопки Принять/Отклонить с интеграцией мутаций и улучшенным UX */}
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                    <button
-                      className="btn btn-primary"
-                      style={{ padding: '4px 8px', fontSize: '12px' }}
-                      onClick={() => handleApprove(rental.id)}
-                      disabled={approveRentalMutation.isPending}
-                    >
-                      {approveRentalMutation.isPending ? '...' : 'Accepter'}
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      style={{ padding: '4px 8px', fontSize: '12px' }}
-                      onClick={() => handleReject(rental.id)}
-                      disabled={rejectRentalMutation.isPending}
-                    >
-                      {rejectRentalMutation.isPending ? '...' : 'Refuser'}
-                    </button>
-                  </div>
+                  {/* Поля message в bookings нет: столбец называется
+                      request_message, и страница показывала пустоту. */}
+                  {rental.request_message && <p><strong>Message:</strong> {rental.request_message}</p>}
+                  {renderCancellation(rental)}
+
+                  {rental.status === 'pending_approval' && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <button
+                        className="btn btn-primary"
+                        style={{ padding: '4px 8px', fontSize: '12px' }}
+                        onClick={() => handleApprove(rental.id)}
+                        disabled={approveRentalMutation.isPending}
+                      >
+                        {approveRentalMutation.isPending ? '...' : 'Accepter'}
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '4px 8px', fontSize: '12px' }}
+                        onClick={() => handleReject(rental.id)}
+                        disabled={rejectRentalMutation.isPending}
+                      >
+                        {rejectRentalMutation.isPending ? '...' : 'Refuser'}
+                      </button>
+                    </div>
+                  )}
+
                   {/* Отображение ошибки мутации для конкретной аренды, если есть */}
                   {(approveRentalMutation.isError || rejectRentalMutation.isError) && (
                      <p style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
@@ -142,6 +219,18 @@ const MyRentals: React.FC = () => {
                          rejectRentalMutation.isError && rejectRentalMutation.variables?.bookingId === rental.id ? rejectRentalMutation.error.message : '')}
                      </p>
                    )}
+
+                  {rental.renter && (
+                    <BookingThread
+                      bookingId={rental.id}
+                      itemId={rental.item_id}
+                      currentUserId={user.id}
+                      counterpartyId={rental.renter.id}
+                      counterpartyName={rental.renter.full_name || 'Utilisateur'}
+                      status={rental.status}
+                      role="owner"
+                    />
+                  )}
                 </div>
               ))}
             </div>

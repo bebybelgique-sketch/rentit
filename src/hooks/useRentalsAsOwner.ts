@@ -3,23 +3,24 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Rental } from '../types';
 
-// Определяем функцию для получения данных
+// Профиль арендатора берётся здесь, а не догружается страницей по одному
+// запросу на строку: до 11.08 его не брали вовсе, и владелец видел в списке
+// сырой UUID вместо человека, с которым ему предстоит встретиться.
+// Связь users!renter_id — это внешний ключ bookings_renter_id_fkey.
 const fetchRentalsAsOwner = async (userId: string | undefined): Promise<Rental[]> => {
   if (!userId) return [];
 
-  // Предполагаем, что в таблице rentals есть поле item_id, связанное с вещью, и у вещи есть owner_id
-  // Запрос может быть сложнее, если связи между вещами и арендами не прямые
-  // Псевдокод: SELECT * FROM rentals WHERE item_id IN (SELECT id FROM items WHERE owner_id = userId)
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, items!inner(owner_id)') // Используем inner join, чтобы отфильтровать по владельцу вещи
-    .eq('items.owner_id', userId);
+    // Псевдоним item — по той же причине, что и в useRentals: страница
+    // читает rental.item, а PostgREST без псевдонима отдаёт "items".
+    .select('*, item:items!inner(id, title, owner_id, photos), renter:users!renter_id(id, full_name, avatar_url, rating_as_renter)')
+    .eq('item.owner_id', userId);
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as unknown as Rental[];
 };
 
-// Экспортируем хук, используя useQuery
 export const useRentalsAsOwner = (userId: string | undefined) => {
   return useQuery<Rental[], Error>({
     queryKey: ['rentalsAsOwner', userId],

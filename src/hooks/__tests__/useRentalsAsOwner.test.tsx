@@ -78,4 +78,22 @@ describe('useRentalsAsOwner', () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.data).toBeUndefined();
   });
+
+  // Регрессия: до 11.08 профиль арендатора не запрашивался вовсе, и страница
+  // показывала владельцу сырой UUID человека, к которому он поедет.
+  it('доносит профиль арендатора, а не только его идентификатор', async () => {
+    mockResponseData = [{
+      id: 'rental-1', item_id: 'item-1', renter_id: 'user-2',
+      start_date: '2026-08-20', end_date: '2026-08-22', status: 'confirmed',
+      item: { id: 'item-1', title: 'Perceuse', owner_id: 'user-1' },
+      renter: { id: 'user-2', full_name: 'Marie Locataire', avatar_url: null },
+    }];
+    mockResponseError = null;
+
+    const { result } = renderHook(() => useRentalsAsOwner('user-1'), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.[0].renter?.full_name).toBe('Marie Locataire');
+    expect(result.current.data?.[0].item?.title).toBe('Perceuse');
+  });
 });
