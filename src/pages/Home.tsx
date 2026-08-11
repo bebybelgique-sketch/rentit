@@ -120,6 +120,8 @@ export default function Home() {
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
   const [geoLoading, setGeoLoading] = useState(false)
   const [maxPrice, setMaxPrice] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
 
   const fetchItems = useCallback(async () => {
@@ -147,13 +149,27 @@ export default function Home() {
         })
       }
 
+      // Занятость считает сервер: политики на bookings не пускают
+      // постороннего к чужим броням, поэтому отфильтровать даты в
+      // браузере нечем. Функция отдаёт только «эта вещь занята» — тот же
+      // факт, что и календарь на странице вещи.
+      if (startDate && endDate && endDate >= startDate) {
+        const { data: busy, error: busyErr } = await supabase
+          .rpc('items_busy_between', { p_start: startDate, p_end: endDate })
+        // Ошибка запроса не должна молча превращаться в «всё свободно»:
+        // лучше показать всё, чем показать занятое как доступное.
+        if (busyErr) throw busyErr
+        const busyIds = new Set((busy || []).map((r: { item_id: string }) => r.item_id))
+        result = result.filter(item => !busyIds.has(item.id))
+      }
+
       setItems(result)
     } catch (err) {
       console.error(err)
     } finally {
       setLoading(false)
     }
-  }, [search, category, nearby, radius, userPos, maxPrice])
+  }, [search, category, nearby, radius, userPos, maxPrice, startDate, endDate])
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
@@ -204,6 +220,30 @@ export default function Home() {
           onChange={e => setMaxPrice(e.target.value)}
           style={{ width: '110px', minWidth: '110px' }}
           aria-label={t('maxPrice')}
+        />
+        {/* Даты: без них витрина показывает уже занятый инструмент, и
+            первое обращение человека заканчивается отказом. */}
+        <input
+          type="date"
+          value={startDate}
+          onChange={e => {
+            const v = e.target.value
+            setStartDate(v)
+            // Конец раньше начала — следствие порядка ввода, а не выбора.
+            if (endDate && endDate < v) setEndDate(v)
+          }}
+          style={{ width: '150px', minWidth: '150px' }}
+          aria-label="Disponible du"
+          title="Disponible du"
+        />
+        <input
+          type="date"
+          value={endDate}
+          min={startDate || undefined}
+          onChange={e => setEndDate(e.target.value)}
+          style={{ width: '150px', minWidth: '150px' }}
+          aria-label="Disponible au"
+          title="Disponible au"
         />
         <button
           onClick={toggleNearby}

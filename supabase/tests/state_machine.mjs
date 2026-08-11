@@ -156,6 +156,20 @@ const main = async () => {
   check('прямая смена статуса из браузера отбита', direct.status >= 400 && stillConfirmed,
         `HTTP ${direct.status}, статус остался ${(await statusOf(b2.id)).status}`)
 
+  // Витрина обязана скрывать занятое: иначе человек пишет владельцу про
+  // инструмент, который на эти даты уже отдан, и получает отказ.
+  const busyRpc = async (from, to) => {
+    const res = await api('/rest/v1/rpc/items_busy_between', {
+      method: 'POST',
+      body: JSON.stringify({ p_start: iso(from), p_end: iso(to) }),
+    })
+    return (res.body || []).map((x) => x.item_id)
+  }
+  check('вещь числится занятой на даты подтверждённой брони',
+        (await busyRpc(20, 22)).includes(itemId))
+  check('на свободные даты вещь не числится занятой',
+        !(await busyRpc(200, 201)).includes(itemId))
+
   r = await fn('transition-booking', renter.token, { booking_id: b2.id, action: 'handover' })
   check('арендатор не может объявить передачу', r.status === 403, `HTTP ${r.status}`)
 
