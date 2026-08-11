@@ -24,9 +24,7 @@ export const en = {
   toolsAvailable: (n: number) => `${n} tool${n > 1 ? 's' : ''} available`,
 
   // Item detail
-  contactWhatsApp: 'Contact via WhatsApp',
   contactViaBooking: 'Contact via the booking below',
-  bookAndPayOnline: 'or book and pay online',
   selectDates: 'Select dates',
   selectDatesHint: 'Choose start and end date',
   bookAndPay: (price: string) => `Book and pay ${price}`,

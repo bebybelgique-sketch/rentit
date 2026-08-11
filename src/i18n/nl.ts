@@ -24,9 +24,7 @@ export const nl = {
   toolsAvailable: (n: number) => `${n} stuk${n > 1 ? 'ken' : ''} gereedschap beschikbaar`,
 
   // Item detail
-  contactWhatsApp: 'Contact via WhatsApp',
   contactViaBooking: 'Contact via onderstaande reservering',
-  bookAndPayOnline: 'of boek en betaal online',
   selectDates: 'Selecteer datums',
   selectDatesHint: 'Klik op een startdatum en daarna op een einddatum',
   bookAndPay: (price: string) => `Boek en betaal ${price}`,

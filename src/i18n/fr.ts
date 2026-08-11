@@ -24,9 +24,7 @@ export const fr = {
   toolsAvailable: (n: number) => `${n} outil${n > 1 ? 's' : ''} disponible${n > 1 ? 's' : ''}`,
 
   // Item detail
-  contactWhatsApp: 'Contacter via WhatsApp',
   contactViaBooking: 'Contacter via la réservation ci-dessous',
-  bookAndPayOnline: 'ou réserver et payer en ligne',
   selectDates: 'Choisir les dates',
   selectDatesHint: 'Cliquez sur une date de début, puis une date de fin',
   bookAndPay: (price: string) => `Réserver et payer ${price}`,
