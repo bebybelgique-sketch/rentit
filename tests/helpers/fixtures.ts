@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test'
-import { UI, dismissCookies } from './app'
+import { UI, dismissCookies, withDialog } from './app'
 
 /**
  * Витрина пуста НАМЕРЕННО: 26 сгенерированных объявлений удалены, и это
@@ -118,10 +118,11 @@ export async function createItem(
   }
 
   // Дубль по заголовку спрашивают через confirm(); заголовок уникальный,
-  // но обработчик оставляем — без него диалог повесит прогон.
-  page.on('dialog', dialog => dialog.accept().catch(() => {}))
-
-  await page.getByRole('button', { name: UI.listItemSubmit }).click()
+  // но ответ на всякий случай даём — и снимаем обработчик сразу после,
+  // иначе он перехватит чужой диалог позже в сценарии.
+  await withDialog(page, true, async () => {
+    await page.getByRole('button', { name: UI.listItemSubmit }).click()
+  })
   await page.waitForURL(/\/item\/[0-9a-f-]+/i, { timeout: 30000 })
 
   const id = new URL(page.url()).pathname.split('/').pop()!
@@ -129,9 +130,11 @@ export async function createItem(
 }
 
 /**
- * Убирает вещь за собой. Не роняет тест, если удалить не вышло: незакрытая
- * уборка — это мусор в базе, а не провал проверяемого сценария. О мусоре
- * сообщаем в консоль, чтобы он не копился молча.
+ * Убирает вещь за собой — и падает, если не вышло.
+ *
+ * Сначала уборка была мягкой: предупреждение в консоль и молча дальше. За
+ * один вечер так набралось 11 объявлений на ЖИВОЙ витрине, которую держат
+ * пустой намеренно. Мусор, о котором никто не узнаёт, копится всегда.
  */
 export async function removeItem(page: Page, id: string) {
   try {
@@ -142,12 +145,22 @@ export async function removeItem(page: Page, id: string) {
       .locator('.card')
       .filter({ has: page.locator(`a[href="/item/${id}"]`) })
 
-    if (!(await card.isVisible({ timeout: 10000 }).catch(() => false))) return
+    // Именно expect, а не card.isVisible(): isVisible проверяет мгновенно и
+    // не ждёт, параметр timeout его не удерживает. Кабинет рисуется около
+    // двух секунд, поэтому мгновенная проверка стабильно возвращала false, и
+    // уборка тихо пропускалась.
+    await expect(card).toBeVisible({ timeout: 20000 })
 
-    page.on('dialog', dialog => dialog.accept().catch(() => {}))
-    await card.getByRole('button', { name: UI.itemDelete }).click()
+    await withDialog(page, true, async () => {
+      await card.getByRole('button', { name: UI.itemDelete }).click()
+    })
     await expect(card).toBeHidden({ timeout: 15000 })
   } catch (error) {
-    console.warn(`[fixtures] объявление ${id} осталось в базе: ${String(error)}`)
+    // Молчаливая уборка копит мусор на ЖИВОЙ витрине: 11.08 так набралось
+    // 11 объявлений. Провал уборки должен быть слышно.
+    throw new Error(
+      `[fixtures] не удалось убрать объявление ${id}: ${String(error)}\n` +
+        'Проверь витрину и добей: node scripts/cleanup-e2e-items.mjs --apply',
+    )
   }
 }

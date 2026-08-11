@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { login, dismissCookies } from './helpers/app'
+import { login, dismissCookies, withDialog } from './helpers/app'
 import { createItem, removeItem, uniqueTitle, type CreatedItem } from './helpers/fixtures'
 
 const OWNER_EMAIL = process.env.TEST_OWNER_EMAIL ?? ''
@@ -59,6 +59,32 @@ async function openOwnerDashboard(page: Page) {
 }
 
 /**
+ * Нажимает кнопку владельца и ДОЖИДАЕТСЯ ответа edge-функции.
+ *
+ * Одобрение и переходы статуса идут не прямым UPDATE, а вызовом функции
+ * (respond-to-request / transition-booking), и занимают около двух секунд.
+ * Уход на другую сессию сразу после клика обрывал запрос на полпути: бронь
+ * оставалась в прежнем статусе, а тест винил следующий экран. Тот же
+ * промах уже случился с сохранением профиля — здесь он повторён на кнопках.
+ */
+async function clickAndAwaitFunction(page: Page, name: RegExp, fn: RegExp) {
+  const button = page.getByRole('button', { name }).first()
+  await expect(button).toBeVisible({ timeout: 15000 })
+
+  const response = page.waitForResponse(
+    r => fn.test(r.url()) && r.request().method() === 'POST',
+    { timeout: 30000 },
+  )
+  await button.click()
+  const result = await response
+  expect(result.ok(), `функция ответила ${result.status()}: ${await result.text().catch(() => '')}`)
+    .toBeTruthy()
+}
+
+const RESPOND = /\/functions\/v1\/respond-to-request/
+const TRANSITION = /\/functions\/v1\/transition-booking/
+
+/**
  * «Мои аренды» открываются в два приёма: сначала каркас, потом обе выборки
  * (свои брони и брони на свои вещи). Пока идёт вторая, на месте списка стоит
  * «Chargement...». Проверять содержимое до её исчезновения — значит ловить
@@ -100,9 +126,7 @@ test.describe('цикл аренды', () => {
 
     await login(page, OWNER_EMAIL, OWNER_PASSWORD)
     await openOwnerDashboard(page)
-    const approve = page.getByRole('button', { name: APPROVE_BUTTON }).first()
-    await expect(approve).toBeVisible({ timeout: 15000 })
-    await approve.click()
+    await clickAndAwaitFunction(page, APPROVE_BUTTON, RESPOND)
 
     // Арендатор видит подтверждение и может ещё отменить.
     await login(page, RENTER_EMAIL, RENTER_PASSWORD)
@@ -111,14 +135,10 @@ test.describe('цикл аренды', () => {
 
     await login(page, OWNER_EMAIL, OWNER_PASSWORD)
     await openOwnerDashboard(page)
-    const pickedUp = page.getByRole('button', { name: MARK_PICKED_UP_BUTTON }).first()
-    await expect(pickedUp).toBeVisible({ timeout: 15000 })
-    await pickedUp.click()
+    await clickAndAwaitFunction(page, MARK_PICKED_UP_BUTTON, TRANSITION)
 
     await openOwnerDashboard(page)
-    const returned = page.getByRole('button', { name: MARK_RETURNED_BUTTON }).first()
-    await expect(returned).toBeVisible({ timeout: 15000 })
-    await returned.click()
+    await clickAndAwaitFunction(page, MARK_RETURNED_BUTTON, TRANSITION)
 
     await login(page, RENTER_EMAIL, RENTER_PASSWORD)
     await openMyRentals(page)
@@ -136,25 +156,29 @@ test.describe('цикл аренды', () => {
 
     await login(page, OWNER_EMAIL, OWNER_PASSWORD)
     await openOwnerDashboard(page)
-    await page.getByRole('button', { name: APPROVE_BUTTON }).first().click()
+    await clickAndAwaitFunction(page, APPROVE_BUTTON, RESPOND)
 
     await login(page, RENTER_EMAIL, RENTER_PASSWORD)
     await openMyRentals(page)
 
-    // Причину спрашивают через prompt() — обработчик ставим до клика.
-    page.on('dialog', dialog => {
-      expect(dialog.type()).toBe('prompt')
-      dialog.accept(reason).catch(() => {})
-    })
-
     const cancel = page.getByRole('button', { name: CANCEL_BUTTON }).first()
     await expect(cancel).toBeVisible({ timeout: 15000 })
-    await cancel.click()
+
+    // Причину спрашивают через prompt(). Обработчик живёт ровно на время
+    // клика: постоянный слушатель уже однажды перехватил чужой диалог и
+    // ответил пустотой — причина уходила null, и это выглядело потерей
+    // данных в продукте.
+    await withDialog(page, reason, async () => {
+      await cancel.click()
+    })
     await expect(page.getByText(/annulé/i).first()).toBeVisible({ timeout: 15000 })
 
     // Смысл проверки: причина доходит до второй стороны, а не теряется.
+    // .first() — потому что владелец видит её в двух местах (в списке своих
+    // аренд и в блоке заявок на свою вещь); без него strict mode валит тест
+    // на том, что причина показана дважды.
     await login(page, OWNER_EMAIL, OWNER_PASSWORD)
     await openMyRentals(page)
-    await expect(page.getByText(reason)).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText(reason).first()).toBeVisible({ timeout: 15000 })
   })
 })

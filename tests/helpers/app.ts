@@ -88,6 +88,37 @@ export async function skipModals(page: Page) {
 }
 
 /**
+ * Выполняет действие, которое открывает confirm() или prompt(), и отвечает
+ * на него — ровно на время этого действия.
+ *
+ * Постоянный `page.on('dialog', …)` здесь опасен, и это не теория: обработчик
+ * из createItem («да» на вопрос о дубле, БЕЗ текста) оставался висеть на
+ * странице и потом первым перехватывал prompt «почему отменяете». Причина
+ * уходила пустой, edge-функция писала cancellation_reason = null, и это
+ * выглядело как потеря причины продуктом. Продукт был ни при чём.
+ *
+ * `answer`: строка — ответ на prompt; true — просто «да» для confirm.
+ */
+export async function withDialog(
+  page: Page,
+  answer: string | true,
+  action: () => Promise<void>,
+) {
+  const handler = (dialog: import('@playwright/test').Dialog) => {
+    const reply = typeof answer === 'string' ? dialog.accept(answer) : dialog.accept()
+    reply.catch(() => { /* диалог мог быть закрыт другим обработчиком */ })
+  }
+  page.on('dialog', handler)
+  try {
+    await action()
+    // Диалог может открыться на волосок позже, чем разрешится клик.
+    await page.waitForTimeout(500)
+  } finally {
+    page.off('dialog', handler)
+  }
+}
+
+/**
  * Полный выход: сессия Supabase лежит в localStorage, поэтому её недостаточно
  * «перелогинить» — старую надо стереть до загрузки приложения.
  */
