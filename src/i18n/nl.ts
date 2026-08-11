@@ -18,7 +18,7 @@ export const nl = {
   noResults: 'Geen gereedschap gevonden',
   noResultsTitle: 'Geen gereedschap in deze regio',
   noResultsDesc: 'Wees de eerste die hier een advertentie plaatst.',
-  earlyLister: "Vroege aanbieders verschijnen bovenaan de resultaten.",
+  earlyLister: 'Uw advertentie is meteen zichtbaar, gratis.',
   listFirstTool: 'Plaats je eerste gereedschap →',
   expandSearch: 'Uitbreiden tot 50 km',
   toolsAvailable: (n: number) => `${n} stuk${n > 1 ? 'ken' : ''} gereedschap beschikbaar`,

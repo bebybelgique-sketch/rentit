@@ -18,7 +18,7 @@ export const en = {
   noResults: 'No tools found',
   noResultsTitle: 'No tools found here yet',
   noResultsDesc: 'Be the first to list a tool in this area and help build the community.',
-  earlyLister: '🌱 Early lister advantage',
+  earlyLister: 'Your listing goes live immediately, free of charge.',
   listFirstTool: 'List your first tool',
   expandSearch: 'Expand to 50 km',
   toolsAvailable: (n: number) => `${n} tool${n > 1 ? 's' : ''} available`,

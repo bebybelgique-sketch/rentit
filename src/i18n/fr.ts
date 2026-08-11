@@ -18,7 +18,7 @@ export const fr = {
   noResults: 'Aucun outil trouvé',
   noResultsTitle: 'Aucun outil dans cette zone',
   noResultsDesc: 'Soyez le premier à déposer une annonce ici.',
-  earlyLister: "Les premiers à s'inscrire apparaissent en tête des résultats.",
+  earlyLister: 'Votre annonce est visible immédiatement, gratuitement.',
   listFirstTool: 'Déposer votre premier outil →',
   expandSearch: 'Élargir à 50 km',
   toolsAvailable: (n: number) => `${n} outil${n > 1 ? 's' : ''} disponible${n > 1 ? 's' : ''}`,
