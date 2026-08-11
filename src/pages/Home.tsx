@@ -114,6 +114,10 @@ export default function Home() {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
+  // Лендинг клал в адрес ?where=..., а витрина его не читала — поле на
+  // первом экране выглядело рабочим и молча ничего не делало. Фальшивый
+  // интерактив хуже отсутствующего: человек считает, что отфильтровал.
+  const [place, setPlace] = useState(searchParams.get('where') ?? '')
   const [category, setCategory] = useState('')
   const [nearby, setNearby] = useState(false)
   const [radius, setRadius] = useState(10)
@@ -136,6 +140,7 @@ export default function Home() {
       if (category) query = query.eq('category', category)
       if (search.trim()) query = query.ilike('title', `%${search.trim()}%`)
       if (maxPrice) query = query.lte('price_per_day', parseFloat(maxPrice))
+      if (place.trim()) query = query.ilike('address', `%${place.trim()}%`)
 
       const { data, error } = await query
       if (error) throw error
@@ -169,7 +174,7 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
-  }, [search, category, nearby, radius, userPos, maxPrice, startDate, endDate])
+  }, [search, category, nearby, radius, userPos, maxPrice, startDate, endDate, place])
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
@@ -220,6 +225,14 @@ export default function Home() {
           onChange={e => setMaxPrice(e.target.value)}
           style={{ width: '110px', minWidth: '110px' }}
           aria-label={t('maxPrice')}
+        />
+        <input
+          type="text"
+          placeholder="Commune, rue…"
+          value={place}
+          onChange={e => setPlace(e.target.value)}
+          style={{ width: '160px', minWidth: '160px' }}
+          aria-label="Où"
         />
         {/* Даты: без них витрина показывает уже занятый инструмент, и
             первое обращение человека заканчивается отказом. */}

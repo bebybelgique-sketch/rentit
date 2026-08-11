@@ -33,8 +33,6 @@ export const en = {
   loginToBook: 'Log in to book & pay',
   totalPrice: 'Total',
   deposit: 'Deposit (refundable)',
-  protection: '🛡 RentIt Protection',
-  protectionNote: '🛡 RentIt Protection',
   perDay: '/day',
   phoneVerified: '✓ Phone verified',
   newOwner: '✦ New — first to rent!',

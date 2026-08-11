@@ -33,8 +33,6 @@ export const fr = {
   loginToBook: 'Se connecter pour réserver et payer',
   totalPrice: 'Total',
   deposit: 'Caution (remboursable)',
-  protection: '🛡 RentIt Protection',
-  protectionNote: 'La protection couvre les dommages jusqu\'à 500€. Caution remboursée si retour en bon état.',
   perDay: '/jour',
   phoneVerified: '✓ Téléphone vérifié',
   newOwner: '✦ Nouveau — soyez le premier !',

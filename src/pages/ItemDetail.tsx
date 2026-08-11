@@ -19,7 +19,11 @@ const CONDITION_FR: Record<string, string> = {
   new: 'Neuf', like_new: 'Comme neuf', good: 'Bon état', fair: 'Correct',
 }
 
-const INSURANCE_PER_DAY = 0 // Free during beta (will become €3 after 50 transactions)
+// Страхового сбора нет и не планируется: платформа не сторона договора и
+// ничего не покрывает. Ноль оставлен, потому что колонка insurance_amount
+// живёт в bookings с марта; комментарий «станет €3 после 50 сделок» снят —
+// он описывал модель, от которой отказались.
+const INSURANCE_PER_DAY = 0
 
 interface Item {
   id: string

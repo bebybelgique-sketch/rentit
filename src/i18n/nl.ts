@@ -33,8 +33,6 @@ export const nl = {
   loginToBook: 'Log in om te boeken en betalen',
   totalPrice: 'Totaal',
   deposit: 'Borg (terugbetaalbaar)',
-  protection: '🛡 RentIt Bescherming',
-  protectionNote: 'De bescherming dekt schade tot 500€. Borg wordt terugbetaald bij goede staat van ontvangst.',
   perDay: '/dag',
   phoneVerified: '✓ Telefoon geverifieerd',
   newOwner: '✦ Nieuw — wees de eerste!',

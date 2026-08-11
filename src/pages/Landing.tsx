@@ -307,7 +307,7 @@ export default function Landing() {
                 Trois étapes.<br />Zéro friction.
               </h2>
               <p className="L-body" style={{ fontSize: '15px' }}>
-                De la recherche au retour de l'outil. Pas de paperasse, pas d'appel — juste WhatsApp.
+                De la recherche au retour de l'outil. Pas de paperasse, pas d'appel — tout se passe ici.
               </p>
             </div>
 
@@ -318,8 +318,10 @@ export default function Landing() {
                   desc: 'Parcourez par catégorie ou mot-clé. Chaque résultat est à moins de 5 km. Disponibilité en temps réel.',
                 },
                 {
-                  n: '02', icon: '📱', title: 'Contactez via WhatsApp',
-                  desc: 'Un clic pour envoyer un message au propriétaire. Arrangez le rendez-vous directement — simple et humain.',
+                  // WhatsApp здесь обещался, но никогда не был подключён, а
+                  // с 11.08 переписка живёт внутри брони (booking_messages).
+                  n: '02', icon: '💬', title: 'Contactez le propriétaire',
+                  desc: 'Envoyez un message depuis la réservation. Convenez du lieu et de l\'heure — simple et humain.',
                 },
                 {
                   n: '03', icon: '✅', title: 'Récupérez & profitez',
@@ -347,7 +349,10 @@ export default function Landing() {
         <div className="L-wrap">
 
           <div style={{ marginBottom: '72px' }}>
-            <div className="L-label" style={{ marginBottom: '20px' }}>Protection</div>
+            {/* Заголовок раздела был «Protection» — под ним обещали
+                страховку. Теперь под ним фотографии состояния и отзывы,
+                то есть доверие, а не покрытие. */}
+            <div className="L-label" style={{ marginBottom: '20px' }}>Confiance</div>
             <h2 className="L-title" style={{ fontSize: 'clamp(36px, 4vw, 64px)', color: 'var(--white)' }}>
               Fait pour la confiance.
             </h2>
@@ -356,18 +361,24 @@ export default function Landing() {
           {/* Bento grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto auto', gap: '8px' }} className="L-sm-col">
 
-            {/* Large feature card */}
+            {/* Здесь обещалась «protection jusqu'à €500, incluse dans chaque
+                location». Страхования нет: платформа не сторона договора и
+                ничего не покрывает. Обещание защиты, которой не существует,
+                опаснее любого другого — на него полагаются в тот момент,
+                когда чужой инструмент уже сломан.
+                Заменено на то, что площадка действительно даёт: фотографии
+                состояния при передаче и возврате, видимые обеим сторонам. */}
             <div className="L-bento-item" style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '320px' }}>
               <div>
                 <div style={{ fontFamily: 'var(--mono)', fontWeight: '300', color: 'var(--accent)', marginBottom: '20px', letterSpacing: '-0.04em', fontSize: 'clamp(56px, 6vw, 80px)', lineHeight: 1 }}>
-                  €500
+                  📷
                 </div>
-                <h3 className="L-title" style={{ fontSize: '22px', color: 'var(--white)', marginBottom: '12px' }}>Protection dommages</h3>
+                <h3 className="L-title" style={{ fontSize: '22px', color: 'var(--white)', marginBottom: '12px' }}>Photos à la remise et au retour</h3>
                 <p className="L-body" style={{ fontSize: '14px' }}>
-                  Chaque location inclut automatiquement une protection jusqu'à €500. Les deux parties sont protégées. Sans opt-in, sans frais supplémentaires.
+                  L'état de l'outil est photographié au départ et au retour. Les deux parties voient les mêmes photos. Pas d'assurance, pas de promesse à votre place : une preuve claire, si le doute survient.
                 </p>
               </div>
-              <div className="L-label" style={{ marginTop: '40px' }}>Inclus · Chaque location</div>
+              <div className="L-label" style={{ marginTop: '40px' }}>Sur chaque réservation</div>
             </div>
 
             <div className="L-bento-item">
