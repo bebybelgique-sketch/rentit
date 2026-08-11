@@ -390,8 +390,11 @@ export default function Landing() {
                   <rect x="15" y="13" width="5" height="2.5" rx="1" fill="var(--accent)" fillOpacity="0.7"/>
                 </svg>
               </div>
-              <h3 className="L-title" style={{ fontSize: '18px', color: 'var(--white)', marginBottom: '8px' }}>Paiement sécurisé</h3>
-              <p className="L-body" style={{ fontSize: '14px' }}>Paiement bancaire sécurisé. Fonds en escrow. Virement automatique après confirmation de remise.</p>
+              {/* Здесь обещались escrow и автоматический перевод. Ни того, ни
+                  другого нет и не планируется: платформа денег не касается,
+                  расчёт наличными между сторонами. */}
+              <h3 className="L-title" style={{ fontSize: '18px', color: 'var(--white)', marginBottom: '8px' }}>Aucun paiement en ligne</h3>
+              <p className="L-body" style={{ fontSize: '14px' }}>Le règlement se fait entre vous, en espèces, à la remise. La plateforme ne touche pas à l'argent.</p>
             </div>
 
           </div>
