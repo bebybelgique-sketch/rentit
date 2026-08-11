@@ -76,7 +76,7 @@ function Navbar() {
               <Link to="/list-item" className="navbar-link" onClick={close}>{t('listItem')}</Link>
               <Link to="/my-items" className="navbar-link hide-mobile" onClick={close}>{t('myItems')}</Link>
               <Link to="/my-rentals" className="navbar-link hide-mobile" onClick={close}>{t('myRentals')}</Link>
-              <Link to="/profile" className="navbar-link" onClick={close}>{t('profile')}</Link>
+              <Link to="/profile" className="navbar-link" onClick={close}>{t('navProfile')}</Link>
               <button
                 onClick={() => { logout(); close() }}
                 style={{ background: 'none', border: 'none', color: 'rgba(242,240,235,0.4)', fontSize: '13px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}

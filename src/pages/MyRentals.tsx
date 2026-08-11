@@ -14,6 +14,7 @@ import { useTransitionBooking } from '../hooks/mutations/useTransitionBooking';
 import type { Rental } from '../types';
 // Импортируем toast
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 const dateFmt = new Intl.DateTimeFormat('fr-BE', { day: '2-digit', month: 'short', year: 'numeric' });
 const formatDate = (iso: string) => {
@@ -27,6 +28,7 @@ const CANCELLABLE_BY_RENTER = ['pending_approval', 'confirmed'];
 
 const MyRentals: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   // Получаем аренды, где пользователь - арендатор
   const { data: userRentals, isLoading: userRentalsLoading, error: userRentalsError } = useRentals(user?.id);
@@ -66,15 +68,15 @@ const MyRentals: React.FC = () => {
   };
 
   const handleCancel = async (rentalId: string) => {
-    const reason = prompt('Pourquoi annulez-vous ?');
+    const reason = prompt(t('rental.cancelPrompt'));
     if (reason === null) return;
     try {
       await transitionMutation.mutateAsync({ bookingId: rentalId, action: 'cancel', reason });
-      toast.success('La réservation est annulée.');
+      toast.success(t('rental.cancelSuccess'));
     } catch (error: any) {
       // 409 от сервера означает, что вторая сторона уже изменила бронь.
       // Показываем как есть: тихо «успешно» здесь было бы враньём.
-      toast.error(error.message || "Erreur lors de l'annulation");
+      toast.error(error.message || t('rental.cancelFailed'));
     }
   };
 
@@ -91,7 +93,7 @@ const MyRentals: React.FC = () => {
     const byMe = rental.cancelled_by === user.id;
     return (
       <CancellationNotice
-        cancelledByName={byMe ? 'vous' : otherPartyName}
+        cancelledByName={byMe ? t('rental.cancelledByYouShort') : otherPartyName}
         cancelledAt={rental.cancelled_at}
         reason={rental.cancellation_reason ?? null}
       />
@@ -132,13 +134,13 @@ const MyRentals: React.FC = () => {
                 const owner = rental.item?.owner;
                 return (
                   <div key={rental.id} className="card" style={{ padding: '16px', marginBottom: '12px' }}>
-                    <p><strong>Article:</strong> {rental.item?.title || 'N/A'}</p>
+                    <p><strong>{t('rental.labelItem')}:</strong> {rental.item?.title || 'N/A'}</p>
                     <p>
-                      <strong>Propriétaire:</strong> {owner?.full_name || 'Utilisateur'}{' '}
+                      <strong>{t('rental.labelOwner')}:</strong> {owner?.full_name || t('rental.unknownUser')}{' '}
                       <UserRatingBadge rating={owner?.rating_as_owner ?? null} role="owner" />
                     </p>
-                    <p><strong>Dates:</strong> Du {formatDate(rental.start_date)} au {formatDate(rental.end_date)}</p>
-                    <p><strong>Statut :</strong> <BookingStatusBadge status={rental.status} /></p>
+                    <p><strong>{t('rental.labelDates')}:</strong> {t('rental.datesRange', { start: formatDate(rental.start_date), end: formatDate(rental.end_date) })}</p>
+                    <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status} /></p>
                     {renderCancellation(rental, owner?.full_name || "l'autre partie")}
 
                     {CANCELLABLE_BY_RENTER.includes(rental.status) && (
@@ -148,7 +150,7 @@ const MyRentals: React.FC = () => {
                           onClick={() => handleCancel(rental.id)}
                           disabled={transitionMutation.isPending}
                         >
-                          Annuler la réservation
+                          {t('rental.cancelButton')}
                         </button>
                       </div>
                     )}
@@ -187,15 +189,15 @@ const MyRentals: React.FC = () => {
                       вместо человека, к которому поедет. Профиль приходит
                       вместе с бронью (useRentalsAsOwner). */}
                   <p>
-                    <strong>Locataire:</strong> {rental.renter?.full_name || 'Utilisateur'}{' '}
+                    <strong>{t('rental.labelRenter')}:</strong> {rental.renter?.full_name || t('rental.unknownUser')}{' '}
                     <UserRatingBadge rating={rental.renter?.rating_as_renter ?? null} role="renter" />
                   </p>
-                  <p><strong>Article:</strong> {rental.item?.title || 'N/A'}</p>
-                  <p><strong>Dates:</strong> Du {formatDate(rental.start_date)} au {formatDate(rental.end_date)}</p>
-                  <p><strong>Statut :</strong> <BookingStatusBadge status={rental.status} /></p>
+                  <p><strong>{t('rental.labelItem')}:</strong> {rental.item?.title || 'N/A'}</p>
+                  <p><strong>{t('rental.labelDates')}:</strong> {t('rental.datesRange', { start: formatDate(rental.start_date), end: formatDate(rental.end_date) })}</p>
+                  <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status} /></p>
                   {/* Поля message в bookings нет: столбец называется
                       request_message, и страница показывала пустоту. */}
-                  {rental.request_message && <p><strong>Message:</strong> {rental.request_message}</p>}
+                  {rental.request_message && <p><strong>{t('rental.labelMessage')}:</strong> {rental.request_message}</p>}
                   {renderCancellation(rental, rental.renter?.full_name || "l'autre partie")}
 
                   {rental.status === 'pending_approval' && (

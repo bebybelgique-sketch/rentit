@@ -7,6 +7,7 @@
 // в components/common. Разделение держится ради того, чтобы правило «кто
 // что вправе» жило в одном месте, а не размазывалось по разметке.
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import MessageList from '../common/MessageList';
 import MessageComposer from '../common/MessageComposer';
 import PhotoGrid from '../common/PhotoGrid';
@@ -57,6 +58,7 @@ const CLOSED_STATUSES = ['cancelled', 'rejected', 'expired', 'payment_expired'];
 const BookingThread: React.FC<BookingThreadProps> = ({
   bookingId, itemId, currentUserId, counterpartyId, counterpartyName, status, role,
 }) => {
+  const { t } = useTranslation();
   const [localError, setLocalError] = useState<string | null>(null);
 
   const { data: messages, isLoading: messagesLoading } = useBookingMessages(bookingId);
@@ -76,7 +78,7 @@ const BookingThread: React.FC<BookingThreadProps> = ({
     try {
       await sendMessage.mutateAsync({ bookingId, senderId: currentUserId, body });
     } catch (err: any) {
-      setLocalError(err.message || "Le message n'a pas pu être envoyé");
+      setLocalError(err.message || t('booking.messageSendFailed'));
     }
   };
 
@@ -89,7 +91,7 @@ const BookingThread: React.FC<BookingThreadProps> = ({
         bookingId, uploadedBy: currentUserId, phase: photoPhase, file,
       });
     } catch (err: any) {
-      setLocalError(err.message || "La photo n'a pas pu être envoyée");
+      setLocalError(err.message || t('booking.photoUploadFailed'));
     } finally {
       // Иначе тот же файл повторно не выбирается: браузер не считает это
       // изменением значения поля.
@@ -120,9 +122,9 @@ const BookingThread: React.FC<BookingThreadProps> = ({
       )}
 
       <div style={box}>
-        <h4 style={heading}>Messages</h4>
+        <h4 style={heading}>{t('booking.messagesTitle')}</h4>
         {messagesLoading ? (
-          <p style={{ fontSize: '13px', color: '#666' }}>Chargement...</p>
+          <p style={{ fontSize: '13px', color: '#666' }}>{t('booking.messagesLoading')}</p>
         ) : (
           <MessageList
             messages={(messages || []).map((m) => ({
@@ -133,7 +135,7 @@ const BookingThread: React.FC<BookingThreadProps> = ({
               senderName: m.senderName,
             }))}
             currentUserId={currentUserId}
-            emptyLabel="Aucun message. Convenez ici du lieu et de l'heure."
+            emptyLabel={t('booking.messagesEmpty')}
           />
         )}
 
@@ -147,14 +149,16 @@ const BookingThread: React.FC<BookingThreadProps> = ({
       {(photoPhase || photoItems.length > 0) && (
         <div style={box}>
           <h4 style={heading}>
-            État de l'outil
-            {photoPhase === 'handover' && ' — à la remise'}
-            {photoPhase === 'return' && ' — au retour'}
+            {photoPhase === 'handover'
+              ? t('booking.photosTitleHandover')
+              : photoPhase === 'return'
+                ? t('booking.photosTitleReturn')
+                : t('booking.photosTitle')}
           </h4>
 
           <PhotoGrid
             photos={photoItems}
-            emptyLabel="Aucune photo. Photographier l'outil protège les deux parties."
+            emptyLabel={t('booking.photosEmpty')}
           />
 
           {photoPhase && (
@@ -173,12 +177,12 @@ const BookingThread: React.FC<BookingThreadProps> = ({
         <div style={box}>
           {createReview.isSuccess ? (
             <p style={{ fontSize: '13px', color: '#16a34a' }}>
-              Merci, votre avis est enregistré.
+              {t('booking.reviewThanks')}
             </p>
           ) : (
             <ReviewForm
-              title={`Votre avis sur ${counterpartyName}`}
-              submitLabel="Envoyer l'avis"
+              title={t('booking.reviewTitle', { name: counterpartyName })}
+              submitLabel={t('booking.reviewSubmit')}
               submitting={createReview.isPending}
               error={createReview.isError ? createReview.error.message : null}
               onSubmit={handleReview}
