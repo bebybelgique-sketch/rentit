@@ -72,7 +72,7 @@ export default function CookieBanner() {
                 </div>
 
                 <p style={{ fontSize: '14px', color: '#555', marginBottom: '20px', lineHeight: 1.65 }}>
-                  We use cookies to keep you logged in, process secure payments via Stripe, and optionally
+                  We use cookies to keep you logged in and, optionally, to
                   collect anonymous analytics. We do not sell your data or use advertising cookies.{' '}
                   <Link to="/privacy" style={{ color: '#080808', fontWeight: '600', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
                     Privacy policy →
@@ -87,7 +87,7 @@ export default function CookieBanner() {
                   </div>
                   {[
                     { label: 'Strictly necessary', desc: 'Session, authentication, security', required: true },
-                    { label: 'Functional', desc: 'Payments (Stripe), user preferences', required: true },
+                    { label: 'Functional', desc: 'User preferences', required: true },
                     { label: 'Analytics', desc: 'Anonymous usage statistics', required: false },
                   ].map((row, i) => (
                     <div key={row.label} style={{
@@ -161,7 +161,7 @@ export default function CookieBanner() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0', border: '1px solid #e8e6e0', borderRadius: '4px', overflow: 'hidden', marginBottom: '24px' }}>
                   {[
                     { label: 'Strictly necessary', desc: 'Required for login, sessions and security. Cannot be disabled.', checked: true, disabled: true, onChange: undefined },
-                    { label: 'Functional', desc: 'Required for Stripe payments and saved preferences.', checked: functional, disabled: false, onChange: setFunctional },
+                    { label: 'Functional', desc: 'Required for saved preferences.', checked: functional, disabled: false, onChange: setFunctional },
                     { label: 'Analytics', desc: 'Anonymous usage data only. No personal data, no advertising.', checked: analytics, disabled: false, onChange: setAnalytics },
                   ].map((row, i) => (
                     <div key={row.label} style={{

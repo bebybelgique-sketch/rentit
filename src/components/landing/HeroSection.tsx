@@ -86,7 +86,7 @@ const HeroSection: React.FC = () => {
         <div className="L-fadein L-fadein-delay-3" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '32px' }}>
           <div style={{ maxWidth: '420px' }}>
             <p className="L-body" style={{ fontSize: '16px', marginBottom: '24px' }}>
-              Louez des outils professionnels à vos voisins. Moins cher qu'acheter, disponible en quelques minutes. Protection incluse gratuitement.
+              Louez des outils professionnels à vos voisins. Moins cher qu'acheter, disponible en quelques minutes. Règlement en espèces, entre vous.
             </p>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <Link to="/browse" className="L-btn-primary">Voir les outils →</Link>

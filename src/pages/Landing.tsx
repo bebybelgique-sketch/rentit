@@ -413,13 +413,13 @@ export default function Landing() {
                 Vos outils.<br />Qui rapportent.
               </h2>
               <p className="L-body" style={{ marginBottom: '32px', fontSize: '15px' }}>
-                Déposez une annonce en 5 min. Touchez votre argent à chaque location. Gratuit pour commencer.
+                Déposez une annonce en 5 min. Vous êtes payé en main propre, à la remise. Gratuit aujourd'hui.
               </p>
               <ul style={{ listStyle: 'none', marginBottom: '36px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[
                   'Annonce en 5 minutes',
-                  'Virement direct',
-                  'Protection incluse',
+                  "Aucune commission aujourd'hui",
+                  "Photos de l'état à la remise et au retour",
                   'Gratuit pour démarrer',
                 ].map(item => (
                   <li key={item} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: 'var(--muted)', fontFamily: 'var(--mono)' }}>
@@ -439,9 +439,14 @@ export default function Landing() {
                 <span className="L-label">Revenus par location</span>
               </div>
 
+              {/* Тариф «8% frais plateforme» описывал удержание из выплаты,
+                  которой не существует: платформа не касается денег. Строка о
+                  будущей платности остаётся — бесплатно сегодня не значит
+                  бесплатно всегда, — но сформулирована как намерение, а не как
+                  действующее удержание. */}
               {[
-                { plan: 'Beta — gratuit', cut: '100%', note: '0% commission · limité dans le temps', accent: true },
-                { plan: 'Après 50 locations', cut: '92%', note: '8% frais plateforme', accent: false },
+                { plan: "Aujourd'hui — gratuit", cut: '100%', note: 'Vous gardez tout · règlement en espèces', accent: true },
+                { plan: 'Plus tard', cut: '100%', note: 'Des options payantes viendront · annoncées à l’avance', accent: false },
               ].map(row => (
                 <div key={row.plan} className="L-earn-row" style={{ padding: '28px 24px', borderBottom: '1px solid var(--border)', background: row.accent ? 'rgba(173,255,47,0.04)' : 'transparent' }}>
                   <div>
@@ -463,7 +468,7 @@ export default function Landing() {
 
               <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent)' }} />
-                <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>Protection toujours gérée par RentIt</span>
+                <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>Le règlement se fait entre vous, en espèces</span>
               </div>
             </div>
 

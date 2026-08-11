@@ -69,8 +69,7 @@ function PrivacyEN() {
             <Tr data={['Phone number', 'Identity verification (OTP), contact between renters and owners after confirmed booking', 'Art. 6(1)(b) — contract performance']} />
             <Tr data={['Geolocation (optional)', 'Show nearby items on the map; stored only if you grant permission', 'Art. 6(1)(a) — your consent']} />
             <Tr data={['Listing photos', 'Display your items to other users', 'Art. 6(1)(b) — contract performance']} />
-            <Tr data={['Booking history', 'Process rentals, calculate payments, handle disputes', 'Art. 6(1)(b) — contract performance']} />
-            <Tr data={['Payment data', 'Processed exclusively by Stripe (PCI-DSS Level 1). We store only booking amounts and Stripe transaction IDs — never card numbers.', 'Art. 6(1)(b) — contract performance']} />
+            <Tr data={['Booking history', 'Show each party their bookings and open mutual reviews once the rental is complete', 'Art. 6(1)(b) — contract performance']} />
             <Tr data={['Ratings and reviews', 'Build trust in the community', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Referral code', 'Track referrals and reward users', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Session cookie (Supabase auth)', 'Keep you logged in — functional cookies only, no tracking', 'Art. 6(1)(b) — necessary for service']} />
@@ -84,7 +83,7 @@ function PrivacyEN() {
       <Section title="3. How We Use Your Data">
         <ul style={listStyle}>
           <li>Provide and improve the RentIt platform</li>
-          <li>Process bookings and payments</li>
+          <li>Process bookings — no payment passes through RentIt, settlement is in cash between users</li>
           <li>Send transactional emails (booking confirmation, rental reminders) — not marketing without your consent</li>
           <li>Verify your identity via phone OTP</li>
           <li>Resolve disputes between renters and owners</li>
@@ -103,7 +102,6 @@ function PrivacyEN() {
             </tr>
           </thead>
           <tbody>
-            <Tr data={['Stripe Inc.', 'Payment processing (PCI-DSS compliant)', 'USA — Standard Contractual Clauses apply']} />
             <Tr data={['Supabase Inc.', 'Database and authentication hosting', 'EU region (Frankfurt)']} />
             <Tr data={['Resend Inc.', 'Transactional email delivery', 'USA — Standard Contractual Clauses apply']} />
             <Tr data={['Other RentIt users', 'Name and phone number shared with the other party only after a booking is confirmed', 'Belgium']} />
@@ -155,7 +153,7 @@ function PrivacyEN() {
         <ul style={listStyle}>
           <li>TLS encryption for all data in transit</li>
           <li>Row-Level Security (RLS) — each user can only access their own data</li>
-          <li>Stripe handles all payment card data (we never see or store card numbers)</li>
+          <li>We never see, ask for or store bank or card details — no payment goes through the platform</li>
           <li>Access to production data limited to authorised personnel only</li>
         </ul>
         <p>In the event of a data breach that risks your rights or freedoms, we will notify the Belgian DPA within <strong>72 hours</strong> and inform affected users without undue delay, as required by GDPR Art. 33–34.</p>
@@ -211,8 +209,7 @@ function PrivacyFR() {
             <Tr data={['Numéro de téléphone', "Vérification d'identité (OTP), contact entre locataires et propriétaires après réservation confirmée", 'Art. 6(1)(b) — exécution du contrat']} />
             <Tr data={['Géolocalisation (optionnelle)', "Afficher les articles à proximité ; stockée uniquement si vous l'autorisez", 'Art. 6(1)(a) — votre consentement']} />
             <Tr data={["Photos d'annonces", 'Présenter vos articles aux autres utilisateurs', 'Art. 6(1)(b) — exécution du contrat']} />
-            <Tr data={['Historique de réservations', 'Traiter les locations, calculer les paiements, gérer les litiges', 'Art. 6(1)(b) — exécution du contrat']} />
-            <Tr data={['Données de paiement', 'Traitées exclusivement par Stripe (certifié PCI-DSS niveau 1). Nous stockons uniquement les montants et identifiants Stripe — jamais les numéros de carte.', 'Art. 6(1)(b) — exécution du contrat']} />
+            <Tr data={['Historique de réservations', 'Montrer à chaque partie ses réservations et ouvrir les avis mutuels une fois la location terminée', 'Art. 6(1)(b) — exécution du contrat']} />
             <Tr data={['Notes et avis', 'Renforcer la confiance dans la communauté', 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Code de parrainage', 'Suivi des parrainages et récompenses', 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Cookie de session (Supabase auth)', 'Maintenir votre connexion — cookie fonctionnel uniquement, sans traçage', 'Art. 6(1)(b) — nécessaire au service']} />
@@ -226,7 +223,7 @@ function PrivacyFR() {
       <Section title="3. Utilisation de vos données">
         <ul style={listStyle}>
           <li>Fournir et améliorer la plateforme RentIt</li>
-          <li>Traiter les réservations et les paiements</li>
+          <li>Traiter les réservations — aucun paiement ne transite par RentIt, le règlement se fait en espèces entre utilisateurs</li>
           <li>Envoyer des emails transactionnels (confirmation de réservation, rappels) — pas de marketing sans votre consentement</li>
           <li>Vérifier votre identité via OTP téléphonique</li>
           <li>Résoudre les litiges entre locataires et propriétaires</li>
@@ -245,7 +242,6 @@ function PrivacyFR() {
             </tr>
           </thead>
           <tbody>
-            <Tr data={['Stripe Inc.', 'Traitement des paiements (conforme PCI-DSS)', 'USA — Clauses Contractuelles Types applicables']} />
             <Tr data={['Supabase Inc.', 'Hébergement base de données et authentification', 'UE (Francfort)']} />
             <Tr data={['Resend Inc.', "Envoi d'emails transactionnels", 'USA — Clauses Contractuelles Types applicables']} />
             <Tr data={['Autres utilisateurs RentIt', 'Nom et téléphone partagés avec l\'autre partie uniquement après confirmation de réservation', 'Belgique']} />
@@ -298,7 +294,7 @@ function PrivacyFR() {
         <ul style={listStyle}>
           <li>Chiffrement TLS pour toutes les données en transit</li>
           <li>Sécurité au niveau des lignes (RLS) — chaque utilisateur ne peut accéder qu'à ses propres données</li>
-          <li>Stripe gère toutes les données de carte bancaire (nous ne voyons ni ne stockons jamais les numéros de carte)</li>
+          <li>Nous ne voyons, ne demandons ni ne conservons aucune coordonnée bancaire — aucun paiement ne transite par la plateforme</li>
           <li>Accès aux données de production limité au personnel autorisé</li>
         </ul>
         <p>En cas de violation de données présentant un risque pour vos droits ou libertés, nous notifierons l'APD/GBA dans les <strong>72 heures</strong> et informerons les utilisateurs concernés sans délai injustifié (RGPD Art. 33–34).</p>
@@ -354,7 +350,6 @@ function PrivacyNL() {
             <Tr data={['Geolocatie (optioneel)', 'Nabijgelegen items tonen; alleen opgeslagen met uw toestemming', 'Art. 6(1)(a) — uw toestemming']} />
             <Tr data={["Advertentiefoto's", 'Uw items tonen aan andere gebruikers', 'Art. 6(1)(b) — uitvoering overeenkomst']} />
             <Tr data={['Boekingsgeschiedenis', 'Verhuur verwerken, betalingen berekenen, geschillen afhandelen', 'Art. 6(1)(b) — uitvoering overeenkomst']} />
-            <Tr data={['Betalingsgegevens', "Verwerkt uitsluitend door Stripe (PCI-DSS niveau 1). Wij slaan alleen bedragen en Stripe-transactie-ID's op — nooit kaartnummers.", 'Art. 6(1)(b) — uitvoering overeenkomst']} />
             <Tr data={['Beoordelingen', 'Vertrouwen opbouwen in de community', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Referralcode', 'Bijhouden van doorverwijzingen en beloningen', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Sessiecookie (Supabase auth)', 'U ingelogd houden — functionele cookie, geen tracking', 'Art. 6(1)(b) — noodzakelijk voor de dienst']} />
@@ -387,7 +382,6 @@ function PrivacyNL() {
             </tr>
           </thead>
           <tbody>
-            <Tr data={['Stripe Inc.', 'Betalingsverwerking (PCI-DSS conform)', 'VS — Standaardcontractbepalingen van toepassing']} />
             <Tr data={['Supabase Inc.', 'Database- en authenticatiehosting', 'EU (Frankfurt)']} />
             <Tr data={['Resend Inc.', 'Transactionele e-mailbezorging', 'VS — Standaardcontractbepalingen van toepassing']} />
             <Tr data={['Andere RentIt-gebruikers', 'Naam en telefoon gedeeld met de andere partij alleen na bevestigde boeking', 'België']} />
@@ -440,7 +434,7 @@ function PrivacyNL() {
         <ul style={listStyle}>
           <li>TLS-versleuteling voor alle gegevens in transit</li>
           <li>Row-Level Security (RLS) — elke gebruiker heeft alleen toegang tot zijn eigen gegevens</li>
-          <li>Stripe verwerkt alle betaalkaartgegevens (wij zien of bewaren nooit kaartnummers)</li>
+          <li>Wij zien, vragen of bewaren geen enkel bank- of kaartgegeven — er verloopt geen betaling via het platform</li>
           <li>Toegang tot productiegegevens beperkt tot bevoegd personeel</li>
         </ul>
         <p>Bij een datalek dat uw rechten of vrijheden bedreigt, zullen wij de GBA binnen <strong>72 uur</strong> informeren en getroffen gebruikers zonder onnodige vertraging op de hoogte stellen (AVG Art. 33–34).</p>
