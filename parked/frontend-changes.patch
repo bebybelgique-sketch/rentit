@@ -1,0 +1,155 @@
+commit 1409b3af9685d4485ea05145f06218c2acc64f2a
+Author: bebybelgique-sketch <bebybelgique@gmail.com>
+Date:   Tue Aug 11 01:10:59 2026 +0200
+
+    feat: переход на бесплатный обмен с расчётом наличными между сторонами
+    
+    Решение Рамзана 11.08: платформа бесплатная, деньги ходят напрямую между
+    арендатором и владельцем при передаче вещи. Комиссии нет.
+    
+    Бэкенд:
+    - respond-to-request: одобрение сразу ставит confirmed. Убраны вызов Stripe
+      и поддельный pi_mock_*, запись в payments не создаётся
+    - notify-rental: письмо об одобрении переписано под наличные; ОБЕ стороны
+      теперь получают контакты друг друга - без этого передача вещи невозможна
+    - expire-bookings: снято истечение неоплаченных броней, оплачивать нечего
+    - выкачены все три
+    
+    Фронтенд:
+    - удалены PayBooking, CheckoutForm, Pro, Business, BusinessDashboard
+      и их маршруты
+    - с лендинга снят блок платных тарифов (€49/€99 в месяц)
+    - тексты про оплату онлайн заменены на расчёт наличными при передаче
+    
+    Проверено на живой базе: заявка -> одобрение -> confirmed, Stripe не
+    вызывается, поле payment_intent пустое. build 0, vitest 0.
+
+diff --git a/src/App.tsx b/src/App.tsx
+index c4d7b88..45af1df 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -39,13 +39,9 @@ const Register         = lazy(() => import('./pages/Register'))
+ const ForgotPassword   = lazy(() => import('./pages/ForgotPassword'))
+ const ResetPassword    = lazy(() => import('./pages/ResetPassword'))
+ const Admin            = lazy(() => import('./pages/Admin'))
+-const Pro              = lazy(() => import('./pages/Pro'))
+-const Business         = lazy(() => import('./pages/Business'))
+-const BusinessDashboard= lazy(() => import('./pages/BusinessDashboard'))
+ const Landing          = lazy(() => import('./pages/Landing'))
+ const Privacy          = lazy(() => import('./pages/Privacy'))
+ const Terms            = lazy(() => import('./pages/Terms'))
+-const PayBooking       = lazy(() => import('./pages/PayBooking'))
+ 
+ function Navbar() {
+   const { t, i18n } = useTranslation() // Используем хук i18next
+@@ -135,11 +131,7 @@ export default function App() {
+             <Route path="/register" element={<Register />} />
+             <Route path="/forgot-password" element={<ForgotPassword />} />
+             <Route path="/reset-password" element={<ResetPassword />} />
+-            <Route path="/pro" element={<Pro />} />
+-            <Route path="/business" element={<Business />} />
+-            <Route path="/business/dashboard" element={loading ? null : user ? <BusinessDashboard /> : <Navigate to="/login" />} />
+             <Route path="/admin" element={loading ? null : user ? <Admin /> : <Navigate to="/login" />} />
+-            <Route path="/pay/:bookingId" element={loading ? null : user ? <PayBooking /> : <Navigate to="/login" />} />
+             <Route path="/privacy" element={<Privacy />} />
+             <Route path="/terms" element={<Terms />} />
+             <Route path="*" element={
+@@ -154,7 +146,7 @@ export default function App() {
+         </Suspense>
+         {pathname !== '/' && (
+           <footer style={{ textAlign: 'center', padding: '24px 16px', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
+-            <a href="/business" style={{ fontSize: '12px', color: 'var(--muted)', textDecoration: 'none' }}>{t('forRentalShops')}</a>
++            <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{t('forRentalShops')}</span>
+           </footer>
+         )}
+         <Toaster position="bottom-right" />
+diff --git a/src/pages/ItemDetail.tsx b/src/pages/ItemDetail.tsx
+index 24e7257..89a63a6 100644
+--- a/src/pages/ItemDetail.tsx
++++ b/src/pages/ItemDetail.tsx
+@@ -429,12 +429,12 @@ export default function ItemDetail() {
+                 {item.users?.phone && user && (
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                     <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+-                    <span style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>ou réserver et payer en ligne</span>
++                    <span style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>ou demander une réservation</span>
+                     <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+                   </div>
+                 )}
+ 
+-                {/* === SECONDARY: Calendar + Stripe (только залогиненным) === */}
++                {/* === SECONDARY: Calendrier + demande de réservation (connecté) === */}
+                 {user ? (
+                   <>
+                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '6px' }}>
+@@ -549,7 +549,7 @@ export default function ItemDetail() {
+                       {requestLoading ? 'Envoi en cours...' : !startDate || !endDate ? 'Choisissez les dates pour continuer' : 'Envoyer une demande de réservation'}
+                     </button>
+                     <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', textAlign: 'center', marginTop: '8px' }}>
+-                      Aucun paiement maintenant — vous paierez après approbation du propriétaire
++                      Aucun paiement en ligne — le règlement se fait en espèces au propriétaire lors de la remise
+                     </p>
+                   </>
+                 ) : (
+diff --git a/src/pages/Landing.tsx b/src/pages/Landing.tsx
+index c479854..7070fc8 100644
+--- a/src/pages/Landing.tsx
++++ b/src/pages/Landing.tsx
+@@ -468,57 +468,6 @@ export default function Landing() {
+         </div>
+       </section>
+ 
+-      {/* ── BUSINESS ─────────────────────────────────────────────────────── */}
+-      <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)', background: 'var(--bg-alt)' }}>
+-        <div className="L-wrap">
+-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'start' }} className="L-sm-col">
+-
+-            <div>
+-              <div className="L-label" style={{ marginBottom: '20px' }}>Pour les professionnels</div>
+-              <h2 className="L-title" style={{ fontSize: 'clamp(36px, 4vw, 56px)', color: 'var(--white)', marginBottom: '20px' }}>
+-                Vous louez<br />du matériel ?
+-              </h2>
+-              <p className="L-body" style={{ fontSize: '15px', marginBottom: '32px', maxWidth: '340px' }}>
+-                Abonnement mensuel fixe. Zéro commission par location. Import CSV en masse. Priorité dans les résultats.
+-              </p>
+-              <Link to="/business" className="L-btn-ghost">Voir les offres pro →</Link>
+-            </div>
+-
+-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+-              {[
+-                { name: 'Starter', price: '€49', period: '/mois', desc: "Jusqu'à 50 annonces · Analytiques de base", featured: false },
+-                { name: 'Growth', price: '€99', period: '/mois', desc: "Annonces illimitées · Priorité dans la recherche", featured: true },
+-                { name: 'Enterprise', price: '€149', period: '/mois', desc: "Domaine personnalisé · Support dédié", featured: false },
+-              ].map(plan => (
+-                <div key={plan.name} className="L-plan" style={{
+-                  background: plan.featured ? 'rgba(173,255,47,0.05)' : 'rgba(242,240,235,0.02)',
+-                  border: `1px solid ${plan.featured ? 'rgba(173,255,47,0.2)' : 'var(--border)'}`,
+-                }}>
+-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+-                    <div>
+-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+-                        <span style={{ fontFamily: 'var(--sans)', fontSize: '15px', fontWeight: '600', color: plan.featured ? 'var(--accent)' : 'var(--white)' }}>
+-                          {plan.name}
+-                        </span>
+-                        {plan.featured && (
+-                          <span className="L-mono" style={{ fontSize: '9px', background: 'var(--accent)', color: 'var(--black)', padding: '2px 7px', borderRadius: '2px', letterSpacing: '0.08em' }}>
+-                            POPULAIRE
+-                          </span>
+-                        )}
+-                      </div>
+-                      <div className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>{plan.desc}</div>
+-                    </div>
+-                    <div style={{ textAlign: 'right' }}>
+-                      <span className="L-display" style={{ fontSize: '30px', color: plan.featured ? 'var(--accent)' : 'var(--white)' }}>{plan.price}</span>
+-                      <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>{plan.period}</span>
+-                    </div>
+-                  </div>
+-                </div>
+-              ))}
+-            </div>
+-          </div>
+-        </div>
+-      </section>
+ 
+       {/* ── LIVE LISTINGS ────────────────────────────────────────────────── */}
+       {/* Обновляем условия отображения */}

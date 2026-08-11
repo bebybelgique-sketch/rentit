@@ -134,6 +134,11 @@ export default function App() {
             <Route path="/admin" element={loading ? null : user ? <Admin /> : <Navigate to="/login" />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            {/* Отложено 11.08 вместе с переходом на бесплатную модель:
+                /pro · /business · /business/dashboard · /pay/:bookingId
+                Страницы целиком лежат в parked/ — там же как их оживить.
+                В src/ их держать нельзя: страж утверждений даёт 14
+                срабатываний на тарифах и страховке, и был бы прав. */}
             <Route path="*" element={
               <div className="page" style={{ textAlign: 'center', paddingTop: '120px' }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', color: 'var(--muted)', marginBottom: '16px' }}>404</div>
