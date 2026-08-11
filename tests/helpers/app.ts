@@ -47,6 +47,7 @@ export const UI = {
 
   profileAvatarLabel: "URL de l'avatar",
   profileSubmit: 'Mettre à jour le profil',
+  profileSaved: 'Profil mis à jour avec succès!',
 } as const
 
 /** Категории витрины: значение в базе → подпись на экране. */
@@ -87,10 +88,35 @@ export async function skipModals(page: Page) {
 }
 
 /**
- * Вход. Возврат только после того, как в навбаре появилась «Déconnexion»:
- * до этого сессия ещё не установлена, и следующий переход уедет на /login.
+ * Полный выход: сессия Supabase лежит в localStorage, поэтому её недостаточно
+ * «перелогинить» — старую надо стереть до загрузки приложения.
+ */
+export async function logout(page: Page) {
+  await page.goto('/', { waitUntil: 'load' })
+  await page.evaluate(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+  await page.context().clearCookies()
+}
+
+/**
+ * Вход под конкретным пользователем.
+ *
+ * Прежняя сессия сбрасывается ПЕРЕД входом, и это не перестраховка. Проверка
+ * «вошли» опирается на кнопку «Déconnexion» в навбаре, а она уже висит там от
+ * предыдущего пользователя: без сброса функция возвращалась мгновенно, тест
+ * продолжался под чужой личностью, и владелец шёл бронировать собственный
+ * инструмент — календаря на такой странице нет, отсюда «ноль свободных дней».
+ * Ошибка выглядела как поломка календаря, хотя календарь исправен.
+ *
+ * После сброса «Déconnexion» на экране может появиться только от этого входа.
+ * Неверный пароль сюда же и приведёт: покажется .error-msg, кнопка не придёт,
+ * ожидание упадёт по таймауту — то есть провалится вход, а не следующий шаг.
  */
 export async function login(page: Page, email: string, password: string) {
+  await logout(page)
+
   await page.goto('/login', { waitUntil: 'load' })
   await dismissCookies(page)
   await page.locator('input[type="email"]').fill(email)

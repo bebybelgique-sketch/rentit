@@ -36,29 +36,62 @@ function formField(page: Page, label: string) {
  * Вызывается под уже вошедшим владельцем.
  */
 export async function ensureProfilePhoto(page: Page) {
-  await page.goto('/list-item', { waitUntil: 'load' })
-  await dismissCookies(page)
-
-  const gate = page.getByText(UI.listItemNeedsPhoto)
-  if (!(await gate.isVisible({ timeout: 5000 }).catch(() => false))) return
-
+  // Аватар ставим безусловно, а не «если стоит заслон».
+  //
+  // Проверять заслон опросом нельзя: ListItem сначала рисует форму и только
+  // потом, когда вернётся запрос avatar_url, подменяет её заглушкой. Опрос
+  // успевал заглянуть в промежуток, решить «заслона нет» и уйти заполнять
+  // форму — а та отрывалась от DOM прямо посреди ввода. Гонку не сторожат,
+  // её убирают: ставим аватар всегда, потом ждём устоявшегося состояния.
+  //
+  // Поле на /profile заполняется из user_metadata, а не из таблицы users
+  // (см. src/pages/Profile.tsx), поэтому оно выглядит пустым даже когда в базе
+  // значение есть. Лишняя перезапись тем же значением безвредна.
   await page.goto('/profile', { waitUntil: 'load' })
   await dismissCookies(page)
 
   const avatar = page.locator('#avatar_url')
-  await expect(avatar).toBeVisible({ timeout: 15000 })
+  await expect(avatar).toBeVisible({ timeout: 20000 })
   // Прозрачный пиксель data-URI: заслон проверяет непустоту поля, а не картинку,
   // и внешний адрес сюда тянуть незачем — он однажды перестанет отвечать.
   await avatar.fill(
     'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
   )
+  // Ответ сервера ловим на лету: всплывашка живёт ~4 с, а по её отсутствию
+  // потом уже не отличить «не сохранилось» от «не успели посмотреть».
+  const saveResponse = page.waitForResponse(
+    r => r.request().method() === 'PATCH' && r.url().includes('/rest/v1/users'),
+    { timeout: 20000 },
+  )
   await page.getByRole('button', { name: UI.profileSubmit }).click()
 
-  // Заслон читает базу, а не форму — убеждаемся, что запись прошла.
+  const response = await saveResponse
+  if (!response.ok()) {
+    const body = await response.text().catch(() => '')
+    // Называем причину здесь, иначе прогон падал через три шага на «нет поля
+    // цены» — симптом, по которому до настоящей причины не дойти.
+    throw new Error(
+      `Профиль не сохраняется: ${response.status()} ${body.slice(0, 200)}\n` +
+        'Без аватара ListItem не отдаёт форму, поэтому весь цикл аренды непроверяем. ' +
+        'Это дефект продукта, а не оснастки.',
+    )
+  }
+
+  // Уходить со страницы сразу после клика нельзя — уход обрывает запрос.
+  await expect(page.getByText(UI.profileSaved)).toBeVisible({ timeout: 20000 })
+
+  // Заслон читает базу, а не форму — убеждаемся, что запись действительно
+  // прошла, и дожидаемся, пока страница перестанет переобуваться.
+  //
+  // Ждать появления формы бесполезно: ListItem рисует её ПЕРВОЙ и только
+  // потом, получив ответ про avatar_url, подменяет заслоном. Значит ждать
+  // надо не элемент, а тишину в сети — момент, когда решение уже принято.
   await expect(async () => {
     await page.goto('/list-item', { waitUntil: 'load' })
-    await expect(formField(page, UI.listItemTitleLabel)).toBeVisible({ timeout: 5000 })
-  }).toPass({ timeout: 30000 })
+    await page.waitForLoadState('networkidle', { timeout: 15000 })
+    await expect(page.getByText(UI.listItemNeedsPhoto)).toHaveCount(0)
+    await expect(formField(page, UI.listItemTitleLabel)).toBeVisible()
+  }).toPass({ timeout: 60000 })
 }
 
 export type CreatedItem = { id: string; href: string; title: string; pricePerDay: string }
@@ -75,10 +108,8 @@ export async function createItem(
   const title = opts.title ?? uniqueTitle()
   const pricePerDay = opts.pricePerDay ?? '12.00'
 
+  // Возвращает страницу уже на /list-item с устоявшейся формой.
   await ensureProfilePhoto(page)
-
-  await page.goto('/list-item', { waitUntil: 'load' })
-  await dismissCookies(page)
 
   await formField(page, UI.listItemTitleLabel).fill(title)
   await formField(page, UI.listItemPriceLabel).fill(pricePerDay)
