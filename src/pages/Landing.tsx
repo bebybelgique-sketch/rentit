@@ -315,7 +315,12 @@ export default function Landing() {
               {[
                 {
                   n: '01', icon: '🔍', title: 'Trouvez l\'outil',
-                  desc: 'Parcourez par catégorie ou mot-clé. Chaque résultat est à moins de 5 km. Disponibilité en temps réel.',
+                  // «Chaque résultat est à moins de 5 km» было неверно трижды:
+                  // фильтр по расстоянию по умолчанию выключен, радиус равен
+                  // 10 км, и работает он только при включённой геолокации.
+                  // Витрина же прямо предлагает расширить до 50 км — обещание
+                  // и продукт противоречили друг другу в открытую.
+                  desc: 'Parcourez par catégorie, mot-clé ou commune. Filtrez par dates : les outils déjà réservés disparaissent de la liste.',
                 },
                 {
                   // WhatsApp здесь обещался, но никогда не был подключён, а
@@ -455,9 +460,14 @@ export default function Landing() {
                   будущей платности остаётся — бесплатно сегодня не значит
                   бесплатно всегда, — но сформулирована как намерение, а не как
                   действующее удержание. */}
+              {/* Обе строки показывали «100%»: таблица сравнения сравнивала
+                  одинаковое. Это осталось от прежнего тарифа «92% / 8% frais
+                  plateforme», когда числа действительно различались. Сравнивать
+                  нечего — платформа денег не касается ни сегодня, ни в
+                  обозримом будущем, поэтому колонка процентов убрана. */}
               {[
-                { plan: "Aujourd'hui — gratuit", cut: '100%', note: 'Vous gardez tout · règlement en espèces', accent: true },
-                { plan: 'Plus tard', cut: '100%', note: 'Des options payantes viendront · annoncées à l’avance', accent: false },
+                { plan: "Aujourd'hui", cut: 'Gratuit', note: 'Vous gardez tout · règlement en espèces', accent: true },
+                { plan: 'Plus tard', cut: 'Annoncé', note: 'Des options payantes viendront · jamais sans accord préalable', accent: false },
               ].map(row => (
                 <div key={row.plan} className="L-earn-row" style={{ padding: '28px 24px', borderBottom: '1px solid var(--border)', background: row.accent ? 'rgba(173,255,47,0.04)' : 'transparent' }}>
                   <div>

@@ -58,7 +58,7 @@ const HeroSection: React.FC = () => {
         <div className="L-fadein L-fadein-delay-3" style={{ marginBottom: '40px' }}>
           <div className="L-search">
             <div className="L-search-field">
-              <span className="L-label" style={{ fontSize: '9px', marginBottom: '2px' }}>WHAT</span>
+              <span className="L-label" style={{ fontSize: '9px', marginBottom: '2px' }}>QUOI</span>
               <input
                 placeholder="Perceuse, nettoyeur haute pression, ponceuse…"
                 value={searchWhat}
@@ -67,7 +67,7 @@ const HeroSection: React.FC = () => {
               />
             </div>
             <div className="L-search-field">
-              <span className="L-label" style={{ fontSize: '9px', marginBottom: '2px' }}>WHERE</span>
+              <span className="L-label" style={{ fontSize: '9px', marginBottom: '2px' }}>OÙ</span>
               <input
                 placeholder="Wavre, Ottignies, Waterloo…"
                 value={searchWhere}
@@ -96,9 +96,13 @@ const HeroSection: React.FC = () => {
 
           {/* Stats — architectural, minimal */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }} className="L-hide-sm">
+            {/* «5 km — Distance moy.» стояло рядом с «0 outil disponible».
+                Среднего расстояния при нуле объявлений не существует: число
+                было взято из воздуха. Заменено на проверяемое — площадка
+                работает по Брабант-Валлону, и это факт, а не измерение. */}
             {[
               { n: toolCount !== null ? `${toolCount}` : '—', l: 'Outils dispo' },
-              { n: '5 km', l: 'Distance moy.' },
+              { n: 'BW', l: 'Brabant Wallon' },
               { n: '0%', l: 'Commission' },
             ].map(s => (
               <div key={s.l} style={{ background: 'var(--black)', padding: '24px 28px' }}>
