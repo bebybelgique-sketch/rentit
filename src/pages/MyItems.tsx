@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
 const CATEGORY_EMOJI: Record<string, string> = {
@@ -47,12 +47,12 @@ interface Item {
 
 export default function MyItems() {
   const { user, accessToken } = useAuth()
-  const navigate = useNavigate()
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'active' | 'all'>('active')
   const [actionError, setActionError] = useState('')
   const [respondingId, setRespondingId] = useState<string | null>(null)
+  const [transitioningId, setTransitioningId] = useState<string | null>(null)
 
   useEffect(() => { if (user) fetchItems() }, [user])
 
@@ -85,8 +85,10 @@ export default function MyItems() {
         headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       })
       if (res.error) throw res.error
-      // Update local state
-      const newStatus = action === 'approve' ? 'pending_payment' : 'rejected'
+      // Одобрение сразу подтверждает бронь: платежей в платформе нет,
+      // расчёт наличными при передаче. Показывать «Paiement en attente»
+      // значит сообщать состояние, которого в базе не существует.
+      const newStatus = action === 'approve' ? 'confirmed' : 'rejected'
       setItems(p => p.map(item => item.id === itemId ? {
         ...item,
         bookings: item.bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b),
@@ -98,18 +100,47 @@ export default function MyItems() {
     }
   }
 
-  const updateBookingStatus = async (bookingId: string, itemId: string, status: string) => {
+  // Раньше здесь стоял прямой update статуса. Переходы теперь принадлежат
+  // transition-booking: там записано, кто вправе и из какого состояния, там
+  // же защита от гонки и письма обеим сторонам. Политики UPDATE на bookings
+  // сняты миграцией 20260811000012 — прямой путь больше не существует.
+  const transitionBooking = async (
+    bookingId: string,
+    itemId: string,
+    action: 'handover' | 'complete' | 'cancel',
+    reason?: string,
+  ) => {
     setActionError('')
-    const { error } = await supabase.from('bookings').update({ status }).eq('id', bookingId)
-    if (error) { setActionError(error.message); return }
-    setItems(p => p.map(item => item.id === itemId ? {
-      ...item,
-      bookings: item.bookings.map(b => b.id === bookingId ? { ...b, status } : b),
-    } : item))
-    supabase.functions.invoke('notify-rental', {
-      body: { booking_id: bookingId, event: status },
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-    }).catch(() => {})
+    setTransitioningId(bookingId)
+    try {
+      const res = await supabase.functions.invoke<{ ok?: boolean; status?: string; error?: string }>(
+        'transition-booking',
+        {
+          body: { booking_id: bookingId, action, reason: reason ?? null },
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+        },
+      )
+      if (res.error) throw new Error(res.data?.error || res.error.message)
+      if (res.data?.error) throw new Error(res.data.error)
+
+      const newStatus = res.data?.status
+      if (newStatus) {
+        setItems(p => p.map(item => item.id === itemId ? {
+          ...item,
+          bookings: item.bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b),
+        } : item))
+      }
+    } catch (err: any) {
+      setActionError(err.message || 'Erreur lors de la mise à jour')
+    } finally {
+      setTransitioningId(null)
+    }
+  }
+
+  const cancelBooking = async (bookingId: string, itemId: string) => {
+    const reason = prompt('Pourquoi annulez-vous cette réservation ?')
+    if (reason === null) return
+    await transitionBooking(bookingId, itemId, 'cancel', reason)
   }
 
   const deleteItem = async (id: string) => {
@@ -182,6 +213,7 @@ export default function MyItems() {
 
                     <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
                       <Link to={`/item/${item.id}`} className="btn btn-secondary btn-sm">Voir</Link>
+                      <Link to={`/edit-item/${item.id}`} className="btn btn-secondary btn-sm">Modifier</Link>
                       <button
                         onClick={() => toggleAvailable(item.id, item.available)}
                         className="btn btn-secondary btn-sm"
@@ -270,19 +302,30 @@ export default function MyItems() {
                               {STATUS_FR[booking.status] || booking.status}
                             </span>
                             {booking.status === 'confirmed' && (
-                              <button
-                                onClick={() => updateBookingStatus(booking.id, item.id, 'active')}
-                                className="btn btn-primary btn-sm"
-                              >
-                                Marquer récupéré
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => transitionBooking(booking.id, item.id, 'handover')}
+                                  className="btn btn-primary btn-sm"
+                                  disabled={transitioningId === booking.id}
+                                >
+                                  {transitioningId === booking.id ? '...' : 'Marquer récupéré'}
+                                </button>
+                                <button
+                                  onClick={() => cancelBooking(booking.id, item.id)}
+                                  className="btn btn-secondary btn-sm"
+                                  disabled={transitioningId === booking.id}
+                                >
+                                  Annuler
+                                </button>
+                              </>
                             )}
                             {booking.status === 'active' && (
                               <button
-                                onClick={() => updateBookingStatus(booking.id, item.id, 'completed')}
+                                onClick={() => transitionBooking(booking.id, item.id, 'complete')}
                                 className="btn btn-primary btn-sm"
+                                disabled={transitioningId === booking.id}
                               >
-                                Marquer retourné
+                                {transitioningId === booking.id ? '...' : 'Marquer retourné'}
                               </button>
                             )}
                           </div>

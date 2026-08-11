@@ -1,27 +1,23 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createSupabaseServiceClient } from '../_shared/supabase.ts'
+import { handleOPTIONS } from '../_shared/cors.ts'
+import { getUserFromAuthHeader } from '../_shared/auth.ts'
 
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-)
+const supabase = createSupabaseServiceClient()
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
 }
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+  if (req.method === 'OPTIONS') return handleOPTIONS()
 
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader) return json({ error: 'Unauthorized' }, 401)
-
-  const { data: { user }, error: authErr } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
-  if (authErr || !user) return json({ error: 'Unauthorized' }, 401)
+  const user = await getUserFromAuthHeader(req)
+  if (user instanceof Response) return user
 
   const userId = user.id
 
@@ -55,7 +51,24 @@ serve(async (req) => {
     .update({ renter_id: null })
     .eq('renter_id', userId)
 
-  // Delete user's items (and their photos are orphaned — acceptable)
+  // Фотографии состояния убираем ДО удаления вещей: снос вещи каскадом
+  // уносит брони и строки booking_photos, и после этого узнать пути файлов
+  // уже не по чему — они останутся в бакете навсегда. Комментарий «их
+  // фотографии осиротеют, это приемлемо» стоял здесь до 11.08; приемлемым
+  // это не является: политика конфиденциальности обещает удаление данных.
+  const { data: ownPhotos } = await supabase
+    .from('booking_photos')
+    .select('storage_path, booking_id, bookings!inner(item_id, renter_id, items!inner(owner_id))')
+
+  const doomed = (ownPhotos || []).filter((p: any) =>
+    p.bookings?.renter_id === userId || p.bookings?.items?.owner_id === userId,
+  ).map((p: any) => p.storage_path as string)
+
+  if (doomed.length > 0) {
+    await supabase.storage.from('booking-photos').remove(doomed)
+  }
+
+  // Delete user's items (bookings, photos rows and reviews cascade)
   await supabase.from('items').delete().eq('owner_id', userId)
 
   // Delete avatar from storage

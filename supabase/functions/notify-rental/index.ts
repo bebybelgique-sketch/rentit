@@ -9,7 +9,7 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'noreply@rentit.app'
 const APP_URL = Deno.env.get('APP_URL') || 'https://rentit.app'
 
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version' }
 
 async function sendEmail(to: string, subject: string, html: string) {
   await fetch('https://api.resend.com/emails', {
@@ -37,7 +37,7 @@ serve(async (req) => {
       .select(`
         *,
         items(id, title, price_per_day, owner_id, users!owner_id(full_name, phone)),
-        users!renter_id(full_name)
+        users!renter_id(full_name, phone)
       `)
       .eq('id', booking_id)
       .single()
@@ -56,7 +56,7 @@ serve(async (req) => {
 
     const myItemsLink = `${APP_URL}/my-items`
     const myRentalsLink = `${APP_URL}/my-rentals`
-    const payLink = `${APP_URL}/pay/${booking_id}`
+    // payLink больше не нужен: оплаты в платформе нет
 
     // --- NEW: Owner receives rental request ---
     if (event === 'pending_approval') {
@@ -74,16 +74,30 @@ serve(async (req) => {
       }
     }
 
-    // --- NEW: Renter approved, time to pay ---
+    // --- Renter approved: réservation confirmée, paiement en espèces ---
     if (event === 'approved') {
       if (renterEmail) {
-        await sendEmail(renterEmail, `Demande acceptée ! Finalisez votre réservation — ${item?.title}`, `
-          <h2>Votre demande a été acceptée !</h2>
+        await sendEmail(renterEmail, `Réservation confirmée — ${item?.title}`, `
+          <h2>Votre réservation est confirmée</h2>
           <p>Article : <strong>${item?.title}</strong></p>
           <p>Dates : ${booking.start_date} → ${booking.end_date} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
-          <p>Total à payer : €${Number(booking.total_price + booking.deposit_amount).toFixed(2)}</p>
-          <p><strong>Vous avez 2 heures pour finaliser le paiement.</strong> Passé ce délai, la réservation sera annulée.</p>
-          <p><a href="${payLink}" style="background:#080808;color:#F2F0EB;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block;margin-top:8px;">Payer maintenant</a></p>
+          <p>Montant convenu : €${Number(booking.total_price).toFixed(2)}${booking.deposit_amount > 0 ? ` + €${Number(booking.deposit_amount).toFixed(2)} de caution` : ''}</p>
+          <p><strong>Le règlement se fait en espèces, directement au propriétaire, lors de la remise de l'article.</strong> RentIt ne perçoit aucun paiement et ne prélève aucune commission.</p>
+          <p>Convenez ensemble du lieu et de l'heure de la remise. Pensez à rendre l'article dans l'état où vous l'avez reçu — la caution vous sera restituée à la restitution.</p>
+          <p>Propriétaire : <strong>${owner?.full_name || '—'}</strong>${owner?.phone ? ` · ${owner.phone}` : ''}</p>
+          <p><a href="${APP_URL}/my-rentals" style="background:#080808;color:#F2F0EB;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block;margin-top:8px;">Voir ma réservation</a></p>
+        `)
+      }
+      // Le propriétaire reçoit les coordonnées du locataire : sans cela,
+      // aucune remise en main propre n'est possible.
+      if (ownerEmail) {
+        await sendEmail(ownerEmail, `Réservation confirmée — ${item?.title}`, `
+          <h2>Vous avez accepté cette demande</h2>
+          <p>Article : <strong>${item?.title}</strong></p>
+          <p>Locataire : <strong>${renter?.full_name || '—'}</strong>${renter?.phone ? ` · ${renter.phone}` : ''}</p>
+          <p>Dates : ${booking.start_date} → ${booking.end_date} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
+          <p>Montant convenu : €${Number(booking.total_price).toFixed(2)}${booking.deposit_amount > 0 ? ` + €${Number(booking.deposit_amount).toFixed(2)} de caution` : ''}, à percevoir <strong>en espèces</strong> lors de la remise.</p>
+          <p><a href="${myItemsLink}">Gérer mes annonces</a></p>
         `)
       }
     }

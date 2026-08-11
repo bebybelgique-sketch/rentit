@@ -11,7 +11,6 @@ interface Props {
 const PURPLE = ['#6c63ff', '#a89cff', '#5046e4', '#c4bfff']
 const MULTI  = ['#6c63ff', '#16a34a', '#f59e0b', '#0284c7', '#e11d48', '#94a3b8']
 const DARK   = ['rgba(168,156,255,0.7)', 'rgba(79,195,247,0.6)', 'rgba(108,99,255,0.8)']
-const GREEN  = ['#4ade80', '#86efac', '#16a34a', '#a3e635']
 const AMBER  = ['#fbbf24', '#f59e0b', '#fde68a', '#d97706']
 
 // ─── DRAW HELPERS ────────────────────────────────────────────────────────────

@@ -1,12 +1,14 @@
 import { fr } from './fr'
 import { en } from './en'
+import { nl } from './nl'
 
-export type Lang = 'en' | 'fr'
+export type Lang = 'en' | 'fr' | 'nl'
 
-export const translations = { fr, en }
+export const translations = { fr, en, nl }
 
 export function getLang(): Lang {
-  return (localStorage.getItem('rentit_lang') as Lang) || 'fr'
+  const saved = localStorage.getItem('rentit_lang') as Lang | null
+  return saved && saved in translations ? saved : 'fr'
 }
 
 export function setLang(lang: Lang) {
@@ -15,13 +17,12 @@ export function setLang(lang: Lang) {
 }
 
 export function t(key: string): string {
-  const lang = getLang()
-  const dict = lang === 'en' ? translations.en : translations.fr
+  const dict = translations[getLang()] ?? translations.fr
   const parts = key.split('.')
   let val: any = dict
   for (const p of parts) val = val?.[p]
   if (typeof val === 'string') return val
-  // fallback to FR if EN key missing
+  // fallback to FR if key missing in the chosen language
   let frVal: any = translations.fr
   for (const p of parts) frVal = frVal?.[p]
   return typeof frVal === 'string' ? frVal : key

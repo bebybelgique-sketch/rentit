@@ -1,31 +1,24 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import Stripe from 'https://esm.sh/stripe@14'
+import { createSupabaseServiceClient } from '../_shared/supabase.ts'
+import { handleOPTIONS } from '../_shared/cors.ts'
+import { getUserFromAuthHeader } from '../_shared/auth.ts'
 
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-)
+const supabase = createSupabaseServiceClient()
 
 const PLATFORM_FEE_PCT = 0.00
 const INSURANCE_PER_DAY = 0
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+  if (req.method === 'OPTIONS') return handleOPTIONS()
 
   try {
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return new Response('Unauthorized', { status: 401, headers: CORS })
-
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    )
-    if (authErr || !user) return new Response('Unauthorized', { status: 401, headers: CORS })
+    const user = await getUserFromAuthHeader(req)
+    if (user instanceof Response) return user
 
     const { booking_id, action } = await req.json()
     if (!booking_id || !['approve', 'reject'].includes(action)) {
@@ -102,60 +95,18 @@ serve(async (req) => {
     const platformFee = isPro ? 0 : rentalPrice * PLATFORM_FEE_PCT
     const insuranceFee = INSURANCE_PER_DAY * totalDays
 
-    const rentalCents = Math.round(rentalPrice * 100)
-    const depositCents = Math.round(deposit * 100)
-    const feeCents = Math.round(platformFee * 100)
-    const insuranceCents = Math.round(insuranceFee * 100)
-    const totalCents = rentalCents + depositCents + insuranceCents
-
-    // Create Stripe PaymentIntent (or mock when Stripe is not configured)
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
-    let piId: string
-    if (stripeSecretKey) {
-      const stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2024-04-10',
-        httpClient: Stripe.createFetchHttpClient(),
-      })
-      const pi = await stripe.paymentIntents.create({
-        amount: totalCents,
-        currency: 'eur',
-        metadata: {
-          booking_id: booking.id,
-          item_id: item.id,
-          renter_id: booking.renter_id,
-          owner_id: user.id,
-          rental_amount: rentalCents,
-          deposit_amount: depositCents,
-          platform_fee: feeCents,
-          insurance_amount: insuranceCents,
-        },
-      })
-      piId = pi.id
-    } else {
-      // No Stripe key configured — use a mock ID so the flow can proceed
-      piId = `pi_mock_${crypto.randomUUID().replace(/-/g, '')}`
-    }
-
-    // Update booking to pending_payment + record approved_at
+    // Платежей в платформе нет: расчёт наличными между арендатором и
+    // владельцем при передаче вещи. Поэтому одобрение сразу подтверждает
+    // бронь — промежуточный статус pending_payment больше не используется,
+    // Stripe не вызывается, запись в payments не создаётся.
+    // Суммы ниже сохраняем: они показываются сторонам как ориентир.
     await supabase.from('bookings').update({
-      status: 'pending_payment',
+      status: 'confirmed',
       approved_at: new Date().toISOString(),
-      stripe_payment_intent_id: piId,
       total_price: rentalPrice,
       deposit_amount: deposit,
       platform_fee: platformFee,
     }).eq('id', booking_id)
-
-    // Create payment record
-    await supabase.from('payments').insert([{
-      booking_id,
-      stripe_payment_intent_id: piId,
-      amount: totalCents,
-      rental_amount: rentalCents,
-      deposit_amount: depositCents,
-      platform_fee: feeCents,
-      status: 'pending',
-    }])
 
     // Auto-reject other pending_approval requests for overlapping dates
     const { data: conflicting } = await supabase

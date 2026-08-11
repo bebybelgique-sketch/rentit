@@ -9,7 +9,7 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
 
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version' }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
@@ -45,26 +45,11 @@ serve(async (req) => {
     }
   }
 
-  // 2. Expire pending_payment bookings where approved_at is older than 2 hours
-  const cutoff2h = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString()
-  const { data: expiredPayment } = await supabase
-    .from('bookings')
-    .select('id')
-    .eq('status', 'pending_payment')
-    .not('approved_at', 'is', null)
-    .lt('approved_at', cutoff2h)
-
-  if (expiredPayment && expiredPayment.length > 0) {
-    const ids = expiredPayment.map((b: any) => b.id)
-    await supabase.from('bookings').update({ status: 'payment_expired' }).in('id', ids)
-    for (const b of expiredPayment) {
-      await fetch(`${supabaseUrl}/functions/v1/notify-rental`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-        body: JSON.stringify({ booking_id: b.id, event: 'payment_expired' }),
-      }).catch(() => {})
-    }
-  }
+  // Прежде здесь истекали брони, не оплаченные в течение 2 часов после
+  // одобрения. Платежей в платформе больше нет: одобрение сразу переводит
+  // бронь в confirmed, поэтому истекать нечему. Статус payment_expired
+  // остаётся в enum ради старых записей, но новых не появляется.
+  const expiredPayment: { id: string }[] = []
 
   return new Response(JSON.stringify({
     expired_approvals: expiredApproval?.length ?? 0,

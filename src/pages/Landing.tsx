@@ -1,6 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useItems } from '../hooks/useItems';
+import ItemCard from '../components/items/ItemCard';
+import ItemCardSkeleton from '../components/common/ItemCardSkeleton';
+
+// Импортируем новые компоненты
+import HeroSection from '../components/landing/HeroSection';
+import CategoriesSection from '../components/landing/CategoriesSection';
 
 // ─── DESIGN PHILOSOPHY: "Negative Space Capitalism" ──────────────────────────
 // The luxury of emptiness. What is NOT on the page sells harder than what is.
@@ -258,143 +264,21 @@ const CSS = `
 `
 
 export default function Landing() {
-  const [scrollY, setScrollY] = useState(0)
-  const [isDark, setIsDark] = useState(true)
-  const [searchWhat, setSearchWhat] = useState('')
-  const [searchWhere, setSearchWhere] = useState('')
-  const [toolCount, setToolCount] = useState<number | null>(null)
-  const [liveItems, setLiveItems] = useState<any[]>([])
-  const navigate = useNavigate()
 
-  useEffect(() => {
-    supabase.from('items').select('id', { count: 'exact', head: true })
-      .eq('available', true)
-      .then(({ count }) => setToolCount(count))
-    supabase.from('items')
-      .select('id, title, category, price_per_day, photos, address')
-      .eq('available', true)
-      .order('created_at', { ascending: false })
-      .limit(6)
-      .then(({ data }) => setLiveItems(data || []))
-  }, [])
+  const [isDark] = useState(true)
 
-  useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
-  const navOpacity = Math.min(scrollY / 80, 1)
+  // Обновляем вызов useItems для получения isLoading и data
+  const { data: liveItems, isLoading: liveItemsLoading, error } = useItems({ limit: 6, sortBy: 'created_at' });
+
+  // ... (остальные useEffect остаются без изменений, если применимо) ...
 
   return (
     <div className={isDark ? 'L' : 'L light'}>
       <style>{CSS}</style>
 
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingTop: '56px', position: 'relative' }}>
-
-        {/* Grid lines background — subtle architectural element */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-          {[...Array(6)].map((_, i) => (
-            <div key={i} style={{
-              position: 'absolute', top: 0, bottom: 0,
-              left: `${(i + 1) * (100 / 7)}%`,
-              borderLeft: '1px solid rgba(242,240,235,0.04)',
-            }} />
-          ))}
-        </div>
-
-        <div className="L-wrap" style={{ position: 'relative', zIndex: 1, paddingBottom: '80px' }}>
-
-          {/* Eyebrow */}
-          <div className="L-fadein L-fadein-delay-1" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '40px' }}>
-            <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent)' }} />
-            <span className="L-label">Location d'outils P2P — Brabant Wallon — Est. 2026</span>
-          </div>
-
-          {/* Main headline */}
-          <h1 className="L-display L-fadein L-fadein-delay-2"
-            style={{ fontSize: 'clamp(34px, 8vw, 104px)', color: 'var(--white)', maxWidth: '1100px', marginBottom: '32px' }}>
-            Les outils de votre voisin,{' '}
-            <span style={{ color: 'var(--accent)', fontStyle: 'italic' }}>à portée de main.</span>
-          </h1>
-
-          {/* Live tool counter */}
-          {toolCount !== null && (
-            <div className="L-fadein L-fadein-delay-2" style={{ display: 'flex', width: 'fit-content', maxWidth: '100%', alignItems: 'center', gap: '8px', marginBottom: '32px', padding: '8px 16px', border: '1px solid var(--border)', fontSize: '13px', fontFamily: 'var(--mono)', color: 'var(--muted)', overflow: 'hidden' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', flexShrink: 0 }} />
-              {toolCount} outil{toolCount > 1 ? 's' : ''} disponible{toolCount > 1 ? 's' : ''} en Brabant Wallon
-            </div>
-          )}
-
-          {/* Search bar */}
-          <div className="L-fadein L-fadein-delay-3" style={{ marginBottom: '40px' }}>
-            <div className="L-search">
-              <div className="L-search-field">
-                <span className="L-label" style={{ fontSize: '9px', marginBottom: '2px' }}>WHAT</span>
-                <input
-                  placeholder="Perceuse, nettoyeur haute pression, ponceuse…"
-                  value={searchWhat}
-                  onChange={e => setSearchWhat(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && navigate(`/browse${searchWhat.trim() ? `?q=${encodeURIComponent(searchWhat.trim())}` : ''}`)}
-                />
-              </div>
-              <div className="L-search-field">
-                <span className="L-label" style={{ fontSize: '9px', marginBottom: '2px' }}>WHERE</span>
-                <input
-                  placeholder="Wavre, Ottignies, Waterloo…"
-                  value={searchWhere}
-                  onChange={e => setSearchWhere(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { const p = new URLSearchParams(); if (searchWhat.trim()) p.set('q', searchWhat.trim()); if (searchWhere.trim()) p.set('where', searchWhere.trim()); navigate(`/browse?${p.toString()}`) } }}
-                />
-              </div>
-              <button
-                className="L-search-btn"
-                onClick={() => { const p = new URLSearchParams(); if (searchWhat.trim()) p.set('q', searchWhat.trim()); if (searchWhere.trim()) p.set('where', searchWhere.trim()); navigate(`/browse?${p.toString()}`) }}
-              >Rechercher →</button>
-            </div>
-          </div>
-
-          {/* Bottom row */}
-          <div className="L-fadein L-fadein-delay-3" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '32px' }}>
-            <div style={{ maxWidth: '420px' }}>
-              <p className="L-body" style={{ fontSize: '16px', marginBottom: '24px' }}>
-                Louez des outils professionnels à vos voisins. Moins cher qu'acheter, disponible en quelques minutes. Protection incluse gratuitement.
-              </p>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <Link to="/browse" className="L-btn-primary">Voir les outils →</Link>
-                <Link to="/list-item" className="L-btn-ghost">Déposer une annonce</Link>
-              </div>
-            </div>
-
-            {/* Stats — architectural, minimal */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }} className="L-hide-sm">
-              {[
-                { n: toolCount !== null ? `${toolCount}` : '—', l: 'Outils dispo' },
-                { n: '5 km', l: 'Distance moy.' },
-                { n: '0%', l: 'Commission' },
-              ].map(s => (
-                <div key={s.l} style={{ background: 'var(--black)', padding: '24px 28px' }}>
-                  <div className="L-display" style={{ fontSize: '40px', color: 'var(--white)', marginBottom: '4px' }}>{s.n}</div>
-                  <div className="L-label">{s.l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="L-scroll-hint" style={{ position: 'absolute', bottom: '32px', right: '48px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-          <span className="L-label" style={{ fontSize: '9px' }}>SCROLL</span>
-          <div style={{ width: '1px', height: '40px', background: 'var(--border)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0,
-              height: '40%', background: 'var(--muted)',
-              animation: 'fadeUp 1.8s ease-in-out infinite',
-            }} />
-          </div>
-        </div>
-      </section>
+      {/* Вставляем HeroSection */}
+      <HeroSection />
 
       {/* ── MARQUEE — social proof ────────────────────────────────────────── */}
       <div style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '14px 0', overflow: 'hidden' }}>
@@ -409,46 +293,8 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ── CATEGORIES ───────────────────────────────────────────────────── */}
-      <section style={{ padding: '140px 0' }}>
-        <div className="L-wrap">
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '80px', alignItems: 'start', marginBottom: '64px' }} className="L-sm-col">
-            <div>
-              <div className="L-label" style={{ marginBottom: '20px' }}>Ce que vous pouvez louer</div>
-              <h2 className="L-title" style={{ fontSize: 'clamp(36px, 4vw, 60px)', color: 'var(--white)' }}>
-                Outils professionnels.<br />De voisin à voisin.
-              </h2>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', paddingBottom: '4px' }}>
-              <Link to="/browse" style={{ color: 'var(--muted)', fontSize: '14px', textDecoration: 'none', fontFamily: 'var(--mono)', display: 'flex', alignItems: 'center', gap: '6px', transition: 'color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--white)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}>
-                Voir tous les outils ↗
-              </Link>
-            </div>
-          </div>
-
-          <div style={{ gap: '8px' }} className="L-sm-col-2">
-            {[
-              { icon: '⚡', label: 'Électroportatif', desc: 'Perceuses, scies, meuleuses, défonceuses', slug: 'power_tools' },
-              { icon: '🔧', label: 'Outillage manuel', desc: 'Marteaux, clés, pinces, étaux', slug: 'hand_tools' },
-              { icon: '🌿', label: 'Jardin & Extérieur', desc: 'Tondeuses, taille-haies, souffleurs', slug: 'garden' },
-              { icon: '🏗️', label: 'Construction', desc: 'Échafaudages, bétonnières, compresseurs', slug: 'construction' },
-              { icon: '🧹', label: 'Nettoyage', desc: 'Nettoyeurs HP, autolaveuses', slug: 'cleaning' },
-              { icon: '📐', label: 'Mesure', desc: 'Niveaux laser, détecteurs, testeurs', slug: 'measuring' },
-            ].map(c => (
-              <Link key={c.slug} to={`/browse?category=${c.slug}`} className="L-cat">
-                <div style={{ fontSize: '24px', marginBottom: '20px' }}>{c.icon}</div>
-                <div style={{ fontFamily: 'var(--sans)', fontSize: '15px', fontWeight: '600', marginBottom: '6px', color: 'var(--white)' }}>
-                  {c.label}
-                </div>
-                <div className="L-mono" style={{ fontSize: '12px', color: 'var(--muted)' }}>{c.desc}</div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Вставляем CategoriesSection */}
+      <CategoriesSection />
 
       {/* ── COMMENT ÇA MARCHE ────────────────────────────────────────────── */}
       <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
@@ -461,7 +307,7 @@ export default function Landing() {
                 Trois étapes.<br />Zéro friction.
               </h2>
               <p className="L-body" style={{ fontSize: '15px' }}>
-                De la recherche au retour de l'outil. Pas de paperasse, pas d'appel — juste WhatsApp.
+                De la recherche au retour de l'outil. Pas de paperasse, pas d'appel — tout se passe ici.
               </p>
             </div>
 
@@ -472,8 +318,10 @@ export default function Landing() {
                   desc: 'Parcourez par catégorie ou mot-clé. Chaque résultat est à moins de 5 km. Disponibilité en temps réel.',
                 },
                 {
-                  n: '02', icon: '📱', title: 'Contactez via WhatsApp',
-                  desc: 'Un clic pour envoyer un message au propriétaire. Arrangez le rendez-vous directement — simple et humain.',
+                  // WhatsApp здесь обещался, но никогда не был подключён, а
+                  // с 11.08 переписка живёт внутри брони (booking_messages).
+                  n: '02', icon: '💬', title: 'Contactez le propriétaire',
+                  desc: 'Envoyez un message depuis la réservation. Convenez du lieu et de l\'heure — simple et humain.',
                 },
                 {
                   n: '03', icon: '✅', title: 'Récupérez & profitez',
@@ -501,7 +349,10 @@ export default function Landing() {
         <div className="L-wrap">
 
           <div style={{ marginBottom: '72px' }}>
-            <div className="L-label" style={{ marginBottom: '20px' }}>Protection</div>
+            {/* Заголовок раздела был «Protection» — под ним обещали
+                страховку. Теперь под ним фотографии состояния и отзывы,
+                то есть доверие, а не покрытие. */}
+            <div className="L-label" style={{ marginBottom: '20px' }}>Confiance</div>
             <h2 className="L-title" style={{ fontSize: 'clamp(36px, 4vw, 64px)', color: 'var(--white)' }}>
               Fait pour la confiance.
             </h2>
@@ -510,18 +361,24 @@ export default function Landing() {
           {/* Bento grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto auto', gap: '8px' }} className="L-sm-col">
 
-            {/* Large feature card */}
+            {/* Здесь обещалась «protection jusqu'à €500, incluse dans chaque
+                location». Страхования нет: платформа не сторона договора и
+                ничего не покрывает. Обещание защиты, которой не существует,
+                опаснее любого другого — на него полагаются в тот момент,
+                когда чужой инструмент уже сломан.
+                Заменено на то, что площадка действительно даёт: фотографии
+                состояния при передаче и возврате, видимые обеим сторонам. */}
             <div className="L-bento-item" style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '320px' }}>
               <div>
                 <div style={{ fontFamily: 'var(--mono)', fontWeight: '300', color: 'var(--accent)', marginBottom: '20px', letterSpacing: '-0.04em', fontSize: 'clamp(56px, 6vw, 80px)', lineHeight: 1 }}>
-                  €500
+                  📷
                 </div>
-                <h3 className="L-title" style={{ fontSize: '22px', color: 'var(--white)', marginBottom: '12px' }}>Protection dommages</h3>
+                <h3 className="L-title" style={{ fontSize: '22px', color: 'var(--white)', marginBottom: '12px' }}>Photos à la remise et au retour</h3>
                 <p className="L-body" style={{ fontSize: '14px' }}>
-                  Chaque location inclut automatiquement une protection jusqu'à €500. Les deux parties sont protégées. Sans opt-in, sans frais supplémentaires.
+                  L'état de l'outil est photographié au départ et au retour. Les deux parties voient les mêmes photos. Pas d'assurance, pas de promesse à votre place : une preuve claire, si le doute survient.
                 </p>
               </div>
-              <div className="L-label" style={{ marginTop: '40px' }}>Inclus · Chaque location</div>
+              <div className="L-label" style={{ marginTop: '40px' }}>Sur chaque réservation</div>
             </div>
 
             <div className="L-bento-item">
@@ -544,8 +401,11 @@ export default function Landing() {
                   <rect x="15" y="13" width="5" height="2.5" rx="1" fill="var(--accent)" fillOpacity="0.7"/>
                 </svg>
               </div>
-              <h3 className="L-title" style={{ fontSize: '18px', color: 'var(--white)', marginBottom: '8px' }}>Paiement sécurisé</h3>
-              <p className="L-body" style={{ fontSize: '14px' }}>Paiement bancaire sécurisé. Fonds en escrow. Virement automatique après confirmation de remise.</p>
+              {/* Здесь обещались escrow и автоматический перевод. Ни того, ни
+                  другого нет и не планируется: платформа денег не касается,
+                  расчёт наличными между сторонами. */}
+              <h3 className="L-title" style={{ fontSize: '18px', color: 'var(--white)', marginBottom: '8px' }}>Aucun paiement en ligne</h3>
+              <p className="L-body" style={{ fontSize: '14px' }}>Le règlement se fait entre vous, en espèces, à la remise. La plateforme ne touche pas à l'argent.</p>
             </div>
 
           </div>
@@ -564,13 +424,13 @@ export default function Landing() {
                 Vos outils.<br />Qui rapportent.
               </h2>
               <p className="L-body" style={{ marginBottom: '32px', fontSize: '15px' }}>
-                Déposez une annonce en 5 min. Touchez votre argent à chaque location. Gratuit pour commencer.
+                Déposez une annonce en 5 min. Vous êtes payé en main propre, à la remise. Gratuit aujourd'hui.
               </p>
               <ul style={{ listStyle: 'none', marginBottom: '36px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[
                   'Annonce en 5 minutes',
-                  'Virement direct',
-                  'Protection incluse',
+                  "Aucune commission aujourd'hui",
+                  "Photos de l'état à la remise et au retour",
                   'Gratuit pour démarrer',
                 ].map(item => (
                   <li key={item} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: 'var(--muted)', fontFamily: 'var(--mono)' }}>
@@ -590,9 +450,14 @@ export default function Landing() {
                 <span className="L-label">Revenus par location</span>
               </div>
 
+              {/* Тариф «8% frais plateforme» описывал удержание из выплаты,
+                  которой не существует: платформа не касается денег. Строка о
+                  будущей платности остаётся — бесплатно сегодня не значит
+                  бесплатно всегда, — но сформулирована как намерение, а не как
+                  действующее удержание. */}
               {[
-                { plan: 'Beta — gratuit', cut: '100%', note: '0% commission · limité dans le temps', accent: true },
-                { plan: 'Après 50 locations', cut: '92%', note: '8% frais plateforme', accent: false },
+                { plan: "Aujourd'hui — gratuit", cut: '100%', note: 'Vous gardez tout · règlement en espèces', accent: true },
+                { plan: 'Plus tard', cut: '100%', note: 'Des options payantes viendront · annoncées à l’avance', accent: false },
               ].map(row => (
                 <div key={row.plan} className="L-earn-row" style={{ padding: '28px 24px', borderBottom: '1px solid var(--border)', background: row.accent ? 'rgba(173,255,47,0.04)' : 'transparent' }}>
                   <div>
@@ -614,7 +479,7 @@ export default function Landing() {
 
               <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent)' }} />
-                <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>Protection toujours gérée par RentIt</span>
+                <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>Le règlement se fait entre vous, en espèces</span>
               </div>
             </div>
 
@@ -622,60 +487,26 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── BUSINESS ─────────────────────────────────────────────────────── */}
-      <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)', background: 'var(--bg-alt)' }}>
-        <div className="L-wrap">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'start' }} className="L-sm-col">
-
-            <div>
-              <div className="L-label" style={{ marginBottom: '20px' }}>Pour les professionnels</div>
-              <h2 className="L-title" style={{ fontSize: 'clamp(36px, 4vw, 56px)', color: 'var(--white)', marginBottom: '20px' }}>
-                Vous louez<br />du matériel ?
-              </h2>
-              <p className="L-body" style={{ fontSize: '15px', marginBottom: '32px', maxWidth: '340px' }}>
-                Abonnement mensuel fixe. Zéro commission par location. Import CSV en masse. Priorité dans les résultats.
-              </p>
-              <Link to="/business" className="L-btn-ghost">Voir les offres pro →</Link>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {[
-                { name: 'Starter', price: '€49', period: '/mois', desc: "Jusqu'à 50 annonces · Analytiques de base", featured: false },
-                { name: 'Growth', price: '€99', period: '/mois', desc: "Annonces illimitées · Priorité dans la recherche", featured: true },
-                { name: 'Enterprise', price: '€149', period: '/mois', desc: "Domaine personnalisé · Support dédié", featured: false },
-              ].map(plan => (
-                <div key={plan.name} className="L-plan" style={{
-                  background: plan.featured ? 'rgba(173,255,47,0.05)' : 'rgba(242,240,235,0.02)',
-                  border: `1px solid ${plan.featured ? 'rgba(173,255,47,0.2)' : 'var(--border)'}`,
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <span style={{ fontFamily: 'var(--sans)', fontSize: '15px', fontWeight: '600', color: plan.featured ? 'var(--accent)' : 'var(--white)' }}>
-                          {plan.name}
-                        </span>
-                        {plan.featured && (
-                          <span className="L-mono" style={{ fontSize: '9px', background: 'var(--accent)', color: 'var(--black)', padding: '2px 7px', borderRadius: '2px', letterSpacing: '0.08em' }}>
-                            POPULAIRE
-                          </span>
-                        )}
-                      </div>
-                      <div className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>{plan.desc}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span className="L-display" style={{ fontSize: '30px', color: plan.featured ? 'var(--accent)' : 'var(--white)' }}>{plan.price}</span>
-                      <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>{plan.period}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ── LIVE LISTINGS ────────────────────────────────────────────────── */}
-      {liveItems.length > 0 && (
+      {/* Обновляем условия отображения */}
+      {liveItemsLoading ? (
+        <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
+          <div className="L-wrap">
+            <div style={{ gap: '8px' }} className="L-sm-col-2">
+              {Array.from({ length: 6 }).map((_, i) => <ItemCardSkeleton key={i} />)}
+            </div>
+          </div>
+        </section>
+      ) : error ? (
+        <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
+          <div className="L-wrap">
+            <p style={{ color: 'var(--muted)' }}>
+              Impossible de charger les outils pour le moment. Réessayez dans un instant.
+            </p>
+          </div>
+        </section>
+      ) : liveItems && liveItems.length > 0 && (
         <section style={{ padding: '140px 0', borderTop: '1px solid var(--border)' }}>
           <div className="L-wrap">
 
@@ -696,37 +527,9 @@ export default function Landing() {
             </div>
 
             <div style={{ gap: '8px' }} className="L-sm-col-2">
+              {/* Используем новый компонент ItemCard */}
               {liveItems.map(item => (
-                <Link key={item.id} to={`/item/${item.id}`} style={{ textDecoration: 'none', display: 'block', border: '1px solid var(--border)', transition: 'border-color 0.2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--muted)')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}>
-                  {item.photos?.[0] ? (
-                    <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}>
-                      <img src={item.photos[0]} alt={item.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.4s ease' }}
-                        onMouseEnter={e => ((e.currentTarget as HTMLImageElement).style.transform = 'scale(1.03)')}
-                        onMouseLeave={e => ((e.currentTarget as HTMLImageElement).style.transform = 'scale(1)')}
-                      />
-                    </div>
-                  ) : (
-                    <div style={{ aspectRatio: '4/3', background: 'var(--bg-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: '40px' }}>🔧</span>
-                    </div>
-                  )}
-                  <div style={{ padding: '16px 20px' }}>
-                    <div style={{ fontFamily: 'var(--sans)', fontSize: '15px', fontWeight: '600', color: 'var(--white)', marginBottom: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.title}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                        {item.address?.split(',')[0] || 'Bruxelles'}
-                      </span>
-                      <span className="L-mono" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500' }}>
-                        €{item.price_per_day}/jour
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                <ItemCard key={item.id} item={item} />
               ))}
             </div>
           </div>

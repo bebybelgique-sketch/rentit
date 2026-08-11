@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useBeforeUnload, Link } from 'react-router-dom'
 import { t } from '../i18n'
-import { supabase } from '../supabase'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
 const CATEGORIES = [

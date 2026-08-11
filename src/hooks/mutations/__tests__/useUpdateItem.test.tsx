@@ -1,0 +1,115 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useUpdateItem } from '../useUpdateItem';
+
+// Hoist mock data and response config to module level
+// База отдаёт сырую строку items, а хук возвращает преобразованный Item —
+// поэтому ожидание описано отдельно.
+const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
+  mockItemData: {
+    id: 'item-1',
+    title: 'Updated Title',
+    description: 'Une perceuse',
+    price_per_day: 30,
+    photos: ['https://example.com/drill.jpg'],
+    owner_id: 'owner-1',
+    address: 'Wavre, BE',
+    lat: 50.71,
+    lng: 4.61,
+    available: true,
+    created_at: '2026-01-01T00:00:00Z',
+  },
+  expectedItem: {
+    id: 'item-1',
+    title: 'Updated Title',
+    description: 'Une perceuse',
+    price_per_day: 30,
+    image_url: 'https://example.com/drill.jpg',
+    owner_id: 'owner-1',
+    location: 'Wavre, BE',
+    latitude: 50.71,
+    longitude: 4.61,
+    is_available: true,
+    created_at: '2026-01-01T00:00:00Z',
+  },
+  mockError: new Error('Update item failed'),
+}));
+
+// Global variable to control mock response
+let mockUpdateResponseData: any = null;
+let mockUpdateResponseError: any = null;
+
+// Mock the supabase module at the top level, focusing on from.update
+vi.mock('../../../lib/supabase', () => {
+  const chain: any = {};
+  chain.update = vi.fn(() => chain);
+  chain.match = vi.fn(() => chain);
+  chain.select = vi.fn(() => chain);
+  chain.single = vi.fn(() => Promise.resolve({ data: mockUpdateResponseData, error: mockUpdateResponseError }));
+
+  return {
+    supabase: {
+      from: vi.fn(() => chain),
+      auth: {
+        getSession: vi.fn(),
+        onAuthStateChange: vi.fn(),
+      },
+    },
+  };
+});
+
+let queryClient: QueryClient;
+
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+);
+
+describe('useUpdateItem', () => {
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    // Reset mock response before each test
+    mockUpdateResponseData = null;
+    mockUpdateResponseError = null;
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it('should update item successfully', async () => {
+    // Configure mock response for success
+    mockUpdateResponseData = mockItemData;
+    mockUpdateResponseError = null;
+
+    const { result } = renderHook(() => useUpdateItem(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({ id: 'item-1', userId: 'owner-1', updates: { title: 'Updated Title' } });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(expectedItem);
+  });
+
+  it('should handle error on update item failure', async () => {
+    // Configure mock response for error
+    mockUpdateResponseData = null;
+    mockUpdateResponseError = mockError;
+
+    const { result } = renderHook(() => useUpdateItem(), { wrapper });
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync({ id: 'item-1', userId: 'owner-1', updates: { title: 'Updated Title' } });
+      } catch (e) {
+        // Ожидаем, что mutateAsync выбросит ошибку
+      }
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toEqual(mockError);
+  });
+});

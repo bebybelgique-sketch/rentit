@@ -89,65 +89,60 @@ function TermsEN() {
         </ul>
       </Section>
 
-      <Section title="6. Payments and Fees">
-        <p>All payments are processed by <strong>Stripe</strong> (Stripe, Inc.), a PCI-DSS Level 1 certified payment processor. By making a payment, you also agree to Stripe's terms of service.</p>
+      <Section title="6. Payments Between Users">
+        <p><strong>No payment goes through RentIt.</strong> The rental price and any deposit are agreed and settled <strong>directly between the Renter and the Owner</strong>, in cash, at handover. RentIt holds no funds, processes no cards, and takes no commission.</p>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
           <thead>
             <tr style={{ background: '#f8f9ff' }}>
-              <Th>Fee</Th>
               <Th>Amount</Th>
-              <Th>Who pays</Th>
+              <Th>Set by</Th>
+              <Th>Settled</Th>
             </tr>
           </thead>
           <tbody>
-            <Tr data={['Rental price', 'Set by Owner', 'Renter']} />
-            <Tr data={['Deposit (if applicable)', 'Set by Owner — refundable', 'Renter (held, returned after rental)']} />
-            <Tr data={['Insurance fee', '€3.00 per day', 'Renter (covers damage up to €500)']} />
-            <Tr data={['Platform commission', '12% of rental price', 'Deducted from Owner\'s payout']} />
+            <Tr data={['Rental price', 'Owner, shown on the listing', 'Between the parties, at handover']} />
+            <Tr data={['Deposit (if any)', 'Owner, shown on the listing', 'Between the parties, returned at the end']} />
           </tbody>
         </table>
-        <p style={{ fontSize: '13px', color: '#888', marginTop: '10px', fontStyle: 'italic' }}>
-          * During the beta period, platform commission and insurance fees are waived. Current pricing is always displayed at checkout.
-        </p>
 
         <ul style={listStyle}>
-          <li>Payment is charged in full at the time of booking confirmation.</li>
-          <li>Deposits are returned within <strong>5 business days</strong> after the item is marked as returned in good condition.</li>
-          <li>If a dispute arises, RentIt may hold the deposit pending resolution.</li>
-          <li>Owner payouts are processed within <strong>5–7 business days</strong> after rental completion.</li>
+          <li>Amounts shown on the platform are <strong>indicative</strong>: they reflect what the Owner published, not a sum collected by RentIt.</li>
+          <li>RentIt is not a payment service provider and does not intervene in the settlement.</li>
+          <li><strong>Using the platform is currently free.</strong> This may change: if paid features are introduced, users will be informed in advance and no charge will ever be applied without prior consent.</li>
         </ul>
       </Section>
 
-      <Section title="7. Cancellations and Refunds">
+      <Section title="7. Cancellations">
+        <p>Either party may cancel before the item changes hands. The cancellation is recorded with its author, its date and its reason, and the other party is notified by email.</p>
+
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
           <thead>
             <tr style={{ background: '#f8f9ff' }}>
-              <Th>Cancelled by</Th>
-              <Th>Timing</Th>
-              <Th>Refund</Th>
+              <Th>Booking status</Th>
+              <Th>Who may cancel</Th>
             </tr>
           </thead>
           <tbody>
-            <Tr data={['Renter', 'More than 48h before start', '100% rental + deposit refund']} />
-            <Tr data={['Renter', 'Less than 48h before start', '50% rental refund; deposit refunded']} />
-            <Tr data={['Renter', 'After rental starts', 'No refund for days already elapsed']} />
-            <Tr data={['Owner', 'Any time before start', '100% refund to Renter; Owner may receive a warning']} />
+            <Tr data={['Awaiting approval', 'The Renter (the Owner declines instead)']} />
+            <Tr data={['Confirmed, item not yet handed over', 'Either party']} />
+            <Tr data={['In progress (item handed over)', 'Neither — the rental ends with the return']} />
           </tbody>
         </table>
-        <p style={{ fontSize: '13px', color: '#666' }}>Insurance fees (€3/day) are non-refundable once a rental has started.</p>
+        <p style={{ fontSize: '13px', color: '#666' }}>
+          Since RentIt never holds your money, there is nothing for RentIt to refund. Any sum already exchanged is settled between the parties.
+        </p>
       </Section>
 
-      <Section title="8. Insurance and Liability">
-        <p>RentIt includes a <strong>basic damage insurance</strong> of €3 per day, covering accidental damage to the rented item up to <strong>€500 per rental</strong>. This insurance does not cover:</p>
+      <Section title="8. Liability">
+        <p><strong>RentIt provides no insurance.</strong> There is no damage cover, no guarantee fund and no compensation scheme. The item is lent between private individuals, under their own responsibility.</p>
         <ul style={listStyle}>
-          <li>Intentional damage or negligence</li>
-          <li>Theft of the item by the Renter</li>
-          <li>Damage exceeding €500 (Renter remains liable for the excess)</li>
-          <li>Third-party property damage or personal injury</li>
+          <li>The Renter is liable to the Owner for damage, loss or theft of the item.</li>
+          <li>The Owner is responsible for the item being safe and fit for its stated use.</li>
+          <li>Both parties are strongly advised to <strong>photograph the item at handover and at return</strong> — the platform provides this for each booking, and the photos remain visible to both.</li>
+          <li>Check whether your home insurance (<em>responsabilité civile familiale</em>) covers this type of loan.</li>
         </ul>
-        <p>Renters remain fully liable for damage or loss beyond the insurance coverage. Owners are encouraged to take photos of items before and after each rental as evidence.</p>
-        <p><strong>RentIt's liability</strong> is limited to the fees paid to RentIt in the 3 months preceding the event giving rise to the claim. RentIt is not liable for: loss of earnings, consequential or indirect damages, disputes between users, or item quality issues.</p>
+        <p><strong>RentIt is not a party to the rental agreement.</strong> Its role is limited to putting people in touch and hosting their exchanges. RentIt is not liable for: the condition or quality of items, loss of earnings, consequential or indirect damages, or disputes between users.</p>
       </Section>
 
       <Section title="9. Disputes Between Users">
@@ -233,50 +228,67 @@ function TermsFR() {
         </ul>
       </Section>
 
-      <Section title="3. Paiements et frais">
+      <Section title="3. Paiements entre utilisateurs">
+        <p><strong>Aucun paiement ne transite par RentIt.</strong> Le prix de la location et l'éventuel dépôt de garantie sont convenus et réglés <strong>directement entre le Locataire et le Propriétaire</strong>, en espèces, lors de la remise. RentIt ne détient aucun fonds, ne traite aucune carte et ne prélève aucune commission.</p>
+
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
           <thead>
             <tr style={{ background: '#f8f9ff' }}>
-              <Th>Frais</Th>
               <Th>Montant</Th>
-              <Th>Payé par</Th>
+              <Th>Fixé par</Th>
+              <Th>Réglé</Th>
             </tr>
           </thead>
           <tbody>
-            <Tr data={['Prix de location', 'Fixé par le Propriétaire', 'Locataire']} />
-            <Tr data={['Dépôt de garantie', 'Fixé par le Propriétaire — remboursable', 'Locataire']} />
-            <Tr data={['Frais d\'assurance', '3,00 € par jour', 'Locataire (couvre les dommages jusqu\'à 500 €)']} />
-            <Tr data={['Commission plateforme', '12 % du prix de location', 'Déduit du versement au Propriétaire']} />
+            <Tr data={['Prix de location', "Le Propriétaire, affiché sur l'annonce", 'Entre les parties, à la remise']} />
+            <Tr data={['Dépôt de garantie (le cas échéant)', "Le Propriétaire, affiché sur l'annonce", 'Entre les parties, restitué à la fin']} />
           </tbody>
         </table>
-        <p style={{ fontSize: '13px', color: '#888', marginTop: '10px', fontStyle: 'italic' }}>
-          * Pendant la période bêta, la commission et les frais d'assurance sont offerts. Le tarif en vigueur est toujours affiché lors du paiement.
+
+        <ul style={listStyle}>
+          <li>Les montants affichés sur la plateforme sont <strong>indicatifs</strong> : ils reprennent ce que le Propriétaire a publié, et non une somme encaissée par RentIt.</li>
+          <li>RentIt n'est pas un prestataire de services de paiement et n'intervient pas dans le règlement.</li>
+          <li><strong>L'utilisation de la plateforme est actuellement gratuite.</strong> Cela peut évoluer : si des fonctionnalités payantes sont introduites, les utilisateurs en seront informés à l'avance et aucun montant ne sera jamais prélevé sans accord préalable.</li>
+        </ul>
+      </Section>
+
+      <Section title="4. Annulations">
+        <p>Chaque partie peut annuler tant que l'outil n'a pas changé de mains. L'annulation est enregistrée avec son auteur, sa date et son motif, et l'autre partie en est informée par e-mail.</p>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
+          <thead>
+            <tr style={{ background: '#f8f9ff' }}>
+              <Th>Statut de la réservation</Th>
+              <Th>Qui peut annuler</Th>
+            </tr>
+          </thead>
+          <tbody>
+            <Tr data={["En attente d'approbation", 'Le Locataire (le Propriétaire refuse la demande)']} />
+            <Tr data={['Confirmée, outil pas encore remis', "L'une ou l'autre partie"]} />
+            <Tr data={['En cours (outil remis)', 'Personne — la location se termine par le retour']} />
+          </tbody>
+        </table>
+        <p style={{ fontSize: '13px', color: '#666' }}>
+          RentIt ne détenant jamais votre argent, RentIt n'a rien à rembourser. Toute somme déjà échangée se règle entre les parties.
         </p>
       </Section>
 
-      <Section title="4. Annulations et remboursements">
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
-          <thead>
-            <tr style={{ background: '#f8f9ff' }}>
-              <Th>Annulé par</Th>
-              <Th>Délai</Th>
-              <Th>Remboursement</Th>
-            </tr>
-          </thead>
-          <tbody>
-            <Tr data={['Locataire', 'Plus de 48h avant le début', 'Remboursement 100 % location + dépôt']} />
-            <Tr data={['Locataire', 'Moins de 48h avant le début', 'Remboursement 50 % location ; dépôt remboursé']} />
-            <Tr data={['Locataire', 'Après le début de la location', 'Pas de remboursement pour les jours écoulés']} />
-            <Tr data={['Propriétaire', 'À tout moment avant le début', 'Remboursement 100 % au Locataire']} />
-          </tbody>
-        </table>
+      <Section title="5. Responsabilité">
+        <p><strong>RentIt ne fournit aucune assurance.</strong> Il n'existe ni couverture des dommages, ni fonds de garantie, ni indemnisation. L'outil est prêté entre particuliers, sous leur propre responsabilité.</p>
+        <ul style={listStyle}>
+          <li>Le Locataire répond envers le Propriétaire des dommages, de la perte ou du vol de l'outil.</li>
+          <li>Le Propriétaire répond de la sécurité de l'outil et de son aptitude à l'usage annoncé.</li>
+          <li>Il est vivement conseillé aux deux parties de <strong>photographier l'outil à la remise et au retour</strong> — la plateforme le permet pour chaque réservation, et les photos restent visibles des deux côtés.</li>
+          <li>Vérifiez si votre assurance <em>responsabilité civile familiale</em> couvre ce type de prêt.</li>
+        </ul>
+        <p><strong>RentIt n'est pas partie au contrat de location.</strong> Son rôle se limite à mettre les personnes en relation et à héberger leurs échanges. RentIt n'est pas responsable de l'état ou de la qualité des outils, des pertes de revenus, des dommages indirects, ni des litiges entre utilisateurs.</p>
       </Section>
 
-      <Section title="5. Droit applicable">
+      <Section title="6. Droit applicable">
         <p>Les présentes CGU sont régies par le <strong>droit belge</strong>. Tout litige relève de la compétence exclusive des tribunaux de <strong>Bruxelles, Belgique</strong>. Résolution en ligne des litiges : <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer">ec.europa.eu/consumers/odr</a></p>
       </Section>
 
-      <Section title="6. Contact">
+      <Section title="7. Contact">
         <p><strong>{COMPANY}</strong> — {ADDRESS}<br />
           Juridique : <a href={`mailto:${EMAIL}`}>{EMAIL}</a> | Support : <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
         </p>
@@ -309,50 +321,67 @@ function TermsNL() {
         </ul>
       </Section>
 
-      <Section title="3. Betalingen en kosten">
+      <Section title="3. Betalingen tussen gebruikers">
+        <p><strong>Er verloopt geen enkele betaling via RentIt.</strong> De huurprijs en een eventuele borg worden <strong>rechtstreeks tussen Huurder en Verhuurder</strong> afgesproken en contant betaald bij de overhandiging. RentIt houdt geen geld aan, verwerkt geen kaarten en neemt geen commissie.</p>
+
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
           <thead>
             <tr style={{ background: '#f8f9ff' }}>
-              <Th>Kosten</Th>
               <Th>Bedrag</Th>
-              <Th>Betaald door</Th>
+              <Th>Vastgesteld door</Th>
+              <Th>Betaald</Th>
             </tr>
           </thead>
           <tbody>
-            <Tr data={['Huurprijs', 'Vastgesteld door Verhuurder', 'Huurder']} />
-            <Tr data={['Borg (indien van toepassing)', 'Vastgesteld door Verhuurder — terugbetaalbaar', 'Huurder']} />
-            <Tr data={['Verzekeringsbijdrage', '€ 3,00 per dag', 'Huurder (dekt schade tot € 500)']} />
-            <Tr data={['Platformcommissie', '12% van de huurprijs', 'Ingehouden op uitbetaling Verhuurder']} />
+            <Tr data={['Huurprijs', 'Verhuurder, vermeld in de advertentie', 'Tussen partijen, bij de overhandiging']} />
+            <Tr data={['Borg (indien van toepassing)', 'Verhuurder, vermeld in de advertentie', 'Tussen partijen, terug bij afloop']} />
           </tbody>
         </table>
-        <p style={{ fontSize: '13px', color: '#888', marginTop: '10px', fontStyle: 'italic' }}>
-          * Tijdens de bètaperiode worden commissie en verzekeringkosten niet in rekening gebracht. De actuele prijzen worden altijd getoond bij het afrekenen.
+
+        <ul style={listStyle}>
+          <li>De op het platform getoonde bedragen zijn <strong>indicatief</strong>: ze geven weer wat de Verhuurder heeft gepubliceerd, niet een som die RentIt int.</li>
+          <li>RentIt is geen betaaldienstverlener en komt niet tussen bij de afrekening.</li>
+          <li><strong>Het gebruik van het platform is momenteel gratis.</strong> Dit kan veranderen: als betalende functies worden ingevoerd, worden gebruikers vooraf geïnformeerd en wordt nooit een bedrag aangerekend zonder voorafgaande toestemming.</li>
+        </ul>
+      </Section>
+
+      <Section title="4. Annuleringen">
+        <p>Elke partij kan annuleren zolang het gereedschap niet is overhandigd. De annulering wordt vastgelegd met auteur, datum en reden, en de andere partij wordt per e-mail verwittigd.</p>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
+          <thead>
+            <tr style={{ background: '#f8f9ff' }}>
+              <Th>Status van de reservering</Th>
+              <Th>Wie kan annuleren</Th>
+            </tr>
+          </thead>
+          <tbody>
+            <Tr data={['In afwachting van goedkeuring', 'De Huurder (de Verhuurder weigert de aanvraag)']} />
+            <Tr data={['Bevestigd, gereedschap nog niet overhandigd', 'Beide partijen']} />
+            <Tr data={['Lopend (gereedschap overhandigd)', 'Niemand — de verhuur eindigt met de teruggave']} />
+          </tbody>
+        </table>
+        <p style={{ fontSize: '13px', color: '#666' }}>
+          Omdat RentIt nooit uw geld aanhoudt, heeft RentIt niets terug te betalen. Reeds uitgewisselde bedragen worden tussen de partijen geregeld.
         </p>
       </Section>
 
-      <Section title="4. Annuleringen en terugbetalingen">
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
-          <thead>
-            <tr style={{ background: '#f8f9ff' }}>
-              <Th>Geannuleerd door</Th>
-              <Th>Tijdstip</Th>
-              <Th>Terugbetaling</Th>
-            </tr>
-          </thead>
-          <tbody>
-            <Tr data={['Huurder', 'Meer dan 48u voor aanvang', '100% huur + borg terugbetaald']} />
-            <Tr data={['Huurder', 'Minder dan 48u voor aanvang', '50% huur; borg terugbetaald']} />
-            <Tr data={['Huurder', 'Na aanvang verhuur', 'Geen terugbetaling voor verstreken dagen']} />
-            <Tr data={['Verhuurder', 'Voor aanvang', '100% terugbetaling aan Huurder']} />
-          </tbody>
-        </table>
+      <Section title="5. Aansprakelijkheid">
+        <p><strong>RentIt biedt geen verzekering.</strong> Er is geen schadedekking, geen waarborgfonds en geen vergoedingsregeling. Het gereedschap wordt tussen particulieren uitgeleend, onder hun eigen verantwoordelijkheid.</p>
+        <ul style={listStyle}>
+          <li>De Huurder is tegenover de Verhuurder aansprakelijk voor schade, verlies of diefstal van het gereedschap.</li>
+          <li>De Verhuurder staat in voor de veiligheid van het gereedschap en de geschiktheid voor het aangekondigde gebruik.</li>
+          <li>Beide partijen wordt sterk aangeraden het gereedschap <strong>te fotograferen bij de overhandiging en bij de teruggave</strong> — het platform voorziet dit per reservering, en de foto's blijven voor beide zichtbaar.</li>
+          <li>Ga na of uw <em>familiale burgerlijke aansprakelijkheidsverzekering</em> dit soort uitlening dekt.</li>
+        </ul>
+        <p><strong>RentIt is geen partij bij de huurovereenkomst.</strong> De rol beperkt zich tot het in contact brengen van mensen en het hosten van hun uitwisselingen. RentIt is niet aansprakelijk voor de staat of kwaliteit van het gereedschap, gederfde inkomsten, indirecte schade of geschillen tussen gebruikers.</p>
       </Section>
 
-      <Section title="5. Toepasselijk recht">
+      <Section title="6. Toepasselijk recht">
         <p>Deze Voorwaarden zijn onderworpen aan het <strong>Belgisch recht</strong>. Geschillen vallen onder de exclusieve bevoegdheid van de rechtbanken van <strong>Brussel, België</strong>. Online geschillenbeslechting: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer">ec.europa.eu/consumers/odr</a></p>
       </Section>
 
-      <Section title="6. Contact">
+      <Section title="7. Contact">
         <p><strong>{COMPANY}</strong> — {ADDRESS}<br />
           Juridisch: <a href={`mailto:${EMAIL}`}>{EMAIL}</a> | Support: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
         </p>
