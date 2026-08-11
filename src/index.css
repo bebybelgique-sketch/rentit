@@ -189,7 +189,13 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   border-bottom: 1px solid rgba(242,240,235,0.1);
   position: sticky;
   top: 0;
-  z-index: 100;
+  /* Выше баннера cookies (9999). Меню открывается ВНУТРИ .navbar, значит
+     собственный z-index выпадающего списка считается уже внутри этого
+     слоя — поднимать надо саму шапку, иначе баннер перекрывает меню.
+     На телефоне это перекрытие делало навигацию нерабочей: посетитель
+     открывал бургер и не мог нажать ни одну ссылку. Проверено браузером
+     на проде (tests/mobile-nav.spec.ts), по CSS такое не видно. */
+  z-index: 10000;
   backdrop-filter: blur(20px) saturate(1.5);
   -webkit-backdrop-filter: blur(20px) saturate(1.5);
 }
