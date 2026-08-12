@@ -293,5 +293,10 @@
   },
   "loading": "Loading…",
   "routeError": "This page could not load. A newer version of the site may be available.",
-  "routeRetry": "Reload the page"
+  "routeRetry": "Reload the page",
+  "loadFailed": "Your listings could not be loaded.",
+  "retry": "Try again",
+  "itemGone": "This tool is no longer listed.",
+  "itemGoneHint": "It was removed, or the link is wrong.",
+  "backHome": "Home"
 }
