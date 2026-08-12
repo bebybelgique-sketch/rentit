@@ -38,9 +38,32 @@ export default function ListItem() {
   const [error, setError] = useState('')
   const [isDirty, setIsDirty] = useState(false)
   const [needsPhoto, setNeedsPhoto] = useState(false)
+  // Просьбу о фото можно отложить. Отказ живёт в состоянии страницы:
+  // повторно в том же заходе она не показывается, но и не запоминается
+  // навсегда — при следующем объявлении спросим снова, мягко.
+  const [photoDeferred, setPhotoDeferred] = useState(false)
   const [estimatedValue, setEstimatedValue] = useState('')
 
-  // Check avatar_url — block listing without profile photo
+  // Есть ли фото профиля. Раньше отсутствие фото ЗАКРЫВАЛО выкладку:
+  // человек нажимал «déposer un outil» и получал вместо формы требование
+  // сфотографироваться. Это точка максимального трения при минимальной
+  // пользе — он ещё ни с кем не встретился, броней нет, а его уже не
+  // пускают. При нуле предложения это самая дорогая протечка воронки.
+  //
+  // Как делают площадки (проверено 12.08): на Leboncoin и Vinted фото
+  // профиля рекомендуется, но публиковать без него можно. Airbnb в
+  // октябре 2018 пошёл дальше и УБРАЛ фото гостя из экрана запроса —
+  // открывает его только после подтверждения брони, потому что видимое
+  // фото до решения измеримо повышало отказы по «неправильному» имени.
+  // Жёсткое требование фото живёт там, где человек садится в чужую
+  // машину или ночует в чужом доме, и где площадка держит деньги. Мы не
+  // оттуда: денег не касаемся, ночевать не сводим.
+  //
+  // Свой же принцип у продукта уже есть и он верный: телефон второй
+  // стороны открывается только после подтверждённой брони. Личность
+  // раскрывается тогда, когда она нужна, — в момент встречи, а не в
+  // момент публикации. Фото приведено к тому же правилу: просьба, а не
+  // стена. НЕ возвращать блокировку без отдельного решения.
   useEffect(() => {
     if (!user) return
     supabase.from('users').select('avatar_url').eq('id', user.id).single()
@@ -219,7 +242,7 @@ export default function ListItem() {
 
   const isLocked = uploading
 
-  if (needsPhoto) return (
+  if (needsPhoto && !photoDeferred) return (
     <div className="page" style={{ maxWidth: '480px', margin: '60px auto', textAlign: 'center' }}>
       <div style={{ fontSize: '56px', marginBottom: '20px' }}>📸</div>
       <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '12px', letterSpacing: '-0.02em' }}>
@@ -231,9 +254,20 @@ export default function ListItem() {
       <p style={{ color: 'var(--muted)', fontSize: '14px', marginBottom: '32px' }}>
         {t('addPhotoHint')}
       </p>
-      <Link to="/profile" className="btn btn-primary" style={{ minHeight: '48px', fontSize: '16px', padding: '14px 32px' }}>
-        {t('addPhotoBtn')}
-      </Link>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', alignItems: 'center' }}>
+        <Link to="/profile" className="btn btn-primary" style={{ minHeight: '48px', fontSize: '16px', padding: '14px 32px' }}>
+          {t('addPhotoBtn')}
+        </Link>
+        {/* Выход, которого не было. Без него экран — стена. */}
+        <button
+          type="button"
+          onClick={() => setPhotoDeferred(true)}
+          className="btn btn-secondary"
+          style={{ minHeight: '44px', fontSize: '15px', padding: '10px 24px' }}
+        >
+          {t('addPhotoLater')}
+        </button>
+      </div>
     </div>
   )
 

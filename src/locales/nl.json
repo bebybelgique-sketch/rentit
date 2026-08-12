@@ -3,7 +3,7 @@
   "addPhotoBtn": "Voeg mijn foto toe →",
   "addPhotoDesc": "Een foto helpt je buur om je te herkennen bij de overdracht.",
   "addPhotoFirst": "Voeg een profielfoto toe",
-  "addPhotoHint": "Het kost 10 seconden en versterkt onmiddellijk het vertrouwen.",
+  "addPhotoHint": "Optioneel. Het telt vooral bij de overdracht, wanneer jullie elkaar ontmoeten.",
   "alreadyAccount": "Al een account?",
   "approve": "Goedkeuren",
   "booking": {
@@ -250,5 +250,6 @@
   "toolsAvailable_other": "{{count}} stukken gereedschap beschikbaar",
   "totalPrice": "Totaal",
   "welcome": "Welkom",
-  "yourListing": "Dit is jouw advertentie"
+  "yourListing": "Dit is jouw advertentie",
+  "addPhotoLater": "Later — mijn gereedschap plaatsen"
 }

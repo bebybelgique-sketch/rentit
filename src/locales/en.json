@@ -2,8 +2,8 @@
   "addItemTitle": "Add New Item",
   "addPhotoBtn": "Go to profile",
   "addPhotoDesc": "A photo helps your neighbour recognise you when you hand the tool over.",
-  "addPhotoFirst": "Add a profile photo first",
-  "addPhotoHint": "Go to your profile to add a photo, then come back to list your tool.",
+  "addPhotoFirst": "Add a profile photo",
+  "addPhotoHint": "Optional. It matters most at handover, when you actually meet.",
   "alreadyAccount": "Already have an account?",
   "approve": "Approve",
   "booking": {
@@ -250,5 +250,6 @@
   "toolsAvailable_other": "{{count}} tools available",
   "totalPrice": "Total",
   "welcome": "Welcome",
-  "yourListing": "This is your listing"
+  "yourListing": "This is your listing",
+  "addPhotoLater": "Later — list my tool"
 }
