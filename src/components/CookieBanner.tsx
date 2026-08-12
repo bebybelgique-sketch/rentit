@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 type Consent = { necessary: true; functional: boolean; analytics: boolean }
 
 const STORAGE_KEY = 'rentit_cookie_consent'
 
 export default function CookieBanner() {
+  const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [functional, setFunctional] = useState(true)
@@ -60,10 +62,10 @@ export default function CookieBanner() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                   <div>
                     <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#999', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                      Privacy notice · GDPR compliant
+                      {t('cookies.header')}
                     </div>
                     <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#080808', letterSpacing: '-0.03em', lineHeight: 1.2, margin: 0 }}>
-                      This site uses cookies
+                      {t('cookies.title')}
                     </h2>
                   </div>
                   <span style={{ fontSize: '17px', fontWeight: '800', letterSpacing: '-0.03em', color: '#080808', flexShrink: 0, marginLeft: '16px', paddingTop: '18px' }}>
@@ -72,23 +74,22 @@ export default function CookieBanner() {
                 </div>
 
                 <p style={{ fontSize: '14px', color: '#555', marginBottom: '20px', lineHeight: 1.65 }}>
-                  We use cookies to keep you logged in and, optionally, to
-                  collect anonymous analytics. We do not sell your data or use advertising cookies.{' '}
+                  {t('cookies.lede')}{' '}
                   <Link to="/privacy" style={{ color: '#080808', fontWeight: '600', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
-                    Privacy policy →
+                    {t('cookies.privacyLink')}
                   </Link>
                 </p>
 
                 {/* Cookie table */}
                 <div style={{ border: '1px solid #e8e6e0', borderRadius: '4px', marginBottom: '24px', overflow: 'hidden' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', padding: '10px 14px', background: '#F5F4F0', borderBottom: '1px solid #e8e6e0' }}>
-                    <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Cookie type</span>
-                    <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Status</span>
+                    <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('cookies.table.type')}</span>
+                    <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('cookies.table.status')}</span>
                   </div>
                   {[
-                    { label: 'Strictly necessary', desc: 'Session, authentication, security', required: true },
-                    { label: 'Functional', desc: 'User preferences', required: true },
-                    { label: 'Analytics', desc: 'Anonymous usage statistics', required: false },
+                    { label: t('cookies.types.necessary.label'), desc: t('cookies.types.necessary.desc'), required: true },
+                    { label: t('cookies.types.functional.label'), desc: t('cookies.types.functional.desc'), required: true },
+                    { label: t('cookies.types.analytics.label'), desc: t('cookies.types.analytics.desc'), required: false },
                   ].map((row, i) => (
                     <div key={row.label} style={{
                       display: 'grid', gridTemplateColumns: '1fr auto',
@@ -106,7 +107,7 @@ export default function CookieBanner() {
                         color: row.required ? '#444' : '#999',
                         border: `1px solid ${row.required ? '#d0cec8' : '#e8e6e0'}`,
                       }}>
-                        {row.required ? 'REQUIRED' : 'OPTIONAL'}
+                        {row.required ? t('cookies.labels.required') : t('cookies.labels.optional')}
                       </span>
                     </div>
                   ))}
@@ -120,7 +121,7 @@ export default function CookieBanner() {
                     padding: '14px', fontSize: '14px', fontWeight: '700',
                     cursor: 'pointer', width: '100%', letterSpacing: '-0.01em',
                   }}>
-                    Accept all cookies
+                    {t('cookies.buttons.acceptAll')}
                   </button>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button onClick={rejectAll} style={{
@@ -129,7 +130,7 @@ export default function CookieBanner() {
                       padding: '11px', fontSize: '13px', cursor: 'pointer',
                       letterSpacing: '-0.01em',
                     }}>
-                      Decline optional
+                      {t('cookies.buttons.declineOptional')}
                     </button>
                     <button onClick={() => setExpanded(true)} style={{
                       flex: 1, background: 'transparent', color: '#080808',
@@ -137,7 +138,7 @@ export default function CookieBanner() {
                       padding: '11px', fontSize: '13px', fontWeight: '600',
                       cursor: 'pointer', letterSpacing: '-0.01em',
                     }}>
-                      Manage preferences
+                      {t('cookies.buttons.managePreferences')}
                     </button>
                   </div>
                 </div>
@@ -147,7 +148,7 @@ export default function CookieBanner() {
                 {/* Preferences header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#999', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    Cookie preferences
+                    {t('cookies.preferences.header')}
                   </div>
                   <button onClick={() => setExpanded(false)} style={{
                     background: 'none', border: 'none', fontSize: '20px',
@@ -155,14 +156,14 @@ export default function CookieBanner() {
                   }}>←</button>
                 </div>
                 <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#080808', letterSpacing: '-0.03em', marginBottom: '20px' }}>
-                  Manage cookies
+                  {t('cookies.preferences.title')}
                 </h3>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0', border: '1px solid #e8e6e0', borderRadius: '4px', overflow: 'hidden', marginBottom: '24px' }}>
                   {[
-                    { label: 'Strictly necessary', desc: 'Required for login, sessions and security. Cannot be disabled.', checked: true, disabled: true, onChange: undefined },
-                    { label: 'Functional', desc: 'Required for saved preferences.', checked: functional, disabled: false, onChange: setFunctional },
-                    { label: 'Analytics', desc: 'Anonymous usage data only. No personal data, no advertising.', checked: analytics, disabled: false, onChange: setAnalytics },
+                    { label: t('cookies.types.necessary.label'), desc: t('cookies.types.necessary.desc'), checked: true, disabled: true, onChange: undefined },
+                    { label: t('cookies.types.functional.label'), desc: t('cookies.types.functional.desc'), checked: functional, disabled: false, onChange: setFunctional },
+                    { label: t('cookies.types.analytics.label'), desc: t('cookies.types.analytics.desc'), checked: analytics, disabled: false, onChange: setAnalytics },
                   ].map((row, i) => (
                     <div key={row.label} style={{
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -178,7 +179,7 @@ export default function CookieBanner() {
                               fontSize: '9px', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
                               background: 'rgba(8,8,8,0.07)', color: '#666',
                               padding: '2px 6px', borderRadius: '2px', border: '1px solid #d0cec8',
-                            }}>ALWAYS ON</span>
+                            }}>{t('cookies.labels.alwaysOn')}</span>
                           )}
                         </div>
                         <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>{row.desc}</div>
@@ -194,14 +195,14 @@ export default function CookieBanner() {
                     border: '1.5px solid #ddd', borderRadius: '3px',
                     padding: '11px', fontSize: '13px', cursor: 'pointer',
                   }}>
-                    Decline optional
+                    {t('cookies.buttons.declineOptional')}
                   </button>
                   <button onClick={saveCustom} style={{
                     flex: 1, background: '#080808', color: '#F5F4F0',
                     border: 'none', borderRadius: '3px',
                     padding: '11px', fontSize: '13px', fontWeight: '700', cursor: 'pointer',
                   }}>
-                    Save preferences
+                    {t('cookies.buttons.savePreferences')}
                   </button>
                 </div>
               </>
