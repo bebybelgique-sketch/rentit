@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Mono:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -13,42 +13,87 @@
    --text-primary, --line. Такое имя остаётся верным при смене темы,
    в отличие от --white, который на светлой теме означал бы чёрный.
 
-   Этот шаг намеренно НИЧЕГО не меняет на экране: новые имена — псевдонимы
-   существующих значений, ни один компонент их пока не использует. Смысл в
-   том, чтобы перевод приложения на тёмную тему стал заменой одного блока,
-   а не переписыванием разметки. Проверяемость важнее скорости: правка, от
-   которой ничего не должно измениться, либо действительно ничего не меняет,
-   либо ошибка видна сразу.
+   Тогда этот шаг намеренно ничего не менял на экране — имена вводились
+   псевдонимами. 12.08 он окупился: смена всей палитры продукта свелась
+   к замене значений в блоке ниже, а не к переписыванию разметки.
+   ────────────────────────────────────────────────────────────────── */
+/* ── Палитра инструмента: КРАСНЫЙ · ЖЁЛТЫЙ · ЧЁРНЫЙ · СЕРЕБРО ──────
+   Принята 12.08 взамен лайма #ADFF2F на чёрном и пары Syne + DM Mono.
+   Прежний набор Рамзан отверг целиком: «это какой-то 90-й» — и по делу,
+   кислотный лайм на чёрном это язык рейв-флаера, а не соседского
+   сервиса. Новый набор — язык самого инструмента: в нём живут DeWalt,
+   Milwaukee, Hilti, Stanley.
+
+   У каждого цвета РОВНО ОДНА работа, второй ему не дают:
+
+     ЧЁРНЫЙ  #121417  чернила и тёмные полосы
+     СЕРЕБРО #CFD4DA  металл: рамки, поверхности, кромки
+     КРАСНЫЙ #C8102E  ТОЛЬКО действие — кнопка, которую жмут
+     ЖЁЛТЫЙ  #FFC400  сигнал, ТОЛЬКО на чёрном
+
+   Про жёлтый отдельно, это замер а не вкус: на светлом фоне #F1F3F5 он
+   даёт контраст 1.44:1 при норме 4.5:1 — текстом быть не может. На
+   чёрном даёт 11.55:1. Поэтому он живёт на тёмных полосах как жёлтая
+   маркировка на корпусе, а на светлом ему разрешена одна роль —
+   толстая линейка слева, не текст.
+
+   Про красный: он ЕДИНСТВЕННОЕ действие. Не цена, не иконка, не
+   выделение. Цена красным читается как скидка или ошибка, и через
+   месяц никто уже не поймёт, где на странице настоящее действие.
    ────────────────────────────────────────────────────────────────── */
 :root {
-  --primary: #080808;
-  --primary-dark: #000000;
-  --accent: #ADFF2F;
-  --success: #28a745;
-  --danger: #dc3545;
-  --warning: #f5a623;
-  --text: #1a1a1a;
-  --muted: #666;
-  --border: #e8e6e0;
-  --bg: #F5F4F0;
-  --card: #ffffff;
-  --radius: 4px;
-  --font-sans: 'Syne', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'DM Mono', 'Fira Code', monospace;
+  --primary: #121417;
+  --primary-dark: #0B0D0F;
 
-  /* Поверхности */
+  /* Роли действия и сигнала. Раньше здесь был один --accent на всё
+     сразу: фокус, кнопка, цена, скелетон. Одно имя на четыре работы —
+     то, из-за чего цена и кнопка выглядели одинаково важными. */
+  --action: #C8102E;
+  --action-deep: #A00D25;
+  --signal: #FFC400;
+  /* Псевдоним для старых мест: --accent теперь означает «действие».
+     Точки, где им красили НЕ действие, вычищены отдельно. */
+  --accent: var(--action);
+
+  --success: #1E7A3C;
+  --danger: #C8102E;
+  --warning: #B4530F;
+  --text: #16181C;
+  --muted: #52585F;
+  --border: #CFD4DA;
+  --bg: #F1F3F5;
+  --card: #FAFBFC;
+  --radius: 6px;
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Моноширинного лица в продукте больше нет: подписи держатся на
+     верхнем регистре и разрядке, а не на моноширинности. Имя оставлено
+     псевдонимом, чтобы 43 места не переписывать в этой же правке —
+     это долг, а не решение. */
+  --font-mono: 'Source Sans 3', -apple-system, sans-serif;
+  --font-text: 'Source Sans 3', -apple-system, sans-serif;
+
+  /* Поверхности. Серебро — материал, а не фон: у него есть и плоские
+     тона, и «плита» — слабый вертикальный градиент, каким металл ловит
+     свет. Плита идёт только на мелочь: бирки, шильдики, кромки.
+     Градиент на больших площадях выглядит дёшево. */
   --surface:        var(--bg);
   --surface-raised: var(--card);
-  --surface-sunken: #ECEAE4;
+  --surface-sunken: #E4E8EC;
+  --silver-plate:   linear-gradient(180deg, #F4F6F8 0%, #DCE1E6 100%);
+  --silver-hair:    rgba(198, 205, 213, 0.30);
+  --silver-edge:    #AEB5BD;
 
   /* Текст */
   --text-primary:   var(--text);
   --text-secondary: var(--muted);
-  --text-on-accent: #080808;
+  --text-faint:     #6A7079;
+  --text-on-accent: #FFFFFF;
+  --text-on-dark:   #F0F1F3;
+  --text-on-dark-muted: #A8AEB6;
 
   /* Линии и состояния */
   --line:           var(--border);
-  --line-strong:    #d6d3ca;
+  --line-strong:    var(--silver-edge);
 
   /* Ритм: одна шкала на оба слоя, чтобы отступы совпадали.
      Замер 12.08: к этим переменным не обращались НИ РАЗУ, при 633 отступах
@@ -124,25 +169,31 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   outline-offset: 2px;
 }
 
+/* Главная кнопка — красная. Это и есть «действие»: на экране она должна
+   быть одна, и по ней сразу видно, что жать. Раньше здесь стоял чёрный
+   #080808 — тот же цвет, что у шапки, карточек и текста, отчего кнопка
+   переставала выделяться среди чёрного вокруг. */
 .btn-primary {
-  background: #080808;
-  color: #F5F4F0;
+  background: var(--action);
+  color: var(--text-on-accent);
 }
-.btn-primary:hover:not(:disabled) { background: #000; }
+.btn-primary:hover:not(:disabled) { background: var(--action-deep); }
 
 .btn-secondary {
-  background: transparent;
+  background: var(--card);
   color: var(--text);
-  border: 1px solid #c8c6c0;
+  border: 1px solid var(--silver-edge);
 }
-.btn-secondary:hover:not(:disabled) { background: rgba(0,0,0,0.04); border-color: #aaa; }
+.btn-secondary:hover:not(:disabled) { background: var(--surface-sunken); border-color: var(--text); }
 
+/* Оставлен как псевдоним: в разметке он ещё встречается, а отдельной
+   третьей роли у кнопок нет. Две роли — действие и всё остальное. */
 .btn-accent {
-  background: var(--accent);
-  color: #080808;
+  background: var(--action);
+  color: var(--text-on-accent);
   font-weight: 700;
 }
-.btn-accent:hover:not(:disabled) { opacity: 0.88; }
+.btn-accent:hover:not(:disabled) { background: var(--action-deep); }
 
 .btn-danger {
   background: var(--danger);
@@ -242,9 +293,13 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 }
 
 /* ── NAVBAR ─────────────────────────────────────────────────── */
+/* Ребро шапки собрано как на корпусе инструмента: чёрное тело, светлая
+   кромка металла, жёлтая маркировка. Жёлтый здесь законен — он лежит на
+   чёрном, а не на светлом, где был бы нечитаем. */
 .navbar {
-  background: #080808;
-  border-bottom: 1px solid rgba(242,240,235,0.1);
+  background: var(--primary);
+  border-bottom: 3px solid var(--signal);
+  box-shadow: inset 0 -4px 0 var(--silver-hair);
   position: sticky;
   top: 0;
   /* Выше баннера cookies (9999). Меню открывается ВНУТРИ .navbar, значит
@@ -271,11 +326,11 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   font-size: 17px;
   font-weight: 800;
   font-family: var(--font-sans);
-  color: #F2F0EB;
+  color: var(--text-on-dark);
   letter-spacing: -0.04em;
   text-decoration: none;
 }
-.navbar-logo span { color: #ADFF2F; }
+.navbar-logo span { color: var(--signal); }
 .navbar-logo:hover { text-decoration: none; opacity: 0.85; }
 
 /* Mobile: hidden by default, shown only when .open or desktop */
@@ -288,16 +343,20 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   color: rgba(242,240,235,0.5);
   transition: color 0.2s;
 }
-.navbar-link:hover { color: #F2F0EB; text-decoration: none; background: transparent; }
+.navbar-link:hover { color: var(--text-on-dark); text-decoration: none; background: transparent; }
 
+/* Кнопка в шапке — то же действие, что и всюду, значит тот же красный.
+   Раньше её здесь перекрашивали в светлую, и на чёрной шапке она была
+   заметнее главной кнопки страницы: два «самых важных» действия на
+   одном экране. */
 .navbar-links .btn-primary {
-  background: #F2F0EB;
-  color: #080808;
+  background: var(--action);
+  color: var(--text-on-accent);
   font-size: 13px;
   padding: 8px 18px;
   margin-left: 6px;
 }
-.navbar-links .btn-primary:hover { background: #fff; opacity: 1; }
+.navbar-links .btn-primary:hover { background: var(--action-deep); opacity: 1; }
 
 @media (max-width: 640px) {
   .navbar-link.hide-mobile { display: none; }
@@ -363,9 +422,9 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 }
 .chip:hover { border-color: #999; background: #f0ede8; }
 .chip.active {
-  background: #080808;
-  border-color: #080808;
-  color: #F2F0EB;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-on-dark);
 }
 
 /* ── SEARCH BAR ──────────────────────────────────────────────── */
@@ -432,7 +491,7 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   font-weight: 500;
 }
 .cal-day.booked { background: #fde8ea; color: var(--danger); }
-.cal-day.selected { background: #080808; color: #F2F0EB; }
+.cal-day.selected { background: var(--primary); color: var(--text-on-dark); }
 .cal-day.available:hover { background: #eee; cursor: pointer; }
 .cal-day.today { font-weight: 800; }
 .cal-header { font-size: 10px; font-weight: 500; font-family: var(--font-mono); color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -458,7 +517,7 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   display: block;
   width: 22px;
   height: 2px;
-  background: #F2F0EB;
+  background: var(--text-on-dark);
   border-radius: 2px;
   transition: all 0.2s;
 }
@@ -469,7 +528,7 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   top: 56px;
   left: 0;
   right: 0;
-  background: #080808;
+  background: var(--primary);
   border-top: 1px solid rgba(242,240,235,0.08);
   flex-direction: column;
   padding: 12px 20px 20px;
@@ -584,3 +643,120 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   text-decoration: none !important;
 }
 /* cache bust Mon Mar 30 22:59:58     2026 */
+
+/* ══════════════════════════════════════════════════════════════════
+   ЛЕНДИНГ
+   Раньше страница инжектила свой <style> строкой на 255 строк, со
+   своим сбросом, своим импортом шрифтов и СВОЕЙ палитрой — отсюда и
+   брались два разных продукта на стыке. Теперь она живёт на тех же
+   токенах, что и остальное приложение.
+   ══════════════════════════════════════════════════════════════════ */
+.lp-wrap { max-width: 1180px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 44px); }
+.lp-band { padding-block: clamp(48px, 8vw, 96px); }
+.lp-band-silver { background: var(--surface-sunken); }
+.lp-band-dark {
+  background: var(--primary); color: var(--text-on-dark);
+  border-top: 1px solid var(--silver-hair);
+  border-bottom: 1px solid var(--silver-hair);
+}
+.lp-band-line { border-top: 1px solid var(--line); }
+
+.lp-h1 {
+  font-family: var(--font-sans); font-weight: 700;
+  font-size: clamp(34px, 5.6vw, 62px); line-height: 1.12;
+  letter-spacing: -0.025em; margin: 0 0 var(--space-5);
+  max-width: 15ch; text-wrap: balance;
+}
+.lp-h2 {
+  font-family: var(--font-sans); font-weight: 700;
+  font-size: clamp(26px, 3.8vw, 40px); line-height: 1.12;
+  letter-spacing: -0.025em; margin: 0; text-wrap: balance;
+}
+.lp-h3 { font-family: var(--font-sans); font-weight: 700; font-size: 19px; letter-spacing: -0.02em; margin: 0 0 var(--space-2); }
+.lp-band-dark .lp-h2, .lp-band-dark .lp-h3 { color: #FFFFFF; }
+
+.lp-label {
+  font-family: var(--font-text); font-weight: 600; font-size: 12.5px;
+  letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 var(--space-4);
+  display: flex; align-items: center; gap: var(--space-2);
+}
+.lp-band-dark .lp-label { color: var(--signal); }
+
+.lp-lede { font-family: var(--font-text); font-size: clamp(16px, 1.7vw, 19px); line-height: 1.6; color: var(--muted); max-width: 54ch; margin: 0; }
+.lp-txt  { font-family: var(--font-text); font-size: 15.5px; line-height: 1.62; color: var(--muted); max-width: 62ch; margin: 0; }
+.lp-band-dark .lp-txt, .lp-band-dark .lp-lede { color: var(--text-on-dark-muted); }
+
+.lp-btns { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.lp-btn {
+  font-family: var(--font-text); font-weight: 600; font-size: 16px;
+  min-height: 48px; padding: 0 26px; border-radius: var(--radius);
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  text-decoration: none; border: 1px solid transparent;
+  transition: background 200ms, border-color 200ms, color 200ms;
+}
+.lp-btn:hover { text-decoration: none; }
+.lp-btn-do { background: var(--action); color: var(--text-on-accent); }
+.lp-btn-do:hover { background: var(--action-deep); color: var(--text-on-accent); }
+.lp-btn-alt { background: var(--card); color: var(--text); border-color: var(--silver-edge); }
+.lp-btn-alt:hover { background: var(--surface-sunken); border-color: var(--text); color: var(--text); }
+.lp-band-dark .lp-btn-alt { background: transparent; color: var(--text-on-dark); border-color: var(--silver-hair); }
+.lp-btn:focus-visible { outline: 3px solid var(--signal); outline-offset: 3px; }
+
+.lp-hero { padding-block: clamp(44px, 7vw, 88px); }
+.lp-hero-grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
+@media (max-width: 940px) { .lp-hero-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Жёлтому на светлом разрешена одна роль — линейка, не текст. */
+.lp-zero {
+  margin-top: var(--space-6); padding: var(--space-4) var(--space-5);
+  background: var(--card); border-left: 5px solid var(--signal);
+  border-radius: var(--radius); max-width: 54ch;
+  font-family: var(--font-text); font-size: 15.5px; line-height: 1.55; color: var(--text);
+  box-shadow: 0 1px 2px rgba(18,20,23,.05);
+}
+.lp-zero b { font-weight: 600; }
+
+.lp-shot { margin: 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: var(--primary); box-shadow: 0 1px 2px rgba(18,20,23,.06), 0 12px 28px rgba(18,20,23,.08); }
+.lp-shot img { display: block; width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4 / 3; }
+.lp-shot figcaption { font-family: var(--font-text); font-size: 12px; color: var(--text-on-dark-muted); padding: 10px var(--space-4); border-top: 1px solid var(--silver-hair); }
+
+.lp-cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-7); }
+@media (max-width: 880px) { .lp-cols3 { grid-template-columns: minmax(0, 1fr); } }
+
+.lp-step { background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--silver-edge); border-radius: var(--radius); padding: var(--space-5); }
+.lp-step-n {
+  font-family: var(--font-sans); font-weight: 700; font-size: 13px;
+  color: var(--primary); background: var(--silver-plate);
+  border: 1px solid var(--silver-edge);
+  width: 34px; height: 34px; border-radius: var(--radius);
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-bottom: var(--space-4); font-variant-numeric: tabular-nums;
+}
+
+.lp-warn-head { display: flex; align-items: flex-start; gap: var(--space-4); }
+.lp-warn-mark { flex-shrink: 0; width: 46px; height: 46px; border-radius: var(--radius); background: var(--signal); color: var(--primary); display: flex; align-items: center; justify-content: center; }
+.lp-limit { background: var(--primary-dark); border: 1px solid var(--silver-hair); border-top: 3px solid var(--signal); border-radius: var(--radius); padding: var(--space-5); }
+.lp-limit-x { color: var(--signal); display: block; margin-bottom: var(--space-3); }
+
+.lp-cats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-6); }
+@media (max-width: 880px) { .lp-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) { .lp-cats { grid-template-columns: minmax(0, 1fr); } }
+.lp-cat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-5) var(--space-4); text-decoration: none; color: var(--text); display: flex; gap: var(--space-4); align-items: flex-start; transition: border-color 200ms, box-shadow 200ms; }
+.lp-cat:hover { border-color: var(--primary); box-shadow: inset 3px 0 0 var(--action); text-decoration: none; color: var(--text); }
+.lp-cat:focus-visible { outline: 3px solid var(--action); outline-offset: 2px; }
+.lp-cat svg { color: var(--primary); flex-shrink: 0; width: 42px; height: 42px; padding: 8px; background: var(--silver-plate); border: 1px solid var(--line); border-radius: var(--radius); }
+.lp-cat-n { font-family: var(--font-sans); font-weight: 600; font-size: 16px; display: block; }
+.lp-cat-h { font-family: var(--font-text); font-size: 14px; color: var(--text-faint); margin-top: 2px; line-height: 1.45; display: block; }
+
+.lp-renter { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: clamp(24px, 5vw, 72px); }
+@media (max-width: 880px) { .lp-renter { grid-template-columns: minmax(0, 1fr); } }
+
+.lp-final { text-align: center; }
+.lp-final .lp-h2 { max-width: 20ch; margin: 0 auto var(--space-5); font-size: clamp(28px, 4.6vw, 50px); }
+.lp-final .lp-txt { margin: 0 auto var(--space-7); }
+.lp-final .lp-btns { justify-content: center; }
+
+.lp-foot { border-top: 1px solid var(--line); padding-block: var(--space-6); display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-6); justify-content: space-between; align-items: center; }
+.lp-foot-l { display: flex; flex-wrap: wrap; gap: var(--space-5); }
+.lp-foot-l a { font-family: var(--font-text); font-size: 14px; color: var(--muted); }

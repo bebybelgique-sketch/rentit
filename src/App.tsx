@@ -80,7 +80,10 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link to="/" className="navbar-logo" onClick={close}>RentIt</Link>
+        {/* Правило `.navbar-logo span` красит вторую половину имени
+            сигнальным цветом и существовало давно — но span в разметке
+            не было, и правило не применялось ни разу. */}
+        <Link to="/" className="navbar-logo" onClick={close}>Rent<span>It</span></Link>
         <button className="navbar-burger" onClick={() => setMenuOpen((o: boolean) => !o)} aria-label="Menu">
           <span /><span /><span />
         </button>
