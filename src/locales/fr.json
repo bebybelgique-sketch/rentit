@@ -3,7 +3,7 @@
   "addPhotoBtn": "Ajouter ma photo →",
   "addPhotoDesc": "Une photo aide votre voisin à vous reconnaître au moment de la remise.",
   "addPhotoFirst": "Ajoutez une photo de profil",
-  "addPhotoHint": "Ça prend 10 secondes et renforce la confiance immédiatement.",
+  "addPhotoHint": "Facultatif. Elle compte surtout au moment de la remise, quand vous vous rencontrez.",
   "alreadyAccount": "Déjà un compte ?",
   "approve": "Accepter",
   "booking": {
@@ -250,5 +250,6 @@
   "toolsAvailable_other": "{{count}} outils disponibles",
   "totalPrice": "Total",
   "welcome": "Bienvenue",
-  "yourListing": "C'est votre annonce"
+  "yourListing": "C'est votre annonce",
+  "addPhotoLater": "Plus tard — déposer mon outil"
 }
