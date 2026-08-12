@@ -4,7 +4,7 @@ import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-r
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import toast, { Toaster } from 'react-hot-toast' // Импортируем Toaster
 // --- НОВЫЕ ИМПОРТЫ ДЛЯ I18N ---
-import './i18n-next' // инициализация i18next (старая система живёт в ./i18n/)
+import i18n from './i18n-next' // импорт и инициализация i18next разом
 import { useTranslation } from 'react-i18next'
 // --------------------------
 import { useAuth } from './context/AuthContext'
@@ -19,9 +19,18 @@ const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000, // 10 минут (в react-query v5 cacheTime переименован)
     },
     mutations: {
-      // Глобальная обработка ошибок для мутаций
+      // Глобальная обработка ошибок для мутаций.
+      //
+      // Человеку — словарная строка, разработчику — техническая.
+      // Раньше здесь стояло `error?.message || t('errors.generic')`, то
+      // есть словарь включался только когда сообщения нет. А сообщение
+      // приходит от Supabase и всегда по-английски: французский
+      // пользователь получал «permission denied for table users»
+      // поверх французской страницы, и это ровно та строка, которую он
+      // видел вместо объяснения при блокере 11.08.
       onError: (error) => {
-        toast.error(error.message || 'Une erreur est survenue'); // сообщение пользователю — по-французски
+        console.error(error)
+        toast.error(i18n.t('errors.generic'))
       },
     },
   },
