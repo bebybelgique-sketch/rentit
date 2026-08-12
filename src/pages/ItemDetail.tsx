@@ -307,22 +307,27 @@ export default function ItemDetail() {
 
         {/* Main info */}
         <div className="card" style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 'var(--space-3)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
             <div>
-              <h1 style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '-0.025em', marginBottom: '10px' }}>{item.title}</h1>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {/* Название ведёт, цена уточняет. До правки было наоборот:
+                  цена 32px против заголовка 24px — крупнее оказывалось то,
+                  что отвечает на второй вопрос, а не на первый. */}
+              <h1 style={{ fontSize: 'clamp(var(--text-lg), 5vw, var(--text-xl))', fontWeight: '800', letterSpacing: '-0.025em', marginBottom: 'var(--space-3)' }}>{item.title}</h1>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
                 <span className="tag tag-gray">{CATEGORY_FR[item.category] || item.category}</span>
                 <span className="tag tag-gray">{CONDITION_FR[item.condition] || item.condition}</span>
                 {!item.available && <span className="tag tag-red">Indisponible</span>}
               </div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '32px', fontWeight: '800', letterSpacing: '-0.04em', lineHeight: 1 }}>
+            {/* На узком экране блок переносится под заголовок, и выравнивание
+                по правому краю разваливало его посреди пустого места. */}
+            <div className="item-price-block">
+              <div style={{ fontSize: 'var(--text-lg)', fontWeight: '800', letterSpacing: '-0.04em', lineHeight: 1 }}>
                 €{item.price_per_day.toFixed(2)}
               </div>
-              <div style={{ color: 'var(--muted)', fontSize: '13px', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>par jour</div>
+              <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>par jour</div>
               {item.deposit > 0 && (
-                <div style={{ color: 'var(--muted)', fontSize: '12px', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+                <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>
                   + €{item.deposit.toFixed(2)} caution
                 </div>
               )}
@@ -330,11 +335,11 @@ export default function ItemDetail() {
           </div>
 
           {item.description && (
-            <p style={{ color: '#555', lineHeight: '1.7', marginBottom: '16px', fontSize: '15px' }}>{item.description}</p>
+            <p style={{ color: '#555', lineHeight: '1.7', marginBottom: 'var(--space-4)', fontSize: 'var(--text-base)' }}>{item.description}</p>
           )}
 
           {item.address && (
-            <div style={{ color: 'var(--muted)', fontSize: '14px', fontFamily: 'var(--font-mono)' }}>📍 {item.address}</div>
+            <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>📍 {item.address}</div>
           )}
         </div>
 
