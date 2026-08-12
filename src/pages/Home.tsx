@@ -84,15 +84,38 @@ interface Item {
   address: string | null
   condition: string
   users: { full_name: string; rating_as_owner: number | null; is_pro: boolean }
+  /** Метры от точки посетителя. Считает база; null, если точки нет. */
+  distance_m: number | null
 }
 
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+/** Строка, как её отдаёт функция browse_items. */
+type BrowseRow = {
+  id: string
+  title: string
+  category: string
+  price_per_day: number
+  deposit: number
+  photos: string[] | null
+  lat: number | null
+  lng: number | null
+  address: string | null
+  condition: string
+  owner_id: string
+  owner_full_name: string | null
+  owner_rating: number | null
+  owner_is_pro: boolean | null
+  distance_m: number | null
+}
+
+/**
+ * Расстояние в том виде, в каком его читает человек: до километра — в метрах
+ * с шагом 50, дальше — километры. «0.8 km» и «1.24 km» одинаково неудобны,
+ * когда решаешь, дойти пешком или ехать.
+ */
+function formatDistance(km: number): string {
+  if (km < 1) return `à ${Math.max(50, Math.round(km * 1000 / 50) * 50)} m`
+  if (km < 10) return `à ${km.toFixed(1).replace('.', ',')} km`
+  return `à ${Math.round(km)} km`
 }
 
 function SkeletonCard() {
@@ -131,42 +154,48 @@ export default function Home() {
   const fetchItems = useCallback(async () => {
     setLoading(true)
     try {
-      let query = supabase
-        .from('items')
-        .select('id, title, category, price_per_day, deposit, photos, lat, lng, address, condition, users!owner_id(full_name, rating_as_owner, is_pro)')
-        .eq('available', true)
-        .order('created_at', { ascending: false })
-
-      if (category) query = query.eq('category', category)
-      if (search.trim()) query = query.ilike('title', `%${search.trim()}%`)
-      if (maxPrice) query = query.lte('price_per_day', parseFloat(maxPrice))
-      if (place.trim()) query = query.ilike('address', `%${place.trim()}%`)
-
-      const { data, error } = await query
+      // Всю выборку делает база одной функцией: радиус по GiST-индексу,
+      // категория, цена, текст, место и занятость на выбранные даты.
+      //
+      // Раньше браузер забирал все подходящие вещи и отсеивал их по радиусу
+      // сам. На пустой витрине разницы не видно, но чинить это надо до
+      // наплыва: под нагрузкой переписывать фильтр — худший момент.
+      //
+      // Точку передаём всегда, когда она известна, а радиус — только когда
+      // включена близость. Так расстояние приходит и для показа на карточке,
+      // а отбор по радиусу остаётся отдельным решением человека.
+      const { data, error } = await supabase.rpc('browse_items', {
+        p_lat: userPos?.lat ?? null,
+        p_lng: userPos?.lng ?? null,
+        p_radius_km: nearby && userPos ? radius : null,
+        p_category: category || null,
+        p_search: search.trim() || null,
+        p_max_price: maxPrice ? parseFloat(maxPrice) : null,
+        p_place: place.trim() || null,
+        p_start: startDate && endDate && endDate >= startDate ? startDate : null,
+        p_end: startDate && endDate && endDate >= startDate ? endDate : null,
+      })
       if (error) throw error
 
-      let result = (data || []) as unknown as Item[]
-
-      if (nearby && userPos) {
-        result = result.filter(item => {
-          if (!item.lat || !item.lng) return false
-          return haversineKm(userPos.lat, userPos.lng, item.lat, item.lng) <= radius
-        })
-      }
-
-      // Занятость считает сервер: политики на bookings не пускают
-      // постороннего к чужим броням, поэтому отфильтровать даты в
-      // браузере нечем. Функция отдаёт только «эта вещь занята» — тот же
-      // факт, что и календарь на странице вещи.
-      if (startDate && endDate && endDate >= startDate) {
-        const { data: busy, error: busyErr } = await supabase
-          .rpc('items_busy_between', { p_start: startDate, p_end: endDate })
-        // Ошибка запроса не должна молча превращаться в «всё свободно»:
-        // лучше показать всё, чем показать занятое как доступное.
-        if (busyErr) throw busyErr
-        const busyIds = new Set((busy || []).map((r: { item_id: string }) => r.item_id))
-        result = result.filter(item => !busyIds.has(item.id))
-      }
+      // Форма карточки не меняется: владелец собирается обратно в users.
+      const result: Item[] = ((data || []) as BrowseRow[]).map(row => ({
+        id: row.id,
+        title: row.title,
+        category: row.category,
+        price_per_day: Number(row.price_per_day),
+        deposit: Number(row.deposit),
+        photos: row.photos ?? [],
+        lat: row.lat,
+        lng: row.lng,
+        address: row.address,
+        condition: row.condition,
+        users: {
+          full_name: row.owner_full_name ?? '',
+          rating_as_owner: row.owner_rating,
+          is_pro: row.owner_is_pro ?? false,
+        },
+        distance_m: row.distance_m,
+      }))
 
       setItems(result)
     } catch (err) {
@@ -411,6 +440,18 @@ export default function Home() {
                     <div className="item-card-meta">
                       {item.address && `📍 ${item.address}`}
                     </div>
+                    {/* Расстояние уже посчитано для фильтра по радиусу, но до
+                        сих пор не доходило до экрана. Близость — главное
+                        обещание витрины («Les outils de votre voisin»), и
+                        человеку важно видеть, идти ему 800 м или 12 км. */}
+                    {item.distance_m != null && (
+                      <div style={{
+                        fontFamily: 'var(--font-mono)', fontSize: '11px',
+                        color: 'var(--muted)', marginTop: '4px',
+                      }}>
+                        {formatDistance(item.distance_m / 1000)}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
                       {(item.users as any)?.rating_as_owner ? (
                         <span className="rating" style={{ fontSize: '12px' }}>

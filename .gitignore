@@ -13,3 +13,8 @@ supabase/.temp/
 
 # Снимки живых страниц для разбора (scripts/capture-pages.mjs)
 capture/
+
+# Артефакты прогонов Playwright: скриншоты и трассы вошедшего тестового
+# аккаунта. Репозиторий публичный — им здесь не место.
+test-results/
+playwright-report/
