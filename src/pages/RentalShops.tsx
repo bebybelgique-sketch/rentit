@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { t } from '../i18n'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Страница для прокатных контор.
@@ -17,6 +17,7 @@ import { t } from '../i18n'
  * с ожиданием и уйдёт с обманом. Названные границы дешевле разбирательства.
  */
 export default function RentalShops() {
+  const { t } = useTranslation()
   return (
     <div className="page">
       <div style={{ maxWidth: '720px', margin: '0 auto' }}>

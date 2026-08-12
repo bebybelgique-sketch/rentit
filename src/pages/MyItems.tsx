@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { t } from '../i18n'
+import { useTranslation } from 'react-i18next'
 import { categoryEmoji, statusLabelKey } from '../domain/catalog'
 
 // Собственные карты убраны в src/domain/catalog.ts. Здесь было две беды:
@@ -34,6 +34,7 @@ interface Item {
 }
 
 export default function MyItems() {
+  const { t } = useTranslation()
   const { user, accessToken } = useAuth()
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)

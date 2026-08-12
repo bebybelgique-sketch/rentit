@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useBeforeUnload, Link } from 'react-router-dom'
-import { t } from '../i18n'
+import { useTranslation } from 'react-i18next'
 import { CATEGORIES, CONDITIONS, categoryPriceHintKey } from '../domain/catalog'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext'
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 
 export default function ListItem() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)

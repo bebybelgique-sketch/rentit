@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { t, getLang } from '../i18n'
-import { translations } from '../i18n'
+import { useTranslation } from 'react-i18next'
 import {
   CATEGORIES, categoryEmoji, categoryLabelKey, conditionLabelKey, isCategoryValue,
 } from '../domain/catalog'
@@ -118,6 +117,7 @@ function SkeletonCard() {
 }
 
 export default function Home() {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
@@ -442,7 +442,7 @@ export default function Home() {
             color: 'var(--muted)',
             marginBottom: 'var(--space-4)',
           }}>
-            {getLang() === 'en' ? translations.en.toolsAvailable(items.length) : translations.fr.toolsAvailable(items.length)}
+            {t('toolsAvailable', { count: items.length })}
           </div>
           <div className="grid grid-3">
             {items.map(item => (

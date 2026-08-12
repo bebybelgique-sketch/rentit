@@ -1,6 +1,6 @@
 // src/components/common/BookingStatusBadge.tsx
 
-import { t } from '../../i18n';
+import { useTranslation } from 'react-i18next';
 import { statusLabelKey, statusTone, type BookingStatusValue } from '../../domain/catalog';
 
 type StatusType = BookingStatusValue;
@@ -15,6 +15,7 @@ interface BookingStatusBadgeProps {
 // Подписи теперь в словарях, состав и цвет — в src/domain/catalog.ts.
 
 const BookingStatusBadge: React.FC<BookingStatusBadgeProps> = ({ status }) => {
+  const { t } = useTranslation();
   const labelKey = statusLabelKey(status);
   const tone = statusTone(status);
   if (!labelKey || !tone) {
