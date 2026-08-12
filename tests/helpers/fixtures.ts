@@ -50,6 +50,14 @@ export async function ensureProfilePhoto(page: Page) {
   await page.goto('/profile', { waitUntil: 'load' })
   await dismissCookies(page)
 
+  // Имя обязательно (required) и больше НЕ подставляется почтой: подстановка
+  // публиковала адрес человека, потому что full_name читается анонимом.
+  // Пустое обязательное поле блокирует отправку формы целиком — заполняем,
+  // как заполнил бы человек.
+  const fullName = page.locator('#full_name')
+  await expect(fullName).toBeVisible({ timeout: 20000 })
+  if (!(await fullName.inputValue())) await fullName.fill('Propriétaire test')
+
   const avatar = page.locator('#avatar_url')
   await expect(avatar).toBeVisible({ timeout: 20000 })
   // Прозрачный пиксель data-URI: заслон проверяет непустоту поля, а не картинку,

@@ -509,6 +509,15 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   }
 }
 
+/* ── Цена на странице вещи ──────────────────────────────── */
+/* Справа — пока блок стоит рядом с заголовком. Как только он переносится
+   под него, выравнивание по правому краю оставляет цену висеть в пустоте:
+   на 390px это читалось как сбитая вёрстка. */
+.item-price-block { text-align: right; }
+@media (max-width: 640px) {
+  .item-price-block { text-align: left; }
+}
+
 /* ── Раскрывающиеся фильтры ─────────────────────────────── */
 .filters-panel {
   display: grid;

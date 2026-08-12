@@ -1,7 +1,8 @@
 // src/pages/Profile.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Импортируем хук
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../hooks/useProfile';
 import { useUpdateProfile } from '../hooks/mutations/useUpdateProfile';
 import { useDeleteAccount } from '../hooks/mutations/useDeleteAccount';
 import toast from 'react-hot-toast';
@@ -12,11 +13,32 @@ const Profile: React.FC = () => {
   const updateProfileMutation = useUpdateProfile();
   const deleteAccountMutation = useDeleteAccount();
 
+  const { data: storedProfile } = useProfile(user?.id);
+
   const [profileData, setProfileData] = useState({
-    full_name: user?.user_metadata?.full_name || user?.email || '', // Fallback на email
+    // Подстановки почты здесь БЫТЬ НЕ ДОЛЖНО. full_name — публичное поле:
+    // миграция 07 разрешает читать его анониму, и оно подписывает владельца
+    // на каждой странице вещи. Прежний запасной вариант `|| user?.email`
+    // означал, что человек, открывший профиль и нажавший «сохранить», не
+    // трогая имя, публиковал свой почтовый адрес. Проверено 12.08: в базе
+    // такая строка уже была — её создал обычный путь через интерфейс.
+    full_name: user?.user_metadata?.full_name || '',
     bio: user?.user_metadata?.bio || '',
     avatar_url: user?.user_metadata?.avatar_url || '',
   });
+
+  // Форма заполнялась из user_metadata, а сохраняла в таблицу users. Два
+  // разных места: у человека с давно сохранённым именем поле выглядело
+  // пустым, и он «терял» его при каждом сохранении. Показываем то, что
+  // действительно лежит в базе и видно другим.
+  useEffect(() => {
+    if (!storedProfile) return;
+    setProfileData(prev => ({
+      ...prev,
+      full_name: storedProfile.full_name || prev.full_name,
+      avatar_url: storedProfile.avatar_url || prev.avatar_url,
+    }));
+  }, [storedProfile]);
 
   if (!user) {
     return (

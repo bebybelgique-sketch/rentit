@@ -95,6 +95,21 @@ const RULES = [
     near: /(sécuris|secure|automatique|automatic|en ligne|online|par la plateforme|via RentIt|door het platform)/i,
   },
   {
+    // Найдено 12.08 снимком страницы вещи: кнопка входа обещала
+    // «Se connecter pour réserver et payer» (и то же в en/nl). Правило выше
+    // это пропускало: оно требует рядом со словом «payer» признак площадки
+    // («en ligne», «sécurisé», «par la plateforme»), а тут обещание голое —
+    // и оттого не менее ложное. Платформа денег не принимает.
+    //
+    // Ловим именно СВЯЗКУ «действие + оплата» в призыве, а не слово «оплата»
+    // саму по себе: «le paiement se fait en espèces» — правда, и ронять на
+    // ней сборку нельзя.
+    name: 'Оплата обещана как часть брони',
+    why: 'Расчёт наличными между сторонами; площадка не принимает денег.',
+    word: /(se connecter|log ?in|inloggen|réserv|book|boek)[^.!?\n]{0,40}\b(payer|pay|paiement|betalen|betaling)\b/i,
+    near: /.?/,
+  },
+  {
     name: 'Комиссия платформы',
     why: 'Комиссии нет; с расчёта наличными её и взять неоткуда.',
     word: /(commission|frais de plateforme|frais plateforme|platform fee|platformcommissie|platformkosten)/i,
