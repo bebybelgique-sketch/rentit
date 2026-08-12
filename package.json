@@ -11,7 +11,8 @@
     "test:ui": "playwright test --ui",
     "test:unit": "vitest",
     "test:unit:ui": "vitest --ui",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:edge": "node supabase/tests/edge-functions.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^2.4.0",
