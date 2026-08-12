@@ -1,34 +1,29 @@
 // src/components/common/BookingStatusBadge.tsx
 
-// Тип для статуса бронирования, строго по списку из AGENTS.md
-type StatusType = 'pending_approval' | 'pending_payment' | 'confirmed' | 'active' | 'completed' | 'cancelled' | 'disputed' | 'rejected' | 'expired' | 'payment_expired';
+import { t } from '../../i18n';
+import { statusLabelKey, statusTone, type BookingStatusValue } from '../../domain/catalog';
+
+type StatusType = BookingStatusValue;
 
 interface BookingStatusBadgeProps {
   status: StatusType;
 }
 
-// Словарь французских переводов и цветов
-const statusConfig: Record<StatusType, { label: string; color: string }> = {
-  pending_approval: { label: 'En attente d\'approbation', color: 'orange' },
-  pending_payment: { label: 'En attente de paiement', color: 'orange' },
-  confirmed: { label: 'Confirmé', color: 'green' },
-  active: { label: 'Actif', color: 'blue' },
-  completed: { label: 'Terminé', color: 'gray' },
-  cancelled: { label: 'Annulé', color: 'red' },
-  disputed: { label: 'Contesté', color: 'purple' },
-  rejected: { label: 'Rejeté', color: 'red' },
-  expired: { label: 'Expiré', color: 'gray' },
-  payment_expired: { label: 'Paiement expiré', color: 'gray' },
-};
+// Собственного словаря подписей здесь больше нет. Он был вторым — рядом жила
+// карта в MyItems, и они разошлись: «Actif» против «En cours», «Rejeté»
+// против «Refusé». Одна бронь называлась по-разному на соседних экранах.
+// Подписи теперь в словарях, состав и цвет — в src/domain/catalog.ts.
 
 const BookingStatusBadge: React.FC<BookingStatusBadgeProps> = ({ status }) => {
-  const config = statusConfig[status];
-  if (!config) {
-    // Fallback на общий стиль, если статус не найден
+  const labelKey = statusLabelKey(status);
+  const tone = statusTone(status);
+  if (!labelKey || !tone) {
+    // Неизвестный статус показываем как есть: выдуманная подпись хуже кода.
     return <span className="tag tag-gray">{status}</span>;
   }
 
-  const { label, color } = config;
+  const label = t(labelKey) || status;
+  const color = tone;
 
   // Используем встроенные стили или определяем классы в CSS
   // Здесь использую встроенные стили для демонстрации, можно заменить на className

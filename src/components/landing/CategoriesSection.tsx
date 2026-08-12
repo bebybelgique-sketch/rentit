@@ -1,6 +1,8 @@
 // src/components/landing/CategoriesSection.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { t } from '../../i18n';
+import { CATEGORIES } from '../../domain/catalog';
 
 const CategoriesSection: React.FC = () => {
   return (
@@ -24,20 +26,16 @@ const CategoriesSection: React.FC = () => {
         </div>
 
         <div style={{ gap: '8px' }} className="L-sm-col-2">
-          {[
-            { icon: '⚡', label: 'Électroportatif', desc: 'Perceuses, scies, meuleuses, défonceuses', slug: 'power_tools' },
-            { icon: '🔧', label: 'Outillage manuel', desc: 'Marteaux, clés, pinces, étaux', slug: 'hand_tools' },
-            { icon: '🌿', label: 'Jardin & Extérieur', desc: 'Tondeuses, taille-haies, souffleurs', slug: 'garden' },
-            { icon: '🏗️', label: 'Construction', desc: 'Échafaudages, bétonnières, compresseurs', slug: 'construction' },
-            { icon: '🧹', label: 'Nettoyage', desc: 'Nettoyeurs HP, autolaveuses', slug: 'cleaning' },
-            { icon: '📐', label: 'Mesure', desc: 'Niveaux laser, détecteurs, testeurs', slug: 'measuring' },
-          ].map(c => (
-            <Link key={c.slug} to={`/browse?category=${c.slug}`} className="L-cat">
-              <div style={{ fontSize: '24px', marginBottom: '20px' }}>{c.icon}</div>
+          {/* Своя копия названий жила здесь и разошлась с остальным продуктом:
+              «Jardin & Extérieur» против «Jardinage», «Mesure» против
+              «Mesure & Détection». Состав — из каталога, текст — из словаря. */}
+          {CATEGORIES.map(c => (
+            <Link key={c.value} to={`/browse?category=${c.value}`} className="L-cat">
+              <div style={{ fontSize: '24px', marginBottom: '20px' }}>{c.emoji}</div>
               <div style={{ fontFamily: 'var(--sans)', fontSize: '15px', fontWeight: '600', marginBottom: '6px', color: 'var(--white)' }}>
-                {c.label}
+                {t(c.labelKey).replace(/^\S+\s/, '')}
               </div>
-              <div className="L-mono" style={{ fontSize: '12px', color: 'var(--muted)' }}>{c.desc}</div>
+              <div className="L-mono" style={{ fontSize: '12px', color: 'var(--muted)' }}>{t(c.hintKey)}</div>
             </Link>
           ))}
         </div>

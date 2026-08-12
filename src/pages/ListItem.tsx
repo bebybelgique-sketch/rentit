@@ -1,34 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useBeforeUnload, Link } from 'react-router-dom'
 import { t } from '../i18n'
+import { CATEGORIES, CONDITIONS, categoryPriceHintKey } from '../domain/catalog'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
-const CATEGORIES = [
-  { value: 'power_tools',  label: '⚡ Électroportatif' },
-  { value: 'hand_tools',   label: '🔧 Outillage manuel' },
-  { value: 'garden',       label: '🌿 Jardinage' },
-  { value: 'construction', label: '🏗️ Construction' },
-  { value: 'cleaning',     label: '🧹 Nettoyage' },
-  { value: 'measuring',    label: '📐 Mesure & Détection' },
-]
+// Категории и состояния — из src/domain/catalog.ts. Здесь была четвёртая
+// копия списка категорий и третья копия состояний.
 
-const CONDITIONS = ['new', 'like_new', 'good', 'fair']
-const CONDITIONS_FR: Record<string, string> = {
-  new: 'Neuf',
-  like_new: 'Comme neuf',
-  good: 'Bon état',
-  fair: 'Correct',
-}
-
-const SUGGESTED_PRICES: Record<string, string> = {
-  power_tools:  'Perceuses €10–18 · Meuleuses €12–20 · Scies sauteuses €8–15',
-  hand_tools:   'Jeux de marteaux €5–10 · Jeux de clés €6–12',
-  garden:       'Tondeuses €20–35 · Débroussailleuses €15–25 · Nettoyeurs HP €25–40',
-  construction: 'Échafaudages €30–60 · Bétonnières €25–45 · Compresseurs €20–35',
-  cleaning:     'Autolaveuses €25–40 · Nettoyeurs vapeur €15–25',
-  measuring:    'Niveaux laser €10–18 · Détecteurs €8–14',
-}
+// Подсказка цен была седьмым местом, где перечислены категории: добавь
+// категорию — и подсказки не будет только здесь, молча.
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 
@@ -40,7 +21,7 @@ export default function ListItem() {
   const [form, setForm] = useState({
     title: '',
     description: '',
-    category: 'power_tools',
+    category: CATEGORIES[0].value as string,
     condition: 'good',
     price_per_day: '',
     deposit: '',
@@ -288,7 +269,7 @@ export default function ListItem() {
               <label>Catégorie *</label>
               <select value={form.category} onChange={set('category')} disabled={isLocked}>
                 {CATEGORIES.map(c => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                  <option key={c.value} value={c.value}>{t(c.labelKey)}</option>
                 ))}
               </select>
             </div>
@@ -296,8 +277,8 @@ export default function ListItem() {
               <label>État *</label>
               <select value={form.condition} onChange={set('condition')} disabled={isLocked}>
                 {CONDITIONS.map(c => (
-                  <option key={c} value={c}>
-                    {CONDITIONS_FR[c] || c}
+                  <option key={c.value} value={c.value}>
+                    {t(c.labelKey)}
                   </option>
                 ))}
               </select>
@@ -332,7 +313,7 @@ export default function ListItem() {
               />
               {form.category && (
                 <p style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginTop: '5px', lineHeight: 1.5 }}>
-                  {SUGGESTED_PRICES[form.category]}
+                  {t(categoryPriceHintKey(form.category) ?? '')}
                 </p>
               )}
             </div>
