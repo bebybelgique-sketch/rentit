@@ -293,5 +293,10 @@
   },
   "loading": "Chargement…",
   "routeError": "Cette page n'a pas pu se charger. Une nouvelle version du site est peut-être disponible.",
-  "routeRetry": "Recharger la page"
+  "routeRetry": "Recharger la page",
+  "loadFailed": "Vos annonces n'ont pas pu être chargées.",
+  "retry": "Réessayer",
+  "itemGone": "Cet outil n'est plus en ligne.",
+  "itemGoneHint": "Il a été retiré ou l'adresse est incorrecte.",
+  "backHome": "Accueil"
 }

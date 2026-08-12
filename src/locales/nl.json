@@ -293,5 +293,10 @@
   },
   "loading": "Laden…",
   "routeError": "Deze pagina kon niet laden. Mogelijk is er een nieuwere versie van de site.",
-  "routeRetry": "Pagina herladen"
+  "routeRetry": "Pagina herladen",
+  "loadFailed": "Je advertenties konden niet worden geladen.",
+  "retry": "Opnieuw proberen",
+  "itemGone": "Dit gereedschap staat niet meer online.",
+  "itemGoneHint": "Het is verwijderd, of de link klopt niet.",
+  "backHome": "Home"
 }

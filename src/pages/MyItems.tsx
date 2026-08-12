@@ -40,6 +40,11 @@ export default function MyItems() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'active' | 'all'>('active')
   const [actionError, setActionError] = useState('')
+  // Ошибка ЗАГРУЗКИ списка, отдельно от ошибки действия. Раньше её не
+  // было вовсе: `catch (err) { console.error(err) }` — и владелец,
+  // у которого список не загрузился, видел «у вас нет инструментов».
+  // Пустой список и сломанный список выглядели одинаково.
+  const [loadError, setLoadError] = useState('')
   const [respondingId, setRespondingId] = useState<string | null>(null)
   const [transitioningId, setTransitioningId] = useState<string | null>(null)
 
@@ -54,7 +59,14 @@ export default function MyItems() {
         .order('created_at', { ascending: false })
       if (error) throw error
       setItems(data as unknown as Item[])
-    } catch (err) { console.error(err) }
+      setLoadError('')
+    } catch (err) {
+      // Техническое — в консоль, человеку — объяснение и путь дальше.
+      // Молчание здесь опаснее ошибки: владелец решает, что его
+      // объявления пропали, и уходит.
+      console.error(err)
+      setLoadError(t('loadFailed'))
+    }
     finally { setLoading(false) }
   }
 
@@ -147,6 +159,20 @@ export default function MyItems() {
   return (
     <div className="page">
       {actionError && <div className="error-msg" style={{ marginBottom: '16px' }}>{actionError}</div>}
+
+      {/* Сбой загрузки — с объяснением и кнопкой, а не пустым списком. */}
+      {loadError && (
+        <div className="error-msg" style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>{loadError}</span>
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{ minHeight: '40px' }}
+            onClick={() => { setLoading(true); fetchItems() }}
+          >
+            {t('retry')}
+          </button>
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Mes outils</h1>
         <Link to="/list-item" className="btn btn-primary">+ Nouvelle annonce</Link>

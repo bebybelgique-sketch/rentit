@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
@@ -209,7 +209,22 @@ export default function ItemDetail() {
   }
 
   if (loading) return <div className="page"><div className="loading">Chargement...</div></div>
-  if (!item) return <div className="page"><div className="loading">Outil introuvable</div></div>
+  // Раньше здесь была голая надпись «Outil introuvable» без единой
+  // кнопки: человек по ссылке на снятое объявление попадал в тупик и мог
+  // только нажать «назад» — а если пришёл по прямой ссылке, то и назад
+  // было некуда. При пустой витрине такая ссылка — обычное дело.
+  if (!item) return (
+    <div className="page" style={{ textAlign: 'center', paddingTop: 'var(--space-8)' }}>
+      <p style={{ fontSize: 'var(--text-lg)', fontWeight: 700, marginBottom: 'var(--space-3)' }}>
+        {t('itemGone')}
+      </p>
+      <p style={{ color: 'var(--muted)', marginBottom: 'var(--space-6)' }}>{t('itemGoneHint')}</p>
+      <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <Link to="/browse" className="btn btn-primary" style={{ minHeight: '48px' }}>{t('browse')}</Link>
+        <Link to="/" className="btn btn-secondary" style={{ minHeight: '48px' }}>{t('backHome')}</Link>
+      </div>
+    </div>
+  )
 
   const photos = item.photos || []
   const { year, month } = calMonth
