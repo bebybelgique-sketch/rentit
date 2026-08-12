@@ -1,48 +1,47 @@
-// src/components/landing/CategoriesSection.tsx
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { CATEGORIES } from '../../domain/catalog';
+import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { CATEGORIES } from '../../domain/catalog'
+import CategoryIcon from '../icons/CategoryIcon'
 
-const CategoriesSection: React.FC = () => {
-  const { t } = useTranslation();
+/**
+ * Шесть категорий.
+ *
+ * Состав — ТОЛЬКО из src/domain/catalog.ts, текст — из словаря. Своя
+ * копия названий жила здесь и разошлась с остальным продуктом:
+ * «Jardin & Extérieur» против «Jardinage», «Mesure» против
+ * «Mesure & Détection».
+ *
+ * Раздел отвечает на вопрос владельца «подходит ли сюда мой инструмент»,
+ * а не арендатора «что бы взять». Отсюда и заголовок.
+ *
+ * Эмодзи из каталога здесь не используются: иконка интерфейса должна быть
+ * SVG, а не эмодзи — эмодзи рисуется шрифтом системы и на каждой машине
+ * выглядит по-своему. В самом каталоге они пока остаются, их замена
+ * задевает витрину, страницу вещи и форму выкладки — отдельная работа.
+ */
+export default function CategoriesSection() {
+  const { t } = useTranslation()
+
   return (
-    <section style={{ padding: '140px 0' }}>
-      <div className="L-wrap">
+    <section className="lp-band lp-band-silver">
+      <div className="lp-wrap">
+        <p className="lp-label">{t('landing.catsLabel')}</p>
+        <h2 className="lp-h2" style={{ maxWidth: '22ch' }}>{t('landing.catsTitle')}</h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '80px', alignItems: 'start', marginBottom: '64px' }} className="L-sm-col">
-          <div>
-            <div className="L-label" style={{ marginBottom: '20px' }}>Ce que vous pouvez louer</div>
-            <h2 className="L-title" style={{ fontSize: 'clamp(36px, 4vw, 60px)', color: 'var(--white)' }}>
-              Outils professionnels.<br />De voisin à voisin.
-            </h2>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', paddingBottom: '4px' }}>
-            <Link to="/browse" style={{ color: 'var(--muted)', fontSize: '14px', textDecoration: 'none', fontFamily: 'var(--mono)', display: 'flex', alignItems: 'center', gap: '6px', transition: 'color 0.2s' }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--white)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}>
-              Voir tous les outils ↗
-            </Link>
-          </div>
-        </div>
-
-        <div style={{ gap: '8px' }} className="L-sm-col-2">
-          {/* Своя копия названий жила здесь и разошлась с остальным продуктом:
-              «Jardin & Extérieur» против «Jardinage», «Mesure» против
-              «Mesure & Détection». Состав — из каталога, текст — из словаря. */}
+        <div className="lp-cats">
           {CATEGORIES.map(c => (
-            <Link key={c.value} to={`/browse?category=${c.value}`} className="L-cat">
-              <div style={{ fontSize: '24px', marginBottom: '20px' }}>{c.emoji}</div>
-              <div style={{ fontFamily: 'var(--sans)', fontSize: '15px', fontWeight: '600', marginBottom: '6px', color: 'var(--white)' }}>
-                {t(c.labelKey).replace(/^\S+\s/, '')}
-              </div>
-              <div className="L-mono" style={{ fontSize: '12px', color: 'var(--muted)' }}>{t(c.hintKey)}</div>
+            <Link key={c.value} to={`/browse?category=${c.value}`} className="lp-cat">
+              <CategoryIcon category={c.value} />
+              <span>
+                {/* Ведущий эмодзи из подписи снимается: он остаётся в
+                    словаре ради остальных экранов, которые ещё на нём. */}
+                <span className="lp-cat-n">{t(c.labelKey).replace(/^\S+\s/, '')}</span>
+                <span className="lp-cat-h">{t(c.hintKey)}</span>
+              </span>
             </Link>
           ))}
         </div>
       </div>
     </section>
-  );
-};
-
-export default CategoriesSection;
+  )
+}
