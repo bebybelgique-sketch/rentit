@@ -20,7 +20,8 @@ serve(async (req) => {
     const user = await getUserFromAuthHeader(req)
     if (user instanceof Response) return user
 
-    const { booking_id } = await req.json()
+    const body = await req.json() as { booking_id?: string }
+    const { booking_id } = body
     if (!booking_id) {
       return new Response(JSON.stringify({ error: 'Missing booking_id' }), { status: 400, headers: CORS })
     }
@@ -28,7 +29,7 @@ serve(async (req) => {
     // Fetch booking
     const { data: booking, error: bookingErr } = await supabase
       .from('bookings')
-      .select('*')
+      .select('id,renter_id,status,approved_at,stripe_payment_intent_id')
       .eq('id', booking_id)
       .single()
 
@@ -108,7 +109,8 @@ serve(async (req) => {
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error(err)
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
