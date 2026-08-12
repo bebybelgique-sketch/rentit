@@ -50,7 +50,11 @@
   --line:           var(--border);
   --line-strong:    #d6d3ca;
 
-  /* Ритм: одна шкала на оба слоя, чтобы отступы совпадали */
+  /* Ритм: одна шкала на оба слоя, чтобы отступы совпадали.
+     Замер 12.08: к этим переменным не обращались НИ РАЗУ, при 633 отступах
+     вручную. Мимо шкалы шли самые частые значения — 20px (46 раз), 14px (38),
+     10px (36), 6px (35). Отсюда и ощущение, что ритма нет: он и не был задан,
+     каждый блок отбивался на глаз. */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -59,6 +63,18 @@
   --space-6: 32px;
   --space-7: 48px;
   --space-8: 80px;
+
+  /* Кегль. Тем же замером: 13px — 70 раз, 14px — 60, 11px — 26, 12px — 25,
+     15px — 16, 16px — 10. Шесть размеров в полосе 11–16px, между которыми
+     глаз не видит разницы: это не иерархия, а шум. Ступени ниже разведены
+     так, чтобы каждая была отличима от соседней. */
+  --text-xs:   11px;  /* моно-подписи, теги, служебное */
+  --text-sm:   13px;  /* второстепенный текст */
+  --text-base: 15px;  /* основной текст */
+  --text-lg:   20px;  /* цена на карточке, подзаголовки */
+  --text-xl:   28px;  /* заголовок раздела */
+  --text-2xl:  40px;  /* заголовок страницы */
+  --text-3xl:  56px;  /* первый экран */
 }
 
 body {
@@ -79,13 +95,13 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 .page {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 32px 24px 80px;
+  padding: var(--space-6) var(--space-5) var(--space-8);
 }
 
 .card {
   background: var(--card);
   border-radius: var(--radius);
-  padding: 24px;
+  padding: var(--space-5);
   border: 1px solid var(--border);
 }
 
@@ -311,10 +327,10 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   justify-content: center;
   font-size: 48px;
 }
-.item-card-body { padding: 16px; }
-.item-card-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
-.item-card-price { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.03em; }
-.item-card-meta { font-size: 12px; font-family: var(--font-mono); color: var(--muted); margin-top: 6px; }
+.item-card-body { padding: var(--space-4); }
+.item-card-title { font-size: var(--text-base); font-weight: 700; margin-bottom: var(--space-2); letter-spacing: -0.01em; }
+.item-card-price { font-size: var(--text-lg); font-weight: 800; color: var(--text); letter-spacing: -0.03em; }
+.item-card-meta { font-size: var(--text-sm); font-family: var(--font-mono); color: var(--muted); margin-top: var(--space-1); }
 
 /* ── SKELETON ─────────────────────────────────────────────────── */
 .skeleton {
@@ -333,16 +349,17 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 
 /* ── CATEGORY CHIPS ──────────────────────────────────────────── */
 .chip {
-  padding: 6px 14px;
+  padding: var(--space-2) var(--space-4);
   border-radius: 20px;
   border: 1.5px solid var(--border);
   background: #fff;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
   font-family: var(--font-sans);
+  white-space: nowrap;
 }
 .chip:hover { border-color: #999; background: #f0ede8; }
 .chip.active {
@@ -354,13 +371,13 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 /* ── SEARCH BAR ──────────────────────────────────────────────── */
 .search-bar {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
   background: #fff;
-  padding: 14px;
+  padding: var(--space-4);
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  margin-bottom: 20px;
+  margin-bottom: var(--space-4);
 }
 .search-bar input, .search-bar select {
   flex: 1;
@@ -495,15 +512,27 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 /* ── Category chips horizontal scroll ───────────────────── */
 .chips-row {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: nowrap;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
+  padding-bottom: var(--space-1);
   scrollbar-width: none;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-5);
 }
 .chips-row::-webkit-scrollbar { display: none; }
+
+/* На телефоне полоса упиралась в поля страницы и обрывалась на полуслове:
+   «Con…» читается как сломанная вёрстка, а не как «прокрути дальше».
+   Выпускаем её до края экрана — обрыв у самого края глаз понимает верно. */
+@media (max-width: 640px) {
+  .chips-row {
+    margin-left: calc(-1 * var(--space-4));
+    margin-right: calc(-1 * var(--space-4));
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+}
 
 /* ── Calendar today fix ──────────────────────────────────── */
 .cal-day.today {

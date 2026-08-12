@@ -226,11 +226,11 @@ export default function Home() {
   return (
     <div className="page">
       {/* Header */}
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '6px', whiteSpace: 'pre-line' }}>
+      <div style={{ marginBottom: 'var(--space-6)' }}>
+        <h1 style={{ fontSize: 'clamp(22px, 4vw, var(--text-xl))', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: 'var(--space-2)', whiteSpace: 'pre-line' }}>
           {t('heroTitle')}
         </h1>
-        <p style={{ color: 'var(--muted)', fontSize: '15px' }}>
+        <p style={{ color: 'var(--muted)', fontSize: 'var(--text-base)' }}>
           {t('heroSub')}
         </p>
       </div>
@@ -308,7 +308,7 @@ export default function Home() {
       </div>
 
       {/* View toggle */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-1)', marginBottom: 'var(--space-4)' }}>
         <button
           onClick={() => setViewMode('grid')}
           className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-secondary'}`}
@@ -363,19 +363,22 @@ export default function Home() {
       ) : items.length === 0 ? (
         <div style={{
           border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-          padding: '64px 32px', textAlign: 'center', background: '#fff',
+          padding: 'var(--space-8) var(--space-6)', textAlign: 'center', background: '#fff',
         }}>
-          <div style={{ fontSize: '52px', marginBottom: '16px' }}>🔨</div>
-          <h3 style={{ fontSize: '22px', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '10px' }}>
+          <div style={{ fontSize: '52px', marginBottom: 'var(--space-4)' }}>🔨</div>
+          {/* Ступень --text-xl (28px) верна для десктопа, но на 390px этот
+              заголовок ломается на три строки. Кегль тут обязан быть гибким:
+              нижняя граница — --text-lg, верхняя — --text-xl. */}
+          <h3 style={{ fontSize: 'clamp(var(--text-lg), 5vw, var(--text-xl))', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: 'var(--space-3)' }}>
             {t('noResultsTitle')}
           </h3>
-          <p style={{ color: 'var(--muted)', fontSize: '15px', marginBottom: '6px' }}>
+          <p style={{ color: 'var(--muted)', fontSize: 'var(--text-base)', marginBottom: 'var(--space-2)' }}>
             {t('noResultsDesc')}
           </p>
-          <p style={{ color: 'var(--muted)', fontSize: '13px', fontFamily: 'var(--font-mono)', marginBottom: '28px' }}>
+          <p style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginBottom: 'var(--space-6)' }}>
             {t('earlyLister')}
           </p>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/list-item" className="btn btn-primary" style={{ minHeight: '44px' }}>
               {t('listFirstTool')}
             </Link>
@@ -394,11 +397,11 @@ export default function Home() {
         <>
           <div style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
+            fontSize: 'var(--text-xs)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: 'var(--muted)',
-            marginBottom: '16px',
+            marginBottom: 'var(--space-4)',
           }}>
             {getLang() === 'en' ? translations.en.toolsAvailable(items.length) : translations.fr.toolsAvailable(items.length)}
           </div>
