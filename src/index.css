@@ -509,6 +509,41 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   }
 }
 
+/* ── Раскрывающиеся фильтры ─────────────────────────────── */
+.filters-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.filters-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.filters-field > span {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.filters-field input {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  background: var(--surface-sunken);
+  min-height: 44px;
+}
+.filters-field input:focus { border-color: #888; outline: none; }
+
 /* ── Category chips horizontal scroll ───────────────────── */
 .chips-row {
   display: flex;
