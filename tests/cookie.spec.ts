@@ -2,10 +2,19 @@ import { test, expect } from '@playwright/test'
 import { UI } from './helpers/app'
 
 /**
- * Баннер cookies. Тексты здесь английские — так в продукте на 11.08, при
- * французском навбаре на том же экране. Тест сверяется с тем, что есть,
- * а несоответствие языков вынесено в отчёт как находка: чинить его надо в
- * продукте, и молчаливая «подгонка» теста под расхождение это бы скрыла.
+ * Баннер cookies. До 12.08 тексты здесь были английскими — так было в
+ * продукте при французском навбаре на том же экране. Тест сверялся с тем,
+ * что есть, а несоответствие вынес в отчёт как находку: чинить его надо
+ * было в продукте, и молчаливая «подгонка» теста это бы скрыла.
+ *
+ * 12.08 баннер переведён на три языка, и тест переведён следом. Подписи
+ * лежат в UI (tests/helpers/app.ts) одним местом — при следующей правке
+ * текстов менять там.
+ *
+ * Важно про адрес: baseURL в playwright.config по умолчанию указывает на
+ * прод, а не на локальную сборку. Пока эта ветка не смержена и не
+ * задеплоена, прогон без E2E_BASE_URL будет падать здесь — он проверяет
+ * старую задеплоенную версию, а не рабочее дерево.
  */
 test.describe('согласие на cookies', () => {
   test('на первом визите баннер показан и предлагает три исхода', async ({ page }) => {
@@ -45,10 +54,10 @@ test.describe('согласие на cookies', () => {
     await expect(page.getByRole('button', { name: UI.cookieManage })).toBeVisible({ timeout: 10000 })
     await page.getByRole('button', { name: UI.cookieManage }).click()
 
-    await expect(page.getByText('Cookie preferences')).toBeVisible({ timeout: 10000 })
-    await expect(page.getByText('Necessary').first()).toBeVisible()
-    await expect(page.getByText('Functional').first()).toBeVisible()
-    await expect(page.getByText('Analytics').first()).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Save preferences' })).toBeVisible()
+    await expect(page.getByText(UI.cookiePrefsTitle)).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(UI.cookieTypeNecessary).first()).toBeVisible()
+    await expect(page.getByText(UI.cookieTypeFunctional).first()).toBeVisible()
+    await expect(page.getByText(UI.cookieTypeAnalytics).first()).toBeVisible()
+    await expect(page.getByRole('button', { name: UI.cookieSavePrefs })).toBeVisible()
   })
 })
