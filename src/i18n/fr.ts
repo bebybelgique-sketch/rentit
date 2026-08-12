@@ -80,4 +80,33 @@ export const fr = {
   yourListing: 'C\'est votre annonce',
   manageIt: 'la gérer',
   forRentalShops: 'Pour les loueurs professionnels →',
+
+  // Страница для прокатных контор. Тарифов здесь нет, потому что их нет в
+  // продукте; чисел вроде «нас уже выбрали N контор» нет, потому что контор
+  // ноль, и выдуманное число ради веса — приём, после которого не верят
+  // ничему остальному.
+  shops: {
+    eyebrow: 'Pour les professionnels',
+    title: 'Vous louez du matériel ? Vos outils peuvent aussi vivre ici.',
+    lede: "RentIt est une vitrine d'outils en Brabant wallon. Le client choisit un outil et des dates, vous acceptez ou refusez, et vous vous arrangez directement. Rien de plus, et surtout rien d'autre.",
+
+    haveTitle: "Ce que vous avez aujourd'hui",
+    have1: 'Vos annonces en ligne immédiatement, sans frais.',
+    have2: 'Le client choisit ses dates ; celles déjà prises ne lui sont plus proposées.',
+    have3: 'Les demandes arrivent dans votre espace ; vous acceptez ou refusez.',
+    have4: "Les coordonnées ne sont échangées qu'une fois la réservation acceptée.",
+
+    notTitle: 'Ce que RentIt ne fait pas',
+    notLede: "Dit avant plutôt qu'après : ces limites font partie de l'offre, pas des petits caractères.",
+    not1: "Aucun paiement ne transite par RentIt. Le règlement se fait en espèces, entre vous et le client.",
+    not2: "Aucune assurance, aucune caution retenue par la plateforme. RentIt n'est pas partie au contrat.",
+    not3: "Aucune commission aujourd'hui. Si des options payantes arrivent un jour, elles seront annoncées, pas glissées.",
+    not4: 'Aucun trafic promis. Une annonce est visible, elle ne se vend pas toute seule.',
+
+    stateTitle: 'Où nous en sommes, sans arrondi',
+    stateBody: "La vitrine est neuve et vide : les annonces de démonstration ont été retirées, parce qu'un catalogue inventé ne dit rien de vrai. Nous cherchons les premiers loueurs du Brabant wallon. Être le premier, c'est peu de concurrence et une oreille attentive — pas une file d'attente de clients.",
+
+    ctaPrimary: 'Créer un compte',
+    ctaSecondary: 'Voir la vitrine',
+  },
 }

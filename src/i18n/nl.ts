@@ -80,4 +80,29 @@ export const nl = {
   yourListing: 'Dit is jouw advertentie',
   manageIt: 'beheren',
   forRentalShops: 'Voor professionele verhuurders →',
+
+  shops: {
+    eyebrow: 'Voor professionals',
+    title: 'Verhuurt u materiaal? Uw gereedschap kan hier ook staan.',
+    lede: 'RentIt is een etalage voor gereedschap in Waals-Brabant. De klant kiest een stuk gereedschap en data, u aanvaardt of weigert, en u regelt de rest rechtstreeks. Niets meer — en vooral niets anders.',
+
+    haveTitle: 'Wat u vandaag krijgt',
+    have1: 'Uw advertenties meteen online, kosteloos.',
+    have2: 'De klant kiest zijn data; reeds bezette data worden niet meer aangeboden.',
+    have3: 'Aanvragen komen in uw ruimte binnen; u aanvaardt of weigert.',
+    have4: 'Contactgegevens worden pas uitgewisseld zodra een reservering is aanvaard.',
+
+    notTitle: 'Wat RentIt niet doet',
+    notLede: 'Vooraf gezegd in plaats van achteraf: deze grenzen horen bij het aanbod, niet bij de kleine lettertjes.',
+    not1: 'Er gaat geen geld via RentIt. De afrekening gebeurt contant, tussen u en de klant.',
+    not2: 'Geen verzekering, geen waarborg die het platform bijhoudt. RentIt is geen partij bij het contract.',
+    not3: 'Vandaag geen commissie. Komen er ooit betalende opties, dan worden ze aangekondigd, niet stilletjes ingevoerd.',
+    not4: 'Geen beloofd bezoek. Een advertentie is zichtbaar; ze verkoopt zichzelf niet.',
+
+    stateTitle: 'Waar we echt staan',
+    stateBody: 'De etalage is nieuw en leeg: de demonstratie-advertenties zijn verwijderd, want een verzonnen catalogus zegt niets waars. We zoeken de eerste verhuurders van Waals-Brabant. Eerste zijn betekent weinig concurrentie en een luisterend oor — geen rij wachtende klanten.',
+
+    ctaPrimary: 'Account aanmaken',
+    ctaSecondary: 'Bekijk de etalage',
+  },
 }

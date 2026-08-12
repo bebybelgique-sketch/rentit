@@ -42,6 +42,7 @@ const Admin            = lazy(() => import('./pages/Admin'))
 const Landing          = lazy(() => import('./pages/Landing'))
 const Privacy          = lazy(() => import('./pages/Privacy'))
 const Terms            = lazy(() => import('./pages/Terms'))
+const RentalShops      = lazy(() => import('./pages/RentalShops'))
 
 function Navbar() {
   const { t, i18n } = useTranslation() // Используем хук i18next
@@ -134,11 +135,15 @@ export default function App() {
             <Route path="/admin" element={loading ? null : user ? <Admin /> : <Navigate to="/login" />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/rental-shops" element={<RentalShops />} />
             {/* Отложено 11.08 вместе с переходом на бесплатную модель:
                 /pro · /business · /business/dashboard · /pay/:bookingId
                 Страницы целиком лежат в parked/ — там же как их оживить.
                 В src/ их держать нельзя: страж утверждений даёт 14
-                срабатываний на тарифах и страховке, и был бы прав. */}
+                срабатываний на тарифах и страховке, и был бы прав.
+
+                /rental-shops выше — не их замена: там нет тарифов, потому
+                что тарифов нет в продукте. */}
             <Route path="*" element={
               <div className="page" style={{ textAlign: 'center', paddingTop: '120px' }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', color: 'var(--muted)', marginBottom: '16px' }}>404</div>
@@ -150,8 +155,13 @@ export default function App() {
           </Routes>
         </Suspense>
         {pathname !== '/' && (
-          <footer style={{ textAlign: 'center', padding: '24px 16px', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
-            <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{t('forRentalShops')}</span>
+          <footer style={{ textAlign: 'center', padding: 'var(--space-5) var(--space-4)', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
+            {/* Была ссылка на /business, коммит 1409b3a снёс страницу и
+                понизил её до <span>. Надпись, обращённая к прокатчикам,
+                полгода никуда не вела. */}
+            <Link to="/rental-shops" style={{ fontSize: 'var(--text-sm)', color: 'var(--muted)' }}>
+              {t('forRentalShops')}
+            </Link>
           </footer>
         )}
         <Toaster position="bottom-right" />
