@@ -69,6 +69,35 @@ test.describe('фильтры витрины', () => {
     await expect(page.getByRole('button', { name: /Filtres · 1/ })).toBeVisible()
   })
 
+  test('три фильтра переживают сворачивание, прокрутку и раскрытие', async ({ page }) => {
+    // Самый неприятный путь: человек набрал три условия, свернул панель,
+    // ушёл смотреть выдачу и вернулся. Если хоть одно значение потеряется
+    // молча, он будет искать по условиям, которых уже нет, и не поймёт,
+    // почему выдача не сходится с тем, что он помнит.
+    await page.goto('/browse?where=Wavre', { waitUntil: 'load' })
+    await expect(page.getByText('Où', { exact: true })).toBeVisible({ timeout: 15000 })
+
+    await page.getByText('Prix max / jour').locator('..').locator('input').fill('30')
+    await page.getByText('Disponible du').locator('..').locator('input').fill('2026-09-10')
+    await expect(page.getByRole('button', { name: /Filtres · 3/ })).toBeVisible({ timeout: 10000 })
+
+    // Свернуть, уйти вниз и вернуться.
+    await page.getByRole('button', { name: /Filtres · 3/ }).click()
+    await expect(page.getByText('Prix max / jour')).toHaveCount(0)
+    await page.mouse.wheel(0, 1200)
+    await page.getByRole('button', { name: /Filtres · 3/ }).click()
+
+    // Все три значения на месте — не «панель открылась», а именно значения.
+    await expect(page.getByText('Prix max / jour').locator('..').locator('input')).toHaveValue('30')
+    await expect(page.getByText('Où', { exact: true }).locator('..').locator('input')).toHaveValue('Wavre')
+    await expect(page.getByText('Disponible du').locator('..').locator('input')).toHaveValue('2026-09-10')
+
+    // Сброс убирает всё разом и гасит счётчик.
+    await page.getByRole('button', { name: 'Réinitialiser' }).click()
+    await expect(page.getByRole('button', { name: /Filtres · / })).toHaveCount(0, { timeout: 10000 })
+    await expect(page.getByText('Prix max / jour').locator('..').locator('input')).toHaveValue('')
+  })
+
   test('категорию выбирают одним органом — чипами', async ({ page }) => {
     await page.goto('/browse', { waitUntil: 'load' })
 
