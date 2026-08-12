@@ -57,9 +57,14 @@ function Navbar() {
 
   const close = () => setMenuOpen(false)
 
+  // Языков три, а переключатель знал два: до нидерландского из интерфейса
+  // было не добраться вовсе, хотя словарь nl лежал полный. Теперь по кругу.
+  const LANGS = ['fr', 'en', 'nl'] as const
+  const current = (LANGS.find(l => i18n.language?.startsWith(l)) ?? 'fr')
+  const nextLang = LANGS[(LANGS.indexOf(current) + 1) % LANGS.length]
+
   const toggleLanguage = () => {
-    const newLang = i18n.language === 'fr' ? 'en' : 'fr'
-    i18n.changeLanguage(newLang)
+    i18n.changeLanguage(nextLang)
     close()
   }
 
@@ -100,7 +105,7 @@ function Navbar() {
               padding: '5px 10px', cursor: 'pointer', letterSpacing: '0.08em',
             }}
           >
-            {i18n.language === 'fr' ? 'EN' : 'FR'}
+            {nextLang.toUpperCase()}
           </button>
         </div>
       </div>

@@ -4,11 +4,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useItemById } from '../hooks/useItemById';
 import { useUpdateItem } from '../hooks/mutations/useUpdateItem';
-import { t } from '../i18n';
+import { useTranslation } from 'react-i18next';
 import { CATEGORIES, CONDITIONS } from '../domain/catalog';
 import { useUploadImage } from '../hooks/useUploadImage';
 
 const EditItem: React.FC = () => {
+  const { t } = useTranslation();
   const { id: itemId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();

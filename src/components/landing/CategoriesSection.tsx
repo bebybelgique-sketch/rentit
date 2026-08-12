@@ -1,10 +1,11 @@
 // src/components/landing/CategoriesSection.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { t } from '../../i18n';
+import { useTranslation } from 'react-i18next';
 import { CATEGORIES } from '../../domain/catalog';
 
 const CategoriesSection: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <section style={{ padding: '140px 0' }}>
       <div className="L-wrap">

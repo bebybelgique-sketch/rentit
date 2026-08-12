@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { t } from '../i18n'
+import { useTranslation } from 'react-i18next'
 import { categoryEmoji, categoryLabelKey, conditionLabelKey } from '../domain/catalog'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
@@ -53,6 +53,7 @@ function isBooked(date: Date, ranges: BookedRange[]) {
 }
 
 export default function ItemDetail() {
+  const { t } = useTranslation()
   const { id: itemId } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user, accessToken } = useAuth()

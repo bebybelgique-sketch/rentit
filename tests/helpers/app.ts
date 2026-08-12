@@ -21,11 +21,15 @@ export const UI = {
   cookieManage: 'Manage preferences',
   cookieHeading: 'This site uses cookies',
 
+  // 12.08, сведение словарей: навбар говорил чужим словом. Продукт сдаёт
+  // инструменты, а не «articles», и глаголы согласованы между собой —
+  // Parcourir · Se connecter · S'inscrire, а не глагол вперемешку с
+  // существительными.
   navBrowse: 'Parcourir',
-  navLogin: 'Connexion',
-  navSignup: 'Inscription',
+  navLogin: 'Se connecter',
+  navSignup: "S'inscrire",
   navLogout: 'Déconnexion',
-  navMyItems: 'Mes articles',
+  navMyItems: 'Mes outils',
 
   loginHeading: 'Se connecter à RentIt',
   loginSubmit: 'Se connecter',
