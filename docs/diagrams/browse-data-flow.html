@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>RentIt — как витрина находит инструменты</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#080808; --paper-2:#141414;
+    --ink:#F2F0EB; --muted:#A5A29B; --soft:#77746E;
+    --rule:rgba(242,240,235,0.12);
+    --accent:#ADFF2F;
+    --sans:'Syne',sans-serif; --mono:'DM Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased;padding:48px 32px 64px}
+  .wrap{max-width:1264px;margin:0 auto}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.16em;
+           text-transform:uppercase;color:var(--soft);margin-bottom:12px}
+  h1{font-size:32px;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px}
+  .sub{color:var(--muted);font-size:15px;max-width:70ch;line-height:1.5}
+  .sub code{font-family:var(--mono);font-size:13px}
+  svg{display:block;width:100%;height:auto;margin:40px 0 8px}
+  .cards{display:grid;grid-template-columns:1.1fr 1fr 0.95fr;gap:20px;margin-top:32px}
+  .card{background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;padding:20px}
+  .card .eyebrow{margin-bottom:8px}
+  .card h3{font-size:15px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .dot.accent{background:var(--accent)}
+  .dot.muted{background:var(--muted)}
+  .dot.soft{background:var(--soft)}
+  .card p{color:var(--muted);font-size:13px;line-height:1.6}
+  .card code{font-family:var(--mono);font-size:12px;color:var(--ink)}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--rule);
+         font-family:var(--mono);font-size:11px;color:var(--soft)}
+  @media(max-width:960px){.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">RentIt · витрина</p>
+  <h1>Как витрина находит инструменты</h1>
+  <p class="sub">Один запрос вместо выборки-и-фильтрации в браузере. Отбор по радиусу идёт
+     <code>ST_DWithin</code> по GiST-индексу, занятость на даты исключается тут же.
+     Глобального стора нет — состояние живёт в <code>useState</code> внутри <code>Home.tsx</code>.</p>
+
+  <svg viewBox="0 0 1200 700" role="img" aria-label="Поток данных витрины RentIt">
+    <defs>
+      <marker id="a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#A5A29B"/>
+      </marker>
+      <marker id="a-acc" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#ADFF2F"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#080808"/>
+
+    <!-- ── СВЯЗИ ─────────────────────────────────────────────────── -->
+    <!-- Home.tsx → PostgREST -->
+    <line x1="304" y1="128" x2="456" y2="128" stroke="#ADFF2F" stroke-width="1.4" marker-end="url(#a-acc)"/>
+    <rect x="336" y="102" width="92" height="14" rx="2" fill="#080808"/>
+    <text x="382" y="112" fill="#ADFF2F" font-size="8" font-family="'DM Mono',monospace"
+          text-anchor="middle" letter-spacing="0.06em">POST · RPC</text>
+
+    <!-- PostgREST → browse_items -->
+    <line x1="600" y1="164" x2="600" y2="256" stroke="#A5A29B" stroke-width="1.2" marker-end="url(#a)"/>
+    <rect x="612" y="196" width="96" height="14" rx="2" fill="#080808"/>
+    <text x="612" y="206" fill="#A5A29B" font-size="8" font-family="'DM Mono',monospace"
+          letter-spacing="0.06em">SECURITY</text>
+    <text x="612" y="224" fill="#77746E" font-size="8" font-family="'DM Mono',monospace"
+          letter-spacing="0.06em">INVOKER</text>
+
+    <!-- browse_items → items + GiST -->
+    <line x1="600" y1="356" x2="600" y2="440" stroke="#A5A29B" stroke-width="1.2" marker-end="url(#a)"/>
+    <rect x="612" y="384" width="104" height="14" rx="2" fill="#080808"/>
+    <text x="612" y="394" fill="#A5A29B" font-size="8" font-family="'DM Mono',monospace"
+          letter-spacing="0.06em">ST_DWITHIN</text>
+
+    <!-- browse_items → items_busy_between (вправо) -->
+    <line x1="756" y1="304" x2="912" y2="304" stroke="#A5A29B" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#a)"/>
+    <rect x="792" y="278" width="88" height="14" rx="2" fill="#080808"/>
+    <text x="836" y="288" fill="#A5A29B" font-size="8" font-family="'DM Mono',monospace"
+          text-anchor="middle" letter-spacing="0.06em">NOT IN</text>
+
+    <!-- RLS слева от browse_items -->
+    <line x1="288" y1="304" x2="440" y2="304" stroke="#A5A29B" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#a)"/>
+    <rect x="316" y="278" width="96" height="14" rx="2" fill="#080808"/>
+    <text x="364" y="288" fill="#A5A29B" font-size="8" font-family="'DM Mono',monospace"
+          text-anchor="middle" letter-spacing="0.06em">ПОЛИТИКИ</text>
+
+    <!-- Возврат: items → витрина. Обходит блок RLS слева (x=72), а не сквозь
+         него: связь не имеет права проходить за узлом, который ей не конец
+         и не начало — иначе читается как взаимодействие, которого нет. -->
+    <path d="M 496 476 L 80 476 Q 72 476 72 468 L 72 136 Q 72 128 80 128 L 100 128"
+          fill="none" stroke="#ADFF2F" stroke-width="1.4" marker-end="url(#a-acc)"/>
+    <rect x="248" y="450" width="152" height="14" rx="2" fill="#080808"/>
+    <text x="324" y="460" fill="#ADFF2F" font-size="8" font-family="'DM Mono',monospace"
+          text-anchor="middle" letter-spacing="0.06em">СТРОКИ + DISTANCE_M</text>
+
+    <!-- ── УЗЛЫ ──────────────────────────────────────────────────── -->
+    <!-- Home.tsx -->
+    <rect x="104" y="92" width="200" height="72" rx="6" fill="#080808"/>
+    <rect x="104" y="92" width="200" height="72" rx="6" fill="rgba(242,240,235,0.10)" stroke="#77746E" stroke-width="1"/>
+    <rect x="112" y="98" width="52" height="12" rx="2" fill="none" stroke="rgba(119,116,110,0.6)" stroke-width="0.8"/>
+    <text x="138" y="107" fill="#A5A29B" font-size="7" font-family="'DM Mono',monospace"
+          text-anchor="middle" letter-spacing="0.08em">BROWSER</text>
+    <text x="204" y="132" fill="#F2F0EB" font-size="12" font-weight="600" font-family="'Syne',sans-serif" text-anchor="middle">Витрина</text>
+    <text x="204" y="150" fill="#A5A29B" font-size="9" font-family="'DM Mono',monospace" text-anchor="middle">Home.tsx · useState</text>
+
+    <!-- PostgREST -->
+    <rect x="456" y="92" width="288" height="72" rx="6" fill="#080808"/>
+    <rect x="456" y="92" width="288" height="72" rx="6" fill="#ffffff10" stroke="#F2F0EB" stroke-width="1"/>
+    <rect x="464" y="98" width="36" height="12" rx="2" fill="none" stroke="rgba(242,240,235,0.4)" stroke-width="0.8"/>
+    <text x="482" y="107" fill="#A5A29B" font-size="7" font-family="'DM Mono',monospace"
+          text-anchor="middle" letter-spacing="0.08em">API</text>
+    <text x="600" y="132" fill="#F2F0EB" font-size="12" font-weight="600" font-family="'Syne',sans-serif" text-anchor="middle">Supabase PostgREST</text>
+    <text x="600" y="150" fill="#A5A29B" font-size="9" font-family="'DM Mono',monospace" text-anchor="middle">/rest/v1/rpc/browse_items</text>
+
+    <!-- browse_items (фокус) -->
+    <rect x="440" y="256" width="316" height="100" rx="6" fill="#080808"/>
+    <rect x="440" y="256" width="316" height="100" rx="6" fill="rgba(173,255,47,0.12)" stroke="#ADFF2F" stroke-width="1.4"/>
+    <rect x="448" y="262" width="36" height="12" rx="2" fill="none" stroke="rgba(173,255,47,0.5)" stroke-width="0.8"/>
+    <text x="466" y="271" fill="#ADFF2F" font-size="7" font-family="'DM Mono',monospace"
+          text-anchor="middle" letter-spacing="0.08em">SQL</text>
+    <text x="598" y="296" fill="#F2F0EB" font-size="12" font-weight="600" font-family="'Syne',sans-serif" text-anchor="middle">browse_items</text>
+    <text x="598" y="316" fill="#A5A29B" font-size="9" font-family="'DM Mono',monospace" text-anchor="middle">category · search · max_price · place</text>
+    <text x="598" y="334" fill="#A5A29B" font-size="9" font-family="'DM Mono',monospace" text-anchor="middle">radius ≤ 200 km · limit ≤ 500</text>
+
+    <!-- items + индекс -->
+    <rect x="496" y="440" width="288" height="72" rx="6" fill="#080808"/>
+    <rect x="496" y="440" width="288" height="72" rx="6" fill="rgba(242,240,235,0.05)" stroke="#A5A29B" stroke-width="1"/>
+    <rect x="504" y="446" width="48" height="12" rx="2" fill="none" stroke="rgba(165,162,155,0.5)" stroke-width="0.8"/>
+    <text x="528" y="455" fill="#A5A29B" font-size="7" font-family="'DM Mono',monospace"
+          text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+    <text x="640" y="480" fill="#F2F0EB" font-size="12" font-weight="600" font-family="'Syne',sans-serif" text-anchor="middle">items</text>
+    <text x="640" y="498" fill="#A5A29B" font-size="9" font-family="'DM Mono',monospace" text-anchor="middle">location geography · GiST</text>
+
+    <!-- items_busy_between -->
+    <rect x="912" y="268" width="184" height="72" rx="6" fill="#080808"/>
+    <rect x="912" y="268" width="184" height="72" rx="6" fill="rgba(242,240,235,0.02)" stroke="rgba(242,240,235,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="1004" y="300" fill="#F2F0EB" font-size="12" font-weight="600" font-family="'Syne',sans-serif" text-anchor="middle">items_busy_between</text>
+    <text x="1004" y="318" fill="#77746E" font-size="9" font-family="'DM Mono',monospace" text-anchor="middle">SECURITY DEFINER</text>
+
+    <!-- RLS -->
+    <rect x="104" y="268" width="184" height="72" rx="6" fill="#080808"/>
+    <rect x="104" y="268" width="184" height="72" rx="6" fill="rgba(173,255,47,0.05)" stroke="rgba(173,255,47,0.5)" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="196" y="300" fill="#F2F0EB" font-size="12" font-weight="600" font-family="'Syne',sans-serif" text-anchor="middle">RLS на items</text>
+    <text x="196" y="318" fill="#77746E" font-size="9" font-family="'DM Mono',monospace" text-anchor="middle">права вызывающего</text>
+
+    <!-- ── ЛЕГЕНДА ───────────────────────────────────────────────── -->
+    <line x1="32" y1="612" x2="1168" y2="612" stroke="rgba(242,240,235,0.12)" stroke-width="0.8"/>
+    <text x="32" y="636" fill="#A5A29B" font-size="8" font-family="'DM Mono',monospace" letter-spacing="0.14em">ЛЕГЕНДА</text>
+    <rect x="140" y="626" width="14" height="12" rx="3" fill="rgba(173,255,47,0.12)" stroke="#ADFF2F" stroke-width="1.2"/>
+    <text x="162" y="636" fill="#A5A29B" font-size="9" font-family="'DM Mono',monospace">где происходит отбор</text>
+    <rect x="360" y="626" width="14" height="12" rx="3" fill="rgba(242,240,235,0.05)" stroke="#A5A29B" stroke-width="1"/>
+    <text x="382" y="636" fill="#A5A29B" font-size="9" font-family="'DM Mono',monospace">данные</text>
+    <rect x="520" y="626" width="14" height="12" rx="3" fill="none" stroke="rgba(242,240,235,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="542" y="636" fill="#A5A29B" font-size="9" font-family="'DM Mono',monospace">вызов с расширенными правами</text>
+    <rect x="820" y="626" width="14" height="12" rx="3" fill="rgba(173,255,47,0.05)" stroke="rgba(173,255,47,0.5)" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="842" y="636" fill="#A5A29B" font-size="9" font-family="'DM Mono',monospace">граница доступа</text>
+  </svg>
+
+  <div class="cards">
+    <div class="card">
+      <p class="eyebrow">почему функция, а не запрос</p>
+      <h3><span class="dot accent"></span>Список ид не влезает в адрес</h3>
+      <p>Вариант «функция отдаёт ид, клиент подставляет их в <code>.in(...)</code>» упирается в длину URL
+         на паре сотен вещей в радиусе. Такой фильтр работает ровно до первого успеха площадки.</p>
+    </div>
+    <div class="card">
+      <p class="eyebrow">права</p>
+      <h3><span class="dot soft"></span>Две разные причины</h3>
+      <p><code>browse_items</code> — <code>INVOKER</code>: политики на <code>items</code> продолжают
+         действовать. <code>items_busy_between</code> — <code>DEFINER</code>, потому что посторонний
+         не видит чужих броней и отфильтровать даты сам не может.</p>
+    </div>
+    <div class="card">
+      <p class="eyebrow">честно</p>
+      <h3><span class="dot muted"></span>Индекс пока не работает</h3>
+      <p>На единицах строк планировщик берёт последовательный просмотр, и это правильно.
+         GiST — отложенная польза, а не замеренное ускорение.</p>
+    </div>
+  </div>
+
+  <footer>Построено по коду 12.08.2026 · Home.tsx · миграция 20260812000016_geo_postgis.sql</footer>
+</div>
+</body>
+</html>
