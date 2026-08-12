@@ -48,6 +48,52 @@ export const fr = {
     measuring: '📐 Mesure & Détection',
   },
 
+  // Примеры инструментов по категориям — для лендинга.
+  categoryHints: {
+    power_tools: 'Perceuses, scies, meuleuses, défonceuses',
+    hand_tools: 'Marteaux, clés, pinces, étaux',
+    garden: 'Tondeuses, taille-haies, souffleurs',
+    construction: 'Échafaudages, bétonnières, compresseurs',
+    cleaning: 'Nettoyeurs HP, autolaveuses',
+    measuring: 'Niveaux laser, détecteurs, testeurs',
+  },
+
+  // Ориентир по ценам в форме выкладки. Это подсказка о рынке, а не тариф
+  // площадки: платформа денег не касается.
+  categoryPrices: {
+    power_tools: 'Perceuses €10–18 · Meuleuses €12–20 · Scies sauteuses €8–15',
+    hand_tools: 'Jeux de marteaux €5–10 · Jeux de clés €6–12',
+    garden: 'Tondeuses €20–35 · Débroussailleuses €15–25 · Nettoyeurs HP €25–40',
+    construction: 'Échafaudages €30–60 · Bétonnières €25–45 · Compresseurs €20–35',
+    cleaning: 'Autolaveuses €25–40 · Nettoyeurs vapeur €15–25',
+    measuring: 'Niveaux laser €10–18 · Détecteurs €8–14',
+  },
+
+  // Состояние вещи. Раньше лежало тремя копиями прямо в страницах и только
+  // по-французски: в английском и нидерландском человек видел «Bon état».
+  conditions: {
+    new: 'Neuf',
+    like_new: 'Comme neuf',
+    good: 'Bon état',
+    fair: 'Correct',
+  },
+
+  // Статусы брони. Раньше — две карты подписей, и они разошлись: одна и та
+  // же бронь называлась «Actif» в бейдже и «En cours» в кабинете, «Rejeté»
+  // и «Refusé». Здесь одна.
+  status: {
+    pending_approval: "En attente d'approbation",
+    pending_payment: 'En attente de paiement',
+    confirmed: 'Confirmé',
+    active: 'En cours',
+    completed: 'Terminé',
+    cancelled: 'Annulé',
+    rejected: 'Refusé',
+    expired: 'Expiré',
+    payment_expired: 'Paiement expiré',
+    disputed: 'Litige',
+  },
+
   // Auth — Register
   joinRentIt: 'Rejoindre RentIt',
   fullName: 'Nom complet',

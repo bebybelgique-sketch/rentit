@@ -3,21 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { t } from '../i18n'
+import { categoryEmoji, categoryLabelKey, conditionLabelKey } from '../domain/catalog'
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  power_tools: '🔌', hand_tools: '🔧', garden: '🌿',
-  construction: '🏗️', cleaning: '🧹', measuring: '📐',
-}
-
-const CATEGORY_FR: Record<string, string> = {
-  power_tools: '⚡ Électroportatif', hand_tools: '🔧 Outillage manuel',
-  garden: '🌿 Jardinage', construction: '🏗️ Construction',
-  cleaning: '🧹 Nettoyage', measuring: '📐 Mesure & Détection',
-}
-
-const CONDITION_FR: Record<string, string> = {
-  new: 'Neuf', like_new: 'Comme neuf', good: 'Bon état', fair: 'Correct',
-}
+// Здесь лежали три собственные карты. Одна из них разошлась с витриной:
+// power_tools был 🔌, а на витрине ⚡ — одна и та же категория с двумя
+// значками на соседних экранах. Теперь источник один.
 
 // Страхового сбора нет и не планируется: платформа не сторона договора и
 // ничего не покрывает. Ноль оставлен, потому что колонка insurance_amount
@@ -300,7 +290,7 @@ export default function ItemDetail() {
             </>
           ) : (
             <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '72px', background: 'var(--bg)' }}>
-              {CATEGORY_EMOJI[item.category] || '📦'}
+              {categoryEmoji(item.category)}
             </div>
           )}
         </div>
@@ -314,8 +304,8 @@ export default function ItemDetail() {
                   что отвечает на второй вопрос, а не на первый. */}
               <h1 style={{ fontSize: 'clamp(var(--text-lg), 5vw, var(--text-xl))', fontWeight: '800', letterSpacing: '-0.025em', marginBottom: 'var(--space-3)' }}>{item.title}</h1>
               <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-                <span className="tag tag-gray">{CATEGORY_FR[item.category] || item.category}</span>
-                <span className="tag tag-gray">{CONDITION_FR[item.condition] || item.condition}</span>
+                <span className="tag tag-gray">{t(categoryLabelKey(item.category) ?? '') || item.category}</span>
+                <span className="tag tag-gray">{t(conditionLabelKey(item.condition) ?? '') || item.condition}</span>
                 {!item.available && <span className="tag tag-red">Indisponible</span>}
               </div>
             </div>

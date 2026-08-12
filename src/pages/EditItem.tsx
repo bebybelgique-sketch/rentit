@@ -4,6 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useItemById } from '../hooks/useItemById';
 import { useUpdateItem } from '../hooks/mutations/useUpdateItem';
+import { t } from '../i18n';
+import { CATEGORIES, CONDITIONS } from '../domain/catalog';
 import { useUploadImage } from '../hooks/useUploadImage';
 
 const EditItem: React.FC = () => {
@@ -185,13 +187,12 @@ const EditItem: React.FC = () => {
               required
               style={{ width: '100%' }}
             >
+              {/* Шестая копия списка была вписана прямо в разметку: добавь
+                  категорию в продукт — и её не будет только здесь. */}
               <option value="">Sélectionnez une catégorie</option>
-              <option value="power_tools">⚡ Électroportatif</option>
-              <option value="hand_tools">🔧 Outillage manuel</option>
-              <option value="garden">🌿 Jardinage</option>
-              <option value="construction">🏗️ Construction</option>
-              <option value="cleaning">🧹 Nettoyage</option>
-              <option value="measuring">📐 Mesure & Détection</option>
+              {CATEGORIES.map(c => (
+                <option key={c.value} value={c.value}>{t(c.labelKey)}</option>
+              ))}
             </select>
           </div>
 
@@ -206,10 +207,9 @@ const EditItem: React.FC = () => {
               style={{ width: '100%' }}
             >
               <option value="">Sélectionnez un état</option>
-              <option value="new">Neuf</option>
-              <option value="like_new">Comme neuf</option>
-              <option value="good">Bon état</option>
-              <option value="fair">Correct</option>
+              {CONDITIONS.map(c => (
+                <option key={c.value} value={c.value}>{t(c.labelKey)}</option>
+              ))}
             </select>
           </div>
 

@@ -48,6 +48,44 @@ export const nl = {
     measuring: '📐 Meten & Detecteren',
   },
 
+  categoryHints: {
+    power_tools: 'Boormachines, zagen, slijpers, freesmachines',
+    hand_tools: 'Hamers, sleutels, tangen, klemmen',
+    garden: 'Grasmaaiers, heggenscharen, bladblazers',
+    construction: 'Steigers, betonmolens, compressoren',
+    cleaning: 'Hogedrukreinigers, schrobmachines',
+    measuring: 'Laserwaterpassen, detectoren, testers',
+  },
+
+  categoryPrices: {
+    power_tools: 'Boormachines €10–18 · Slijpers €12–20 · Decoupeerzagen €8–15',
+    hand_tools: 'Hamersets €5–10 · Sleutelsets €6–12',
+    garden: 'Grasmaaiers €20–35 · Bosmaaiers €15–25 · Hogedrukreinigers €25–40',
+    construction: 'Steigers €30–60 · Betonmolens €25–45 · Compressoren €20–35',
+    cleaning: 'Schrobmachines €25–40 · Stoomreinigers €15–25',
+    measuring: 'Laserwaterpassen €10–18 · Detectoren €8–14',
+  },
+
+  conditions: {
+    new: 'Nieuw',
+    like_new: 'Zo goed als nieuw',
+    good: 'Goede staat',
+    fair: 'Redelijk',
+  },
+
+  status: {
+    pending_approval: 'Wacht op goedkeuring',
+    pending_payment: 'Wacht op betaling',
+    confirmed: 'Bevestigd',
+    active: 'Loopt',
+    completed: 'Afgerond',
+    cancelled: 'Geannuleerd',
+    rejected: 'Geweigerd',
+    expired: 'Verlopen',
+    payment_expired: 'Betaling verlopen',
+    disputed: 'Geschil',
+  },
+
   // Auth — Register
   joinRentIt: 'Sluit je aan bij RentIt',
   fullName: 'Volledige naam',

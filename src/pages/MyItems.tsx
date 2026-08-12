@@ -2,25 +2,13 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { t } from '../i18n'
+import { categoryEmoji, statusLabelKey } from '../domain/catalog'
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  power_tools: '⚡', hand_tools: '🔧', garden: '🌿',
-  construction: '🏗️', cleaning: '🧹', measuring: '📐',
-  tools: '🔧', other: '📦',
-}
-
-const STATUS_FR: Record<string, string> = {
-  pending_approval: 'En attente',
-  pending_payment: 'Paiement en attente',
-  confirmed: 'Confirmé',
-  active: 'En cours',
-  completed: 'Terminé',
-  disputed: 'Litige',
-  cancelled: 'Annulé',
-  rejected: 'Refusé',
-  expired: 'Expiré',
-  payment_expired: 'Paiement expiré',
-}
+// Собственные карты убраны в src/domain/catalog.ts. Здесь было две беды:
+// категории `tools` и `other`, которых в продукте нет вовсе, и вторая карта
+// подписей статусов — она разошлась с бейджем (Actif/En cours,
+// Rejeté/Refusé), и одна бронь называлась по-разному на соседних экранах.
 
 interface Booking {
   id: string
@@ -186,7 +174,7 @@ export default function MyItems() {
                     <img src={item.photos[0]} alt="" style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
                   ) : (
                     <div style={{ width: '80px', height: '80px', borderRadius: '8px', background: '#ede9ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', flexShrink: 0 }}>
-                      {CATEGORY_EMOJI[item.category]}
+                      {categoryEmoji(item.category)}
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -299,7 +287,7 @@ export default function MyItems() {
                               booking.status === 'active' ? 'tag-yellow' :
                               booking.status === 'pending_payment' ? 'tag-yellow' : 'tag-gray'
                             }`}>
-                              {STATUS_FR[booking.status] || booking.status}
+                              {t(statusLabelKey(booking.status) ?? '') || booking.status}
                             </span>
                             {booking.status === 'confirmed' && (
                               <>

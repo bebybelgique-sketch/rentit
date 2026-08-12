@@ -48,6 +48,44 @@ export const en = {
     measuring: '📐 Measuring & Detection',
   },
 
+  categoryHints: {
+    power_tools: 'Drills, saws, grinders, routers',
+    hand_tools: 'Hammers, wrenches, pliers, clamps',
+    garden: 'Mowers, hedge trimmers, blowers',
+    construction: 'Scaffolding, mixers, compressors',
+    cleaning: 'Pressure washers, floor scrubbers',
+    measuring: 'Laser levels, detectors, testers',
+  },
+
+  categoryPrices: {
+    power_tools: 'Drills €10–18 · Grinders €12–20 · Jigsaws €8–15',
+    hand_tools: 'Hammer sets €5–10 · Wrench sets €6–12',
+    garden: 'Mowers €20–35 · Brushcutters €15–25 · Pressure washers €25–40',
+    construction: 'Scaffolding €30–60 · Mixers €25–45 · Compressors €20–35',
+    cleaning: 'Floor scrubbers €25–40 · Steam cleaners €15–25',
+    measuring: 'Laser levels €10–18 · Detectors €8–14',
+  },
+
+  conditions: {
+    new: 'New',
+    like_new: 'Like new',
+    good: 'Good condition',
+    fair: 'Fair',
+  },
+
+  status: {
+    pending_approval: 'Awaiting approval',
+    pending_payment: 'Awaiting payment',
+    confirmed: 'Confirmed',
+    active: 'In progress',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    rejected: 'Declined',
+    expired: 'Expired',
+    payment_expired: 'Payment expired',
+    disputed: 'Disputed',
+  },
+
   // Auth — Register
   joinRentIt: 'Join RentIt',
   fullName: 'Full name',

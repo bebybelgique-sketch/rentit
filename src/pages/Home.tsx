@@ -3,6 +3,9 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { t, getLang } from '../i18n'
 import { translations } from '../i18n'
+import {
+  CATEGORIES, categoryEmoji, categoryLabelKey, conditionLabelKey, isCategoryValue,
+} from '../domain/catalog'
 
 // Leaflet loaded via CDN in index.html — using window.L
 declare const L: any
@@ -50,27 +53,9 @@ function MapView({ items, userPos }: { items: Item[], userPos: { lat: number; ln
   return <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
 }
 
-const CATEGORIES = [
-  { value: '', label: 'Tous les outils' },
-  { value: 'power_tools', label: '⚡ Électroportatif' },
-  { value: 'hand_tools', label: '🔧 Outillage manuel' },
-  { value: 'garden', label: '🌿 Jardinage' },
-  { value: 'construction', label: '🏗️ Construction' },
-  { value: 'cleaning', label: '🧹 Nettoyage' },
-  { value: 'measuring', label: '📐 Mesure & Détection' },
-]
-
-const CONDITION_FR: Record<string, string> = {
-  new: 'Neuf',
-  like_new: 'Comme neuf',
-  good: 'Bon état',
-  fair: 'Correct',
-}
-
-const CATEGORY_EMOJI: Record<string, string> = {
-  power_tools: '⚡', hand_tools: '🔧', garden: '🌿',
-  construction: '🏗️', cleaning: '🧹', measuring: '📐',
-}
+// Категории, состояния и эмодзи больше не объявляются здесь: они живут в
+// src/domain/catalog.ts. Прежняя копия разошлась с копией на странице вещи
+// (⚡ против 🔌 для одной и той же категории).
 
 interface Item {
   id: string
@@ -141,7 +126,17 @@ export default function Home() {
   // первом экране выглядело рабочим и молча ничего не делало. Фальшивый
   // интерактив хуже отсутствующего: человек считает, что отфильтровал.
   const [place, setPlace] = useState(searchParams.get('where') ?? '')
-  const [category, setCategory] = useState('')
+  // Лендинг вёл на /browse?category=power_tools шестью плитками, а витрина
+  // этот параметр НЕ читала: человек нажимал «Électroportatif», попадал на
+  // общий список и не понимал, почему фильтр не сработал. Тот же класс, что
+  // был с ?where= (комментарий ниже) — только его починили, а этот остался.
+  //
+  // Значение сверяется с каталогом: чужое `?category=logement` иначе
+  // отфильтровало бы витрину в ноль и выглядело как «ничего нет».
+  const [category, setCategory] = useState(() => {
+    const fromUrl = searchParams.get('category')
+    return isCategoryValue(fromUrl) ? fromUrl : ''
+  })
   const [nearby, setNearby] = useState(false)
   const [radius, setRadius] = useState(10)
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
@@ -381,13 +376,13 @@ export default function Home() {
 
       {/* Category chips */}
       <div className="chips-row">
-        {CATEGORIES.slice(1).map(c => (
+        {CATEGORIES.map(c => (
           <button
             key={c.value}
             onClick={() => setCategory(category === c.value ? '' : c.value)}
             className={`chip ${category === c.value ? 'active' : ''}`}
           >
-            {c.label}
+            {t(c.labelKey)}
           </button>
         ))}
       </div>
@@ -462,16 +457,16 @@ export default function Home() {
                     />
                   ) : (
                     <div className="item-card-img">
-                      {CATEGORY_EMOJI[item.category] || '📦'}
+                      {categoryEmoji(item.category)}
                     </div>
                   )}
                   <div className="item-card-body">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
                       <span className="tag tag-gray">
-                        {t(`categories.${item.category}`) || `${CATEGORY_EMOJI[item.category]} ${item.category}`}
+                        {t(categoryLabelKey(item.category) ?? '') || item.category}
                       </span>
                       <span className="tag tag-gray">
-                        {CONDITION_FR[item.condition] || item.condition}
+                        {t(conditionLabelKey(item.condition) ?? '') || item.condition}
                       </span>
                     </div>
                     <div className="item-card-title">{item.title}</div>
