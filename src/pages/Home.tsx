@@ -150,6 +150,21 @@ export default function Home() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
+  const [filtersOpen, setFiltersOpen] = useState(false)
+
+  // Сколько второстепенных фильтров применено. Свёрнутая панель не должна
+  // прятать работающий отбор: иначе человек видит две вещи вместо двадцати и
+  // считает, что на площадке пусто. Число на кнопке — и есть это признание.
+  const extraFilterCount =
+    (maxPrice ? 1 : 0) + (place.trim() ? 1 : 0) + (startDate ? 1 : 0) + (endDate ? 1 : 0)
+
+  // Пришли с лендинга с ?where=… — фильтр уже действует, значит панель
+  // открывается сразу, а не прячет причину сокращённой выдачи.
+  useEffect(() => {
+    if (extraFilterCount > 0) setFiltersOpen(true)
+    // Только на первом рендере: дальше панелью управляет человек.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
@@ -244,49 +259,10 @@ export default function Home() {
           style={{ flex: 2, minWidth: '180px' }}
           aria-label={t('searchPlaceholder')}
         />
-        <select value={category} onChange={e => setCategory(e.target.value)} aria-label={t('category')}>
-          {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-        </select>
-        <input
-          type="number"
-          placeholder={t('maxPrice')}
-          value={maxPrice}
-          onChange={e => setMaxPrice(e.target.value)}
-          style={{ width: '110px', minWidth: '110px' }}
-          aria-label={t('maxPrice')}
-        />
-        <input
-          type="text"
-          placeholder="Commune, rue…"
-          value={place}
-          onChange={e => setPlace(e.target.value)}
-          style={{ width: '160px', minWidth: '160px' }}
-          aria-label="Où"
-        />
-        {/* Даты: без них витрина показывает уже занятый инструмент, и
-            первое обращение человека заканчивается отказом. */}
-        <input
-          type="date"
-          value={startDate}
-          onChange={e => {
-            const v = e.target.value
-            setStartDate(v)
-            // Конец раньше начала — следствие порядка ввода, а не выбора.
-            if (endDate && endDate < v) setEndDate(v)
-          }}
-          style={{ width: '150px', minWidth: '150px' }}
-          aria-label="Disponible du"
-          title="Disponible du"
-        />
-        <input
-          type="date"
-          value={endDate}
-          min={startDate || undefined}
-          onChange={e => setEndDate(e.target.value)}
-          style={{ width: '150px', minWidth: '150px' }}
-          aria-label="Disponible au"
-          title="Disponible au"
-        />
+        {/* Селект категорий убран: тот же выбор делают чипы ниже, и делают
+            его виднее. Два органа для одного фильтра — это не запасной путь,
+            а вопрос «а эти два одно и то же?» на каждом визите. Сброс не
+            потерян: повторное нажатие по чипу снимает выбор. */}
         <button
           onClick={toggleNearby}
           className={`btn ${nearby ? 'btn-accent' : 'btn-secondary'}`}
@@ -294,6 +270,17 @@ export default function Home() {
           style={{ whiteSpace: 'nowrap', minHeight: '44px' }}
         >
           {geoLoading ? '...' : t('nearby')}
+        </button>
+        {/* Цена, место и даты нужны меньшинству и реже, но занимали весь
+            первый экран телефона: семь полей подряд и ни одного инструмента.
+            Витрина обязана показывать инструменты, а не форму. */}
+        <button
+          onClick={() => setFiltersOpen(o => !o)}
+          className="btn btn-secondary"
+          style={{ whiteSpace: 'nowrap', minHeight: '44px' }}
+          aria-expanded={filtersOpen}
+        >
+          Filtres{extraFilterCount > 0 ? ` · ${extraFilterCount}` : ''} {filtersOpen ? '▴' : '▾'}
         </button>
         {nearby && (
           <select
@@ -306,6 +293,63 @@ export default function Home() {
           </select>
         )}
       </div>
+
+      {filtersOpen && (
+        <div className="filters-panel">
+          <label className="filters-field">
+            <span>Prix max / jour</span>
+            <input
+              type="number"
+              placeholder={t('maxPrice')}
+              value={maxPrice}
+              onChange={e => setMaxPrice(e.target.value)}
+            />
+          </label>
+          <label className="filters-field">
+            <span>Où</span>
+            <input
+              type="text"
+              placeholder="Commune, rue…"
+              value={place}
+              onChange={e => setPlace(e.target.value)}
+            />
+          </label>
+          {/* Два одинаковых dd.mm.yyyy подряд не читаются как диапазон:
+              человек видит два поля даты и не знает, какое «с», а какое «по».
+              Подписи здесь несут смысл, а не украшают. */}
+          <label className="filters-field">
+            <span>Disponible du</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={e => {
+                const v = e.target.value
+                setStartDate(v)
+                // Конец раньше начала — следствие порядка ввода, а не выбора.
+                if (endDate && endDate < v) setEndDate(v)
+              }}
+            />
+          </label>
+          <label className="filters-field">
+            <span>au</span>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate || undefined}
+              onChange={e => setEndDate(e.target.value)}
+            />
+          </label>
+          {extraFilterCount > 0 && (
+            <button
+              onClick={() => { setMaxPrice(''); setPlace(''); setStartDate(''); setEndDate('') }}
+              className="btn btn-secondary btn-sm"
+              style={{ alignSelf: 'end' }}
+            >
+              Réinitialiser
+            </button>
+          )}
+        </div>
+      )}
 
       {/* View toggle */}
       <div style={{ display: 'flex', gap: 'var(--space-1)', marginBottom: 'var(--space-4)' }}>
