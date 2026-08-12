@@ -40,8 +40,11 @@
       }
     }
     </script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Здесь висели <link> и <script> на unpkg.com с leaflet. Грузились
+         они на КАЖДОЙ странице — на входе, на лендинге, в условиях, где
+         карты нет. Пакет leaflet и так лежит в зависимостях; теперь он
+         импортируется в src/pages/Home.tsx и приезжает только с витриной.
+         Сторонних доменов у продукта после этого не осталось. -->
   </head>
   <body>
     <div id="root"></div>

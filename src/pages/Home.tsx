@@ -6,18 +6,31 @@ import {
   CATEGORIES, categoryEmoji, categoryLabelKey, conditionLabelKey, isCategoryValue,
 } from '../domain/catalog'
 
-// Leaflet loaded via CDN in index.html — using window.L
-declare const L: any
+// Leaflet берётся из зависимостей проекта, а не с unpkg.
+//
+// Раньше в <head> index.html висели <script> и <link> на unpkg.com, и
+// грузились они на КАЖДОЙ странице — на входе, на лендинге, в условиях,
+// где карты нет вовсе. Два чужих запроса в критическом пути ради экрана,
+// который открывает меньшинство.
+//
+// Пакет `leaflet` при этом уже лежал в package.json и не импортировался
+// ни разу: карта работала на глобальном `window.L`. Теперь он приезжает
+// вместе с кодом витрины — Vite отдаёт его отдельным куском, и на других
+// страницах он не грузится совсем.
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 function MapView({ items, userPos }: { items: Item[], userPos: { lat: number; lng: number } | null }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
 
   useEffect(() => {
-    if (!containerRef.current || !window.L) return
+    // Проверка на window.L снята: L теперь импорт, а не глобальная
+    // переменная, которая могла не доехать с чужого CDN.
+    if (!containerRef.current) return
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
 
-    const center = userPos ? [userPos.lat, userPos.lng] : [50.85, 4.35]
+    const center: [number, number] = userPos ? [userPos.lat, userPos.lng] : [50.85, 4.35]
     const map = L.map(containerRef.current).setView(center, 13)
     mapRef.current = map
 
@@ -27,10 +40,22 @@ function MapView({ items, userPos }: { items: Item[], userPos: { lat: number; ln
     }).addTo(map)
 
     const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-    items.filter(i => i.lat && i.lng).forEach(item => {
+    // Предикат, а не просто фильтр: без него TypeScript не сужает
+    // number | null и ругается на L.marker. Проверка та же самая,
+    // просто теперь она видна и типам.
+    const placed = items.filter(
+      (i): i is Item & { lat: number; lng: number } => i.lat != null && i.lng != null
+    )
+
+    placed.forEach(item => {
       const icon = L.divIcon({
         className: '',
-        html: `<div style="background:#080808;color:#ADFF2F;font-family:monospace;font-size:12px;font-weight:600;padding:4px 9px;border-radius:3px;border:1px solid rgba(173,255,47,0.5);white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);cursor:pointer">€${Number(item.price_per_day).toFixed(2)}</div>`,
+        // Метка была лаймовой (#ADFF2F на #080808) — старая палитра,
+        // пережившая смену токенов, потому что живёт внутри строки и под
+        // замену переменных не попала. Цена не действие и не сигнал,
+        // поэтому здесь чернила, белый текст и серебряная кромка, а не
+        // красный с жёлтым.
+        html: `<div style="background:#121417;color:#F0F1F3;font-family:'Source Sans 3',system-ui,sans-serif;font-size:12px;font-weight:600;padding:4px 9px;border-radius:6px;border:1px solid rgba(198,205,213,0.45);white-space:nowrap;box-shadow:0 2px 8px rgba(18,20,23,0.45);cursor:pointer">€${Number(item.price_per_day).toFixed(2)}</div>`,
         iconAnchor: [28, 14],
       })
       const marker = L.marker([item.lat, item.lng], { icon }).addTo(map)
