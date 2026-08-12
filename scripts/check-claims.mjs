@@ -23,8 +23,9 @@ import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SCAN_DIRS = ['src'];
-const SCAN_EXT = /\.(ts|tsx|json)$/;
+const SCAN_DIRS = ['src', 'public'];
+const SCAN_FILES = ['index.html'];
+const SCAN_EXT = /\.(ts|tsx|json|html)$/;
 
 // Формулировки, которые выглядят как нарушение, но верны по существу.
 // Список намеренно из точных фраз, а не из шаблонов: широкий шаблон в
@@ -79,6 +80,18 @@ const ALLOWED = [
   'phone number shared with the other party only after a booking is confirmed',
   'numéro de téléphone communiqué à l\'autre partie uniquement après confirmation',
   'telefoonnummer gedeeld met de andere partij pas na bevestiging',
+  // Кнопка «поделиться объявлением» — не канал связи с контрагентом.
+  // Правило ниже запрещает WhatsApp как способ ДОГОВАРИВАТЬСЯ со второй
+  // стороной: телефон открывается только после подтверждённой брони, и
+  // переписка живёт внутри брони. Отправить ссылку на объявление кому
+  // угодно — другое действие, и запрещать его нечем.
+  // Исключения записаны точными подписями, а не шаблоном: шаблон вида
+  // /WhatsApp/ рядом с «partager» однажды пропустит «contactez le
+  // propriétaire via WhatsApp», и это будет ровно то нарушение, ради
+  // которого правило и заведено.
+  'Partager sur WhatsApp',
+  'Share on WhatsApp',
+  'Delen via WhatsApp',
 ];
 
 const RULES = [
@@ -127,6 +140,19 @@ const FORBIDDEN_WORDS = [
   // «поделиться» шлёт wa.me/?text=… без номера и никого не раскрывает.
   { word: /wa\.me\/[^?\s'"`]/i, why: 'Ссылка вида wa.me/<номер> раскрывает чужой телефон.' },
   { word: /users[^)]*\bphone\b(?!_verified)/, why: 'Телефон закрыт от чтения: контакт только после подтверждённой брони.' },
+  // 12.08. Подпись кнопки провели мимо стража: первую букву слова
+  // записали в словаре не буквой, а шестью символами — обратный слэш,
+  // «u», «0», «0», «5», «7». JSON при разборе возвращает букву на место,
+  // на экране слово стоит целиком, а в сыром тексте файла его нет —
+  // страж молчит. Ослабления правила в дифе при этом не видно, и вывод
+  // «нарушений нет» становится ложным свидетельством.
+  //
+  // Страж читает файл как ТЕКСТ, значит такая запись — готовый способ
+  // спрятать от него что угодно. Закрываем класс, а не случай.
+  // Экранирование ASCII (0x00–0x7F) не нужно никогда: эти символы просто
+  // набирают. Диакритика под правило не попадает: у «é» код 00E9, и
+  // третий разряд «E» лежит вне диапазона [0-7].
+  { word: /\\u00[0-7][0-9A-Fa-f]/i, why: 'ASCII-escape прячет слово от стража. Пишите символ как есть.' },
 ];
 
 // pending_payment намеренно НЕ запрещён. Значение живёт в enum базы с
@@ -134,13 +160,15 @@ const FORBIDDEN_WORDS = [
 // Правило, которое ругается на защитную обработку, приучает не смотреть
 // на стража — а это дороже, чем сама находка.
 
-const walk = (dir) => readdirSync(dir).flatMap((f) => {
-  const p = join(dir, f);
-  if (statSync(p).isDirectory()) {
-    return f === 'node_modules' || f === '__tests__' ? [] : walk(p);
+const walk = (path) => {
+  if (statSync(path).isDirectory()) {
+    return readdirSync(path).flatMap((f) => {
+      const p = join(path, f);
+      return f === 'node_modules' || f === '__tests__' ? [] : walk(p);
+    });
   }
-  return SCAN_EXT.test(f) ? [p] : [];
-});
+  return SCAN_EXT.test(path) ? [path] : [];
+};
 
 // Комментарии — это разговор разработчиков между собой, а не обещание
 // пользователю. Половина сегодняшних правок объясняет в комментарии, что
@@ -162,6 +190,13 @@ const stripComments = (source) =>
     // Чинить делением по /\r?\n/ мало: одиночный \r так и остаётся.
     .replace(/\r\n?/g, '\n')
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+    // HTML-комментарии — с того дня, как страж начал читать index.html.
+    // Без этой строки любое пояснение в разметке разбиралось как живой
+    // текст: комментарий «здесь жило „Protection incluse“, убрано»
+    // ронял сборку ровно на объяснении того, что нарушение снято.
+    // Комментарий пользователю не показывается, значит обещанием быть
+    // не может — как и блочные комментарии в JS выше.
+    .replace(/<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ' '))
     .split('\n')
     // Двойной слэш после двоеточия — это схема URL, а не комментарий.
     // Без этой оговорки строка «https://wa.me/<номер>» обрезалась до
@@ -205,7 +240,17 @@ export const findClaimViolations = () => {
       });
     }
   }
-
+  for (const file of SCAN_FILES) {
+    const path = join(root, file);
+    if (!statSync(path).isFile()) continue;
+    const rel = relative(root, path).replace(/\\/g, '/')
+    const lines = stripComments(readFileSync(path, 'utf8'));
+    lines.forEach((line, i) => {
+      for (const found of checkText(line)) {
+        violations.push({ file: rel, line: i + 1, ...found });
+      }
+    });
+  }
   return violations;
 };
 
