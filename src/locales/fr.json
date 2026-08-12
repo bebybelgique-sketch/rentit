@@ -290,5 +290,8 @@
     "finalCta": "Déposer un outil",
     "privacy": "Confidentialité",
     "terms": "CGU"
-  }
+  },
+  "loading": "Chargement…",
+  "routeError": "Cette page n'a pas pu se charger. Une nouvelle version du site est peut-être disponible.",
+  "routeRetry": "Recharger la page"
 }

@@ -290,5 +290,8 @@
     "finalCta": "List a tool",
     "privacy": "Privacy",
     "terms": "Terms"
-  }
+  },
+  "loading": "Loading…",
+  "routeError": "This page could not load. A newer version of the site may be available.",
+  "routeRetry": "Reload the page"
 }

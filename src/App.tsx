@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useState, useEffect } from 'react'
 import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 // ИМПОРТЫ ДЛЯ TanStack Query и Toast
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from './context/AuthContext'
 import { supabase } from './lib/supabase'
 import CookieBanner from './components/CookieBanner'
+import RouteBoundary, { clearChunkReloadFlag } from './components/common/RouteBoundary'
 
 // Создаем клиент для TanStack Query
 const queryClient = new QueryClient({
@@ -125,31 +126,73 @@ function Navbar() {
   )
 }
 
-export default function App() {
+/**
+ * Страж закрытых страниц.
+ *
+ * Найдено 12.08 по жалобе «через „list a tool" попадаешь на логин, и
+ * оттуда нет выхода, петля». Воспроизведено на проде:
+ *
+ *   лендинг                     история: 2
+ *   нажал «Déposer un outil» →  /login, история: 4
+ *   назад №1 → /login
+ *   назад №2 → /login   ← и так до бесконечности
+ *
+ * Причина: `<Navigate to="/login" />` по умолчанию ДОБАВЛЯЕТ запись в
+ * историю, а не заменяет. Получалось [/, /list-item, /login]; «назад»
+ * возвращал на /list-item, страж срабатывал снова и снова толкал на
+ * /login. Выбраться назад было нельзя вообще — только закрыть вкладку.
+ *
+ * Дверь стояла на главной кнопке лендинга, то есть ровно на той дороге,
+ * ради которой лендинг и переписан под владельца инструмента.
+ *
+ * `replace` убирает промежуточную запись: история остаётся [/, /login],
+ * и «назад» возвращает туда, откуда пришли. Заодно запоминаем, куда
+ * человек шёл, чтобы после входа отправить его именно туда.
+ */
+function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
+  const location = useLocation()
+  if (loading) return null
+  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  return <>{children}</>
+}
+
+export default function App() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
+
+  // Приложение поднялось — значит прошлая поломка чанка вылечена
+  // перезагрузкой. Снимаем флаг, иначе СЛЕДУЮЩИЙ сбой в этой же сессии
+  // не получит своей попытки и человек упрётся в текст вместо того,
+  // чтобы просто поехать дальше.
+  useEffect(() => { clearChunkReloadFlag() }, [])
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <CookieBanner />
-        <Suspense fallback={null}>
+        {/* fallback={null} означал: пока страница грузится — пусто. То
+            есть «грузится» и «сломалось» выглядели одинаково, и человек
+            не мог отличить медленную сеть от мёртвой вкладки.
+            RouteBoundary ловит непогрузившийся чанк (после деплоя старые
+            имена файлов исчезают) и перезагружает страницу один раз. */}
+        <RouteBoundary message={t('routeError')} retry={t('routeRetry')}>
+        <Suspense fallback={<div className="loading">{t('loading')}</div>}>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/browse" element={<Home />} />
             <Route path="/item/:id" element={<ItemDetail />} />
-            <Route path="/list-item" element={loading ? null : user ? <ListItem /> : <Navigate to="/login" />} />
-            <Route path="/edit-item/:id" element={loading ? null : user ? <EditItem /> : <Navigate to="/login" />} />
-            <Route path="/my-items" element={loading ? null : user ? <MyItems /> : <Navigate to="/login" />} />
-            <Route path="/my-rentals" element={loading ? null : user ? <MyRentals /> : <Navigate to="/login" />} />
-            <Route path="/profile" element={loading ? null : user ? <Profile /> : <Navigate to="/login" />} />
+            <Route path="/list-item" element={<RequireAuth><ListItem /></RequireAuth>} />
+            <Route path="/edit-item/:id" element={<RequireAuth><EditItem /></RequireAuth>} />
+            <Route path="/my-items" element={<RequireAuth><MyItems /></RequireAuth>} />
+            <Route path="/my-rentals" element={<RequireAuth><MyRentals /></RequireAuth>} />
+            <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/admin" element={loading ? null : user ? <Admin /> : <Navigate to="/login" />} />
+            <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/rental-shops" element={<RentalShops />} />
@@ -171,6 +214,7 @@ export default function App() {
             } />
           </Routes>
         </Suspense>
+        </RouteBoundary>
         {pathname !== '/' && (
           <footer style={{ textAlign: 'center', padding: 'var(--space-5) var(--space-4)', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
             {/* Была ссылка на /business, коммит 1409b3a снёс страницу и
