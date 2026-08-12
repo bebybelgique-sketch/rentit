@@ -76,6 +76,9 @@
   "expandSearch": "Expand to 50 km",
   "forgotPassword": "Forgot password?",
   "forRentalShops": "For rental shops →",
+  "errors": {
+    "generic": "Something went wrong. Please try again later."
+  },
   "fullName": "Full name",
   "heroSub": "Rent professional tools from people nearby. Cheaper than buying, ready in minutes.",
   "heroTitle": "Your neighbor's tools,\nat your fingertips",
@@ -162,7 +165,53 @@
   "searchPlaceholder": "Drill, pressure washer, sander…",
   "selectDates": "Select dates",
   "selectDatesHint": "Choose start and end date",
+  "searchRadius": "Search radius",
+  "toolsAvailable": "{{count}} tools available",
   "shareWhatsApp": "Share",
+  "share": {
+    "copyLink": "Copy link",
+    "linkCopied": "✓ Link copied!",
+    "whatsappButton": "Share on WhatsApp"
+  },
+  "cookies": {
+    "header": "Privacy notice · GDPR compliant",
+    "title": "This site uses cookies",
+    "lede": "We use cookies to keep you logged in and, optionally, to collect anonymous analytics. We do not sell your data or use advertising cookies.",
+    "privacyLink": "Privacy policy →",
+    "table": {
+      "type": "Cookie type",
+      "status": "Status"
+    },
+    "types": {
+      "necessary": {
+        "label": "Strictly necessary",
+        "desc": "Session, authentication, security"
+      },
+      "functional": {
+        "label": "Functional",
+        "desc": "User preferences"
+      },
+      "analytics": {
+        "label": "Analytics",
+        "desc": "Anonymous usage statistics"
+      }
+    },
+    "labels": {
+      "required": "REQUIRED",
+      "optional": "OPTIONAL",
+      "alwaysOn": "ALWAYS ON"
+    },
+    "buttons": {
+      "acceptAll": "Accept all cookies",
+      "declineOptional": "Decline optional",
+      "managePreferences": "Manage preferences",
+      "savePreferences": "Save preferences"
+    },
+    "preferences": {
+      "header": "Cookie preferences",
+      "title": "Manage cookies"
+    }
+  },
   "shops": {
     "eyebrow": "For professionals",
     "title": "You rent out equipment? Your tools can live here too.",

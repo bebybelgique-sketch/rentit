@@ -76,6 +76,9 @@
   "expandSearch": "Élargir à 50 km",
   "forgotPassword": "Mot de passe oublié ?",
   "forRentalShops": "Pour les loueurs professionnels →",
+  "errors": {
+    "generic": "Une erreur est survenue. Veuillez réessayer plus tard."
+  },
   "fullName": "Nom complet",
   "heroSub": "Louez des outils professionnels près de chez vous — moins cher qu'acheter, disponible en minutes",
   "heroTitle": "Les outils de votre voisin,\nà portée de main",
@@ -162,7 +165,53 @@
   "searchPlaceholder": "Rechercher des outils...",
   "selectDates": "Choisir les dates",
   "selectDatesHint": "Cliquez sur une date de début, puis une date de fin",
+  "searchRadius": "Rayon de recherche",
+  "toolsAvailable": "{{count}} outils disponibles",
   "shareWhatsApp": "Partager",
+  "share": {
+    "copyLink": "Copier le lien",
+    "linkCopied": "✓ Copié !",
+    "whatsappButton": "Partager sur WhatsApp"
+  },
+  "cookies": {
+    "header": "Mention de confidentialité · conforme RGPD",
+    "title": "Ce site utilise des cookies",
+    "lede": "Nous utilisons des cookies pour vous maintenir connecté et, éventuellement, collecter des statistiques anonymes. Nous ne vendons pas vos données et n'utilisons pas de cookies publicitaires.",
+    "privacyLink": "Politique de confidentialité →",
+    "table": {
+      "type": "Type de cookie",
+      "status": "Statut"
+    },
+    "types": {
+      "necessary": {
+        "label": "Strictement nécessaires",
+        "desc": "Session, authentification, sécurité"
+      },
+      "functional": {
+        "label": "Fonctionnels",
+        "desc": "Préférences utilisateur"
+      },
+      "analytics": {
+        "label": "Analytique",
+        "desc": "Statistiques anonymes d'utilisation"
+      }
+    },
+    "labels": {
+      "required": "REQUIS",
+      "optional": "OPTIONNEL",
+      "alwaysOn": "TOUJOURS ACTIVÉ"
+    },
+    "buttons": {
+      "acceptAll": "Accepter tous les cookies",
+      "declineOptional": "Refuser les optionnels",
+      "managePreferences": "Gérer les préférences",
+      "savePreferences": "Enregistrer"
+    },
+    "preferences": {
+      "header": "Préférences des cookies",
+      "title": "Gérer les cookies"
+    }
+  },
   "shops": {
     "eyebrow": "Pour les professionnels",
     "title": "Vous louez du matériel ? Vos outils peuvent aussi vivre ici.",

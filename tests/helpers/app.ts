@@ -14,12 +14,24 @@ import { expect, type Page } from '@playwright/test'
  * href, тексту предпочитаем их — они переживают и смену языка.
  */
 export const UI = {
-  // Баннер cookies. Внимание: он англоязычный и не переведён — это не описка
-  // теста, а состояние продукта на 11.08 (навбар при этом французский).
-  cookieAcceptAll: 'Accept all cookies',
-  cookieDeclineOptional: 'Decline optional',
-  cookieManage: 'Manage preferences',
-  cookieHeading: 'This site uses cookies',
+  // Баннер cookies. До 12.08 он был англоязычным на французском продукте —
+  // тест сверялся с английским и держал расхождение видимым, чтобы его
+  // чинили в продукте, а не подгонкой теста. Продукт починен: баннер
+  // переведён на три языка, и тест догоняет его. Порядок именно такой —
+  // сначала правка продукта, потом теста, иначе «подгонка» скрыла бы
+  // находку вместо того, чтобы её закрыть.
+  cookieAcceptAll: 'Accepter tous les cookies',
+  cookieDeclineOptional: 'Refuser les optionnels',
+  cookieManage: 'Gérer les préférences',
+  cookieHeading: 'Ce site utilise des cookies',
+  // Панель настройки. Раньше эти подписи стояли строками прямо в тесте —
+  // при переводе продукта половина осталась английской и падала отдельно
+  // от остальных. Держим одним местом, как и всё в UI.
+  cookiePrefsTitle: 'Gérer les cookies',
+  cookieTypeNecessary: 'Strictement nécessaires',
+  cookieTypeFunctional: 'Fonctionnels',
+  cookieTypeAnalytics: 'Analytique',
+  cookieSavePrefs: 'Enregistrer',
 
   // 12.08, сведение словарей: навбар говорил чужим словом. Продукт сдаёт
   // инструменты, а не «articles», и глаголы согласованы между собой —
