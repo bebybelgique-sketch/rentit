@@ -80,4 +80,29 @@ export const en = {
   yourListing: 'This is your listing',
   manageIt: 'manage it',
   forRentalShops: 'For rental shops →',
+
+  shops: {
+    eyebrow: 'For professionals',
+    title: 'You rent out equipment? Your tools can live here too.',
+    lede: "RentIt is a tool showcase in Walloon Brabant. A customer picks a tool and dates, you accept or decline, and you arrange the rest directly. Nothing more — and nothing else.",
+
+    haveTitle: 'What you get today',
+    have1: 'Your listings online immediately, at no cost.',
+    have2: 'Customers pick their dates; dates already taken are no longer offered.',
+    have3: 'Requests arrive in your dashboard; you accept or decline.',
+    have4: 'Contact details are exchanged only once a booking is accepted.',
+
+    notTitle: 'What RentIt does not do',
+    notLede: 'Said upfront rather than after: these limits are part of the offer, not the small print.',
+    not1: 'No money passes through RentIt. Settlement is in cash, between you and the customer.',
+    not2: 'No insurance, no deposit held by the platform. RentIt is not a party to the contract.',
+    not3: 'No commission today. If paid options ever arrive, they will be announced, not slipped in.',
+    not4: 'No traffic promised. A listing is visible; it does not sell itself.',
+
+    stateTitle: 'Where we actually stand',
+    stateBody: 'The showcase is new and empty: the demo listings were removed, because an invented catalogue tells you nothing true. We are looking for the first rental businesses in Walloon Brabant. Being first means little competition and a listening ear — not a queue of customers.',
+
+    ctaPrimary: 'Create an account',
+    ctaSecondary: 'See the showcase',
+  },
 }
