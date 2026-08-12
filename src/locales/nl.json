@@ -76,6 +76,9 @@
   "expandSearch": "Uitbreiden tot 50 km",
   "forgotPassword": "Wachtwoord vergeten?",
   "forRentalShops": "Voor professionele verhuurders →",
+  "errors": {
+    "generic": "Er is iets misgegaan. Probeer het later opnieuw."
+  },
   "fullName": "Volledige naam",
   "heroSub": "Huurgereedschap in de buurt — goedkoper dan kopen, beschikbaar binnen enkele minuten",
   "heroTitle": "Gereedschap van je buurman,\nbinnen handbereik",
@@ -162,7 +165,53 @@
   "searchPlaceholder": "Zoek gereedschap...",
   "selectDates": "Selecteer datums",
   "selectDatesHint": "Klik op een startdatum en daarna op een einddatum",
+  "searchRadius": "Zoekradius",
+  "toolsAvailable": "{{count}} tools beschikbaar",
   "shareWhatsApp": "Delen",
+  "share": {
+    "copyLink": "Link kopiëren",
+    "linkCopied": "✓ Link gekopieerd!",
+    "whatsappButton": "Delen via WhatsApp"
+  },
+  "cookies": {
+    "header": "Privacyverklaring · GDPR-conform",
+    "title": "Deze site gebruikt cookies",
+    "lede": "We gebruiken cookies om u ingelogd te houden en eventueel anonieme analyses te verzamelen. We verkopen uw gegevens niet en gebruiken geen advertentiecookies.",
+    "privacyLink": "Privacybeleid →",
+    "table": {
+      "type": "Cookietype",
+      "status": "Status"
+    },
+    "types": {
+      "necessary": {
+        "label": "Strikt noodzakelijk",
+        "desc": "Sessie, authenticatie, beveiliging"
+      },
+      "functional": {
+        "label": "Functioneel",
+        "desc": "Gebruikersvoorkeuren"
+      },
+      "analytics": {
+        "label": "Analytics",
+        "desc": "Anonieme gebruiksstatistieken"
+      }
+    },
+    "labels": {
+      "required": "VERPLICHT",
+      "optional": "OPTIONEEL",
+      "alwaysOn": "ALTIJD AAN"
+    },
+    "buttons": {
+      "acceptAll": "Alle cookies accepteren",
+      "declineOptional": "Optionele weigeren",
+      "managePreferences": "Voorkeuren beheren",
+      "savePreferences": "Voorkeuren opslaan"
+    },
+    "preferences": {
+      "header": "Cookievoorkeuren",
+      "title": "Beheer cookies"
+    }
+  },
   "shops": {
     "eyebrow": "Voor professionals",
     "title": "Verhuurt u materiaal? Uw gereedschap kan hier ook staan.",
