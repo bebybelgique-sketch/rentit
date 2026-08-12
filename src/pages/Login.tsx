@@ -1,11 +1,22 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from 'react-i18next'
 
 export default function Login() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Куда человек шёл до того, как его попросили войти. Страж маршрута
+  // кладёт это в state (см. RequireAuth в App.tsx).
+  //
+  // Раньше после входа всегда был navigate('/'): человек нажимал
+  // «Déposer un outil», попадал на вход, входил — и оказывался на
+  // лендинге, откуда ту же кнопку надо искать заново. На воронке
+  // предложения, где каждый посетитель на счету, это лишний шаг ровно
+  // в том месте, где его быть не должно.
+  const from = (location.state as { from?: string } | null)?.from ?? '/'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,7 +27,10 @@ export default function Login() {
     setLoading(true); setError('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) { setError(error.message); setLoading(false) }
-    else navigate('/')
+    // replace, а не push: страница входа не должна оставаться в истории
+    // позади вошедшего человека — «назад» возвращало бы его на форму,
+    // которую он уже прошёл.
+    else navigate(from, { replace: true })
   }
 
   return (

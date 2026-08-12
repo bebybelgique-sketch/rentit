@@ -290,5 +290,8 @@
     "finalCta": "Gereedschap plaatsen",
     "privacy": "Privacy",
     "terms": "Voorwaarden"
-  }
+  },
+  "loading": "Laden…",
+  "routeError": "Deze pagina kon niet laden. Mogelijk is er een nieuwere versie van de site.",
+  "routeRetry": "Pagina herladen"
 }
