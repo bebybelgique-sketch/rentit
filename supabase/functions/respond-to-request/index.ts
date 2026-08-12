@@ -20,15 +20,16 @@ serve(async (req) => {
     const user = await getUserFromAuthHeader(req)
     if (user instanceof Response) return user
 
-    const { booking_id, action } = await req.json()
-    if (!booking_id || !['approve', 'reject'].includes(action)) {
+    const body = await req.json() as { booking_id?: string; action?: string }
+    const { booking_id, action } = body
+    if (!booking_id || !['approve', 'reject'].includes(action || '')) {
       return new Response(JSON.stringify({ error: 'Missing or invalid fields' }), { status: 400, headers: CORS })
     }
 
     // Fetch booking with item
     const { data: booking, error: bookingErr } = await supabase
       .from('bookings')
-      .select('*, items(*)')
+      .select('id,start_date,end_date,status,items(id,owner_id,price_per_day,deposit)')
       .eq('id', booking_id)
       .single()
 
@@ -36,7 +37,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Booking not found' }), { status: 404, headers: CORS })
     }
 
-    const item = booking.items as any
+    const item = (booking as any).items as any
 
     // Verify caller is the item owner
     if (item.owner_id !== user.id) {
@@ -90,8 +91,12 @@ serve(async (req) => {
     const start = new Date(booking.start_date)
     const end = new Date(booking.end_date)
     const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
-    const rentalPrice = parseFloat(item.price_per_day) * totalDays
-    const deposit = parseFloat(item.deposit) || 0
+    const pricePerDay = Number(item.price_per_day)
+    if (isNaN(pricePerDay) || pricePerDay <= 0) {
+      return new Response(JSON.stringify({ error: 'Invalid item price' }), { status: 400, headers: CORS })
+    }
+    const rentalPrice = pricePerDay * totalDays
+    const deposit = Number(item.deposit) || 0
     const platformFee = isPro ? 0 : rentalPrice * PLATFORM_FEE_PCT
     const insuranceFee = INSURANCE_PER_DAY * totalDays
 
@@ -142,7 +147,8 @@ serve(async (req) => {
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error(err)
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })

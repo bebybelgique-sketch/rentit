@@ -2,7 +2,6 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createSupabaseServiceClient } from '../_shared/supabase.ts'
 import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
-import { json } from '../_shared/json.ts'
 
 const supabase = createSupabaseServiceClient()
 
@@ -20,14 +19,40 @@ serve(async (req) => {
     const user = await getUserFromAuthHeader(req)
     if (user instanceof Response) return user
 
-    const { item_id, start_date, end_date, message } = await req.json()
+    const body = await req.json() as { item_id?: string; start_date?: string; end_date?: string; message?: string }
+    const { item_id, start_date, end_date, message } = body
     if (!item_id || !start_date || !end_date) {
       return new Response(JSON.stringify({ error: 'Missing fields' }), { status: 400, headers: CORS })
     }
 
+    // Validate dates: parsable, end >= start, start not in past
+    const start = new Date(start_date)
+    const end = new Date(end_date)
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return new Response(JSON.stringify({ error: 'Invalid dates' }), { status: 400, headers: CORS })
+    }
+    if (end.getTime() < start.getTime()) {
+      return new Response(JSON.stringify({ error: 'End date must be after or equal to start date' }), { status: 400, headers: CORS })
+    }
+    // Сравниваем ДАТУ с ДАТОЙ, а не дату с моментом.
+    //
+    // Было `start.getTime() < Date.now()` — и это резало весь текущий день:
+    // `new Date('2026-08-12')` разбирается как полночь UTC, а `Date.now()`
+    // в момент проверки равнялся 18:22 UTC, поэтому бронь на СЕГОДНЯ
+    // отклонялась всегда. «Нужна дрель сегодня после обеда» — самый частый
+    // случай проката инструмента — не проходил вовсе.
+    //
+    // Строки вида YYYY-MM-DD сравниваются лексикографически в том же
+    // порядке, что и даты, поэтому сравнение строк здесь и точнее, и
+    // дешевле разбора в Date.
+    const todayUTC = new Date().toISOString().slice(0, 10)
+    if (start_date < todayUTC) {
+      return new Response(JSON.stringify({ error: 'Start date cannot be in the past' }), { status: 400, headers: CORS })
+    }
+
     // Fetch item
     const { data: item, error: itemErr } = await supabase
-      .from('items').select('*').eq('id', item_id).single()
+      .from('items').select('id,owner_id,price_per_day,deposit,available').eq('id', item_id).single()
     if (itemErr || !item) {
       return new Response(JSON.stringify({ error: 'Item not found' }), { status: 404, headers: CORS })
     }
@@ -69,11 +94,16 @@ serve(async (req) => {
     }
 
     // Calculate amounts for the booking record
-    const start = new Date(start_date)
-    const end = new Date(end_date)
+    // ВАЖНО: формула числа дней сохранена как есть (product owner решает изменение)
     const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
-    const rentalPrice = parseFloat(item.price_per_day) * totalDays
-    const deposit = parseFloat(item.deposit) || 0
+
+    // Безопасное приведение цен: Number() + проверка
+    const pricePerDay = Number(item.price_per_day)
+    if (isNaN(pricePerDay) || pricePerDay <= 0) {
+      return new Response(JSON.stringify({ error: 'Invalid item price' }), { status: 400, headers: CORS })
+    }
+    const rentalPrice = pricePerDay * totalDays
+    const deposit = Number(item.deposit) || 0
 
     // Create booking with pending_approval
     const { data: booking, error: bookingErr } = await supabase
@@ -89,11 +119,12 @@ serve(async (req) => {
         status: 'pending_approval',
         request_message: message?.trim() || null,
       }])
-      .select()
+      .select('id')
       .single()
 
     if (bookingErr) {
-      return new Response(JSON.stringify({ error: bookingErr.message }), { status: 400, headers: CORS })
+      console.error(bookingErr)
+      return new Response(JSON.stringify({ error: 'Could not create booking' }), { status: 400, headers: CORS })
     }
 
     // Notify owner
@@ -109,7 +140,8 @@ serve(async (req) => {
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error(err)
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
