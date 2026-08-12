@@ -5,18 +5,55 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
+// Восклицательного знака здесь больше нет намеренно. Он означал «клянусь,
+// переменная задана» — а 12.08 `npx supabase secrets list` показал девять
+// секретов, и RESEND_API_KEY среди них НЕ БЫЛО. Ключ уходил в заголовок
+// как `Bearer undefined`, Resend отвечал 401, и никто об этом не узнавал.
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'noreply@rentit.app'
 const APP_URL = Deno.env.get('APP_URL') || 'https://rentit.app'
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version' }
 
+/**
+ * Отправка письма через Resend.
+ *
+ * Было: `await fetch(...)` и всё. Ни `response.ok`, ни `try/catch`, ни
+ * строчки в лог. Resend мог ответить 401 на неверный ключ, 403 на
+ * неподтверждённый домен, 422 на плохой адрес, 429 на лимит — функция
+ * возвращала успех при любом исходе. Вызывающие её `await`-или и получали
+ * 200. Провал не всплывал НИГДЕ.
+ *
+ * Цена этой тишины прямая: сосед оставляет запрос на аренду, владелец не
+ * получает письма, оба видят «всё прошло», и площадка молча умирает для
+ * обоих. Ровно то, чего боялись.
+ *
+ * Теперь ошибка бросается наружу: письмо — не побочный эффект, а часть
+ * обещания «вам придёт уведомление». Бронь при этом не теряется: тот, кто
+ * зовёт notify-rental, гасит её падение своим `.catch()`, и запись в базе
+ * уже создана.
+ */
 async function sendEmail(to: string, subject: string, html: string) {
-  await fetch('https://api.resend.com/emails', {
+  if (!RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY не задан в секретах проекта — письма не отправляются')
+  }
+
+  const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ from: FROM_EMAIL, to, subject, html }),
   })
+
+  if (!res.ok) {
+    // Тело ответа Resend называет причину поимённо: неподтверждённый
+    // домен, неверный адрес, превышенный лимит. Без него в логе остаётся
+    // голый код, по которому чинить нечего.
+    const body = await res.text().catch(() => '')
+    console.error(`Resend ${res.status} при отправке «${subject}» на ${to}: ${body.slice(0, 300)}`)
+    throw new Error(`Resend ответил ${res.status}`)
+  }
+
+  console.log(`письмо отправлено: «${subject}» → ${to}`)
 }
 
 serve(async (req) => {
@@ -204,7 +241,11 @@ serve(async (req) => {
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    // Функцию зовёт только сервисная роль (проверка токена выше), поэтому
+    // причина здесь не утечка наружу, а единственный способ увидеть, что
+    // письма не уходят. В логах Supabase она же лежит развёрнуто.
+    console.error('notify-rental:', err)
+    return new Response(JSON.stringify({ error: err?.message ?? 'notify failed' }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
