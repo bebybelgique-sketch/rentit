@@ -167,7 +167,7 @@ export default function ListItem() {
       },
       () => {
         setGeoLoading(false)
-        setError('Accès à la localisation refusé. Veuillez saisir votre adresse manuellement.')
+        setError(t('listItem.geolocationDenied'))
       },
       { timeout: 10000 }
     )
@@ -182,28 +182,28 @@ export default function ListItem() {
     if (!(day > 0)) return ''
     const dead: string[] = []
     const p3 = parseFloat(form.price_3days)
-    if (p3 > 0 && p3 >= day * 3) dead.push(`le forfait 3 jours (€${p3.toFixed(2)}) coûte plus que 3 jours au tarif journalier (€${(day * 3).toFixed(2)})`)
+    if (p3 > 0 && p3 >= day * 3) dead.push(`${t('listItem.package3Days')} (€${p3.toFixed(2)}) ${t('listItem.packageWeek') /* coûte plus que 3 jours */} (€${(day * 3).toFixed(2)})`)
     const pw = parseFloat(form.price_week)
-    if (pw > 0 && pw >= day * 7) dead.push(`le forfait semaine (€${pw.toFixed(2)}) coûte plus que 7 jours au tarif journalier (€${(day * 7).toFixed(2)})`)
+    if (pw > 0 && pw >= day * 7) dead.push(`${t('listItem.packageWeek')} (€${pw.toFixed(2)}) ${t('listItem.packageWeek') /* coûte plus que 7 jours */} (€${(day * 7).toFixed(2)})`)
     if (dead.length === 0) return ''
-    return `Attention : ${dead.join(' ; ')}. Le locataire paiera toujours le tarif le moins cher, donc ce forfait ne s'appliquera jamais.`
+    return t('listItem.packageWarning', { packages: dead.join(' ; ') })
   })()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
-    if (!form.title.trim())           return setError('Le titre est requis.')
+    if (!form.title.trim())           return setError(t('listItem.titleRequired'))
     if (!form.price_per_day || parseFloat(form.price_per_day) <= 0)
-                                       return setError('Le prix doit être supérieur à 0.')
+                                       return setError(t('listItem.priceMustBePositive'))
     if (parseFloat(form.deposit || '0') < 0)
-                                       return setError('La caution ne peut pas être négative.')
+                                       return setError(t('listItem.depositNonNegative'))
     // Ноль в необязательном поле — не «нет тарифа», а «неделя бесплатно».
     // База такое отклонит проверкой, но человеку нужен ответ здесь, а не
     // невнятный отказ Postgres на французской странице.
     for (const [field, label] of [
-      ['price_3days', 'Le forfait 3 jours'],
-      ['price_week', 'Le forfait semaine'],
-      ['late_fee_per_day', 'Le montant de retard'],
+      ['price_3days', t('listItem.package3Days')],
+      ['price_week', t('listItem.packageWeek')],
+      ['late_fee_per_day', t('listItem.lateFeesLabel')],
     ] as const) {
       const raw = form[field]
       if (raw !== '' && !(parseFloat(raw) > 0))
@@ -269,7 +269,7 @@ export default function ListItem() {
       setIsDirty(false) // prevent leave-warning after successful submit
       navigate(`/item/${data.id}?published=1`)
     } catch (err: any) {
-      setError(err.message || "Impossible de créer l'annonce. Veuillez réessayer.")
+      setError(err.message || t('listItem.couldNotCreate'))
     } finally {
       setUploading(false)
       setUploadProgress(0)
@@ -324,7 +324,7 @@ export default function ListItem() {
 
           {/* Title */}
           <div className="form-group">
-            <label>Titre de l'outil *</label>
+            <label>{t('listItem.titleLabel')}</label>
             <input
               value={form.title}
               onChange={set('title')}
@@ -337,7 +337,7 @@ export default function ListItem() {
           {/* Category + Condition */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div className="form-group">
-              <label>Catégorie *</label>
+              <label>{t('listItem.categoryLabel')}</label>
               <select value={form.category} onChange={set('category')} disabled={isLocked}>
                 {CATEGORIES.map(c => (
                   <option key={c.value} value={c.value}>{t(c.labelKey)}</option>
@@ -345,7 +345,7 @@ export default function ListItem() {
               </select>
             </div>
             <div className="form-group">
-              <label>État *</label>
+              <label>{t('listItem.conditionLabel')}</label>
               <select value={form.condition} onChange={set('condition')} disabled={isLocked}>
                 {CONDITIONS.map(c => (
                   <option key={c.value} value={c.value}>
@@ -362,7 +362,7 @@ export default function ListItem() {
             <textarea
               value={form.description}
               onChange={set('description')}
-              placeholder="Dimensions, caractéristiques, accessoires inclus, règles..."
+              placeholder={t('listItem.descriptionHint')}
               rows={3}
               disabled={isLocked}
             />
@@ -371,7 +371,7 @@ export default function ListItem() {
           {/* Price + Deposit */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div className="form-group">
-              <label>Prix par jour (€) *</label>
+              <label>{t('listItem.pricePerDayLabel')}</label>
               <input
                 type="number"
                 min="0.50"
@@ -389,7 +389,7 @@ export default function ListItem() {
               )}
             </div>
             <div className="form-group">
-              <label>Valeur estimée de l'outil (€)</label>
+              <label>{t('listItem.estimatedValueLabel')}</label>
               <input
                 type="number"
                 value={estimatedValue}
@@ -399,7 +399,7 @@ export default function ListItem() {
                 disabled={isLocked}
               />
               <p style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginTop: '5px' }}>
-                Aide à calculer une caution équitable
+                {t('listItem.depositHint')}
               </p>
             </div>
           </div>
@@ -410,26 +410,26 @@ export default function ListItem() {
               за ВЕСЬ пакет, а не за день внутри него. */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div className="form-group">
-              <label>Forfait 3 jours (€) <span style={{ color: 'var(--muted)', fontWeight: '400' }}>— optionnel</span></label>
+              <label>{t('listItem.package3DaysLabel')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span></label>
               <input
                 type="number"
                 min="0.50"
                 step="0.50"
                 value={form.price_3days}
                 onChange={set('price_3days')}
-                placeholder="prix total des 3 jours"
+                placeholder={t('listItem.package3DaysHint')}
                 disabled={isLocked}
               />
             </div>
             <div className="form-group">
-              <label>Forfait semaine (€) <span style={{ color: 'var(--muted)', fontWeight: '400' }}>— optionnel</span></label>
+              <label>{t('listItem.packageWeekLabel')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span></label>
               <input
                 type="number"
                 min="0.50"
                 step="0.50"
                 value={form.price_week}
                 onChange={set('price_week')}
-                placeholder="prix total des 7 jours"
+                placeholder={t('listItem.packageWeekHint')}
                 disabled={isLocked}
               />
             </div>
@@ -442,14 +442,14 @@ export default function ListItem() {
 
           {/* Deposit */}
           <div className="form-group">
-            <label>Caution (€) <span style={{ color: 'var(--muted)', fontWeight: '400' }}>— remboursable au retour</span></label>
+            <label>{t('listItem.depositLabel')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.refundableAtReturn')}</span></label>
             <input
               type="number"
               min="0"
               step="1"
               value={form.deposit}
               onChange={set('deposit')}
-              placeholder="Calculée automatiquement à 20% de la valeur"
+              placeholder={t('listItem.depositHint')}
               disabled={isLocked}
             />
           </div>
@@ -457,7 +457,7 @@ export default function ListItem() {
           {/* Просрочка. Платформа её НЕ считает и НЕ удерживает — это цифра,
               которую владелец объявляет заранее, чтобы при встрече не спорить. */}
           <div className="form-group">
-            <label>Retard (€ / jour) <span style={{ color: 'var(--muted)', fontWeight: '400' }}>— optionnel</span></label>
+            <label>{t('listItem.lateFeeLabel')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span></label>
             <input
               type="number"
               min="0.50"
@@ -474,11 +474,11 @@ export default function ListItem() {
 
           {/* Location */}
           <div className="form-group">
-            <label>Localisation</label>
+            <label>{t('listItem.addressLabel')}</label>
             <input
               value={form.address}
               onChange={set('address')}
-              placeholder="Rue, ville (visible par les locataires)"
+              placeholder={t('listItem.addressLabel')}
               disabled={isLocked}
             />
             <div style={{ marginTop: '8px', display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -488,7 +488,7 @@ export default function ListItem() {
                 className="btn btn-secondary btn-sm"
                 disabled={geoLoading || isLocked}
               >
-                {geoLoading ? 'Localisation...' : lat ? '✓ Position définie' : '📍 Ma position'}
+                {geoLoading ? t('common.loading') : lat ? t('listItem.locationStatus') : '📍 ' + t('listItem.locationStatus')}
               </button>
               {lat && (
                 <span style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
@@ -510,7 +510,7 @@ export default function ListItem() {
 
           {/* Photos */}
           <div className="form-group">
-            <label>Photos (jusqu'à 5, max 5 Mo chacune)</label>
+            <label>{t('listItem.photosLabel')}</label>
 
             {/* Hidden native input */}
             <input
@@ -536,7 +536,7 @@ export default function ListItem() {
                 <circle cx="7" cy="7.5" r="2" stroke="currentColor" strokeWidth="1.2"/>
                 <path d="M5 3V2.5A1.5 1.5 0 0 1 6.5 1h1A1.5 1.5 0 0 1 9 2.5V3" stroke="currentColor" strokeWidth="1.2"/>
               </svg>
-              {photos.length > 0 ? `${photos.length} photo${photos.length > 1 ? 's' : ''} sélectionnée${photos.length > 1 ? 's' : ''} — changer` : 'Choisir des photos'}
+              {photos.length > 0 ? `${photos.length} ${t(photos.length > 1 ? 'listItem.photosCount_other' : 'listItem.photosCount_one', { count: photos.length })} — changer` : t('listItem.photosLabel')}
             </button>
 
             {photoPreviews.length > 0 && (
@@ -548,7 +548,7 @@ export default function ListItem() {
                       type="button"
                       onClick={() => removePhoto(i)}
                       disabled={isLocked}
-                      aria-label="Supprimer la photo"
+                      aria-label={t('listItem.deletePhoto')}
                       style={{
                         position: 'absolute', top: '2px', right: '2px',
                         background: 'rgba(0,0,0,0.65)', color: '#fff',

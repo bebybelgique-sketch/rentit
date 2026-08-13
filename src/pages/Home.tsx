@@ -21,6 +21,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 function MapView({ items, userPos }: { items: Item[], userPos: { lat: number; lng: number } | null }) {
+  const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
 
@@ -60,19 +61,19 @@ function MapView({ items, userPos }: { items: Item[], userPos: { lat: number; ln
       })
       const marker = L.marker([item.lat, item.lng], { icon }).addTo(map)
       const safePhotoUrl = item.photos?.[0]?.replace(/"/g, '') || ''
-      const photo = safePhotoUrl ? `<img src="${safePhotoUrl}" alt="Photo of ${esc(item.title)}" style="width:100%;height:90px;object-fit:cover;border-radius:3px;margin-bottom:8px;display:block">` : ''
+      const photo = safePhotoUrl ? `<img src="${safePhotoUrl}" alt="${t('home.altText', { title: esc(item.title) })}" style="width:100%;height:90px;object-fit:cover;border-radius:3px;margin-bottom:8px;display:block">` : ''
       marker.bindPopup(`
         <div style="min-width:180px;font-family:inherit">
           ${photo}
           <div style="font-weight:700;font-size:14px;margin-bottom:4px">${esc(item.title)}</div>
-          <div style="font-size:13px;color:#666;margin-bottom:10px">€${Number(item.price_per_day).toFixed(2)}/jour${item.deposit > 0 ? ` · €${Number(item.deposit).toFixed(2)} caution` : ''}</div>
-          <a href="/item/${esc(item.id)}" style="display:block;background:#080808;color:#ADFF2F;padding:7px 12px;border-radius:3px;font-size:12px;font-weight:600;text-align:center;text-decoration:none">Voir l'outil →</a>
+          <div style="font-size:13px;color:#666;margin-bottom:10px">€${Number(item.price_per_day).toFixed(2)}${t('home.perDay')}${item.deposit > 0 ? ` · €${Number(item.deposit).toFixed(2)} caution` : ''}</div>
+          <a href="/item/${esc(item.id)}" style="display:block;background:#080808;color:#ADFF2F;padding:7px 12px;border-radius:3px;font-size:12px;font-weight:600;text-align:center;text-decoration:none">${t('home.seeMore')}</a>
         </div>
       `)
     })
 
     return () => { map.remove(); mapRef.current = null }
-  }, [items, userPos])
+  }, [items, userPos, t])
 
   return <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
 }
@@ -317,7 +318,7 @@ export default function Home() {
       {filtersOpen && (
         <div className="filters-panel">
           <label className="filters-field">
-            <span>Prix max / jour</span>
+            <span>{t('home.maxPriceLabel')}</span>
             <input
               type="number"
               placeholder={t('maxPrice')}
@@ -326,10 +327,10 @@ export default function Home() {
             />
           </label>
           <label className="filters-field">
-            <span>Où</span>
+            <span>{t('home.locationLabel')}</span>
             <input
               type="text"
-              placeholder="Commune, rue…"
+              placeholder={t('home.locationPlaceholder')}
               value={place}
               onChange={e => setPlace(e.target.value)}
             />
@@ -338,7 +339,7 @@ export default function Home() {
               человек видит два поля даты и не знает, какое «с», а какое «по».
               Подписи здесь несут смысл, а не украшают. */}
           <label className="filters-field">
-            <span>Disponible du</span>
+            <span>{t('home.availableFrom')}</span>
             <input
               type="date"
               value={startDate}
@@ -497,7 +498,7 @@ export default function Home() {
                     <div className="item-card-title">{item.title}</div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginTop: '4px' }}>
                       <span className="item-card-price">€{item.price_per_day.toFixed(2)}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>/jour</span>
+                      <span style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{t('home.perDay')}</span>
                     </div>
                     {item.deposit > 0 && (
                       <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>

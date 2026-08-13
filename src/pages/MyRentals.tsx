@@ -46,11 +46,11 @@ const MyRentals: React.FC = () => {
     try {
       await approveRentalMutation.mutateAsync({ bookingId: rentalId });
       // Уведомления об успехе через toast
-      toast.success("La demande a été acceptée !");
+      toast.success(t('myRentals.approvalSuccess'));
     } catch (error: any) {
       console.error("Erreur lors de l'approbation:", error);
       // Уведомления об ошибке через toast
-      toast.error(error.message || "Erreur lors de l'approbation");
+      toast.error(error.message || t('myRentals.approvalErrorGeneric'));
     }
   };
 
@@ -59,11 +59,11 @@ const MyRentals: React.FC = () => {
     try {
       await rejectRentalMutation.mutateAsync({ bookingId: rentalId });
       // Уведомления об успехе через toast
-      toast.success("La demande a été refusée.");
+      toast.success(t('myRentals.rejectionSuccess'));
     } catch (error: any) {
       console.error("Erreur lors du rejet:", error);
       // Уведомления об ошибке через toast
-      toast.error(error.message || "Erreur lors du rejet");
+      toast.error(error.message || t('myRentals.rejectionErrorGeneric'));
     }
   };
 
@@ -83,7 +83,7 @@ const MyRentals: React.FC = () => {
   if (!user) {
     return (
       <div className="page">
-        <div className="loading">Se connecter pour voir vos locations</div>
+        <div className="loading">{t('myRentals.loginRequired')}</div>
       </div>
     );
   }
@@ -122,11 +122,11 @@ const MyRentals: React.FC = () => {
 
         {/* Аренды как арендатор */}
         <section id="as-renter" style={{ marginBottom: '40px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Mes locations (Locataire)</h2>
-          {userRentalsLoading && <p>Chargement...</p>}
+          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>{t('myRentals.renterTitle')}</h2>
+          {userRentalsLoading && <p>{t('common.loading')}</p>}
           {userRentalsError && <p>Erreur: {userRentalsError.message}</p>}
           {userRentals && userRentals.length === 0 && (
-            <EmptyState title="Aucune location en cours" description="Vos demandes de location apparaîtront ici." actionLabel="Parcourir les outils" actionTo="/browse" />
+            <EmptyState title={t('myRentals.noRentals')} description={t('myRentals.noRentalsHint')} actionLabel={t('myRentals.browseTools')} actionTo="/browse" />
           )}
           {userRentals && userRentals.length > 0 && (
             <div>
@@ -175,11 +175,11 @@ const MyRentals: React.FC = () => {
 
         {/* Аренды как владелец */}
         <section id="as-owner" style={{ marginBottom: '40px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Demandes pour mes outils (Propriétaire)</h2>
-          {ownerRentalsLoading && <p>Chargement...</p>}
+          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>{t('myRentals.ownerTitle')}</h2>
+          {ownerRentalsLoading && <p>{t('common.loading')}</p>}
           {ownerRentalsError && <p>Erreur: {ownerRentalsError.message}</p>}
           {ownerRentals && ownerRentals.length === 0 && (
-            <EmptyState title="Aucune demande" description="Les demandes de location pour vos outils apparaîtront ici." actionLabel="Déposer une annonce" actionTo="/list-item" />
+            <EmptyState title={t('myRentals.noRequests')} description={t('myRentals.noRequestsHint')} actionLabel={t('myRentals.listTool')} actionTo="/list-item" />
           )}
           {ownerRentals && ownerRentals.length > 0 && (
             <div>

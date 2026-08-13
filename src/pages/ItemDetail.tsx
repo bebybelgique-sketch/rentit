@@ -192,7 +192,7 @@ export default function ItemDetail() {
       if (res.error) throw res.error
       setRequestSent(true)
     } catch (err: any) {
-      setError(err.message || "Erreur lors de l'envoi de la demande")
+      setError(err.message || t('itemDetail.requestError'))
     } finally {
       setRequestLoading(false)
     }
@@ -226,7 +226,7 @@ export default function ItemDetail() {
     }
   }
 
-  if (loading) return <div className="page"><div className="loading">Chargement...</div></div>
+  if (loading) return <div className="page"><div className="loading">{t('common.loading')}</div></div>
   // Раньше здесь была голая надпись «Outil introuvable» без единой
   // кнопки: человек по ссылке на снятое объявление попадал в тупик и мог
   // только нажать «назад» — а если пришёл по прямой ссылке, то и назад
@@ -340,7 +340,7 @@ export default function ItemDetail() {
               <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
                 <span className="tag tag-gray">{t(categoryLabelKey(item.category) ?? '') || item.category}</span>
                 <span className="tag tag-gray">{t(conditionLabelKey(item.condition) ?? '') || item.condition}</span>
-                {!item.available && <span className="tag tag-red">Indisponible</span>}
+                {!item.available && <span className="tag tag-red">{t('itemDetail.unavailable')}</span>}
               </div>
             </div>
             {/* На узком экране блок переносится под заголовок, и выравнивание
@@ -349,7 +349,7 @@ export default function ItemDetail() {
               <div style={{ fontSize: 'var(--text-lg)', fontWeight: '800', letterSpacing: '-0.04em', lineHeight: 1 }}>
                 €{item.price_per_day.toFixed(2)}
               </div>
-              <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>par jour</div>
+              <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>{t('itemDetail.perDay')}</div>
               {/* Тарифы на срок. Показываем только назначенные: пустая строка
                   «— € / semaine» читается как «неделю нельзя». */}
               {hasTiers && (
@@ -425,7 +425,7 @@ export default function ItemDetail() {
             {requestSent ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <div style={{ fontSize: '40px', marginBottom: '12px' }}>✅</div>
-                <h3 style={{ fontWeight: '800', marginBottom: '8px' }}>Demande envoyée !</h3>
+                <h3 style={{ fontWeight: '800', marginBottom: '8px' }}>{t('itemDetail.requestSent')}</h3>
                 <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
                   Le propriétaire a 24 heures pour répondre. Vous serez notifié par email.
                 </p>
@@ -548,18 +548,18 @@ export default function ItemDetail() {
                         )}
                         {savedVsDaily > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--muted)' }}>
-                            <span>Forfait appliqué</span>
+                            <span>{t('itemDetail.packageApplied')}</span>
                             <span>− €{savedVsDaily.toFixed(2)}</span>
                           </div>
                         )}
                         {item.deposit > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: 'var(--muted)' }}>Caution (remboursable)</span>
+                            <span style={{ color: 'var(--muted)' }}>{t('itemDetail.deposit')}</span>
                             <span>€{item.deposit.toFixed(2)}</span>
                           </div>
                         )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '20px', letterSpacing: '-0.03em', borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '4px' }}>
-                          <span>Total estimé</span>
+                          <span>{t('itemDetail.estimatedTotal')}</span>
                           <span>€{totalPrice.toFixed(2)}</span>
                         </div>
                       </div>
@@ -567,11 +567,11 @@ export default function ItemDetail() {
 
                     {totalDays > 0 && (
                       <div className="form-group" style={{ marginBottom: '16px' }}>
-                        <label style={{ fontSize: '13px', color: 'var(--muted)' }}>Message au propriétaire (facultatif)</label>
+                        <label style={{ fontSize: '13px', color: 'var(--muted)' }}>{t('itemDetail.messageToOwner')}</label>
                         <textarea
                           value={requestMessage}
                           onChange={e => setRequestMessage(e.target.value)}
-                          placeholder="Expliquez brièvement votre usage prévu..."
+                          placeholder={t('itemDetail.messagePlaceholder')}
                           rows={2}
                           maxLength={300}
                           style={{ marginTop: '6px', fontSize: '14px' }}
@@ -585,7 +585,7 @@ export default function ItemDetail() {
                       className="btn btn-primary"
                       style={{ width: '100%', minHeight: '44px', fontSize: '15px' }}
                     >
-                      {requestLoading ? 'Envoi en cours...' : !startDate || !endDate ? 'Choisissez les dates pour continuer' : 'Envoyer une demande de réservation'}
+                      {requestLoading ? t('common.loading') : !startDate || !endDate ? t('selectDatesHint') : t('itemDetail.sendRequest')}
                     </button>
                     <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', textAlign: 'center', marginTop: '8px' }}>
                       Aucun paiement en ligne — le règlement se fait en espèces au propriétaire lors de la remise
@@ -667,10 +667,10 @@ export default function ItemDetail() {
                 </div>
                 <div className="form-group">
                   <label>Commentaire (facultatif)</label>
-                  <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Partagez votre expérience..." rows={3} />
+                  <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder={t('itemDetail.shareExperience')} rows={3} />
                 </div>
                 <button type="submit" className="btn btn-primary" disabled={reviewLoading} style={{ minHeight: '44px' }}>
-                  {reviewLoading ? 'Envoi en cours...' : "Envoyer l'avis"}
+                  {reviewLoading ? t('common.loading') : t('itemDetail.submitReview')}
                 </button>
               </form>
             )}

@@ -1,5 +1,6 @@
 // src/components/common/CancellationNotice.tsx
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CancellationNoticeProps {
   cancelledByName: string;
@@ -21,8 +22,11 @@ const formatDate = (iso: string) => {
 // это и превращает несостоявшуюся сделку в обиду. Поэтому оба поля видимы,
 // и отсутствие причины названо прямо, а не спрятано.
 const CancellationNotice: React.FC<CancellationNoticeProps> = ({
-  cancelledByName, cancelledAt, reason, noReasonLabel = 'Aucune raison indiquée',
-}) => (
+  cancelledByName, cancelledAt, reason, noReasonLabel,
+}) => {
+  const { t } = useTranslation();
+  const defaultNoReasonLabel = noReasonLabel || t('cancellationNotice.noReason');
+  return (
   <div
     style={{
       background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px',
@@ -35,9 +39,10 @@ const CancellationNotice: React.FC<CancellationNoticeProps> = ({
       <time dateTime={cancelledAt} style={{ fontWeight: 400 }}>{formatDate(cancelledAt)}</time>
     </div>
     <div style={{ fontSize: '13px', color: '#7f1d1d', marginTop: '2px', whiteSpace: 'pre-wrap' }}>
-      {reason?.trim() ? reason : noReasonLabel}
+      {reason?.trim() ? reason : defaultNoReasonLabel}
     </div>
   </div>
-);
+  );
+};
 
 export default CancellationNotice;
