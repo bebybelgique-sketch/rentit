@@ -20,7 +20,12 @@ const fetchItemById = async (id: string): Promise<Item | null> => {
     throw error;
   }
 
-  // Преобразование данных из Supabase к типу Item
+  // Преобразование данных из Supabase к типу Item.
+  //
+  // Четыре нижних поля здесь не переносились, хотя в типе `Item` объявлены.
+  // Единственный потребитель хука — форма редактирования, и она читала
+  // ровно их: подставляла пустую категорию и пустое состояние поверх
+  // заполненных, обнуляла залог и не видела остальных снимков объявления.
   const mappedItem: Item = {
     id: data.id,
     title: data.title,
@@ -33,6 +38,10 @@ const fetchItemById = async (id: string): Promise<Item | null> => {
     longitude: data.lng,
     is_available: data.available,
     created_at: data.created_at,
+    deposit: data.deposit ?? 0,
+    category: data.category ?? '',
+    condition: data.condition ?? '',
+    photos: Array.isArray(data.photos) ? data.photos : [],
   };
 
   return mappedItem;

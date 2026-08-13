@@ -3,13 +3,34 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { Item } from '../../types';
 
+// Колонки таблицы `items`, которые форма вправе менять. Список явный и
+// закрытый — намеренно.
+//
+// Прежде здесь стояло `Partial<Omit<Item, …>> & Record<string, unknown>`, и
+// это пропускало что угодно. `Item` — тип ПРИЛОЖЕНИЯ: в нём есть `image_url`
+// и `location`, а колонок с такими именами в базе нет. Форма редактирования
+// слала `image_url`, PostgREST отклонял ЗАПРОС ЦЕЛИКОМ (PGRST204,
+// «Could not find the 'image_url' column»), и страница не сохраняла ничего —
+// ни цену, ни описание. Компилятор при `Record<string, unknown>` молчал.
+//
+// Сверено с `information_schema.columns` живой базы 13.08.2026.
+export type ItemUpdate = Partial<{
+  title: string;
+  description: string | null;
+  category: string;
+  condition: string;
+  price_per_day: number;
+  deposit: number;
+  photos: string[];
+  lat: number | null;
+  lng: number | null;
+  address: string | null;
+  available: boolean;
+}>;
+
 interface UpdateItemParams {
   id: string;
-  // Поля, которые можно обновить, исключая id, owner_id и created_at.
-  // Record<string, unknown> — потому что формы шлют имена КОЛОНОК базы
-  // (address, lat, lng, available), а Item описан в терминах приложения
-  // (location, latitude, longitude, is_available). Свести их — отдельная задача.
-  updates: Partial<Omit<Item, 'id' | 'owner_id' | 'created_at'>> & Record<string, unknown>;
+  updates: ItemUpdate;
   userId: string; // Владелец товара
 }
 

@@ -12,13 +12,16 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     title: 'Test Item',
     description: 'Une perceuse',
     price_per_day: 10,
-    photos: ['https://example.com/drill.jpg'],
+    photos: ['https://example.com/drill.jpg', 'https://example.com/drill-2.jpg'],
     owner_id: 'owner-1',
     address: 'Wavre, BE',
     lat: 50.71,
     lng: 4.61,
     available: true,
     created_at: '2026-01-01T00:00:00Z',
+    deposit: 50,
+    category: 'power_tools',
+    condition: 'good',
   },
   expectedItem: {
     id: 'item-1',
@@ -32,6 +35,12 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     longitude: 4.61,
     is_available: true,
     created_at: '2026-01-01T00:00:00Z',
+    // Ниже — поля, которых хук не переносил: форма редактирования читает
+    // именно их и подставляла пустые значения поверх заполненных.
+    deposit: 50,
+    category: 'power_tools',
+    condition: 'good',
+    photos: ['https://example.com/drill.jpg', 'https://example.com/drill-2.jpg'],
   },
   mockError: new Error('Fetch item failed'),
 }));
