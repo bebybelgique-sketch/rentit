@@ -11,16 +11,19 @@ type Lang = 'en' | 'fr' | 'nl'
 // По языкам раздельно: строка показывается в трёх разделах, и
 // английское «March 20, 2026» стояло под французским «Dernière mise
 // à jour :» и нидерландским «Laatste update:».
-const LAST_UPDATED_EN = 'August 11, 2026'
-const LAST_UPDATED_FR = '11 août 2026'
-const LAST_UPDATED_NL = '11 augustus 2026'
+const LAST_UPDATED_EN = 'August 13, 2026'
+const LAST_UPDATED_FR = '13 août 2026'
+const LAST_UPDATED_NL = '13 augustus 2026'
 const COMPANY = 'RentIt'
 const EMAIL = 'privacy@rentit.be'
 const ADDRESS = 'Belgium'
 const DPA_URL = 'https://www.dataprotectionauthority.be'
 
 export default function PrivacyPolicy() {
-  const [lang, setLang] = useState<Lang>('en')
+  // Французский, как и в условиях: продукт французский, пользователь
+  // бельгийский, и действует для него тот текст, который он прочёл на своём
+  // языке.
+  const [lang, setLang] = useState<Lang>('fr')
 
   return (
     <div className="page">
@@ -82,7 +85,7 @@ function PrivacyEN() {
             <Tr data={['Listing photos', 'Display your items to other users', 'Art. 6(1)(b) — contract performance']} />
             <Tr data={['Booking history', 'Show each party their bookings and open mutual reviews once the rental is complete', 'Art. 6(1)(b) — contract performance']} />
             <Tr data={['Ratings and reviews', 'Build trust in the community', 'Art. 6(1)(f) — legitimate interest']} />
-            <Tr data={['Referral code', 'Track referrals and reward users', 'Art. 6(1)(f) — legitimate interest']} />
+            <Tr data={['Referral code', 'Track who invited whom', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Session cookie (Supabase auth)', 'Keep you logged in — functional cookies only, no tracking', 'Art. 6(1)(b) — necessary for service']} />
           </tbody>
         </table>
@@ -95,7 +98,7 @@ function PrivacyEN() {
         <ul style={listStyle}>
           <li>Provide and improve the RentIt platform</li>
           <li>Process bookings — no payment passes through RentIt, settlement is in cash between users</li>
-          <li>Send transactional emails (booking confirmation, rental reminders) — not marketing without your consent</li>
+          <li>Send transactional emails about your bookings (request, approval, cancellation, expiry) — not marketing without your consent</li>
           <li>Verify your identity via phone OTP</li>
           <li>Resolve disputes between renters and owners</li>
           <li>Comply with legal obligations (Belgian Law of 30 July 2018, GDPR)</li>
@@ -126,7 +129,7 @@ function PrivacyEN() {
 
       <Section title="5. How Long We Keep Your Data">
         <ul style={listStyle}>
-          <li><strong>Account data:</strong> retained as long as your account is active, plus 12 months after deletion (for dispute resolution)</li>
+          <li><strong>Account data:</strong> kept while your account is active and <strong>deleted immediately</strong> when you delete it. Your past bookings remain, stripped of any link to you, for the 7 years below.</li>
           <li><strong>Booking records:</strong> 7 years (Belgian accounting and tax law requirements)</li>
           <li><strong>Photos:</strong> deleted within 30 days of listing removal</li>
           <li><strong>Session cookies:</strong> expire when you log out or after 7 days of inactivity</li>
@@ -222,7 +225,7 @@ function PrivacyFR() {
             <Tr data={["Photos d'annonces", 'Présenter vos articles aux autres utilisateurs', 'Art. 6(1)(b) — exécution du contrat']} />
             <Tr data={['Historique de réservations', 'Montrer à chaque partie ses réservations et ouvrir les avis mutuels une fois la location terminée', 'Art. 6(1)(b) — exécution du contrat']} />
             <Tr data={['Notes et avis', 'Renforcer la confiance dans la communauté', 'Art. 6(1)(f) — intérêt légitime']} />
-            <Tr data={['Code de parrainage', 'Suivi des parrainages et récompenses', 'Art. 6(1)(f) — intérêt légitime']} />
+            <Tr data={['Code de parrainage', 'Suivi de qui a invité qui', 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Cookie de session (Supabase auth)', 'Maintenir votre connexion — cookie fonctionnel uniquement, sans traçage', 'Art. 6(1)(b) — nécessaire au service']} />
           </tbody>
         </table>
@@ -235,7 +238,7 @@ function PrivacyFR() {
         <ul style={listStyle}>
           <li>Fournir et améliorer la plateforme RentIt</li>
           <li>Traiter les réservations — aucun paiement ne transite par RentIt, le règlement se fait en espèces entre utilisateurs</li>
-          <li>Envoyer des emails transactionnels (confirmation de réservation, rappels) — pas de marketing sans votre consentement</li>
+          <li>Envoyer des emails transactionnels liés à vos réservations (demande, approbation, annulation, expiration) — pas de marketing sans votre consentement</li>
           <li>Vérifier votre identité via OTP téléphonique</li>
           <li>Résoudre les litiges entre locataires et propriétaires</li>
           <li>Respecter nos obligations légales (Loi belge du 30 juillet 2018, RGPD)</li>
@@ -266,7 +269,7 @@ function PrivacyFR() {
 
       <Section title="5. Durée de conservation">
         <ul style={listStyle}>
-          <li><strong>Données de compte :</strong> conservées tant que le compte est actif, puis 12 mois après suppression</li>
+          <li><strong>Données de compte :</strong> conservées tant que le compte est actif et <strong>supprimées immédiatement</strong> à votre demande. Vos réservations passées subsistent, détachées de votre identité, pendant les 7 ans indiqués ci-dessous.</li>
           <li><strong>Réservations :</strong> 7 ans (obligations comptables et fiscales belges)</li>
           <li><strong>Photos :</strong> supprimées dans les 30 jours suivant le retrait de l'annonce</li>
           <li><strong>Cookies de session :</strong> expirent à la déconnexion ou après 7 jours d'inactivité</li>
@@ -360,9 +363,9 @@ function PrivacyNL() {
             <Tr data={['Telefoonnummer', 'Identiteitsverificatie (OTP), contact tussen huurders en verhuurders na bevestigde boeking', 'Art. 6(1)(b) — uitvoering overeenkomst']} />
             <Tr data={['Geolocatie (optioneel)', 'Nabijgelegen items tonen; alleen opgeslagen met uw toestemming', 'Art. 6(1)(a) — uw toestemming']} />
             <Tr data={["Advertentiefoto's", 'Uw items tonen aan andere gebruikers', 'Art. 6(1)(b) — uitvoering overeenkomst']} />
-            <Tr data={['Boekingsgeschiedenis', 'Verhuur verwerken, betalingen berekenen, geschillen afhandelen', 'Art. 6(1)(b) — uitvoering overeenkomst']} />
+            <Tr data={['Boekingsgeschiedenis', 'Elke partij haar reserveringen tonen en na afloop de wederzijdse beoordelingen openen', 'Art. 6(1)(b) — uitvoering overeenkomst']} />
             <Tr data={['Beoordelingen', 'Vertrouwen opbouwen in de community', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
-            <Tr data={['Referralcode', 'Bijhouden van doorverwijzingen en beloningen', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
+            <Tr data={['Referralcode', 'Bijhouden wie wie heeft uitgenodigd', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Sessiecookie (Supabase auth)', 'U ingelogd houden — functionele cookie, geen tracking', 'Art. 6(1)(b) — noodzakelijk voor de dienst']} />
           </tbody>
         </table>
@@ -374,8 +377,8 @@ function PrivacyNL() {
       <Section title="3. Hoe wij uw gegevens gebruiken">
         <ul style={listStyle}>
           <li>Het leveren en verbeteren van het RentIt-platform</li>
-          <li>Het verwerken van boekingen en betalingen</li>
-          <li>Het verzenden van transactionele e-mails (boekingsbevestiging, herinneringen) — geen marketing zonder uw toestemming</li>
+          <li>Reserveringen verwerken — Er verloopt geen enkele betaling via RentIt, de afrekening gebeurt contant tussen gebruikers</li>
+          <li>Transactionele e-mails over uw reserveringen versturen (aanvraag, goedkeuring, annulering, verval) — geen marketing zonder uw toestemming</li>
           <li>Het verifiëren van uw identiteit via telefoon-OTP</li>
           <li>Het oplossen van geschillen tussen huurders en verhuurders</li>
           <li>Het naleven van wettelijke verplichtingen (Belgische Wet van 30 juli 2018, AVG)</li>
@@ -406,7 +409,7 @@ function PrivacyNL() {
 
       <Section title="5. Bewaartermijnen">
         <ul style={listStyle}>
-          <li><strong>Accountgegevens:</strong> bewaard zolang het account actief is, plus 12 maanden na verwijdering (voor geschillenbeslechting)</li>
+          <li><strong>Accountgegevens:</strong> bewaard zolang het account actief is en <strong>onmiddellijk verwijderd</strong> op uw verzoek. Uw eerdere reserveringen blijven bestaan, losgekoppeld van uw identiteit, gedurende de 7 jaar hieronder.</li>
           <li><strong>Boekingsrecords:</strong> 7 jaar (Belgische boekhoudkundige en fiscale verplichting)</li>
           <li><strong>Foto's:</strong> verwijderd binnen 30 dagen na verwijdering van de advertentie</li>
           <li><strong>Sessiecookies:</strong> verlopen bij uitloggen of na 7 dagen inactiviteit</li>
