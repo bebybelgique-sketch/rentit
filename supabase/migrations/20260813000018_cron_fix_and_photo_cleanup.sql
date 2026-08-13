@@ -1,0 +1,111 @@
+-- 20260813000018_cron_fix_and_photo_cleanup.sql
+--
+-- ЧТО ЭТО ЧИНИТ
+--
+-- 1. Расписание `expire-bookings` существует с 02.04.2026 и НЕ ОТРАБОТАЛО НИ
+--    РАЗУ. Замерено 13.08: `cron.job_run_details` — 718 запусков, 718 со
+--    статусом `failed`, ноль успешных. Две ошибки в одной команде:
+--      — адрес без домена: `https://<ref>/functions/v1/…` вместо
+--        `https://<ref>.supabase.co/functions/v1/…`; такое имя не резолвится;
+--      — в заголовке Authorization осталась подсказка-заглушка, приклеенная
+--        к ключу: `Bearer ТВОЙ_SERVICE_ROLE_KEY` + сам ключ одной строкой.
+--    Следствие: автоматического истечения броней в продукте нет. Заявка,
+--    которую владелец не тронул, висит в `pending_approval` вечно.
+--
+-- 2. Уборка `cleanup-orphan-photos` расписания не имела вовсе — её
+--    запускали руками. Политика конфиденциальности на всех трёх языках
+--    обещает «Photos: deleted within 30 days of listing removal»; обещание,
+--    исполнение которого зависит от того, вспомнит ли человек нажать
+--    кнопку, — не обещание.
+--
+-- ПЕРЕД ЗАПУСКОМ ЗАМЕНИТЬ ТРИ ПОДСТАНОВКИ. Ключи в файл не вписаны
+-- намеренно: команда крона хранится в базе открытым текстом, и всё, что сюда
+-- попадёт, окажется читаемым для всякого, у кого есть доступ к `cron.job`.
+--
+--   <PROJECT_REF>   — идентификатор проекта Supabase (панель → Settings)
+--   <SERVICE_KEY>   — секретный ключ проекта (sb_secret_…), БЕЗ слов вокруг
+--   <CLEANUP_TOKEN> — значение секрета CLEANUP_TOKEN
+--
+-- ⚠️ Ключ, который лежал в старой команде, считать засвеченным: он хранился
+-- в базе открытым текстом с апреля. После применения этого файла —
+-- перевыпустить его в панели и обновить секреты функций.
+--
+-- Применять как остальные миграции проекта:
+--   npx supabase db query --linked < supabase/migrations/20260813000018_cron_fix_and_photo_cleanup.sql
+-- (`supabase db push` СЛОМАЕТ базу: `schema_migrations` пуста для всех
+-- миграций, их применяли вручную.)
+
+-- --------------------------------------------------------------------------
+-- 1. Истечение заявок: пересоздаём задание с рабочим адресом и заголовком
+-- --------------------------------------------------------------------------
+
+SELECT cron.unschedule('expire-bookings')
+WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'expire-bookings');
+
+SELECT cron.schedule(
+  'expire-bookings',
+  '*/30 * * * *',
+  $job$
+  SELECT net.http_post(
+    url     := 'https://<PROJECT_REF>.supabase.co/functions/v1/expire-bookings',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer <SERVICE_KEY>',
+      'Content-Type',  'application/json'
+    ),
+    body    := '{}'::jsonb
+  );
+  $job$
+);
+
+-- --------------------------------------------------------------------------
+-- 2. Уборка осиротевших снимков: раз в сутки
+-- --------------------------------------------------------------------------
+--
+-- Почему раз в сутки, а не каждые полчаса: функция обходит оба бакета
+-- целиком. Обещанный срок — 30 дней, суточный проход даёт тридцатикратный
+-- запас и не создаёт нагрузки на пустом продукте.
+--
+-- 03:15 UTC — вне часов, когда человек может смотреть витрину, и не в ноль
+-- минут: в ноль стартует всё остальное.
+--
+-- Свой заголовок, не Authorization: функция ходит по ВСЕМУ бакету, это не
+-- операция одной стороны сделки, и пользовательский токен ей не подходит
+-- намеренно (см. шапку `cleanup-orphan-photos/index.ts`).
+
+SELECT cron.unschedule('cleanup-orphan-photos')
+WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'cleanup-orphan-photos');
+
+SELECT cron.schedule(
+  'cleanup-orphan-photos',
+  '15 3 * * *',
+  $job$
+  SELECT net.http_post(
+    url     := 'https://<PROJECT_REF>.supabase.co/functions/v1/cleanup-orphan-photos',
+    headers := jsonb_build_object(
+      'X-Cleanup-Token', '<CLEANUP_TOKEN>',
+      'Content-Type',    'application/json'
+    ),
+    body    := '{}'::jsonb
+  );
+  $job$
+);
+
+-- --------------------------------------------------------------------------
+-- ПРОВЕРКА ПОСЛЕ ПРИМЕНЕНИЯ
+-- --------------------------------------------------------------------------
+--
+-- Сразу — что задания на месте и адрес полный:
+--
+--   SELECT jobname, schedule, active,
+--          command LIKE '%.supabase.co/%' AS адрес_полный,
+--          command LIKE '%ТВОЙ_%'         AS заглушка_осталась
+--   FROM cron.job ORDER BY jobname;
+--
+-- Через час — что запуски пошли успешные. До этой правки строка была одна:
+-- 718 × failed. Если и после правки `succeeded` не появляется, дело не в
+-- адресе:
+--
+--   SELECT status, count(*), max(start_time)
+--   FROM cron.job_run_details
+--   WHERE start_time > now() - interval '2 hours'
+--   GROUP BY status;
