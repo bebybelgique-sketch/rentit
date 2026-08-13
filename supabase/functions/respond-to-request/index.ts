@@ -45,16 +45,37 @@ serve(async (req) => {
     }
 
     // Must be pending_approval
+    //
+    // Эта проверка НЕ защищает от гонки: она смотрит на значение, прочитанное
+    // выше, а между чтением и записью арендатор успевает отменить заявку.
+    // Настоящая защита — условие по исходному статусу в самих UPDATE ниже,
+    // как в `transition-booking`. Проверка здесь оставлена ради внятного
+    // ответа человеку в обычном случае.
     if (booking.status !== 'pending_approval') {
       return new Response(JSON.stringify({ error: 'Booking is no longer pending approval' }), { status: 409, headers: CORS })
     }
+
+    // Один и тот же ответ на проигранную гонку в обеих ветках: бронь
+    // изменилась под руками, и владелец должен увидеть её заново, а не
+    // получить «готово» о действии, которого не произошло.
+    const changedMeanwhile = () => new Response(
+      JSON.stringify({ error: 'La réservation a changé entre-temps' }),
+      { status: 409, headers: CORS },
+    )
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
     // --- REJECT ---
     if (action === 'reject') {
-      await supabase.from('bookings').update({ status: 'rejected' }).eq('id', booking_id)
+      const { data: rejected } = await supabase
+        .from('bookings')
+        .update({ status: 'rejected' })
+        .eq('id', booking_id)
+        .eq('status', 'pending_approval')
+        .select('id')
+      if (!rejected || rejected.length === 0) return changedMeanwhile()
+
       await fetch(`${supabaseUrl}/functions/v1/notify-rental`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
@@ -105,13 +126,18 @@ serve(async (req) => {
     // бронь — промежуточный статус pending_payment больше не используется,
     // Stripe не вызывается, запись в payments не создаётся.
     // Суммы ниже сохраняем: они показываются сторонам как ориентир.
-    await supabase.from('bookings').update({
+    // Условие по исходному статусу обязательно. Без него отменённая
+    // арендатором заявка поднималась обратно в `confirmed`: он считал бронь
+    // отменённой, владелец — подтверждённой, вещь блокировалась на эти даты,
+    // и разошлись бы они уже у двери.
+    const { data: approved } = await supabase.from('bookings').update({
       status: 'confirmed',
       approved_at: new Date().toISOString(),
       total_price: rentalPrice,
       deposit_amount: deposit,
       platform_fee: platformFee,
-    }).eq('id', booking_id)
+    }).eq('id', booking_id).eq('status', 'pending_approval').select('id')
+    if (!approved || approved.length === 0) return changedMeanwhile()
 
     // Auto-reject other pending_approval requests for overlapping dates
     const { data: conflicting } = await supabase
@@ -125,9 +151,18 @@ serve(async (req) => {
 
     if (conflicting && conflicting.length > 0) {
       const ids = conflicting.map((b: any) => b.id)
-      await supabase.from('bookings').update({ status: 'rejected' }).in('id', ids)
+      // Условие по статусу и здесь: между выборкой и записью арендатор
+      // соседней заявки успевает отменить её сам. Письма шлём по
+      // ВОЗВРАЩЁННЫМ строкам — сообщать надо о том, что вправду изменилось,
+      // а не о том, что мы намеревались изменить.
+      const { data: autoRejected } = await supabase
+        .from('bookings')
+        .update({ status: 'rejected' })
+        .in('id', ids)
+        .eq('status', 'pending_approval')
+        .select('id')
       // Notify each rejected renter
-      for (const b of conflicting) {
+      for (const b of autoRejected ?? []) {
         await fetch(`${supabaseUrl}/functions/v1/notify-rental`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
