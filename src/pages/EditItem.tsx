@@ -63,20 +63,20 @@ const EditItem: React.FC = () => {
   if (!user) {
     return (
       <div className="page">
-        <div className="loading">Se connecter pour modifier un outil</div>
+        <div className="loading">{t('editItem.loginToEdit')}</div>
       </div>
     );
   }
 
-  if (itemLoading) return <div className="page"><div className="loading">Chargement de l'outil...</div></div>;
+  if (itemLoading) return <div className="page"><div className="loading">{t('editItem.loading')}</div></div>;
   if (itemError) return <div className="page"><div className="loading">Erreur: {itemError.message}</div></div>;
-  if (!item) return <div className="page"><div className="loading">Outil introuvable</div></div>;
+  if (!item) return <div className="page"><div className="loading">{t('editItem.notFound')}</div></div>;
 
   // Проверка, является ли пользователь владельцем
   if (item.owner_id !== user.id) {
     return (
       <div className="page">
-        <div className="loading">Accès refusé. Vous n'êtes pas le propriétaire de cet outil.</div>
+        <div className="loading">{t('editItem.accessDenied')}</div>
       </div>
     );
   }
@@ -107,16 +107,16 @@ const EditItem: React.FC = () => {
       const tier = (raw: string, label: string): number | null => {
         if (raw.trim() === '') return null;
         const v = parseFloat(raw);
-        if (!(v > 0)) throw new Error(`${label} doit être supérieur à 0, ou laissé vide.`);
+        if (!(v > 0)) throw new Error(`${label} ${t('listItem.priceMustBePositive').toLowerCase()}`);
         return v;
       };
 
       const { price_3days, price_week, late_fee_per_day, ...rest } = formData;
       const updates: ItemUpdate = {
         ...rest,
-        price_3days: tier(price_3days, 'Le forfait 3 jours'),
-        price_week: tier(price_week, 'Le forfait semaine'),
-        late_fee_per_day: tier(late_fee_per_day, 'Le montant de retard'),
+        price_3days: tier(price_3days, t('listItem.package3Days')),
+        price_week: tier(price_week, t('listItem.packageWeek')),
+        late_fee_per_day: tier(late_fee_per_day, t('listItem.lateFeesLabel')),
       };
 
       if (imageFile) {
@@ -154,25 +154,25 @@ const EditItem: React.FC = () => {
         userId: user.id,
       });
       // Перенаправить на страницу просмотра или список
-      alert("Outil mis à jour avec succès!");
+      alert(t('editItem.updateSuccess'));
       navigate(`/item/${itemId}`);
     } catch (error) {
-      console.error("Erreur lors de la mise à jour de l'outil:", error);
-      alert("Une erreur s'est produite lors de la mise à jour de l'outil.");
+      console.error(t('editItem.updateError'), error);
+      alert(t('editItem.updateErrorGeneric'));
     }
   };
 
   return (
     <div className="page">
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px' }}>Modifier l'outil</h1>
+        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px' }}>{t('editItem.title')}</h1>
 
         {updateItemMutation.isError && <div className="error-msg">Erreur: {(updateItemMutation.error as Error).message}</div>}
         {uploadError && <div className="error-msg">Erreur d'upload: {uploadError}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="title">Titre</label>
+            <label htmlFor="title">{t('editItem.titleField')}</label>
             <input
               id="title"
               name="title"
@@ -197,7 +197,7 @@ const EditItem: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="price_per_day">Prix par jour (€)</label>
+            <label htmlFor="price_per_day">{t('editItem.pricePerDay')}</label>
             <input
               id="price_per_day"
               name="price_per_day"
@@ -212,7 +212,7 @@ const EditItem: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="deposit">Dépôt (€)</label>
+            <label htmlFor="deposit">{t('editItem.deposit')}</label>
             <input
               id="deposit"
               name="deposit"
@@ -230,7 +230,7 @@ const EditItem: React.FC = () => {
               parseFloat, и пустая строка стала бы NaN — то есть «тариф не
               назначен» превратилось бы в мусор при первом же касании. */}
           <div className="form-group">
-            <label htmlFor="price_3days">Forfait 3 jours (€) — optionnel</label>
+            <label htmlFor="price_3days">{t('editItem.package3Days')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span></label>
             <input
               id="price_3days"
               name="price_3days"
@@ -239,13 +239,13 @@ const EditItem: React.FC = () => {
               onChange={e => setFormData(prev => ({ ...prev, price_3days: e.target.value }))}
               min="0.50"
               step="0.50"
-              placeholder="prix total des 3 jours"
+              placeholder={t('editItem.package3DaysHint')}
               style={{ width: '100%' }}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="price_week">Forfait semaine (€) — optionnel</label>
+            <label htmlFor="price_week">{t('editItem.packageWeek')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span></label>
             <input
               id="price_week"
               name="price_week"
@@ -254,13 +254,13 @@ const EditItem: React.FC = () => {
               onChange={e => setFormData(prev => ({ ...prev, price_week: e.target.value }))}
               min="0.50"
               step="0.50"
-              placeholder="prix total des 7 jours"
+              placeholder={t('editItem.packageWeekHint')}
               style={{ width: '100%' }}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="late_fee_per_day">Retard (€ / jour) — optionnel</label>
+            <label htmlFor="late_fee_per_day">{t('editItem.lateFee')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span></label>
             <input
               id="late_fee_per_day"
               name="late_fee_per_day"
@@ -278,7 +278,7 @@ const EditItem: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="category">Catégorie</label>
+            <label htmlFor="category">{t('editItem.categoryLabel')}</label>
             <select
               id="category"
               name="category"
@@ -289,7 +289,7 @@ const EditItem: React.FC = () => {
             >
               {/* Шестая копия списка была вписана прямо в разметку: добавь
                   категорию в продукт — и её не будет только здесь. */}
-              <option value="">Sélectionnez une catégorie</option>
+              <option value="">{t('editItem.selectCategory')}</option>
               {CATEGORIES.map(c => (
                 <option key={c.value} value={c.value}>{t(c.labelKey)}</option>
               ))}
@@ -297,7 +297,7 @@ const EditItem: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="condition">État</label>
+            <label htmlFor="condition">{t('editItem.conditionLabel')}</label>
             <select
               id="condition"
               name="condition"
@@ -306,7 +306,7 @@ const EditItem: React.FC = () => {
               required
               style={{ width: '100%' }}
             >
-              <option value="">Sélectionnez un état</option>
+              <option value="">{t('editItem.selectCondition')}</option>
               {CONDITIONS.map(c => (
                 <option key={c.value} value={c.value}>{t(c.labelKey)}</option>
               ))}
@@ -314,7 +314,7 @@ const EditItem: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="address">Adresse</label>
+            <label htmlFor="address">{t('editItem.addressLabel')}</label>
             <input
               id="address"
               name="address"
@@ -344,7 +344,7 @@ const EditItem: React.FC = () => {
             disabled={updateItemMutation.isPending || uploading}
             style={{ width: '100%', minHeight: '44px' }}
           >
-            {updateItemMutation.isPending ? 'Mise à jour en cours...' : 'Mettre à jour l\'outil'}
+            {updateItemMutation.isPending ? t('editItem.updating') : t('editItem.updateButton')}
           </button>
         </form>
       </div>

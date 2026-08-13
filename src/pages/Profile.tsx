@@ -103,7 +103,7 @@ const Profile: React.FC = () => {
       });
       toast.success(t('profile.updateSuccess')); // Новая строка в i18n
     } catch (error: any) {
-      console.error("Erreur lors de la mise à jour du profil:", error);
+      console.error(t('profile.updateError'), error);
       toast.error(error.message || t('profile.updateError')); // Новая строка в i18n
     }
   };
@@ -120,7 +120,7 @@ const Profile: React.FC = () => {
       // await supabase.auth.signOut(); // Это может быть вызвано в AuthContext
       // navigate('/'); // Перенаправление на главную
     } catch (error: any) {
-      console.error("Erreur lors de la suppression du compte:", error);
+      console.error(t('profile.deleteError'), error);
       toast.error(error.message || t('profile.deleteError')); // Новая строка в i18n
     }
   };

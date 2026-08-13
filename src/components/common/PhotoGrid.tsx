@@ -1,5 +1,6 @@
 // src/components/common/PhotoGrid.tsx
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface PhotoGridItem {
   id: string;
@@ -20,16 +21,17 @@ const PHASE_TITLE: Record<'handover' | 'return', string> = {
   return: 'Retour',
 };
 
-const PHASE_ALT: Record<'handover' | 'return', string> = {
-  handover: "État de l'outil à la remise",
-  return: "État de l'outil au retour",
-};
-
 const PhotoGrid: React.FC<PhotoGridProps> = ({
-  photos, onRemove, emptyLabel = 'Aucune photo',
+  photos, onRemove, emptyLabel,
 }) => {
+  const { t } = useTranslation();
+  const defaultEmptyLabel = emptyLabel || t('photoGrid.noPhotos');
+  const PHASE_ALT: Record<'handover' | 'return', string> = {
+    handover: t('photoGrid.titleHandover'),
+    return: t('photoGrid.titleReturn'),
+  };
   if (photos.length === 0) {
-    return <p style={{ fontSize: '13px', color: '#666' }}>{emptyLabel}</p>;
+    return <p style={{ fontSize: '13px', color: '#666' }}>{defaultEmptyLabel}</p>;
   }
 
   // Порядок фиксированный: сначала как отдали, потом как вернули. Иначе
@@ -57,7 +59,7 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({
                   {p.canRemove && onRemove && (
                     <button
                       type="button"
-                      aria-label="Supprimer la photo"
+                      aria-label={t('photoGrid.deletePhoto')}
                       onClick={() => onRemove(p.id)}
                       style={{
                         position: 'absolute', top: '2px', right: '2px',

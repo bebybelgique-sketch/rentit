@@ -17,7 +17,7 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password.length < 8) return setError('Le mot de passe doit contenir au moins 8 caractères')
+    if (password.length < 8) return setError(t('register.passwordMinimum'))
     setLoading(true); setError('')
 
     const { data, error } = await supabase.auth.signUp({

@@ -95,7 +95,7 @@ export default function MyItems() {
         bookings: item.bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b),
       } : item))
     } catch (err: any) {
-      setActionError(err.message || 'Erreur lors de la réponse')
+      setActionError(err.message || t('myItems.responseError'))
     } finally {
       setRespondingId(null)
     }
@@ -132,20 +132,20 @@ export default function MyItems() {
         } : item))
       }
     } catch (err: any) {
-      setActionError(err.message || 'Erreur lors de la mise à jour')
+      setActionError(err.message || t('myItems.updateError'))
     } finally {
       setTransitioningId(null)
     }
   }
 
   const cancelBooking = async (bookingId: string, itemId: string) => {
-    const reason = prompt('Pourquoi annulez-vous cette réservation ?')
+    const reason = prompt(t('myItems.cancellationPrompt'))
     if (reason === null) return
     await transitionBooking(bookingId, itemId, 'cancel', reason)
   }
 
   const deleteItem = async (id: string) => {
-    if (!confirm('Supprimer cette annonce ? Cette action est irréversible.')) return
+    if (!confirm(t('myItems.deleteConfirm'))) return
     setActionError('')
     const { error } = await supabase.from('items').delete().eq('id', id)
     if (error) { setActionError(error.message); return }
@@ -154,7 +154,7 @@ export default function MyItems() {
 
   const filtered = tab === 'active' ? items.filter(i => i.available) : items
 
-  if (loading) return <div className="page"><div className="loading">Chargement...</div></div>
+  if (loading) return <div className="page"><div className="loading">{t('common.loading')}</div></div>
 
   return (
     <div className="page">
@@ -174,20 +174,20 @@ export default function MyItems() {
         </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '800' }}>Mes outils</h1>
-        <Link to="/list-item" className="btn btn-primary">+ Nouvelle annonce</Link>
+        <h1 style={{ fontSize: '24px', fontWeight: '800' }}>{t('myItems.title')}</h1>
+        <Link to="/list-item" className="btn btn-primary">{t('myItems.newListing')}</Link>
       </div>
 
       <div className="tabs">
-        <button className={`tab ${tab === 'active' ? 'active' : ''}`} onClick={() => setTab('active')}>Actifs</button>
-        <button className={`tab ${tab === 'all' ? 'active' : ''}`} onClick={() => setTab('all')}>Tous</button>
+        <button className={`tab ${tab === 'active' ? 'active' : ''}`} onClick={() => setTab('active')}>{t('myItems.activeTab')}</button>
+        <button className={`tab ${tab === 'all' ? 'active' : ''}`} onClick={() => setTab('all')}>{t('myItems.allTab')}</button>
       </div>
 
       {filtered.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '48px' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>📦</div>
-          <p style={{ color: '#666', marginBottom: '16px' }}>Aucun outil pour l'instant</p>
-          <Link to="/list-item" className="btn btn-primary">Déposer votre premier outil</Link>
+          <p style={{ color: '#666', marginBottom: '16px' }}>{t('myItems.noItems')}</p>
+          <Link to="/list-item" className="btn btn-primary">{t('myItems.listFirst')}</Link>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -215,7 +215,7 @@ export default function MyItems() {
                       </div>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         <span className={`tag ${item.available ? 'tag-green' : 'tag-gray'}`}>
-                          {item.available ? 'Disponible' : 'Masqué'}
+                          {item.available ? t('landing.finalCta') : t('myItems.hidden')}
                         </span>
                         {pendingRequests.length > 0 && (
                           <span className="tag tag-yellow">
@@ -227,8 +227,8 @@ export default function MyItems() {
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-                      <Link to={`/item/${item.id}`} className="btn btn-secondary btn-sm">Voir</Link>
-                      <Link to={`/edit-item/${item.id}`} className="btn btn-secondary btn-sm">Modifier</Link>
+                      <Link to={`/item/${item.id}`} className="btn btn-secondary btn-sm">{t('myItems.view')}</Link>
+                      <Link to={`/edit-item/${item.id}`} className="btn btn-secondary btn-sm">{t('myItems.edit')}</Link>
                       <button
                         onClick={() => toggleAvailable(item.id, item.available)}
                         className="btn btn-secondary btn-sm"
@@ -296,7 +296,7 @@ export default function MyItems() {
                 {/* Confirmed / active bookings */}
                 {item.bookings.filter(b => ['confirmed', 'active', 'pending_payment'].includes(b.status)).length > 0 && (
                   <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
-                    <h4 style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px', fontWeight: '700' }}>Réservations</h4>
+                    <h4 style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px', fontWeight: '700' }}>{t('myItems.requestsTitle')}</h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {item.bookings.filter(b => ['confirmed', 'active', 'pending_payment'].includes(b.status)).map(booking => (
                         <div key={booking.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8f9ff', padding: '10px 14px', borderRadius: '8px', flexWrap: 'wrap', gap: '10px' }}>
@@ -323,7 +323,7 @@ export default function MyItems() {
                                   className="btn btn-primary btn-sm"
                                   disabled={transitioningId === booking.id}
                                 >
-                                  {transitioningId === booking.id ? '...' : 'Marquer récupéré'}
+                                  {transitioningId === booking.id ? t('common.loading') : t('myItems.markHandedOver')}
                                 </button>
                                 <button
                                   onClick={() => cancelBooking(booking.id, item.id)}
@@ -340,7 +340,7 @@ export default function MyItems() {
                                 className="btn btn-primary btn-sm"
                                 disabled={transitioningId === booking.id}
                               >
-                                {transitioningId === booking.id ? '...' : 'Marquer retourné'}
+                                {transitioningId === booking.id ? t('common.loading') : t('myItems.markReturned')}
                               </button>
                             )}
                           </div>
