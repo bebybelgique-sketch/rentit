@@ -3,10 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useItemById } from '../hooks/useItemById';
-import { useUpdateItem } from '../hooks/mutations/useUpdateItem';
+import { useUpdateItem, type ItemUpdate } from '../hooks/mutations/useUpdateItem';
 import { useTranslation } from 'react-i18next';
 import { CATEGORIES, CONDITIONS } from '../domain/catalog';
 import { useUploadImage } from '../hooks/useUploadImage';
+import { supabase } from '../lib/supabase';
+import { ITEM_PHOTOS_BUCKET, itemPhotoPath } from '../lib/itemPhotos';
 
 const EditItem: React.FC = () => {
   const { t } = useTranslation();
@@ -85,25 +87,44 @@ const EditItem: React.FC = () => {
     e.preventDefault();
 
     try {
-      let imageUrl = item.image_url; // Сохраняем старый URL, если не загружаем новый
-      if (imageFile) {
-        // Если выбрано новое изображение, загружаем его
-        imageUrl = await uploadImage(imageFile, 'items');
-      }
+      // Колонки `image_url` в таблице `items` нет — снимки лежат в `photos`.
+      // PostgREST отклонял ВЕСЬ запрос целиком (PGRST204, замерено на живой
+      // базе 13.08), поэтому страница не сохраняла ничего: ни цену, ни
+      // описание, ни доступность. Человек видел «Une erreur s'est produite».
+      const updates: ItemUpdate = { ...formData };
 
-      // Обновить товар, передав URL изображения (новый или старый)
+      if (imageFile) {
+        // Путь обязан быть `items/<uid>/…`: правило удаления в Storage
+        // сверяет владельца со ВТОРЫМ сегментом пути. При прежнем `items/…`
+        // файл нельзя было бы удалить даже собственнику.
+        const newUrl = await uploadImage(imageFile, `items/${user.id}`);
+
+        // Подпись у поля обещает заменить «l'actuelle» — текущий снимок,
+        // то есть первый. Остальные снимки объявления остаются: прежний код
+        // слал photos: [imageUrl] и на объявлении с тремя снимками молча
+        // оставлял один.
+        const previous = item.photos ?? [];
+        updates.photos = [newUrl, ...previous.slice(1)];
+
+        // Заменённый файл больше ничем не удерживается. Не удалить его
+        // здесь — значит оставить снимок чужой вещи в публичном бакете
+        // навсегда, вопреки обещанию политики конфиденциальности.
+        const replaced = itemPhotoPath(previous[0]);
+        if (replaced) {
+          const { error: rmErr } = await supabase.storage
+            .from(ITEM_PHOTOS_BUCKET)
+            .remove([replaced]);
+          // Уборка не должна валить сохранение: объявление важнее файла, а
+          // недобитый файл подберёт cleanup-orphan-photos.
+          if (rmErr) console.error('Не удалось удалить заменённый снимок:', rmErr.message);
+        }
+      }
+      // Без нового файла `photos` не трогаем вовсе — иначе любое изменение
+      // цены переписывало бы список снимков.
+
       await updateItemMutation.mutateAsync({
         id: itemId!,
-        updates: {
-          ...formData,
-          image_url: imageUrl, // Обновляем поле image_url
-          // Обновляем поля, соответствующие структуре Supabase
-          photos: imageUrl ? [imageUrl] : [],
-          address: formData.address,
-          lat: formData.lat,
-          lng: formData.lng,
-          available: formData.available,
-        },
+        updates,
         userId: user.id,
       });
       // Перенаправить на страницу просмотра или список
