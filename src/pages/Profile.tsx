@@ -72,9 +72,14 @@ const Profile: React.FC = () => {
     }
 
     try {
+      // Поля перечислены поимённо, а не `...profileData`. В состоянии формы
+      // живёт ещё и `bio`, а колонки `bio` в таблице `users` НЕТ — PostgREST
+      // отклонил бы весь запрос целиком (PGRST204), файл лёг бы в бакет, а
+      // ссылка не сохранилась. Ровно то, что чинили в PR #19 на странице
+      // «Modifier»: одно лишнее поле — и не сохраняется ничего.
       await updateProfileMutation.mutateAsync({
         userId: user.id,
-        updates: { ...profileData, avatar_url: result.url },
+        updates: { full_name: profileData.full_name, avatar_url: result.url },
       });
       setProfileData(prev => ({ ...prev, avatar_url: result.url }));
       toast.success(t('profile.avatarSaved'));
