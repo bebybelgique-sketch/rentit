@@ -30,12 +30,23 @@
 -- намеренно: команда крона хранится в базе открытым текстом, и всё, что сюда
 -- попадёт, окажется читаемым для всякого, у кого есть доступ к `cron.job`.
 --
---   <PROJECT_REF>   — идентификатор проекта Supabase (панель → Settings)
---   <CRON_TOKEN>    — значение секрета CRON_TOKEN функций
---   <CLEANUP_TOKEN> — значение секрета CLEANUP_TOKEN функций
+--   <PROJECT_REF>       — идентификатор проекта Supabase (панель → Settings)
+--   <PUBLISHABLE_KEY>   — публикуемый ключ (`sb_publishable_…`, он же
+--                         VITE_SUPABASE_ANON_KEY). НЕ секрет: он и так уезжает
+--                         в браузерный бандл
+--   <CRON_TOKEN>        — значение секрета CRON_TOKEN функций
+--   <CLEANUP_TOKEN>     — значение секрета CLEANUP_TOKEN функций
 --
 -- Оба секрета задаются так:
 --   npx supabase secrets set CRON_TOKEN=<значение> CLEANUP_TOKEN=<значение>
+--
+-- ЗАЧЕМ ДВА ЗАГОЛОВКА. У функций включена проверка JWT на стороне платформы:
+-- запрос без `Authorization` отбивается шлюзом (`UNAUTHORIZED_NO_AUTH_HEADER`)
+-- ещё до нашего кода — замерено 13.08 curl'ом. Поэтому:
+--   Authorization  — пропуск через шлюз, публичным ключом, не секрет;
+--   X-Cron-Token / X-Cleanup-Token — настоящая проверка, уже в нашем коде.
+-- Одного публичного ключа мало: с ним и без своего токена функция отвечает
+-- 401 (проверено).
 --
 -- Применять как остальные миграции проекта:
 --   npx supabase db query --linked < supabase/migrations/20260813000018_cron_fix_and_photo_cleanup.sql
@@ -56,8 +67,9 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url     := 'https://<PROJECT_REF>.supabase.co/functions/v1/expire-bookings',
     headers := jsonb_build_object(
-      'X-Cron-Token', '<CRON_TOKEN>',
-      'Content-Type', 'application/json'
+      'Authorization', 'Bearer <PUBLISHABLE_KEY>',
+      'X-Cron-Token',  '<CRON_TOKEN>',
+      'Content-Type',  'application/json'
     ),
     body    := '{}'::jsonb
   );
@@ -89,6 +101,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url     := 'https://<PROJECT_REF>.supabase.co/functions/v1/cleanup-orphan-photos',
     headers := jsonb_build_object(
+      'Authorization',   'Bearer <PUBLISHABLE_KEY>',
       'X-Cleanup-Token', '<CLEANUP_TOKEN>',
       'Content-Type',    'application/json'
     ),
