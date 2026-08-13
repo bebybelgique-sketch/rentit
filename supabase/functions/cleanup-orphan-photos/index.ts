@@ -1,7 +1,15 @@
 // supabase/functions/cleanup-orphan-photos/index.ts
 //
-// Убирает из приватного бакета файлы, у которых больше нет строки в
-// booking_photos.
+// Убирает из обоих фото-бакетов файлы, которые больше ничем не удерживаются:
+// из приватного `booking-photos` — те, у кого нет строки в `booking_photos`,
+// из ПУБЛИЧНОГО `item-photos` — те, на кого не ссылается ни одно объявление.
+//
+// Второй бакет добавлен 13.08. До этого снимки объявлений не удалялись
+// НИКОГДА и ниоткуда: ни при снятии объявления, ни при удалении аккаунта.
+// Бакет публичный, то есть снятое объявление оставляло снимок чужой вещи в
+// чужой квартире доступным по прямой ссылке бессрочно — при том что
+// политика конфиденциальности на всех трёх языках обещает «Photos: deleted
+// within 30 days of listing removal».
 //
 // Зачем отдельная функция, а не триггер в базе: Supabase запрещает
 // удаление из storage.objects напрямую (storage.protect_delete), чистить
@@ -33,9 +41,11 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createSupabaseServiceClient } from '../_shared/supabase.ts'
 import { handleOPTIONS } from '../_shared/cors.ts'
 import { json } from '../_shared/json.ts'
+import { ITEM_PHOTOS_BUCKET, itemPhotoPaths } from '../_shared/item-photos.ts'
+import { planSweep } from '../_shared/sweep.ts'
 
 const supabase = createSupabaseServiceClient()
-const BUCKET = 'booking-photos'
+const BOOKING_BUCKET = 'booking-photos'
 const PAGE = 100
 
 // Файл считается сиротой не сразу: между загрузкой в бакет и вставкой
@@ -57,47 +67,73 @@ serve(async (req) => {
   }
 
   try {
-    const { data: rows, error: rowsErr } = await supabase
+    // Обход и решение «сирота или нет» живут в `_shared/sweep.ts` и покрыты
+    // тестами. Здесь остаются только сеть и удаление.
+    const sweep = async (bucket: string, known: Set<string>, root: string, depth: number) => {
+      const plan = await planSweep({
+        known,
+        root,
+        depth,
+        minAgeMs: MIN_AGE_MS,
+        list: async (prefix) => {
+          const { data, error } = await supabase.storage
+            .from(bucket)
+            .list(prefix, { limit: PAGE })
+          if (error) throw new Error(`list ${bucket}:${prefix || '/'}: ${error.message}`)
+          return data || []
+        },
+      })
+
+      if (plan.orphans.length === 0) {
+        return { checked: plan.checked, scanned: plan.scanned, removed: 0 }
+      }
+
+      const { error: rmErr } = await supabase.storage.from(bucket).remove(plan.orphans)
+      if (rmErr) throw new Error(`remove ${bucket}: ${rmErr.message} (найдено ${plan.orphans.length})`)
+
+      return { checked: plan.checked, scanned: plan.scanned, removed: plan.orphans.length }
+    }
+
+    // --- booking-photos: удерживает строка в booking_photos ---
+    const { data: photoRows, error: photoErr } = await supabase
       .from('booking_photos')
       .select('storage_path')
+    if (photoErr) return json({ error: photoErr.message }, 500)
 
-    if (rowsErr) return json({ error: rowsErr.message }, 500)
-    const known = new Set((rows || []).map((r) => r.storage_path as string))
+    // Пути `<booking_id>/<phase>/<файл>`: от пустого корня два уровня папок.
+    const bookings = await sweep(
+      BOOKING_BUCKET,
+      new Set((photoRows || []).map((r) => r.storage_path as string)),
+      '',
+      2,
+    )
 
-    const orphans: string[] = []
-    const now = Date.now()
+    // --- item-photos: удерживает ссылка в items.photos ---
+    //
+    // Адрес → путь считает `itemPhotoPaths`. Ошибка в разборе здесь опаснее
+    // молчания: неузнанный путь выглядит сиротой, и уборка снесла бы живой
+    // снимок с витрины. Поэтому разбор вынесен в отдельный модуль и покрыт
+    // тестами на стороне браузера (`src/lib/__tests__/itemPhotos.test.ts`).
+    const { data: itemRows, error: itemErr } = await supabase
+      .from('items')
+      .select('photos')
+    if (itemErr) return json({ error: itemErr.message }, 500)
 
-    // Пути вида <booking_id>/<phase>/<файл>: обходим два уровня папок.
-    const listFolders = async (prefix: string) => {
-      const { data, error } = await supabase.storage
-        .from(BUCKET)
-        .list(prefix, { limit: PAGE })
-      if (error) throw new Error(`list ${prefix || '/'}: ${error.message}`)
-      return data || []
-    }
+    // Пути `items/<uid>/<файл>`: первый сегмент фиксирован, значит от корня
+    // `items` остаётся ОДИН уровень папок, а не два.
+    const items = await sweep(
+      ITEM_PHOTOS_BUCKET,
+      new Set((itemRows || []).flatMap((i: { photos?: unknown }) => itemPhotoPaths(i.photos))),
+      'items',
+      1,
+    )
 
-    for (const booking of await listFolders('')) {
-      for (const phase of await listFolders(booking.name)) {
-        for (const file of await listFolders(`${booking.name}/${phase.name}`)) {
-          const path = `${booking.name}/${phase.name}/${file.name}`
-          if (known.has(path)) continue
-
-          const created = file.created_at ? Date.parse(file.created_at) : 0
-          if (created && now - created < MIN_AGE_MS) continue
-
-          orphans.push(path)
-        }
-      }
-    }
-
-    if (orphans.length === 0) {
-      return json({ ok: true, checked: known.size, removed: 0 })
-    }
-
-    const { error: rmErr } = await supabase.storage.from(BUCKET).remove(orphans)
-    if (rmErr) return json({ error: rmErr.message, found: orphans.length }, 500)
-
-    return json({ ok: true, checked: known.size, removed: orphans.length })
+    return json({
+      ok: true,
+      'booking-photos': bookings,
+      'item-photos': items,
+      removed: bookings.removed + items.removed,
+    })
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : 'Unexpected error' }, 500)
   }

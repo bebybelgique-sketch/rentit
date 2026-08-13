@@ -1,5 +1,16 @@
-// expire-bookings — called by Supabase pg_cron every 30 minutes
-// Setup in SQL editor — see project docs
+// expire-bookings — вызывается по расписанию pg_cron каждые 30 минут.
+// Само расписание — в миграции 20260813000018.
+//
+// ПРОПУСК. Раньше здесь сверялся служебный ключ проекта
+// (`SUPABASE_SERVICE_ROLE_KEY`), и это заставляло хранить его в команде
+// крона — то есть в таблице `cron.job`, открытым текстом, доступным всякому,
+// у кого есть доступ к базе. Замерено 13.08: значение в `cron.job` побайтово
+// совпадало с ключом, которым ходят ВСЕ функции проекта. Ключ от всего
+// лежал в базе ради задания, умеющего одно действие.
+//
+// Теперь пропуск отдельный — `CRON_TOKEN`, как у `cleanup-orphan-photos`.
+// Он открывает ровно эту функцию и ничего больше, и его можно менять, не
+// трогая ничего остального.
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -9,15 +20,17 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
 
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version' }
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version, x-cron-token' }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
-  // Only service role can call this
-  const authHeader = req.headers.get('Authorization') || ''
-  const token = authHeader.replace('Bearer ', '').trim()
-  if (token !== Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+  // Пропуск для планировщика. Секрет обязателен: без него функция закрыта
+  // наглухо, а не открыта для всех — иначе опечатка в имени переменной
+  // окружения молча распахнула бы её наружу.
+  const expected = Deno.env.get('CRON_TOKEN')
+  const presented = req.headers.get('X-Cron-Token')
+  if (!expected || !presented || presented !== expected) {
     return new Response('Unauthorized', { status: 401, headers: CORS })
   }
 

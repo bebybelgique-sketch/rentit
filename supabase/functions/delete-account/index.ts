@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createSupabaseServiceClient } from '../_shared/supabase.ts'
 import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
+import { ITEM_PHOTOS_BUCKET, itemPhotoPaths } from '../_shared/item-photos.ts'
 
 const supabase = createSupabaseServiceClient()
 
@@ -66,6 +67,22 @@ serve(async (req) => {
 
   if (doomed.length > 0) {
     await supabase.storage.from('booking-photos').remove(doomed)
+  }
+
+  // Снимки объявлений — по той же причине и в том же порядке: адреса лежат
+  // в колонке `items.photos`, и после `delete` их взять неоткуда. Бакет
+  // `item-photos` ПУБЛИЧНЫЙ: не убрать файлы здесь — значит оставить снимки
+  // вещей удалённого человека открытыми по прямой ссылке навсегда, вопреки
+  // и политике конфиденциальности, и самому смыслу удаления аккаунта.
+  const { data: ownItems } = await supabase
+    .from('items')
+    .select('photos')
+    .eq('owner_id', userId)
+
+  const doomedItemPhotos = (ownItems || []).flatMap((i: { photos?: unknown }) => itemPhotoPaths(i.photos))
+
+  if (doomedItemPhotos.length > 0) {
+    await supabase.storage.from(ITEM_PHOTOS_BUCKET).remove(doomedItemPhotos)
   }
 
   // Delete user's items (bookings, photos rows and reviews cascade)
