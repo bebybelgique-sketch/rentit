@@ -11,9 +11,9 @@ type Lang = 'en' | 'fr' | 'nl'
 // По языкам раздельно: строка показывается в трёх разделах, и
 // английское «March 20, 2026» стояло под французским «Dernière mise
 // à jour :» и нидерландским «Laatste update:».
-const LAST_UPDATED_EN = 'August 11, 2026'
-const LAST_UPDATED_FR = '11 août 2026'
-const LAST_UPDATED_NL = '11 augustus 2026'
+const LAST_UPDATED_EN = 'August 13, 2026'
+const LAST_UPDATED_FR = '13 août 2026'
+const LAST_UPDATED_NL = '13 augustus 2026'
 const COMPANY = 'RentIt'
 const EMAIL = 'legal@rentit.be'
 const SUPPORT_EMAIL = 'support@rentit.be'
@@ -21,7 +21,11 @@ const ADDRESS = 'Belgium'
 const GOVERNING_LAW = 'Belgian law'
 
 export default function TermsOfService() {
-  const [lang, setLang] = useState<Lang>('en')
+  // Французский, а не английский. Продукт французский, пользователь
+  // бельгийский, и в Бельгии для человека действует тот текст, который он
+  // прочёл на своём языке. Открывать ему английский документ по умолчанию —
+  // значит показывать не тот, что его связывает.
+  const [lang, setLang] = useState<Lang>('fr')
 
   return (
     <div className="page">
@@ -96,7 +100,7 @@ function TermsEN() {
           <li>You must use rented items only for their intended purpose and in accordance with applicable laws.</li>
           <li>You are responsible for any damage, loss, or theft of the item during your rental period.</li>
           <li>You must return the item by the agreed end date in the same condition as received, normal wear excepted.</li>
-          <li>Late returns may result in additional charges equivalent to the daily rate for each additional day.</li>
+          <li>If you return the item late, you owe the Owner the late fee shown on the listing for each additional day, or — if the Owner did not announce one — the daily rate. This is settled between you and the Owner in cash: RentIt does not calculate, charge or collect it.</li>
         </ul>
       </Section>
 
@@ -114,6 +118,7 @@ function TermsEN() {
           <tbody>
             <Tr data={['Rental price', 'Owner, shown on the listing', 'Between the parties, at handover']} />
             <Tr data={['Deposit (if any)', 'Owner, shown on the listing', 'Between the parties, returned at the end']} />
+            <Tr data={['Late fee (if announced)', 'Owner, shown on the listing', 'Between the parties, at the return']} />
           </tbody>
         </table>
 
@@ -157,20 +162,19 @@ function TermsEN() {
       </Section>
 
       <Section title="9. Disputes Between Users">
-        <p>RentIt is an intermediary and is not a party to rental agreements between Owners and Renters. In case of dispute:</p>
-        <ol style={{ ...listStyle, listStyleType: 'decimal' }}>
-          <li>Contact the other party directly through the platform.</li>
-          <li>If unresolved within 48 hours, contact RentIt at <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</li>
-          <li>RentIt may mediate and, at its discretion, make a final determination on deposit release.</li>
-        </ol>
-        <p>RentIt's mediation decisions are final for matters within our platform scope, but do not affect your right to pursue legal remedies.</p>
+        <p>RentIt is an intermediary and is not a party to rental agreements between Owners and Renters. <strong>RentIt does not arbitrate disputes and cannot decide who owes what.</strong> We hold no deposit, so we can neither release nor withhold one.</p>
+        <ul style={listStyle}>
+          <li>Talk to the other party in the booking conversation. It is written down and both of you keep it.</li>
+          <li>The handover and return photos are your evidence — take them.</li>
+          <li>Write to <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> for platform matters: an account, a listing, conduct that breaches these Terms. We can act on those.</li>
+          <li>For money owed between you, the ordinary route is Belgian law and, if needed, the courts named in section 14.</li>
+        </ul>
       </Section>
 
       <Section title="10. Prohibited Conduct">
         <p>You may not:</p>
         <ul style={listStyle}>
           <li>Use RentIt for illegal purposes or to facilitate illegal activity</li>
-          <li>Circumvent platform payments (arranging rentals off-platform to avoid fees)</li>
           <li>Post false, misleading, or fraudulent listings or reviews</li>
           <li>Harass, threaten, or discriminate against other users</li>
           <li>Attempt to access other users' accounts or data</li>
@@ -195,7 +199,7 @@ function TermsEN() {
 
       <Section title="14. Governing Law and Disputes">
         <p>These Terms are governed by <strong>{GOVERNING_LAW}</strong>. Any dispute arising from these Terms or your use of the platform shall be subject to the exclusive jurisdiction of the courts of <strong>Brussels, Belgium</strong>.</p>
-        <p>Before initiating legal proceedings, you agree to attempt to resolve any dispute with us informally by contacting <a href={`mailto:${EMAIL}`}>{EMAIL}</a>. We will endeavour to resolve disputes within 30 days.</p>
+        <p>Before initiating legal proceedings, you agree to attempt to resolve any dispute with us informally by contacting <a href={`mailto:${EMAIL}`}>{EMAIL}</a>.</p>
         <p>As a consumer in Belgium, you may also use the European Online Dispute Resolution platform: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer">ec.europa.eu/consumers/odr</a></p>
       </Section>
 
@@ -235,11 +239,39 @@ function TermsFR() {
         <ul style={listStyle}>
           <li>Vous devez avoir au moins <strong>18 ans</strong>.</li>
           <li>Vous devez fournir des informations d'inscription exactes et complètes.</li>
-          <li>Un compte par personne.</li>
+          <li>Vous devez avoir le droit de louer tout objet que vous publiez.</li>
+          <li>Un compte par personne. La création de plusieurs comptes est interdite.</li>
         </ul>
       </Section>
 
-      <Section title="3. Paiements entre utilisateurs">
+      <Section title="3. Comptes utilisateurs">
+        <p>Vous êtes responsable de la confidentialité de vos identifiants et de toute activité effectuée depuis votre compte. Prévenez-nous immédiatement à <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> si vous soupçonnez un accès non autorisé.</p>
+        <p>Nous pouvons suspendre ou supprimer un compte qui enfreint les présentes Conditions, sert à une fraude, ou fait l'objet de plaintes fondées et répétées.</p>
+      </Section>
+
+      <Section title="4. Publier une annonce (Propriétaires)">
+        <ul style={listStyle}>
+          <li>Vous devez posséder l'objet publié ou avoir le droit de le louer.</li>
+          <li>L'annonce doit être exacte, complète et non trompeuse. Les photos doivent représenter l'objet réel.</li>
+          <li>Vous fixez vous-même le prix par jour, les éventuels forfaits (3 jours, semaine), la caution et le montant de retard.</li>
+          <li>Vous répondez de l'état annoncé : l'outil doit être propre, sûr et en état de marche au moment de la remise.</li>
+          <li>Vous ne pouvez pas publier un objet illégal, dangereux sans certification, volé, ou grevé d'un droit empêchant la location.</li>
+          <li>En publiant une annonce, vous accordez à RentIt une licence non exclusive et gratuite d'afficher vos photos d'annonce sur la plateforme.</li>
+        </ul>
+        <p><strong>Objets interdits, notamment :</strong> armes, explosifs, objets exigeant une licence professionnelle que vous ne détenez pas, matières dangereuses.</p>
+      </Section>
+
+      <Section title="5. Louer un outil (Locataires)">
+        <ul style={listStyle}>
+          <li>Réserver un objet crée un engagement entre vous et le Propriétaire.</li>
+          <li>Vous n'utilisez l'outil que pour son usage prévu et conformément à la loi.</li>
+          <li>Vous répondez des dommages, de la perte ou du vol de l'outil pendant la location.</li>
+          <li>Vous rendez l'outil à la date convenue, dans l'état où vous l'avez reçu, usure normale exceptée.</li>
+          <li>En cas de retard, vous devez au Propriétaire le montant de retard affiché sur l'annonce pour chaque jour supplémentaire ou, s'il n'en a pas annoncé, le tarif journalier. Ce montant se règle entre vous en espèces : RentIt ne le calcule pas, ne le facture pas et ne l'encaisse pas.</li>
+        </ul>
+      </Section>
+
+      <Section title="6. Paiements entre utilisateurs">
         <p><strong>Aucun paiement ne transite par RentIt.</strong> Le prix de la location et l'éventuel dépôt de garantie sont convenus et réglés <strong>directement entre le Locataire et le Propriétaire</strong>, en espèces, lors de la remise. RentIt ne détient aucun fonds, ne traite aucune carte et ne prélève aucune commission.</p>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
@@ -253,6 +285,7 @@ function TermsFR() {
           <tbody>
             <Tr data={['Prix de location', "Le Propriétaire, affiché sur l'annonce", 'Entre les parties, à la remise']} />
             <Tr data={['Dépôt de garantie (le cas échéant)', "Le Propriétaire, affiché sur l'annonce", 'Entre les parties, restitué à la fin']} />
+            <Tr data={['Montant de retard (si annoncé)', "Le Propriétaire, affiché sur l'annonce", 'Entre les parties, à la restitution']} />
           </tbody>
         </table>
 
@@ -263,7 +296,7 @@ function TermsFR() {
         </ul>
       </Section>
 
-      <Section title="4. Annulations">
+      <Section title="7. Annulations">
         <p>Chaque partie peut annuler tant que l'outil n'a pas changé de mains. L'annulation est enregistrée avec son auteur, sa date et son motif, et l'autre partie en est informée par e-mail.</p>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
@@ -284,7 +317,7 @@ function TermsFR() {
         </p>
       </Section>
 
-      <Section title="5. Responsabilité">
+      <Section title="8. Responsabilité">
         <p><strong>RentIt ne fournit aucune assurance.</strong> Il n'existe ni couverture des dommages, ni fonds de garantie, ni indemnisation. L'outil est prêté entre particuliers, sous leur propre responsabilité.</p>
         <ul style={listStyle}>
           <li>Le Locataire répond envers le Propriétaire des dommages, de la perte ou du vol de l'outil.</li>
@@ -295,11 +328,53 @@ function TermsFR() {
         <p><strong>RentIt n'est pas partie au contrat de location.</strong> Son rôle se limite à mettre les personnes en relation et à héberger leurs échanges. RentIt n'est pas responsable de l'état ou de la qualité des outils, des pertes de revenus, des dommages indirects, ni des litiges entre utilisateurs.</p>
       </Section>
 
-      <Section title="6. Droit applicable">
-        <p>Les présentes CGU sont régies par le <strong>droit belge</strong>. Tout litige relève de la compétence exclusive des tribunaux de <strong>Bruxelles, Belgique</strong>. Résolution en ligne des litiges : <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer">ec.europa.eu/consumers/odr</a></p>
+      <Section title="9. Litiges entre utilisateurs">
+        <p>RentIt est un intermédiaire et n'est pas partie au contrat de location. <strong>RentIt n'arbitre pas les litiges et ne décide pas qui doit quoi à qui.</strong> Nous ne détenons aucune caution : nous ne pouvons donc ni la libérer ni la retenir.</p>
+        <ul style={listStyle}>
+          <li>Parlez-vous dans la conversation de réservation : elle est écrite et vous la conservez tous les deux.</li>
+          <li>Les photos de remise et de retour sont vos preuves — prenez-les.</li>
+          <li>Écrivez à <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> pour ce qui relève de la plateforme : un compte, une annonce, un comportement contraire aux présentes Conditions. Sur ces points-là, nous pouvons agir.</li>
+          <li>Pour les sommes dues entre vous, la voie ordinaire est le droit belge et, si nécessaire, les tribunaux visés à l'article 14.</li>
+        </ul>
       </Section>
 
-      <Section title="7. Contact">
+      <Section title="10. Conduites interdites">
+        <p>Il vous est interdit de :</p>
+        <ul style={listStyle}>
+          <li>utiliser RentIt à des fins illégales ou pour faciliter une activité illégale ;</li>
+          <li>publier des annonces ou des avis faux, trompeurs ou frauduleux ;</li>
+          <li>harceler, menacer ou discriminer d'autres utilisateurs ;</li>
+          <li>tenter d'accéder aux comptes ou aux données d'autres utilisateurs ;</li>
+          <li>extraire ou aspirer les données de la plateforme sans autorisation écrite ;</li>
+          <li>utiliser la plateforme après en avoir été exclu.</li>
+        </ul>
+        <p>Une infraction peut entraîner la suspension immédiate du compte et des poursuites.</p>
+      </Section>
+
+      <Section title="11. Avis et contenus">
+        <p>Les utilisateurs peuvent laisser un avis après une location terminée. L'avis doit être honnête, fondé sur une expérience directe, et non diffamatoire. RentIt peut retirer un avis qui enfreint ces règles. En publiant un contenu (avis, photos, descriptions), vous accordez à RentIt une licence non exclusive d'utilisation de ce contenu sur la plateforme.</p>
+      </Section>
+
+      <Section title="12. Propriété intellectuelle">
+        <p>La plateforme {COMPANY}, son nom, son logo et son code sont la propriété de l'exploitant de la plateforme et protégés par le droit belge et européen de la propriété intellectuelle. Vous ne pouvez copier, modifier ni distribuer aucune partie de la plateforme sans autorisation écrite.</p>
+      </Section>
+
+      <Section title="13. Résiliation">
+        <p>Vous pouvez supprimer votre compte à tout moment depuis votre profil ou en écrivant à <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. Les réservations en cours doivent être terminées ou annulées avant la suppression.</p>
+        <p>RentIt peut suspendre ou supprimer votre compte en cas de manquement aux présentes Conditions, avec ou sans préavis selon la gravité.</p>
+      </Section>
+
+      <Section title="14. Droit applicable">
+        <p>Les présentes CGU sont régies par le <strong>droit belge</strong>. Tout litige relève de la compétence exclusive des tribunaux de <strong>Bruxelles, Belgique</strong>.</p>
+        <p>Avant toute procédure, vous acceptez de tenter un règlement amiable en écrivant à <a href={`mailto:${EMAIL}`}>{EMAIL}</a>.</p>
+        <p>En tant que consommateur en Belgique, vous pouvez aussi recourir à la plateforme européenne de résolution en ligne des litiges : <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer">ec.europa.eu/consumers/odr</a></p>
+      </Section>
+
+      <Section title="15. Modification des présentes Conditions">
+        <p>Nous pouvons mettre à jour ces Conditions. En cas de modification substantielle, nous vous en informerons par e-mail au moins <strong>30 jours</strong> avant son entrée en vigueur. L'usage de la plateforme après cette date vaut acceptation des nouvelles Conditions.</p>
+      </Section>
+
+      <Section title="16. Contact">
         <p><strong>{COMPANY}</strong> — {ADDRESS}<br />
           Juridique : <a href={`mailto:${EMAIL}`}>{EMAIL}</a> | Support : <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
         </p>
@@ -328,11 +403,39 @@ function TermsNL() {
         <ul style={listStyle}>
           <li>U moet minimaal <strong>18 jaar</strong> oud zijn.</li>
           <li>U moet nauwkeurige registratiegegevens verstrekken.</li>
-          <li>Één account per persoon.</li>
+          <li>U moet het recht hebben om elk voorwerp dat u plaatst te verhuren.</li>
+          <li>Één account per persoon. Meerdere accounts aanmaken is verboden.</li>
         </ul>
       </Section>
 
-      <Section title="3. Betalingen tussen gebruikers">
+      <Section title="3. Gebruikersaccounts">
+        <p>U bent verantwoordelijk voor de vertrouwelijkheid van uw inloggegevens en voor alles wat vanaf uw account gebeurt. Waarschuw ons onmiddellijk via <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> als u ongeoorloofde toegang vermoedt.</p>
+        <p>Wij kunnen een account opschorten of verwijderen dat deze Voorwaarden schendt, voor fraude wordt gebruikt, of herhaaldelijk gegronde klachten oplevert.</p>
+      </Section>
+
+      <Section title="4. Een advertentie plaatsen (Verhuurders)">
+        <ul style={listStyle}>
+          <li>U moet het geplaatste voorwerp bezitten of het recht hebben het te verhuren.</li>
+          <li>De advertentie moet juist, volledig en niet misleidend zijn. Foto's moeten het echte voorwerp tonen.</li>
+          <li>U bepaalt zelf de dagprijs, eventuele forfaits (3 dagen, week), de borg en het bedrag bij te late teruggave.</li>
+          <li>U staat in voor de aangekondigde staat: het gereedschap is schoon, veilig en werkend bij de overhandiging.</li>
+          <li>U mag geen voorwerp plaatsen dat illegaal is, gevaarlijk zonder certificering, gestolen, of bezwaard met een recht dat verhuur belet.</li>
+          <li>Door een advertentie te plaatsen verleent u RentIt een niet-exclusieve, kosteloze licentie om uw advertentiefoto's op het platform te tonen.</li>
+        </ul>
+        <p><strong>Verboden voorwerpen, onder meer:</strong> wapens, explosieven, voorwerpen waarvoor een beroepsvergunning nodig is die u niet heeft, gevaarlijke stoffen.</p>
+      </Section>
+
+      <Section title="5. Gereedschap huren (Huurders)">
+        <ul style={listStyle}>
+          <li>Een reservering schept een verbintenis tussen u en de Verhuurder.</li>
+          <li>U gebruikt het gereedschap alleen waarvoor het bedoeld is en volgens de wet.</li>
+          <li>U bent aansprakelijk voor schade, verlies of diefstal tijdens de huurperiode.</li>
+          <li>U geeft het gereedschap terug op de afgesproken datum, in de staat waarin u het ontving, normale slijtage uitgezonderd.</li>
+          <li>Bij te late teruggave bent u de Verhuurder het in de advertentie vermelde bedrag per extra dag verschuldigd, of — als hij er geen aankondigde — de dagprijs. Dit wordt onderling contant geregeld: RentIt berekent, factureert en int dit niet.</li>
+        </ul>
+      </Section>
+
+      <Section title="6. Betalingen tussen gebruikers">
         <p><strong>Er verloopt geen enkele betaling via RentIt.</strong> De huurprijs en een eventuele borg worden <strong>rechtstreeks tussen Huurder en Verhuurder</strong> afgesproken en contant betaald bij de overhandiging. RentIt houdt geen geld aan, verwerkt geen kaarten en neemt geen commissie.</p>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
@@ -346,6 +449,7 @@ function TermsNL() {
           <tbody>
             <Tr data={['Huurprijs', 'Verhuurder, vermeld in de advertentie', 'Tussen partijen, bij de overhandiging']} />
             <Tr data={['Borg (indien van toepassing)', 'Verhuurder, vermeld in de advertentie', 'Tussen partijen, terug bij afloop']} />
+            <Tr data={['Bedrag bij te late teruggave (indien aangekondigd)', 'Verhuurder, vermeld in de advertentie', 'Tussen partijen, bij de teruggave']} />
           </tbody>
         </table>
 
@@ -356,7 +460,7 @@ function TermsNL() {
         </ul>
       </Section>
 
-      <Section title="4. Annuleringen">
+      <Section title="7. Annuleringen">
         <p>Elke partij kan annuleren zolang het gereedschap niet is overhandigd. De annulering wordt vastgelegd met auteur, datum en reden, en de andere partij wordt per e-mail verwittigd.</p>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
@@ -377,7 +481,7 @@ function TermsNL() {
         </p>
       </Section>
 
-      <Section title="5. Aansprakelijkheid">
+      <Section title="8. Aansprakelijkheid">
         <p><strong>RentIt biedt geen verzekering.</strong> Er is geen schadedekking, geen waarborgfonds en geen vergoedingsregeling. Het gereedschap wordt tussen particulieren uitgeleend, onder hun eigen verantwoordelijkheid.</p>
         <ul style={listStyle}>
           <li>De Huurder is tegenover de Verhuurder aansprakelijk voor schade, verlies of diefstal van het gereedschap.</li>
@@ -388,11 +492,53 @@ function TermsNL() {
         <p><strong>RentIt is geen partij bij de huurovereenkomst.</strong> De rol beperkt zich tot het in contact brengen van mensen en het hosten van hun uitwisselingen. RentIt is niet aansprakelijk voor de staat of kwaliteit van het gereedschap, gederfde inkomsten, indirecte schade of geschillen tussen gebruikers.</p>
       </Section>
 
-      <Section title="6. Toepasselijk recht">
-        <p>Deze Voorwaarden zijn onderworpen aan het <strong>Belgisch recht</strong>. Geschillen vallen onder de exclusieve bevoegdheid van de rechtbanken van <strong>Brussel, België</strong>. Online geschillenbeslechting: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer">ec.europa.eu/consumers/odr</a></p>
+      <Section title="9. Geschillen tussen gebruikers">
+        <p>RentIt is een tussenpersoon en geen partij bij de huurovereenkomst. <strong>RentIt beslecht geen geschillen en bepaalt niet wie wat verschuldigd is.</strong> Wij houden geen borg aan: wij kunnen die dus niet vrijgeven en niet inhouden.</p>
+        <ul style={listStyle}>
+          <li>Praat met elkaar in het reserveringsgesprek: het staat op schrift en u bewaart het allebei.</li>
+          <li>De foto's bij overhandiging en teruggave zijn uw bewijs — maak ze.</li>
+          <li>Schrijf naar <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> voor wat het platform betreft: een account, een advertentie, gedrag in strijd met deze Voorwaarden. Daarop kunnen wij handelen.</li>
+          <li>Voor bedragen die u elkaar verschuldigd bent geldt de gewone weg: het Belgisch recht en, indien nodig, de rechtbanken uit artikel 14.</li>
+        </ul>
       </Section>
 
-      <Section title="7. Contact">
+      <Section title="10. Verboden gedrag">
+        <p>Het is u verboden:</p>
+        <ul style={listStyle}>
+          <li>RentIt te gebruiken voor illegale doeleinden of om illegale activiteit te vergemakkelijken;</li>
+          <li>valse, misleidende of frauduleuze advertenties of beoordelingen te plaatsen;</li>
+          <li>andere gebruikers te intimideren, te bedreigen of te discrimineren;</li>
+          <li>te proberen toegang te krijgen tot accounts of gegevens van anderen;</li>
+          <li>gegevens van het platform te schrapen of te extraheren zonder schriftelijke toestemming;</li>
+          <li>het platform te gebruiken nadat u bent uitgesloten.</li>
+        </ul>
+        <p>Een inbreuk kan leiden tot onmiddellijke opschorting van het account en tot gerechtelijke stappen.</p>
+      </Section>
+
+      <Section title="11. Beoordelingen en inhoud">
+        <p>Gebruikers kunnen een beoordeling achterlaten na een afgeronde verhuur. Een beoordeling moet eerlijk zijn, gebaseerd op eigen ervaring, en niet lasterlijk. RentIt kan een beoordeling verwijderen die deze regels schendt. Door inhoud te plaatsen (beoordelingen, foto's, beschrijvingen) verleent u RentIt een niet-exclusieve licentie om die inhoud op het platform te gebruiken.</p>
+      </Section>
+
+      <Section title="12. Intellectuele eigendom">
+        <p>Het platform {COMPANY}, de naam, het logo en de software zijn eigendom van de uitbater van het platform en beschermd door Belgisch en Europees recht inzake intellectuele eigendom. U mag geen enkel deel van het platform kopiëren, wijzigen of verspreiden zonder schriftelijke toestemming.</p>
+      </Section>
+
+      <Section title="13. Beëindiging">
+        <p>U kunt uw account op elk moment verwijderen via uw profiel of door te schrijven naar <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. Lopende reserveringen moeten eerst afgerond of geannuleerd zijn.</p>
+        <p>RentIt kan uw account opschorten of verwijderen bij schending van deze Voorwaarden, met of zonder voorafgaande kennisgeving naargelang de ernst.</p>
+      </Section>
+
+      <Section title="14. Toepasselijk recht">
+        <p>Deze Voorwaarden zijn onderworpen aan het <strong>Belgisch recht</strong>. Geschillen vallen onder de exclusieve bevoegdheid van de rechtbanken van <strong>Brussel, België</strong>.</p>
+        <p>Vóór elke procedure aanvaardt u een minnelijke regeling te proberen via <a href={`mailto:${EMAIL}`}>{EMAIL}</a>.</p>
+        <p>Als consument in België kunt u ook terecht bij het Europese platform voor onlinegeschillenbeslechting: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer">ec.europa.eu/consumers/odr</a></p>
+      </Section>
+
+      <Section title="15. Wijziging van deze Voorwaarden">
+        <p>Wij kunnen deze Voorwaarden bijwerken. Bij een wezenlijke wijziging informeren wij u per e-mail ten minste <strong>30 dagen</strong> vóór de inwerkingtreding. Gebruik van het platform na die datum geldt als aanvaarding van de nieuwe Voorwaarden.</p>
+      </Section>
+
+      <Section title="16. Contact">
         <p><strong>{COMPANY}</strong> — {ADDRESS}<br />
           Juridisch: <a href={`mailto:${EMAIL}`}>{EMAIL}</a> | Support: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
         </p>
