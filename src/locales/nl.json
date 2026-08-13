@@ -433,5 +433,11 @@
   "retry": "Opnieuw proberen",
   "itemGone": "Dit gereedschap staat niet meer online.",
   "itemGoneHint": "Het is verwijderd, of de link klopt niet.",
-  "backHome": "Home"
+  "backHome": "Home",
+  "language": {
+    "choose": "Taal kiezen",
+    "fr": "Français",
+    "en": "English",
+    "nl": "Nederlands"
+  }
 }

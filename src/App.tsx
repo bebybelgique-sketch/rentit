@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from 'react'
+import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 // ИМПОРТЫ ДЛЯ TanStack Query и Toast
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -68,19 +68,44 @@ function Navbar() {
 
   const close = () => setMenuOpen(false)
 
-  // Языков три, а переключатель знал два: до нидерландского из интерфейса
-  // было не добраться вовсе, хотя словарь nl лежал полный. Теперь по кругу.
+  // Переключатель показывает ТЕКУЩИЙ язык и раскрывает выбор.
+  //
+  // До 13.08 он работал по кругу и показывал СЛЕДУЮЩИЙ язык: человек стоял
+  // на французской странице и видел кнопку «EN», не понимая, это его язык
+  // или переход. Меня самого это поймало — оснастка кликала до надписи «EN»,
+  // получала французский экран, и я чуть не записал это дефектом перевода.
+  // Если подпись обманывает того, кто знает код, посетителя она обманывает
+  // тем более.
   //
   // Текущий язык считает `useDocumentLanguage` — тот же, что у «Условий» и
   // «Политики». Своя копия этих трёх строк здесь и была третьим по счёту
   // способом определять язык в продукте.
   const current = useDocumentLanguage()
-  const nextLang = LANGUAGES[(LANGUAGES.indexOf(current) + 1) % LANGUAGES.length]
+  const [langOpen, setLangOpen] = useState(false)
 
-  const toggleLanguage = () => {
-    i18n.changeLanguage(nextLang)
+  const chooseLanguage = (lang: string) => {
+    i18n.changeLanguage(lang)
+    setLangOpen(false)
     close()
   }
+
+  // Закрытие по клику мимо и по Esc: список перекрывает содержимое, и
+  // оставить его открытым — значит держать человека в ловушке на телефоне,
+  // где промахнуться мимо мелкой кнопки легко.
+  const langRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!langOpen) return
+    const onDown = (e: MouseEvent) => {
+      if (!langRef.current?.contains(e.target as Node)) setLangOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLangOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [langOpen])
 
   return (
     <nav className="navbar">
@@ -113,17 +138,61 @@ function Navbar() {
               <Link to="/register" className="btn btn-primary btn-sm" onClick={close}>{t('signup')}</Link>
             </>
           )}
-          <button
-            onClick={toggleLanguage}
-            style={{
-              background: 'none', border: '1px solid rgba(242,240,235,0.2)',
-              borderRadius: '3px', color: 'rgba(242,240,235,0.5)',
-              fontSize: '11px', fontFamily: 'var(--font-mono)',
-              padding: '5px 10px', cursor: 'pointer', letterSpacing: '0.08em',
-            }}
-          >
-            {nextLang.toUpperCase()}
-          </button>
+          <div ref={langRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setLangOpen(o => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={langOpen}
+              aria-label={t('language.choose')}
+              style={{
+                background: 'none', border: '1px solid rgba(242,240,235,0.2)',
+                borderRadius: '3px', color: 'rgba(242,240,235,0.5)',
+                fontSize: '11px', fontFamily: 'var(--font-mono)',
+                padding: '5px 10px', cursor: 'pointer', letterSpacing: '0.08em',
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+              }}
+            >
+              {current.toUpperCase()}
+              <span aria-hidden style={{ fontSize: '8px', opacity: 0.7 }}>▼</span>
+            </button>
+
+            {langOpen && (
+              <ul
+                role="listbox"
+                aria-label={t('language.choose')}
+                style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 50,
+                  margin: 0, padding: '4px', listStyle: 'none',
+                  background: 'var(--ink, #121417)',
+                  border: '1px solid rgba(242,240,235,0.2)', borderRadius: '4px',
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.35)', minWidth: '112px',
+                }}
+              >
+                {LANGUAGES.map(l => (
+                  <li key={l}>
+                    <button
+                      role="option"
+                      aria-selected={l === current}
+                      onClick={() => chooseLanguage(l)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        // Выбранный язык виден и без цвета: галочка остаётся
+                        // при любой теме и читается тем, кто не различает
+                        // оттенки серого на тёмном.
+                        color: l === current ? 'rgba(242,240,235,0.95)' : 'rgba(242,240,235,0.6)',
+                        fontSize: '12px', fontFamily: 'var(--font-mono)',
+                        padding: '7px 10px', textAlign: 'left', borderRadius: '3px',
+                      }}
+                    >
+                      <span aria-hidden style={{ width: '10px' }}>{l === current ? '✓' : ''}</span>
+                      {t(`language.${l}`)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </nav>

@@ -433,5 +433,11 @@
   "retry": "Réessayer",
   "itemGone": "Cet outil n'est plus en ligne.",
   "itemGoneHint": "Il a été retiré ou l'adresse est incorrecte.",
-  "backHome": "Accueil"
+  "backHome": "Accueil",
+  "language": {
+    "choose": "Choisir la langue",
+    "fr": "Français",
+    "en": "English",
+    "nl": "Nederlands"
+  }
 }
