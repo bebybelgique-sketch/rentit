@@ -19,6 +19,15 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     lng: 4.61,
     available: true,
     created_at: '2026-01-01T00:00:00Z',
+    // Эти поля база отдаёт, а хук их терял. Результат кладётся в кэш через
+    // setQueryData и ЗАМЕЩАЕТ полный объект — форма, открытая сразу после
+    // сохранения, показывала пустую категорию поверх сохранённой.
+    deposit: 50,
+    category: 'power_tools',
+    condition: 'good',
+    price_3days: null,
+    price_week: 60,
+    late_fee_per_day: 10,
   },
   expectedItem: {
     id: 'item-1',
@@ -32,6 +41,13 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     longitude: 4.61,
     is_available: true,
     created_at: '2026-01-01T00:00:00Z',
+    deposit: 50,
+    category: 'power_tools',
+    condition: 'good',
+    photos: ['https://example.com/drill.jpg'],
+    price_3days: null,
+    price_week: 60,
+    late_fee_per_day: 10,
   },
   mockError: new Error('Update item failed'),
 }));

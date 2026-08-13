@@ -23,6 +23,11 @@ const EditItem: React.FC = () => {
     title: '',
     description: '',
     price_per_day: 0,
+    // Пустые тарифы держим строками: число не умеет отличить «не назначен»
+    // от нуля, а ноль здесь означал бы «неделя бесплатно».
+    price_3days: '' as string,
+    price_week: '' as string,
+    late_fee_per_day: '' as string,
     deposit: 0,
     category: '',
     condition: '',
@@ -39,6 +44,11 @@ const EditItem: React.FC = () => {
         title: item.title,
         description: item.description || '',
         price_per_day: item.price_per_day,
+        // `?? ''` намеренно вместо `|| ''`: тариф в 0 база не допустит, но
+        // приводить пустое к строке надо ровно там, где оно пустое.
+        price_3days: item.price_3days == null ? '' : String(item.price_3days),
+        price_week: item.price_week == null ? '' : String(item.price_week),
+        late_fee_per_day: item.late_fee_per_day == null ? '' : String(item.late_fee_per_day),
         deposit: item.deposit || 0,
         category: item.category || '', // Assuming category is part of the Item type
         condition: item.condition || '', // Assuming condition is part of the Item type
@@ -91,7 +101,23 @@ const EditItem: React.FC = () => {
       // PostgREST отклонял ВЕСЬ запрос целиком (PGRST204, замерено на живой
       // базе 13.08), поэтому страница не сохраняла ничего: ни цену, ни
       // описание, ни доступность. Человек видел «Une erreur s'est produite».
-      const updates: ItemUpdate = { ...formData };
+      // Тарифы держатся в форме строками, а в базе это numeric. Пустая
+      // строка — «тарифа нет» и уходит как NULL; ноль база отклонит
+      // проверкой, поэтому отвечаем человеку здесь, а не отказом Postgres.
+      const tier = (raw: string, label: string): number | null => {
+        if (raw.trim() === '') return null;
+        const v = parseFloat(raw);
+        if (!(v > 0)) throw new Error(`${label} doit être supérieur à 0, ou laissé vide.`);
+        return v;
+      };
+
+      const { price_3days, price_week, late_fee_per_day, ...rest } = formData;
+      const updates: ItemUpdate = {
+        ...rest,
+        price_3days: tier(price_3days, 'Le forfait 3 jours'),
+        price_week: tier(price_week, 'Le forfait semaine'),
+        late_fee_per_day: tier(late_fee_per_day, 'Le montant de retard'),
+      };
 
       if (imageFile) {
         // Путь обязан быть `items/<uid>/…`: правило удаления в Storage
@@ -197,6 +223,58 @@ const EditItem: React.FC = () => {
               step="0.01"
               style={{ width: '100%' }}
             />
+          </div>
+
+          {/* Тарифы на срок и просрочка. Свой обработчик, а не общий
+              `handleChange`: тот приводит любое числовое поле через
+              parseFloat, и пустая строка стала бы NaN — то есть «тариф не
+              назначен» превратилось бы в мусор при первом же касании. */}
+          <div className="form-group">
+            <label htmlFor="price_3days">Forfait 3 jours (€) — optionnel</label>
+            <input
+              id="price_3days"
+              name="price_3days"
+              type="number"
+              value={formData.price_3days}
+              onChange={e => setFormData(prev => ({ ...prev, price_3days: e.target.value }))}
+              min="0.50"
+              step="0.50"
+              placeholder="prix total des 3 jours"
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="price_week">Forfait semaine (€) — optionnel</label>
+            <input
+              id="price_week"
+              name="price_week"
+              type="number"
+              value={formData.price_week}
+              onChange={e => setFormData(prev => ({ ...prev, price_week: e.target.value }))}
+              min="0.50"
+              step="0.50"
+              placeholder="prix total des 7 jours"
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="late_fee_per_day">Retard (€ / jour) — optionnel</label>
+            <input
+              id="late_fee_per_day"
+              name="late_fee_per_day"
+              type="number"
+              value={formData.late_fee_per_day}
+              onChange={e => setFormData(prev => ({ ...prev, late_fee_per_day: e.target.value }))}
+              min="0.50"
+              step="0.50"
+              placeholder="ex. 10.00"
+              style={{ width: '100%' }}
+            />
+            <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '5px', lineHeight: 1.5 }}>
+              Montant annoncé à l'avance, réglé entre vous à la restitution. RentIt ne le calcule ni ne le prélève.
+            </p>
           </div>
 
           <div className="form-group">

@@ -26,6 +26,12 @@ export interface Item {
   category?: string;
   condition?: string;
   photos?: string[];
+  // Тарифы на срок и объявленная плата за просрочку. `null` — владелец их не
+  // назначил, и тогда счёт идёт по дневной цене. Платформа эти суммы не
+  // держит и не считает: расчёт наличными между сторонами.
+  price_3days?: number | null;
+  price_week?: number | null;
+  late_fee_per_day?: number | null;
 }
 
 // Краткая карточка человека — то, что одна сторона сделки вправе знать о

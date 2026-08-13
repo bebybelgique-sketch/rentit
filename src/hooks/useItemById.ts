@@ -42,6 +42,11 @@ const fetchItemById = async (id: string): Promise<Item | null> => {
     category: data.category ?? '',
     condition: data.condition ?? '',
     photos: Array.isArray(data.photos) ? data.photos : [],
+    // Пустое значение оставляем пустым, а не приводим к нулю: ноль здесь
+    // означал бы «неделя бесплатно», и расчёт принял бы его всерьёз.
+    price_3days: data.price_3days ?? null,
+    price_week: data.price_week ?? null,
+    late_fee_per_day: data.late_fee_per_day ?? null,
   };
 
   return mappedItem;

@@ -25,6 +25,9 @@ export default function ListItem() {
     category: CATEGORIES[0].value as string,
     condition: 'good',
     price_per_day: '',
+    price_3days: '',
+    price_week: '',
+    late_fee_per_day: '',
     deposit: '',
     address: '',
   })
@@ -170,6 +173,22 @@ export default function ListItem() {
     )
   }
 
+  // Тариф дороже того же срока по дням никогда не будет выбран расчётом —
+  // он просто мёртвый. Владелец об этом узнать неоткуда: он вводит «40 € за
+  // 3 дня» при дневной цене 12 € и считает, что сделал скидку. Говорим сразу,
+  // при вводе, а не отказом при отправке: тариф не ошибка, он бесполезен.
+  const tierHint = (() => {
+    const day = parseFloat(form.price_per_day)
+    if (!(day > 0)) return ''
+    const dead: string[] = []
+    const p3 = parseFloat(form.price_3days)
+    if (p3 > 0 && p3 >= day * 3) dead.push(`le forfait 3 jours (€${p3.toFixed(2)}) coûte plus que 3 jours au tarif journalier (€${(day * 3).toFixed(2)})`)
+    const pw = parseFloat(form.price_week)
+    if (pw > 0 && pw >= day * 7) dead.push(`le forfait semaine (€${pw.toFixed(2)}) coûte plus que 7 jours au tarif journalier (€${(day * 7).toFixed(2)})`)
+    if (dead.length === 0) return ''
+    return `Attention : ${dead.join(' ; ')}. Le locataire paiera toujours le tarif le moins cher, donc ce forfait ne s'appliquera jamais.`
+  })()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
@@ -178,6 +197,18 @@ export default function ListItem() {
                                        return setError('Le prix doit être supérieur à 0.')
     if (parseFloat(form.deposit || '0') < 0)
                                        return setError('La caution ne peut pas être négative.')
+    // Ноль в необязательном поле — не «нет тарифа», а «неделя бесплатно».
+    // База такое отклонит проверкой, но человеку нужен ответ здесь, а не
+    // невнятный отказ Postgres на французской странице.
+    for (const [field, label] of [
+      ['price_3days', 'Le forfait 3 jours'],
+      ['price_week', 'Le forfait semaine'],
+      ['late_fee_per_day', 'Le montant de retard'],
+    ] as const) {
+      const raw = form[field]
+      if (raw !== '' && !(parseFloat(raw) > 0))
+        return setError(`${label} doit être supérieur à 0, ou laissé vide.`)
+    }
 
     try {
       setUploading(true)
@@ -220,6 +251,11 @@ export default function ListItem() {
         category:      form.category,
         condition:     form.condition,
         price_per_day: parseFloat(form.price_per_day),
+        // Пустое поле уходит как NULL, а не как 0: ноль в базе означал бы
+        // «неделя бесплатно», и расчёт принял бы его всерьёз.
+        price_3days:      form.price_3days      === '' ? null : parseFloat(form.price_3days),
+        price_week:       form.price_week       === '' ? null : parseFloat(form.price_week),
+        late_fee_per_day: form.late_fee_per_day === '' ? null : parseFloat(form.late_fee_per_day),
         deposit:       parseFloat(form.deposit) || 0,
         photos:        photoUrls,
         lat,
@@ -368,6 +404,42 @@ export default function ListItem() {
             </div>
           </div>
 
+          {/* Тарифы на срок. Необязательны: пустое поле означает «такого
+              тарифа нет», и счёт идёт по дневной цене. Подсказка про 12/40/70
+              не случайна — без примера человек не понимает, что вводить цену
+              за ВЕСЬ пакет, а не за день внутри него. */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="form-group">
+              <label>Forfait 3 jours (€) <span style={{ color: 'var(--muted)', fontWeight: '400' }}>— optionnel</span></label>
+              <input
+                type="number"
+                min="0.50"
+                step="0.50"
+                value={form.price_3days}
+                onChange={set('price_3days')}
+                placeholder="prix total des 3 jours"
+                disabled={isLocked}
+              />
+            </div>
+            <div className="form-group">
+              <label>Forfait semaine (€) <span style={{ color: 'var(--muted)', fontWeight: '400' }}>— optionnel</span></label>
+              <input
+                type="number"
+                min="0.50"
+                step="0.50"
+                value={form.price_week}
+                onChange={set('price_week')}
+                placeholder="prix total des 7 jours"
+                disabled={isLocked}
+              />
+            </div>
+          </div>
+          {tierHint && (
+            <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginTop: '-8px', marginBottom: '16px', lineHeight: 1.5 }}>
+              {tierHint}
+            </p>
+          )}
+
           {/* Deposit */}
           <div className="form-group">
             <label>Caution (€) <span style={{ color: 'var(--muted)', fontWeight: '400' }}>— remboursable au retour</span></label>
@@ -380,6 +452,24 @@ export default function ListItem() {
               placeholder="Calculée automatiquement à 20% de la valeur"
               disabled={isLocked}
             />
+          </div>
+
+          {/* Просрочка. Платформа её НЕ считает и НЕ удерживает — это цифра,
+              которую владелец объявляет заранее, чтобы при встрече не спорить. */}
+          <div className="form-group">
+            <label>Retard (€ / jour) <span style={{ color: 'var(--muted)', fontWeight: '400' }}>— optionnel</span></label>
+            <input
+              type="number"
+              min="0.50"
+              step="0.50"
+              value={form.late_fee_per_day}
+              onChange={set('late_fee_per_day')}
+              placeholder="ex. 10.00"
+              disabled={isLocked}
+            />
+            <p style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginTop: '5px', lineHeight: 1.5 }}>
+              Montant annoncé à l'avance, réglé entre vous à la restitution. RentIt ne le calcule ni ne le prélève.
+            </p>
           </div>
 
           {/* Location */}
