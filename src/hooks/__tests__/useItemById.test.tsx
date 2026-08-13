@@ -22,6 +22,11 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     deposit: 50,
     category: 'power_tools',
     condition: 'good',
+    // Тарифов у этой вещи нет: база отдаёт NULL, и хук обязан донести
+    // именно пустоту, а не ноль — ноль означал бы «неделя бесплатно».
+    price_3days: null,
+    price_week: 60,
+    late_fee_per_day: null,
   },
   expectedItem: {
     id: 'item-1',
@@ -41,6 +46,9 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     category: 'power_tools',
     condition: 'good',
     photos: ['https://example.com/drill.jpg', 'https://example.com/drill-2.jpg'],
+    price_3days: null,
+    price_week: 60,
+    late_fee_per_day: null,
   },
   mockError: new Error('Fetch item failed'),
 }));

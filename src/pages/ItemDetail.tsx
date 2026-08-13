@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { categoryEmoji, categoryLabelKey, conditionLabelKey } from '../domain/catalog'
+import { computeRentalPrice } from '../domain/pricing'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
 // power_tools был 🔌, а на витрине ⚡ — одна и та же категория с двумя
@@ -23,6 +24,9 @@ interface Item {
   category: string
   condition: string
   price_per_day: number
+  price_3days: number | null
+  price_week: number | null
+  late_fee_per_day: number | null
   deposit: number
   photos: string[]
   lat: number | null
@@ -159,8 +163,22 @@ export default function ItemDetail() {
     : 0
 
   const insuranceFee = totalDays > 0 ? INSURANCE_PER_DAY * totalDays : 0
-  const totalPrice = totalDays > 0 && item
-    ? item.price_per_day * totalDays + item.deposit + insuranceFee
+  // Ту же формулу применяет `request-rental`, когда пишет сумму в бронь —
+  // файл общий (`supabase/functions/_shared/pricing.ts`). Считать здесь
+  // «примерно так же» нельзя: человек увидел бы одну сумму, а в брони
+  // оказалась бы другая, и разошлись бы они уже при встрече.
+  const rental = item
+    ? computeRentalPrice(
+        { pricePerDay: item.price_per_day, price3Days: item.price_3days, priceWeek: item.price_week },
+        totalDays,
+      )
+    : { total: 0, weeks: 0, packs3: 0, days: 0 }
+  const totalPrice = totalDays > 0 && item ? rental.total + item.deposit + insuranceFee : 0
+  const hasTiers = !!item && (!!item.price_3days || !!item.price_week)
+  // Экономия против дневной цены. Показываем, только если она есть: иначе
+  // строка «вы экономите 0 €» превращается в насмешку.
+  const savedVsDaily = item && totalDays > 0
+    ? Math.round((item.price_per_day * totalDays - rental.total) * 100) / 100
     : 0
 
   const handleRequest = async () => {
@@ -332,9 +350,22 @@ export default function ItemDetail() {
                 €{item.price_per_day.toFixed(2)}
               </div>
               <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>par jour</div>
+              {/* Тарифы на срок. Показываем только назначенные: пустая строка
+                  «— € / semaine» читается как «неделю нельзя». */}
+              {hasTiers && (
+                <div style={{ marginTop: 'var(--space-2)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', color: 'var(--muted)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  {item.price_3days != null && <div>€{Number(item.price_3days).toFixed(2)} / 3 jours</div>}
+                  {item.price_week != null && <div>€{Number(item.price_week).toFixed(2)} / semaine</div>}
+                </div>
+              )}
               {item.deposit > 0 && (
                 <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>
                   + €{item.deposit.toFixed(2)} caution
+                </div>
+              )}
+              {item.late_fee_per_day != null && (
+                <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>
+                  Retard : €{Number(item.late_fee_per_day).toFixed(2)} / jour
                 </div>
               )}
             </div>
@@ -494,10 +525,33 @@ export default function ItemDetail() {
 
                     {totalDays > 0 && (
                       <div style={{ background: 'var(--bg)', borderRadius: 'var(--radius)', padding: '16px', marginBottom: '16px', fontSize: '14px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                          <span style={{ color: 'var(--muted)' }}>€{item.price_per_day.toFixed(2)} × {totalDays} jour{totalDays > 1 ? 's' : ''}</span>
-                          <span>€{(item.price_per_day * totalDays).toFixed(2)}</span>
-                        </div>
+                        {/* Разбор по тарифам. Без него итог выглядит взятым с
+                            потолка: человек умножает дни на дневную цену, не
+                            сходится, и он перестаёт верить числу. */}
+                        {rental.weeks > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ color: 'var(--muted)' }}>€{Number(item.price_week).toFixed(2)} × {rental.weeks} semaine{rental.weeks > 1 ? 's' : ''}</span>
+                            <span>€{(Number(item.price_week) * rental.weeks).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {rental.packs3 > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ color: 'var(--muted)' }}>€{Number(item.price_3days).toFixed(2)} × {rental.packs3} forfait{rental.packs3 > 1 ? 's' : ''} 3 jours</span>
+                            <span>€{(Number(item.price_3days) * rental.packs3).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {rental.days > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ color: 'var(--muted)' }}>€{item.price_per_day.toFixed(2)} × {rental.days} jour{rental.days > 1 ? 's' : ''}</span>
+                            <span>€{(item.price_per_day * rental.days).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {savedVsDaily > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--muted)' }}>
+                            <span>Forfait appliqué</span>
+                            <span>− €{savedVsDaily.toFixed(2)}</span>
+                          </div>
+                        )}
                         {item.deposit > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                             <span style={{ color: 'var(--muted)' }}>Caution (remboursable)</span>

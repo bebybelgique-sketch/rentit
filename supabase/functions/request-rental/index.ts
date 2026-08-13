@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createSupabaseServiceClient } from '../_shared/supabase.ts'
 import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
+import { computeRentalPrice } from '../_shared/pricing.ts'
 
 const supabase = createSupabaseServiceClient()
 
@@ -52,7 +53,7 @@ serve(async (req) => {
 
     // Fetch item
     const { data: item, error: itemErr } = await supabase
-      .from('items').select('id,owner_id,price_per_day,deposit,available').eq('id', item_id).single()
+      .from('items').select('id,owner_id,price_per_day,price_3days,price_week,deposit,available').eq('id', item_id).single()
     if (itemErr || !item) {
       return new Response(JSON.stringify({ error: 'Item not found' }), { status: 404, headers: CORS })
     }
@@ -102,7 +103,15 @@ serve(async (req) => {
     if (isNaN(pricePerDay) || pricePerDay <= 0) {
       return new Response(JSON.stringify({ error: 'Invalid item price' }), { status: 400, headers: CORS })
     }
-    const rentalPrice = pricePerDay * totalDays
+    // Тарифы на срок. Формула одна на клиента и сервер — файл
+    // `_shared/pricing.ts`, из него же читает страница вещи. Считать здесь
+    // «примерно так же» нельзя: человек увидел бы одну сумму, а в брони
+    // оказалась бы другая.
+    const { total: rentalPrice } = computeRentalPrice({
+      pricePerDay,
+      price3Days: item.price_3days,
+      priceWeek: item.price_week,
+    }, totalDays)
     const deposit = Number(item.deposit) || 0
 
     // Create booking with pending_approval

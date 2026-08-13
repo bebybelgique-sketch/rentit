@@ -20,6 +20,9 @@ export type ItemUpdate = Partial<{
   category: string;
   condition: string;
   price_per_day: number;
+  price_3days: number | null;
+  price_week: number | null;
+  late_fee_per_day: number | null;
   deposit: number;
   photos: string[];
   lat: number | null;
@@ -59,6 +62,18 @@ const updateItemById = async ({ id, updates, userId }: UpdateItemParams): Promis
     longitude: data.lng,
     is_available: data.available,
     created_at: data.created_at,
+    // Ниже — поля, которых здесь не было. Пропуск не безобиден: результат
+    // кладётся в кэш через `setQueryData(['item', id])`, то есть урезанный
+    // объект ЗАМЕЩАЕТ полный. Форма редактирования, открытая сразу после
+    // сохранения, показывала пустую категорию и нулевой залог поверх только
+    // что сохранённых. Тот же класс, что чинили в `useItemById` (PR #19).
+    deposit: data.deposit ?? 0,
+    category: data.category ?? '',
+    condition: data.condition ?? '',
+    photos: Array.isArray(data.photos) ? data.photos : [],
+    price_3days: data.price_3days ?? null,
+    price_week: data.price_week ?? null,
+    late_fee_per_day: data.late_fee_per_day ?? null,
   };
 
   return mappedItem;
