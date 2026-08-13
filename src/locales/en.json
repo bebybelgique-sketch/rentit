@@ -433,5 +433,11 @@
   "retry": "Try again",
   "itemGone": "This tool is no longer listed.",
   "itemGoneHint": "It was removed, or the link is wrong.",
-  "backHome": "Home"
+  "backHome": "Home",
+  "language": {
+    "choose": "Choose language",
+    "fr": "Français",
+    "en": "English",
+    "nl": "Nederlands"
+  }
 }
