@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
-
-type Lang = 'en' | 'fr' | 'nl'
+import React from 'react'
+import { useDocumentLanguage } from '../hooks/useDocumentLanguage'
 
 // Дата правится ВМЕСТЕ с текстом документа. 11.08 оба документа были
 // переписаны по существу (убраны страховка, Stripe, раздел платежей,
@@ -20,27 +19,11 @@ const ADDRESS = 'Belgium'
 const DPA_URL = 'https://www.dataprotectionauthority.be'
 
 export default function PrivacyPolicy() {
-  // Французский, как и в условиях: продукт французский, пользователь
-  // бельгийский, и действует для него тот текст, который он прочёл на своём
-  // языке.
-  const [lang, setLang] = useState<Lang>('fr')
+  const lang = useDocumentLanguage()
 
   return (
     <div className="page">
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
-
-        {/* Language selector */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '32px' }}>
-          {(['en', 'fr', 'nl'] as Lang[]).map(l => (
-            <button
-              key={l}
-              onClick={() => setLang(l)}
-              className={`btn btn-sm ${lang === l ? 'btn-primary' : 'btn-secondary'}`}
-            >
-              {l === 'en' ? 'English' : l === 'fr' ? 'Français' : 'Nederlands'}
-            </button>
-          ))}
-        </div>
 
         {lang === 'en' && <PrivacyEN />}
         {lang === 'fr' && <PrivacyFR />}

@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
-
-type Lang = 'en' | 'fr' | 'nl'
+import React from 'react'
+import { useDocumentLanguage } from '../hooks/useDocumentLanguage'
 
 // Дата правится ВМЕСТЕ с текстом документа. 11.08 оба документа были
 // переписаны по существу (убраны страховка, Stripe, раздел платежей,
@@ -21,27 +20,11 @@ const ADDRESS = 'Belgium'
 const GOVERNING_LAW = 'Belgian law'
 
 export default function TermsOfService() {
-  // Французский, а не английский. Продукт французский, пользователь
-  // бельгийский, и в Бельгии для человека действует тот текст, который он
-  // прочёл на своём языке. Открывать ему английский документ по умолчанию —
-  // значит показывать не тот, что его связывает.
-  const [lang, setLang] = useState<Lang>('fr')
+  const lang = useDocumentLanguage()
 
   return (
     <div className="page">
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '32px' }}>
-          {(['en', 'fr', 'nl'] as Lang[]).map(l => (
-            <button
-              key={l}
-              onClick={() => setLang(l)}
-              className={`btn btn-sm ${lang === l ? 'btn-primary' : 'btn-secondary'}`}
-            >
-              {l === 'en' ? 'English' : l === 'fr' ? 'Français' : 'Nederlands'}
-            </button>
-          ))}
-        </div>
-
         {lang === 'en' && <TermsEN />}
         {lang === 'fr' && <TermsFR />}
         {lang === 'nl' && <TermsNL />}

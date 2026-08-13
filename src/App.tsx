@@ -4,8 +4,9 @@ import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-r
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import toast, { Toaster } from 'react-hot-toast' // Импортируем Toaster
 // --- НОВЫЕ ИМПОРТЫ ДЛЯ I18N ---
-import i18n from './i18n-next' // импорт и инициализация i18next разом
+import i18n, { LANGUAGES } from './i18n-next' // импорт и инициализация i18next разом
 import { useTranslation } from 'react-i18next'
+import { useDocumentLanguage } from './hooks/useDocumentLanguage'
 // --------------------------
 import { useAuth } from './context/AuthContext'
 import { supabase } from './lib/supabase'
@@ -69,9 +70,12 @@ function Navbar() {
 
   // Языков три, а переключатель знал два: до нидерландского из интерфейса
   // было не добраться вовсе, хотя словарь nl лежал полный. Теперь по кругу.
-  const LANGS = ['fr', 'en', 'nl'] as const
-  const current = (LANGS.find(l => i18n.language?.startsWith(l)) ?? 'fr')
-  const nextLang = LANGS[(LANGS.indexOf(current) + 1) % LANGS.length]
+  //
+  // Текущий язык считает `useDocumentLanguage` — тот же, что у «Условий» и
+  // «Политики». Своя копия этих трёх строк здесь и была третьим по счёту
+  // способом определять язык в продукте.
+  const current = useDocumentLanguage()
+  const nextLang = LANGUAGES[(LANGUAGES.indexOf(current) + 1) % LANGUAGES.length]
 
   const toggleLanguage = () => {
     i18n.changeLanguage(nextLang)
