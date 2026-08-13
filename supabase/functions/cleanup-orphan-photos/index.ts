@@ -42,6 +42,7 @@ import { createSupabaseServiceClient } from '../_shared/supabase.ts'
 import { handleOPTIONS } from '../_shared/cors.ts'
 import { json } from '../_shared/json.ts'
 import { ITEM_PHOTOS_BUCKET, itemPhotoPaths } from '../_shared/item-photos.ts'
+import { AVATARS_BUCKET, avatarPath } from '../_shared/avatars.ts'
 import { planSweep } from '../_shared/sweep.ts'
 
 const supabase = createSupabaseServiceClient()
@@ -128,11 +129,40 @@ serve(async (req) => {
       1,
     )
 
+    // --- avatars: удерживает ссылка в users.avatar_url ---
+    //
+    // Сирота заводится при смене расширения: `<uid>.png` не перезаписывает
+    // `<uid>.jpg`, это разные объекты. Загрузка убирает прежний сама, но
+    // право на удаление у неё появилось только 13.08 — файлы, накопленные
+    // до этого, подбирать некому, кроме уборки.
+    //
+    // Внешние адреса (аватар из OAuth, ссылка, вставленная руками, пока поле
+    // было текстовым) `avatarPath` отбрасывает: они не в нашем бакете, и
+    // держать по ним нечего.
+    const { data: userRows, error: userErr } = await supabase
+      .from('users')
+      .select('avatar_url')
+    if (userErr) return json({ error: userErr.message }, 500)
+
+    // Пути `<uid>.<расширение>` лежат в корне бакета: папок между корнем и
+    // файлами нет вовсе.
+    const avatars = await sweep(
+      AVATARS_BUCKET,
+      new Set(
+        (userRows || [])
+          .map((u: { avatar_url?: unknown }) => avatarPath(u.avatar_url))
+          .filter((p): p is string => p !== null),
+      ),
+      '',
+      0,
+    )
+
     return json({
       ok: true,
       'booking-photos': bookings,
       'item-photos': items,
-      removed: bookings.removed + items.removed,
+      avatars,
+      removed: bookings.removed + items.removed + avatars.removed,
     })
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : 'Unexpected error' }, 500)

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { useUpdateProfile } from '../hooks/mutations/useUpdateProfile';
 import { useDeleteAccount } from '../hooks/mutations/useDeleteAccount';
+import { useUploadAvatar } from '../hooks/mutations/useUploadAvatar';
 import toast from 'react-hot-toast';
 
 const Profile: React.FC = () => {
@@ -12,6 +13,7 @@ const Profile: React.FC = () => {
   const { user } = useAuth();
   const updateProfileMutation = useUpdateProfile();
   const deleteAccountMutation = useDeleteAccount();
+  const { upload: uploadAvatar, uploading: avatarUploading } = useUploadAvatar();
 
   const { data: storedProfile } = useProfile(user?.id);
 
@@ -51,6 +53,36 @@ const Profile: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Снимок сохраняется СРАЗУ, не дожидаясь кнопки «сохранить».
+  //
+  // Иначе человек выбирает файл, видит новое лицо в кружке, уходит со
+  // страницы — и аватар не сохранён, хотя выглядел сохранённым. Тот же
+  // класс, что «интерфейс сообщает об исходе, которого не было».
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    e.target.value = ''; // чтобы выбор того же файла второй раз тоже сработал
+
+    const result = await uploadAvatar(file, user.id);
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
+    }
+
+    try {
+      await updateProfileMutation.mutateAsync({
+        userId: user.id,
+        updates: { ...profileData, avatar_url: result.url },
+      });
+      setProfileData(prev => ({ ...prev, avatar_url: result.url }));
+      toast.success(t('profile.avatarSaved'));
+    } catch (err: any) {
+      // Файл уже в бакете, а ссылка не записалась: показать «готово» здесь
+      // значило бы соврать — при перезагрузке аватар исчезнет.
+      toast.error(err?.message || t('profile.avatarSaveFailed'));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,16 +150,38 @@ const Profile: React.FC = () => {
             />
           </div>
 
+          {/* Фотография профиля. Прежде здесь стояло текстовое поле с
+              адресом: человек должен был сам где-то разместить снимок. Бакет
+              и политики записи существовали с самого начала — не было формы. */}
           <div className="form-group">
-            <label htmlFor="avatar_url">{t('profile.avatarUrl')}</label> {/* Новая строка в i18n */}
-            <input
-              id="avatar_url"
-              name="avatar_url"
-              type="text"
-              value={profileData.avatar_url}
-              onChange={handleChange}
-              style={{ width: '100%' }}
-            />
+            <label htmlFor="avatar_file">{t('profile.avatarLabel')}</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
+              {profileData.avatar_url ? (
+                <img
+                  src={profileData.avatar_url}
+                  alt=""
+                  style={{ width: '72px', height: '72px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border)' }}
+                />
+              ) : (
+                <div
+                  aria-hidden
+                  style={{ width: '72px', height: '72px', borderRadius: '50%', flexShrink: 0, background: 'var(--bg)', border: '1px dashed var(--border)' }}
+                />
+              )}
+              <div style={{ flex: 1 }}>
+                <input
+                  id="avatar_file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleAvatarFile}
+                  disabled={avatarUploading}
+                  style={{ width: '100%' }}
+                />
+                <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '6px', lineHeight: 1.5 }}>
+                  {avatarUploading ? t('profile.avatarUploading') : t('profile.avatarHint')}
+                </p>
+              </div>
+            </div>
           </div>
 
           <button
