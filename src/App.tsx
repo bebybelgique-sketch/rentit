@@ -121,9 +121,15 @@ function Navbar() {
           <Link to="/browse" className="navbar-link" onClick={close}>{t('browse')}</Link>
           {user ? (
             <>
-              <Link to="/list-item" className="navbar-link" onClick={close}>{t('listItem')}</Link>
-              <Link to="/my-items" className="navbar-link hide-mobile" onClick={close}>{t('myItems')}</Link>
-              <Link to="/my-rentals" className="navbar-link hide-mobile" onClick={close}>{t('myRentals')}</Link>
+              {/* Пространство `nav.*`, а не плоские `listItem`/`myItems`/
+                  `myRentals`: перенос 121 строки в словари (#30) завёл
+                  ПРОСТРАНСТВА ИМЁН с теми же именами, и они затёрли строки
+                  навбара. i18next на объекте отдаёт не текст, а
+                  «key 'myItems (fr)' returned an object instead of string.» —
+                  ровно это и висело в проде у каждого вошедшего. */}
+              <Link to="/list-item" className="navbar-link" onClick={close}>{t('nav.listItem')}</Link>
+              <Link to="/my-items" className="navbar-link hide-mobile" onClick={close}>{t('nav.myItems')}</Link>
+              <Link to="/my-rentals" className="navbar-link hide-mobile" onClick={close}>{t('nav.myRentals')}</Link>
               <Link to="/profile" className="navbar-link" onClick={close}>{t('navProfile')}</Link>
               <button
                 onClick={() => { logout(); close() }}
@@ -251,7 +257,7 @@ export default function App() {
             RouteBoundary ловит непогрузившийся чанк (после деплоя старые
             имена файлов исчезают) и перезагружает страницу один раз. */}
         <RouteBoundary message={t('routeError')} retry={t('routeRetry')}>
-        <Suspense fallback={<div className="loading">{t('loading')}</div>}>
+        <Suspense fallback={<div className="loading">{t('common.loading')}</div>}>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/browse" element={<Home />} />
