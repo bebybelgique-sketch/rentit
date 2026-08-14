@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createSupabaseServiceClient } from '../_shared/supabase.ts'
 import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
+import { notifyRental } from '../_shared/notify.ts'
 
 const supabase = createSupabaseServiceClient()
 
@@ -63,9 +64,6 @@ serve(async (req) => {
       { status: 409, headers: CORS },
     )
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
     // --- REJECT ---
     if (action === 'reject') {
       const { data: rejected } = await supabase
@@ -76,11 +74,7 @@ serve(async (req) => {
         .select('id')
       if (!rejected || rejected.length === 0) return changedMeanwhile()
 
-      await fetch(`${supabaseUrl}/functions/v1/notify-rental`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-        body: JSON.stringify({ booking_id, event: 'rejected' }),
-      }).catch(() => {})
+      await notifyRental(booking_id, 'rejected')
 
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...CORS, 'Content-Type': 'application/json' },
@@ -163,20 +157,12 @@ serve(async (req) => {
         .select('id')
       // Notify each rejected renter
       for (const b of autoRejected ?? []) {
-        await fetch(`${supabaseUrl}/functions/v1/notify-rental`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-          body: JSON.stringify({ booking_id: b.id, event: 'rejected' }),
-        }).catch(() => {})
+        await notifyRental(b.id, 'rejected')
       }
     }
 
     // Notify renter that they're approved
-    await fetch(`${supabaseUrl}/functions/v1/notify-rental`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-      body: JSON.stringify({ booking_id, event: 'approved' }),
-    }).catch(() => {})
+    await notifyRental(booking_id, 'approved')
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },

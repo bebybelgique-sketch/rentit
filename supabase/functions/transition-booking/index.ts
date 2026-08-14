@@ -24,6 +24,7 @@ import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
 import { json } from '../_shared/json.ts'
 import type { BookingStatus } from '../_shared/types.ts'
+import { notifyRental, type RentalEvent } from '../_shared/notify.ts'
 
 const supabase = createSupabaseServiceClient()
 
@@ -35,7 +36,10 @@ interface Rule {
   from: BookingStatus
   to: BookingStatus
   who: Party[]
-  event: string
+  // Не `string`: событие, которого notify-rental не знает, она молча
+  // проигнорирует, и письмо не уйдёт без единой жалобы. Пусть опечатку
+  // ловит тип.
+  event: RentalEvent
 }
 
 // Таблица переходов — единственное место, где записано, что вообще возможно.
@@ -125,13 +129,8 @@ serve(async (req) => {
     }
 
     // Письма не должны валить переход: он уже произошёл и зафиксирован.
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    await fetch(`${supabaseUrl}/functions/v1/notify-rental`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
-      body: JSON.stringify({ booking_id, event: rule.event }),
-    }).catch(() => {})
+    // notifyRental наружу не бросает, но и не молчит — исход в логе.
+    await notifyRental(booking_id, rule.event)
 
     return json({ ok: true, status: rule.to })
   } catch (err) {

@@ -1,5 +1,8 @@
 import React from 'react'
 import { useDocumentLanguage } from '../hooks/useDocumentLanguage'
+import {
+  PLATFORM_NAME, OPERATOR_NAME, OPERATOR_ADDRESS, OPERATOR_STATUS, CONTACT_EMAIL,
+} from '../domain/operator'
 
 // Дата правится ВМЕСТЕ с текстом документа. 11.08 оба документа были
 // переписаны по существу (убраны страховка, Stripe, раздел платежей,
@@ -10,13 +13,19 @@ import { useDocumentLanguage } from '../hooks/useDocumentLanguage'
 // По языкам раздельно: строка показывается в трёх разделах, и
 // английское «March 20, 2026» стояло под французским «Dernière mise
 // à jour :» и нидерландским «Laatste update:».
-const LAST_UPDATED_EN = 'August 13, 2026'
-const LAST_UPDATED_FR = '13 août 2026'
-const LAST_UPDATED_NL = '13 augustus 2026'
-const COMPANY = 'RentIt'
-const EMAIL = 'legal@rentit.be'
-const SUPPORT_EMAIL = 'support@rentit.be'
-const ADDRESS = 'Belgium'
+const LAST_UPDATED_EN = 'August 14, 2026'
+const LAST_UPDATED_FR = '14 août 2026'
+const LAST_UPDATED_NL = '14 augustus 2026'
+// Сторона договора — физическое лицо, а не «RentIt». До 14.08 здесь
+// стояли COMPANY = 'RentIt', ADDRESS = 'Belgium' и два ящика на
+// rentit.be — домене, принадлежащем ПОСТОРОННЕМУ лицу: человек,
+// оспаривающий блокировку или требующий удаления аккаунта, писал в
+// пустоту. Два ящика при нуле пользователей сведены в один живой.
+// Значения общие с письмами и политикой (src/domain/operator.ts).
+const COMPANY = PLATFORM_NAME
+const EMAIL = CONTACT_EMAIL
+const SUPPORT_EMAIL = CONTACT_EMAIL
+const ADDRESS = `${OPERATOR_NAME}, ${OPERATOR_ADDRESS}`
 const GOVERNING_LAW = 'Belgian law'
 
 export default function TermsOfService() {
@@ -47,7 +56,7 @@ function TermsEN() {
 
       <Section title="1. About RentIt">
         <p>{COMPANY} is a peer-to-peer marketplace that connects people who want to rent tools and equipment ("Renters") with people who own them ("Owners"). RentIt is a platform intermediary — we do not own, inspect, or guarantee any items listed.</p>
-        <p>These Terms constitute a legally binding agreement between you and {COMPANY} ({ADDRESS}) under {GOVERNING_LAW}.</p>
+        <p>The platform is operated by <strong>{OPERATOR_NAME}</strong>, a {OPERATOR_STATUS.en} established at {OPERATOR_ADDRESS}. These Terms constitute a legally binding agreement between you and {OPERATOR_NAME} under {GOVERNING_LAW}.</p>
       </Section>
 
       <Section title="2. Eligibility">
@@ -172,7 +181,7 @@ function TermsEN() {
       </Section>
 
       <Section title="12. Intellectual Property">
-        <p>The RentIt platform, logo, and software are owned by {COMPANY} and protected by Belgian and EU intellectual property law. You may not copy, modify, or distribute any part of the platform without written permission.</p>
+        <p>The RentIt platform, its name, logo, and software are owned by {OPERATOR_NAME}, the operator of the platform, and protected by Belgian and EU intellectual property law. You may not copy, modify, or distribute any part of the platform without written permission.</p>
       </Section>
 
       <Section title="13. Termination">
@@ -194,8 +203,7 @@ function TermsEN() {
         <p>
           <strong>{COMPANY}</strong><br />
           {ADDRESS}<br />
-          Legal: <a href={`mailto:${EMAIL}`}>{EMAIL}</a><br />
-          Support: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a> — legal and support requests alike
         </p>
       </Section>
     </div>
@@ -216,6 +224,7 @@ function TermsFR() {
 
       <Section title="1. À propos de RentIt">
         <p>{COMPANY} est une marketplace peer-to-peer qui met en relation des personnes souhaitant louer des outils (« Locataires ») et des personnes qui les possèdent (« Propriétaires »). RentIt est un intermédiaire de plateforme — nous ne possédons, n'inspectons ni ne garantissons aucun article listé.</p>
+        <p>La plateforme est exploitée par <strong>{OPERATOR_NAME}</strong>, {OPERATOR_STATUS.fr} établie à {OPERATOR_ADDRESS}. Les présentes Conditions constituent un accord juridiquement contraignant entre vous et {OPERATOR_NAME}, régi par le droit belge.</p>
       </Section>
 
       <Section title="2. Admissibilité">
@@ -359,7 +368,7 @@ function TermsFR() {
 
       <Section title="16. Contact">
         <p><strong>{COMPANY}</strong> — {ADDRESS}<br />
-          Juridique : <a href={`mailto:${EMAIL}`}>{EMAIL}</a> | Support : <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a> — questions juridiques comme demandes de support
         </p>
       </Section>
     </div>
@@ -380,6 +389,7 @@ function TermsNL() {
 
       <Section title="1. Over RentIt">
         <p>{COMPANY} exploiteert een peer-to-peer marktplaats die mensen die gereedschap willen huren ("Huurders") verbindt met eigenaren ("Verhuurders"). RentIt is een platform-intermediair — wij bezitten, inspecteren of garanderen geen geadverteerde items.</p>
+        <p>Het platform wordt uitgebaat door <strong>{OPERATOR_NAME}</strong>, {OPERATOR_STATUS.nl} gevestigd te {OPERATOR_ADDRESS}. Deze Voorwaarden vormen een juridisch bindende overeenkomst tussen u en {OPERATOR_NAME}, beheerst door het Belgisch recht.</p>
       </Section>
 
       <Section title="2. Toelating">
@@ -523,7 +533,7 @@ function TermsNL() {
 
       <Section title="16. Contact">
         <p><strong>{COMPANY}</strong> — {ADDRESS}<br />
-          Juridisch: <a href={`mailto:${EMAIL}`}>{EMAIL}</a> | Support: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a> — zowel juridische vragen als support
         </p>
       </Section>
     </div>

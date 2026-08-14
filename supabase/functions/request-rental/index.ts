@@ -3,6 +3,7 @@ import { createSupabaseServiceClient } from '../_shared/supabase.ts'
 import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
 import { computeRentalPrice } from '../_shared/pricing.ts'
+import { notifyRental } from '../_shared/notify.ts'
 
 const supabase = createSupabaseServiceClient()
 
@@ -137,13 +138,7 @@ serve(async (req) => {
     }
 
     // Notify owner
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    await fetch(`${supabaseUrl}/functions/v1/notify-rental`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-      body: JSON.stringify({ booking_id: booking.id, event: 'pending_approval' }),
-    }).catch(() => {})
+    await notifyRental(booking.id, 'pending_approval')
 
     return new Response(JSON.stringify({ booking_id: booking.id }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },

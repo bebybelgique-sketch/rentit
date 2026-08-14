@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { SITE_URL } from '../_shared/operator.ts'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -10,8 +11,16 @@ const supabase = createClient(
 // секретов, и RESEND_API_KEY среди них НЕ БЫЛО. Ключ уходил в заголовок
 // как `Bearer undefined`, Resend отвечал 401, и никто об этом не узнавал.
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'noreply@rentit.app'
-const APP_URL = Deno.env.get('APP_URL') || 'https://rentit.app'
+// Умолчания больше не указывают на rentit.app: этот домен НАМ НЕ
+// ПРИНАДЛЕЖИТ. Каждая ссылка в каждом письме вела к чужому человеку, а
+// отправитель на неподтверждённом домене получил бы от Resend 403 —
+// то есть даже с появившимся ключом письма бы не пошли.
+// SITE_URL — общая точка с юридическими страницами (_shared/operator.ts),
+// чтобы адрес продукта нельзя было поменять в одном месте и забыть в другом.
+// FROM_EMAIL остаётся обязательным секретом: молча подставить отправителя
+// значило бы решить за Рамзана, с какого адреса пишет продукт.
+const FROM_EMAIL = Deno.env.get('FROM_EMAIL')
+const APP_URL = Deno.env.get('APP_URL') || SITE_URL
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version' }
 
@@ -36,6 +45,9 @@ const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers
 async function sendEmail(to: string, subject: string, html: string) {
   if (!RESEND_API_KEY) {
     throw new Error('RESEND_API_KEY не задан в секретах проекта — письма не отправляются')
+  }
+  if (!FROM_EMAIL) {
+    throw new Error('FROM_EMAIL не задан в секретах проекта — с какого адреса писать, продукт не знает')
   }
 
   const res = await fetch('https://api.resend.com/emails', {
