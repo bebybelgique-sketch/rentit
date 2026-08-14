@@ -163,6 +163,11 @@
   "myRentalsAsOwner": "Aanvragen voor mijn items",
   "myRentalsAsRenter": "Als huurder",
   "myRentalsTitle": "Mijn verhuur",
+  "nav": {
+    "listItem": "Gereedschap plaatsen",
+    "myItems": "Mijn gereedschap",
+    "myRentals": "Mijn huurcontracten"
+  },
   "navProfile": "Profiel",
   "nearby": "📍 In de buurt",
   "newListing": "Nieuwe advertentie",

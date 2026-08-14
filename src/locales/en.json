@@ -163,6 +163,11 @@
   "myRentalsAsOwner": "Requests for my Items",
   "myRentalsAsRenter": "As Renter",
   "myRentalsTitle": "My Rentals",
+  "nav": {
+    "listItem": "List a tool",
+    "myItems": "My tools",
+    "myRentals": "My rentals"
+  },
   "navProfile": "Profile",
   "nearby": "Near me",
   "newListing": "New listing",

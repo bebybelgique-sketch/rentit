@@ -163,6 +163,11 @@
   "myRentalsAsOwner": "Demandes pour mes outils",
   "myRentalsAsRenter": "En tant que locataire",
   "myRentalsTitle": "Mes Locations",
+  "nav": {
+    "listItem": "Déposer un outil",
+    "myItems": "Mes outils",
+    "myRentals": "Mes locations"
+  },
   "navProfile": "Profil",
   "nearby": "📍 À proximité",
   "newListing": "Nouvelle annonce",
