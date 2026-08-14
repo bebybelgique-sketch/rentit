@@ -74,7 +74,6 @@
   "editItemTitle": "Bewerk item",
   "email": "E-mailadres",
   "expandSearch": "Uitbreiden tot 50 km",
-  "forgotPassword": "Wachtwoord vergeten?",
   "forRentalShops": "Voor professionele verhuurders →",
   "errors": {
     "generic": "Er is iets misgegaan. Probeer het later opnieuw."
@@ -113,7 +112,8 @@
     "photosCount_one": "…geselecteerd",
     "photosCount_other": "…geselecteerd",
     "deletePhoto": "Foto verwijderen",
-    "packageWarning": "Opgelet: {{packages}} zal nooit van toepassing zijn. Huurders betalen altijd het laagste tarief."
+    "packageWarning": "Opgelet: {{packages}} zal nooit van toepassing zijn. Huurders betalen altijd het laagste tarief.",
+    "titlePlaceholder": "bv. Bosch boormachine, hogedrukreiniger…"
   },
   "listYourTool": "Plaats je gereedschap",
   "loggingIn": "Bezig met inloggen...",
@@ -141,7 +141,8 @@
     "edit": "Bewerken",
     "requestsTitle": "Verhuurverzoeken",
     "markHandedOver": "Markeer overgedragen",
-    "markReturned": "Markeer teruggegeven"
+    "markReturned": "Markeer teruggegeven",
+    "rentalInProgress": "Verhuur loopt"
   },
   "myRentals": {
     "approvalSuccess": "Verzoek goedgekeurd!",
@@ -430,7 +431,8 @@
     "noRating": "Nog geen beoordeling"
   },
   "register": {
-    "passwordMinimum": "Wachtwoord moet minstens 8 tekens bevatten"
+    "passwordMinimum": "Wachtwoord moet minstens 8 tekens bevatten",
+    "namePlaceholder": "Uw naam"
   },
   "routeError": "Deze pagina kon niet laden. Een nieuwere versie van de site is misschien beschikbaar.",
   "routeRetry": "Pagina herladen",
@@ -444,5 +446,36 @@
     "fr": "Français",
     "en": "English",
     "nl": "Nederlands"
-  }
+  },
+  "notFound": {
+    "title": "Pagina niet gevonden",
+    "text": "Deze pagina bestaat niet of is verwijderd.",
+    "cta": "Bekijk het gereedschap →"
+  },
+  "review": {
+    "thanks": "Bedankt voor uw beoordeling!",
+    "ratingLabel": "Beoordeling",
+    "commentLabel": "Opmerking (optioneel)",
+    "leaveTitle": "Een beoordeling achterlaten"
+  },
+  "form": {
+    "description": "Omschrijving",
+    "photoReplaceLabel": "Foto (leeg laten om de huidige te behouden)",
+    "uploading": "Uploaden…"
+  },
+  "passwordRecovery": {
+    "requestTitle": "Wachtwoord vergeten",
+    "sentText": "Bekijk uw mailbox: daarin vindt u een link om een nieuw wachtwoord te kiezen.",
+    "emailLabel": "E-mailadres",
+    "submit": "Stuur de link",
+    "sending": "Versturen…",
+    "backToLogin": "Terug naar inloggen",
+    "verifying": "Link controleren…",
+    "newTitle": "Nieuw wachtwoord",
+    "newLabel": "Nieuw wachtwoord (minimaal 8 tekens)",
+    "tooShort": "Het wachtwoord moet minstens 8 tekens lang zijn.",
+    "save": "Wachtwoord opslaan",
+    "saving": "Opslaan…"
+  },
+  "forgotPassword": "Wachtwoord vergeten?"
 }

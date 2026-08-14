@@ -74,7 +74,6 @@
   "editItemTitle": "Edit Item",
   "email": "Email",
   "expandSearch": "Expand to 50 km",
-  "forgotPassword": "Forgot password?",
   "forRentalShops": "For rental shops →",
   "errors": {
     "generic": "Something went wrong. Please try again later."
@@ -113,7 +112,8 @@
     "photosCount_one": "…selected",
     "photosCount_other": "…selected",
     "deletePhoto": "Delete photo",
-    "packageWarning": "Attention: {{packages}} will never apply. Renters always pay the lowest rate."
+    "packageWarning": "Attention: {{packages}} will never apply. Renters always pay the lowest rate.",
+    "titlePlaceholder": "e.g. Bosch drill, pressure washer…"
   },
   "listYourTool": "List your tool",
   "loggingIn": "Logging in…",
@@ -141,7 +141,8 @@
     "edit": "Edit",
     "requestsTitle": "Rental requests",
     "markHandedOver": "Mark handed over",
-    "markReturned": "Mark returned"
+    "markReturned": "Mark returned",
+    "rentalInProgress": "Rental in progress"
   },
   "myRentals": {
     "approvalSuccess": "Request approved!",
@@ -430,7 +431,8 @@
     "noRating": "No rating yet"
   },
   "register": {
-    "passwordMinimum": "Password must contain at least 8 characters"
+    "passwordMinimum": "Password must contain at least 8 characters",
+    "namePlaceholder": "Your name"
   },
   "routeError": "This page could not load. A newer version of the site may be available.",
   "routeRetry": "Reload the page",
@@ -444,5 +446,36 @@
     "fr": "Français",
     "en": "English",
     "nl": "Nederlands"
-  }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "text": "This page does not exist or has been removed.",
+    "cta": "Browse the tools →"
+  },
+  "review": {
+    "thanks": "Thank you for your review!",
+    "ratingLabel": "Rating",
+    "commentLabel": "Comment (optional)",
+    "leaveTitle": "Leave a review"
+  },
+  "form": {
+    "description": "Description",
+    "photoReplaceLabel": "Photo (leave empty to keep the current one)",
+    "uploading": "Uploading…"
+  },
+  "passwordRecovery": {
+    "requestTitle": "Forgotten password",
+    "sentText": "Check your inbox: you will find a link to choose a new password.",
+    "emailLabel": "Email address",
+    "submit": "Send the link",
+    "sending": "Sending…",
+    "backToLogin": "Back to login",
+    "verifying": "Checking the link…",
+    "newTitle": "New password",
+    "newLabel": "New password (8 characters minimum)",
+    "tooShort": "The password must be at least 8 characters long.",
+    "save": "Save the password",
+    "saving": "Saving…"
+  },
+  "forgotPassword": "Forgot password?"
 }

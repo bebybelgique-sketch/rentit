@@ -103,7 +103,7 @@ const MyRentals: React.FC = () => {
   return (
     <div className="page">
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '20px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px' }}>Mes Locations</h1>
+        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px' }}>{t('myRentalsTitle')}</h1>
 
         <div style={{ display: 'flex', gap: '20px', marginBottom: '32px' }}>
           <button

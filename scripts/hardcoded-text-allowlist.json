@@ -1,0 +1,14 @@
+[
+  "src/App.tsx :: Rent",
+  "src/App.tsx :: [aria-label] Menu",
+  "src/pages/Admin.tsx :: Admin",
+  "src/pages/Admin.tsx :: Chargement...",
+  "src/pages/Admin.tsx :: Items",
+  "src/pages/Admin.tsx :: Stats",
+  "src/pages/Admin.tsx :: Users",
+  "src/pages/Admin.tsx :: ✓ Phone",
+  "src/pages/Home.tsx :: OpenStreetMap",
+  "src/pages/Home.tsx :: s.replace(/&/g,'&amp;').replace(/",
+  "src/pages/ItemDetail.tsx :: = r.start_date && ds",
+  "src/pages/ItemDetail.tsx :: = startDate && ds"
+]

@@ -649,14 +649,14 @@ export default function ItemDetail() {
         {canReview && (
           <div className="card">
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px' }}>
-              Laisser un avis
+              {t('review.leaveTitle')}
             </p>
             {reviewSuccess ? (
-              <div className="success-msg">Merci pour votre avis !</div>
+              <div className="success-msg">{t('review.thanks')}</div>
             ) : (
               <form onSubmit={handleReviewSubmit}>
                 <div className="form-group">
-                  <label>Note</label>
+                  <label>{t('review.ratingLabel')}</label>
                   <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
                     {[1, 2, 3, 4, 5].map(n => (
                       <button key={n} type="button" onClick={() => setReviewStars(n)}
@@ -667,7 +667,7 @@ export default function ItemDetail() {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Commentaire (facultatif)</label>
+                  <label>{t('review.commentLabel')}</label>
                   <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder={t('itemDetail.shareExperience')} rows={3} />
                 </div>
                 <button type="submit" className="btn btn-primary" disabled={reviewLoading} style={{ minHeight: '44px' }}>

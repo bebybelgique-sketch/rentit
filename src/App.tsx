@@ -286,9 +286,9 @@ export default function App() {
             <Route path="*" element={
               <div className="page" style={{ textAlign: 'center', paddingTop: '120px' }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', color: 'var(--muted)', marginBottom: '16px' }}>404</div>
-                <h1 style={{ fontSize: '48px', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '16px' }}>Page introuvable</h1>
-                <p style={{ color: 'var(--muted)', marginBottom: '32px' }}>Cette page n'existe pas ou a été supprimée.</p>
-                <Link to="/browse" className="btn btn-primary">Parcourir les outils →</Link>
+                <h1 style={{ fontSize: '48px', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '16px' }}>{t('notFound.title')}</h1>
+                <p style={{ color: 'var(--muted)', marginBottom: '32px' }}>{t('notFound.text')}</p>
+                <Link to="/browse" className="btn btn-primary">{t('notFound.cta')}</Link>
               </div>
             } />
           </Routes>
