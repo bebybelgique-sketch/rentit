@@ -1,5 +1,8 @@
 import React from 'react'
 import { useDocumentLanguage } from '../hooks/useDocumentLanguage'
+import {
+  PLATFORM_NAME, OPERATOR_NAME, OPERATOR_ADDRESS, OPERATOR_STATUS, CONTACT_EMAIL,
+} from '../domain/operator'
 
 // Дата правится ВМЕСТЕ с текстом документа. 11.08 оба документа были
 // переписаны по существу (убраны страховка, Stripe, раздел платежей,
@@ -10,12 +13,17 @@ import { useDocumentLanguage } from '../hooks/useDocumentLanguage'
 // По языкам раздельно: строка показывается в трёх разделах, и
 // английское «March 20, 2026» стояло под французским «Dernière mise
 // à jour :» и нидерландским «Laatste update:».
-const LAST_UPDATED_EN = 'August 13, 2026'
-const LAST_UPDATED_FR = '13 août 2026'
-const LAST_UPDATED_NL = '13 augustus 2026'
-const COMPANY = 'RentIt'
-const EMAIL = 'privacy@rentit.be'
-const ADDRESS = 'Belgium'
+const LAST_UPDATED_EN = 'August 14, 2026'
+const LAST_UPDATED_FR = '14 août 2026'
+const LAST_UPDATED_NL = '14 augustus 2026'
+// Ответственный за обработку — физическое лицо, а не «RentIt». До 14.08
+// здесь стояли COMPANY = 'RentIt', ADDRESS = 'Belgium' и ящик
+// privacy@rentit.be: контроллер вымышлен, страна вместо адреса, а домен
+// rentit.be принадлежит постороннему лицу — то есть запросы по GDPR
+// уходили к чужому человеку. Значения теперь общие с письмами.
+const COMPANY = PLATFORM_NAME
+const EMAIL = CONTACT_EMAIL
+const ADDRESS = `${OPERATOR_NAME}, ${OPERATOR_ADDRESS}`
 const DPA_URL = 'https://www.dataprotectionauthority.be'
 
 export default function PrivacyPolicy() {
@@ -48,8 +56,8 @@ function PrivacyEN() {
       </div>
 
       <Section title="1. Who We Are">
-        <p>{COMPANY} operates a peer-to-peer marketplace for renting tools and equipment in Belgium. We are the data controller responsible for your personal data.</p>
-        <p><strong>Contact:</strong> <a href={`mailto:${EMAIL}`}>{EMAIL}</a> — {ADDRESS}</p>
+        <p>{COMPANY} is a peer-to-peer marketplace for renting tools and equipment in Belgium. It is operated by <strong>{OPERATOR_NAME}</strong>, a {OPERATOR_STATUS.en} established in Belgium, who is the data controller responsible for your personal data.</p>
+        <p><strong>Contact:</strong> {OPERATOR_NAME}, {OPERATOR_ADDRESS} — <a href={`mailto:${EMAIL}`}>{EMAIL}</a></p>
       </Section>
 
       <Section title="2. Data We Collect and Why">
@@ -188,8 +196,8 @@ function PrivacyFR() {
       </div>
 
       <Section title="1. Qui sommes-nous ?">
-        <p>{COMPANY} exploite une marketplace de location d'outils et d'équipements entre particuliers en Belgique. Nous sommes le responsable du traitement de vos données personnelles.</p>
-        <p><strong>Contact :</strong> <a href={`mailto:${EMAIL}`}>{EMAIL}</a> — {ADDRESS}</p>
+        <p>{COMPANY} est une marketplace de location d'outils et d'équipements entre particuliers en Belgique. La plateforme est exploitée par <strong>{OPERATOR_NAME}</strong>, {OPERATOR_STATUS.fr} établie en Belgique, responsable du traitement de vos données personnelles.</p>
+        <p><strong>Contact :</strong> {OPERATOR_NAME}, {OPERATOR_ADDRESS} — <a href={`mailto:${EMAIL}`}>{EMAIL}</a></p>
       </Section>
 
       <Section title="2. Données collectées et finalités">
@@ -328,8 +336,8 @@ function PrivacyNL() {
       </div>
 
       <Section title="1. Wie zijn wij?">
-        <p>{COMPANY} exploiteert een peer-to-peer marktplaats voor de verhuur van gereedschap en apparatuur in België. Wij zijn de verwerkingsverantwoordelijke voor uw persoonsgegevens.</p>
-        <p><strong>Contact:</strong> <a href={`mailto:${EMAIL}`}>{EMAIL}</a> — {ADDRESS}</p>
+        <p>{COMPANY} is een peer-to-peer marktplaats voor de verhuur van gereedschap en apparatuur in België. Het platform wordt uitgebaat door <strong>{OPERATOR_NAME}</strong>, {OPERATOR_STATUS.nl} gevestigd in België, verwerkingsverantwoordelijke voor uw persoonsgegevens.</p>
+        <p><strong>Contact:</strong> {OPERATOR_NAME}, {OPERATOR_ADDRESS} — <a href={`mailto:${EMAIL}`}>{EMAIL}</a></p>
       </Section>
 
       <Section title="2. Gegevens die wij verzamelen en waarom">

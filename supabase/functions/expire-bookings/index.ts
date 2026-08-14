@@ -27,6 +27,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { notifyRental, type RentalEvent } from '../_shared/notify.ts'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -53,17 +54,11 @@ serve(async (req) => {
     return new Response('Unauthorized', { status: 401, headers: CORS })
   }
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const now = new Date()
 
-  const notify = async (ids: string[], event: string) => {
+  const notify = async (ids: string[], event: RentalEvent) => {
     for (const id of ids) {
-      await fetch(`${supabaseUrl}/functions/v1/notify-rental`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-        body: JSON.stringify({ booking_id: id, event }),
-      }).catch(() => {})
+      await notifyRental(id, event)
     }
   }
 
