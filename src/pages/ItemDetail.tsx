@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
-import { categoryEmoji, categoryLabelKey, conditionLabelKey } from '../domain/catalog'
+import { categoryLabelKey, conditionLabelKey } from '../domain/catalog'
+import CategoryIcon from '../components/icons/CategoryIcon'
 import { computeRentalPrice } from '../domain/pricing'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
@@ -323,8 +324,8 @@ export default function ItemDetail() {
               )}
             </>
           ) : (
-            <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '72px', background: 'var(--bg)' }}>
-              {categoryEmoji(item.category)}
+            <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--text-secondary)' }}>
+              <CategoryIcon category={item.category} size={72} />
             </div>
           )}
         </div>
