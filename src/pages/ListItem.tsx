@@ -328,7 +328,7 @@ export default function ListItem() {
             <input
               value={form.title}
               onChange={set('title')}
-              placeholder="ex. Perceuse Bosch, Nettoyeur haute pression..."
+              placeholder={t('listItem.titlePlaceholder')}
               required
               disabled={isLocked}
             />
@@ -358,7 +358,7 @@ export default function ListItem() {
 
           {/* Description */}
           <div className="form-group">
-            <label>Description</label>
+            <label>{t('form.description')}</label>
             <textarea
               value={form.description}
               onChange={set('description')}

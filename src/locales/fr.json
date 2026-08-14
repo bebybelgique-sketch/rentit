@@ -74,7 +74,6 @@
   "editItemTitle": "Modifier l'outil",
   "email": "Email",
   "expandSearch": "Élargir à 50 km",
-  "forgotPassword": "Mot de passe oublié ?",
   "forRentalShops": "Pour les loueurs professionnels →",
   "errors": {
     "generic": "Une erreur est survenue. Veuillez réessayer plus tard."
@@ -113,7 +112,8 @@
     "photosCount_one": "…sélectionnée",
     "photosCount_other": "…sélectionnées",
     "deletePhoto": "Supprimer la photo",
-    "packageWarning": "Attention : {{packages}} ne s'appliquera jamais. Le locataire paiera toujours le tarif le moins cher."
+    "packageWarning": "Attention : {{packages}} ne s'appliquera jamais. Le locataire paiera toujours le tarif le moins cher.",
+    "titlePlaceholder": "ex. Perceuse Bosch, Nettoyeur haute pression…"
   },
   "listYourTool": "Déposer votre outil",
   "loggingIn": "Connexion...",
@@ -141,7 +141,8 @@
     "edit": "Modifier",
     "requestsTitle": "Réservations",
     "markHandedOver": "Marquer récupéré",
-    "markReturned": "Marquer retourné"
+    "markReturned": "Marquer retourné",
+    "rentalInProgress": "Location en cours"
   },
   "myRentals": {
     "approvalSuccess": "La demande a été acceptée !",
@@ -430,7 +431,8 @@
     "noRating": "Pas encore d'avis"
   },
   "register": {
-    "passwordMinimum": "Le mot de passe doit contenir au moins 8 caractères"
+    "passwordMinimum": "Le mot de passe doit contenir au moins 8 caractères",
+    "namePlaceholder": "Votre nom"
   },
   "routeError": "Cette page n'a pas pu se charger. Une nouvelle version du site est peut-être disponible.",
   "routeRetry": "Recharger la page",
@@ -444,5 +446,36 @@
     "fr": "Français",
     "en": "English",
     "nl": "Nederlands"
-  }
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "text": "Cette page n'existe pas ou a été supprimée.",
+    "cta": "Parcourir les outils →"
+  },
+  "review": {
+    "thanks": "Merci pour votre avis !",
+    "ratingLabel": "Note",
+    "commentLabel": "Commentaire (facultatif)",
+    "leaveTitle": "Laisser un avis"
+  },
+  "form": {
+    "description": "Description",
+    "photoReplaceLabel": "Photo (laisser vide pour conserver l'actuelle)",
+    "uploading": "Envoi en cours…"
+  },
+  "passwordRecovery": {
+    "requestTitle": "Mot de passe oublié",
+    "sentText": "Consultez votre boîte mail : vous y trouverez un lien pour choisir un nouveau mot de passe.",
+    "emailLabel": "Adresse e-mail",
+    "submit": "Envoyer le lien",
+    "sending": "Envoi…",
+    "backToLogin": "Retour à la connexion",
+    "verifying": "Vérification du lien…",
+    "newTitle": "Nouveau mot de passe",
+    "newLabel": "Nouveau mot de passe (8 caractères minimum)",
+    "tooShort": "Le mot de passe doit contenir au moins 8 caractères.",
+    "save": "Enregistrer le mot de passe",
+    "saving": "Enregistrement…"
+  },
+  "forgotPassword": "Mot de passe oublié ?"
 }

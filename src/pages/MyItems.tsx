@@ -223,7 +223,7 @@ export default function MyItems() {
                             {pendingRequests.length} demande{pendingRequests.length > 1 ? 's' : ''}
                           </span>
                         )}
-                        {activeBooking && <span className="tag tag-yellow">Location en cours</span>}
+                        {activeBooking && <span className="tag tag-yellow">{t('myItems.rentalInProgress')}</span>}
                       </div>
                     </div>
 

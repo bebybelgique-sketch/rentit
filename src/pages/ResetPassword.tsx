@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
+// Вторая половина пути восстановления пароля, тоже была целиком
+// по-английски. См. комментарий в ForgotPassword.tsx.
 export default function ResetPassword() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -18,7 +22,7 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password.length < 8) return setError('Password must be at least 8 characters')
+    if (password.length < 8) return setError(t('passwordRecovery.tooShort'))
     setLoading(true); setError('')
     const { error } = await supabase.auth.updateUser({ password })
     if (error) { setError(error.message); setLoading(false) }
@@ -29,7 +33,7 @@ export default function ResetPassword() {
     return (
       <div className="page">
         <div style={{ maxWidth: '420px', margin: '40px auto', textAlign: 'center' }}>
-          <div className="loading">Verifying reset link...</div>
+          <div className="loading">{t('passwordRecovery.verifying')}</div>
         </div>
       </div>
     )
@@ -38,16 +42,26 @@ export default function ResetPassword() {
   return (
     <div className="page">
       <div style={{ maxWidth: '420px', margin: '40px auto' }}>
-        <h1 style={{ marginBottom: '28px', fontSize: '24px', fontWeight: '800', textAlign: 'center' }}>New password</h1>
+        <h1 style={{ marginBottom: '28px', fontSize: '24px', fontWeight: '800', textAlign: 'center' }}>
+          {t('passwordRecovery.newTitle')}
+        </h1>
         <div className="card">
           {error && <div className="error-msg">{error}</div>}
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>New password (min 8 chars)</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoFocus />
+              <label htmlFor="reset-password">{t('passwordRecovery.newLabel')}</label>
+              <input
+                id="reset-password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                minLength={8}
+                autoFocus
+              />
             </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-              {loading ? 'Saving...' : 'Set new password'}
+              {loading ? t('passwordRecovery.saving') : t('passwordRecovery.save')}
             </button>
           </form>
         </div>

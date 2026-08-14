@@ -53,7 +53,7 @@ export default function Register() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>{t('fullName')}</label>
-              <input value={name} onChange={e => setName(e.target.value)} required placeholder="Votre nom" />
+              <input value={name} onChange={e => setName(e.target.value)} required placeholder={t('register.namePlaceholder')} />
             </div>
             <div className="form-group">
               <label>{t('email')}</label>

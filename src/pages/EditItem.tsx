@@ -185,7 +185,7 @@ const EditItem: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Description</label>
+            <label htmlFor="description">{t('form.description')}</label>
             <textarea
               id="description"
               name="description"
@@ -327,7 +327,7 @@ const EditItem: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="image">Image (laisser vide pour conserver l'actuelle)</label>
+            <label htmlFor="image">{t('form.photoReplaceLabel')}</label>
             <input
               id="image"
               type="file"
@@ -335,7 +335,7 @@ const EditItem: React.FC = () => {
               onChange={handleImageChange}
               style={{ width: '100%' }}
             />
-            {uploading && <p>Upload en cours...</p>}
+            {uploading && <p>{t('form.uploading')}</p>}
           </div>
 
           <button
