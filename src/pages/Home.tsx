@@ -3,8 +3,9 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from 'react-i18next'
 import {
-  CATEGORIES, categoryEmoji, categoryLabelKey, conditionLabelKey, isCategoryValue,
+  CATEGORIES, categoryLabelKey, conditionLabelKey, isCategoryValue,
 } from '../domain/catalog'
+import CategoryIcon from '../components/icons/CategoryIcon'
 
 // Leaflet берётся из зависимостей проекта, а не с unpkg.
 //
@@ -483,7 +484,7 @@ export default function Home() {
                     />
                   ) : (
                     <div className="item-card-img">
-                      {categoryEmoji(item.category)}
+                      <CategoryIcon category={item.category} size={56} />
                     </div>
                   )}
                   <div className="item-card-body">

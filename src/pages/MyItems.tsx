@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
-import { categoryEmoji, statusLabelKey } from '../domain/catalog'
+import { statusLabelKey } from '../domain/catalog'
+import CategoryIcon from '../components/icons/CategoryIcon'
 
 // Собственные карты убраны в src/domain/catalog.ts. Здесь было две беды:
 // категории `tools` и `other`, которых в продукте нет вовсе, и вторая карта
@@ -200,8 +201,8 @@ export default function MyItems() {
                   {item.photos?.[0] ? (
                     <img src={item.photos[0]} alt="" style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
                   ) : (
-                    <div style={{ width: '80px', height: '80px', borderRadius: '8px', background: '#ede9ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', flexShrink: 0 }}>
-                      {categoryEmoji(item.category)}
+                    <div style={{ width: '80px', height: '80px', borderRadius: '8px', background: 'var(--surface)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                      <CategoryIcon category={item.category} size={32} />
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>

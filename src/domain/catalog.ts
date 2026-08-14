@@ -18,21 +18,27 @@
 // Rejeté/Refusé, En attente d'approbation/En attente).
 //
 // Правило простое: здесь лежит СТРУКТУРА (какие значения существуют, какой
-// эмодзи, какой ключ подписи), а ТЕКСТ живёт в словарях. Копия структуры в
-// странице — это будущее расхождение, а не удобство.
+// ключ подписи), ТЕКСТ живёт в словарях, а ОФОРМЛЕНИЕ — в компонентах.
+// Копия структуры в странице — это будущее расхождение, а не удобство.
 
 /* ─────────────────────────── Категории ─────────────────────────── */
 
 // hintKey — примеры инструментов, нужны лендингу. Раньше он держал их у себя
 // вместе со своей копией названий, и названия разошлись: «Jardin & Extérieur»
 // против «Jardinage», «Mesure» против «Mesure & Détection».
+// Поля `emoji` здесь больше нет. Оно было ОФОРМЛЕНИЕМ в справочнике
+// СТРУКТУРЫ — и держало продукт на двух визуальных языках сразу: лендинг
+// после #12 рисовал категории SVG-иконками, а витрина, страница вещи и
+// «Мои инструменты» продолжали ставить ⚡🔧🌿. Человек видел смену языка
+// на первом же переходе с лендинга.
+// Иконки живут в `src/components/icons/CategoryIcon.tsx`, ключи те же.
 export const CATEGORIES = [
-  { value: 'power_tools',  emoji: '⚡',   labelKey: 'categories.power_tools',  hintKey: 'categoryHints.power_tools',  priceHintKey: 'categoryPrices.power_tools'  },
-  { value: 'hand_tools',   emoji: '🔧',   labelKey: 'categories.hand_tools',   hintKey: 'categoryHints.hand_tools',   priceHintKey: 'categoryPrices.hand_tools'   },
-  { value: 'garden',       emoji: '🌿',   labelKey: 'categories.garden',       hintKey: 'categoryHints.garden',       priceHintKey: 'categoryPrices.garden'       },
-  { value: 'construction', emoji: '🏗️', labelKey: 'categories.construction', hintKey: 'categoryHints.construction', priceHintKey: 'categoryPrices.construction' },
-  { value: 'cleaning',     emoji: '🧹',   labelKey: 'categories.cleaning',     hintKey: 'categoryHints.cleaning',     priceHintKey: 'categoryPrices.cleaning'     },
-  { value: 'measuring',    emoji: '📐',   labelKey: 'categories.measuring',    hintKey: 'categoryHints.measuring',    priceHintKey: 'categoryPrices.measuring'    },
+  { value: 'power_tools',  labelKey: 'categories.power_tools',  hintKey: 'categoryHints.power_tools',  priceHintKey: 'categoryPrices.power_tools'  },
+  { value: 'hand_tools',   labelKey: 'categories.hand_tools',   hintKey: 'categoryHints.hand_tools',   priceHintKey: 'categoryPrices.hand_tools'   },
+  { value: 'garden',       labelKey: 'categories.garden',       hintKey: 'categoryHints.garden',       priceHintKey: 'categoryPrices.garden'       },
+  { value: 'construction', labelKey: 'categories.construction', hintKey: 'categoryHints.construction', priceHintKey: 'categoryPrices.construction' },
+  { value: 'cleaning',     labelKey: 'categories.cleaning',     hintKey: 'categoryHints.cleaning',     priceHintKey: 'categoryPrices.cleaning'     },
+  { value: 'measuring',    labelKey: 'categories.measuring',    hintKey: 'categoryHints.measuring',    priceHintKey: 'categoryPrices.measuring'    },
 ] as const
 
 export type CategoryValue = (typeof CATEGORIES)[number]['value']
@@ -40,11 +46,6 @@ export type CategoryValue = (typeof CATEGORIES)[number]['value']
 export const CATEGORY_VALUES: readonly string[] = CATEGORIES.map(c => c.value)
 
 const CATEGORY_BY_VALUE = new Map(CATEGORIES.map(c => [c.value as string, c]))
-
-/** Эмодзи категории. Неизвестная категория — коробка, а не пустота. */
-export function categoryEmoji(value: string | null | undefined): string {
-  return (value && CATEGORY_BY_VALUE.get(value)?.emoji) || '📦'
-}
 
 /** Ключ подписи для словаря. */
 export function categoryLabelKey(value: string | null | undefined): string | null {
