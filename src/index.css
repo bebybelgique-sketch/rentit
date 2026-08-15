@@ -285,6 +285,24 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   margin-top: 6px;
 }
 
+/* Отказ РЯДОМ с полем, а не в шапке формы. Ошибка, показанная за пять
+   экранов от места, где произошла, — это не сообщение, а загадка.
+   Фон, а не полоса сбоку: полоса сбоку — самый узнаваемый шаблон
+   машинного оформления, и детектор ловит его по делу. */
+.form-notice {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
+  list-style: none;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-family: var(--font-text);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.form-notice li + li { margin-top: var(--space-2); }
+
 /* Раскрытие необязательного. Нативный <details>: работает с клавиатуры и
    с экранным диктором без единой строки JS, и это не модальное окно.
    Намеренно НЕ карточка — иначе получилась бы карточка внутри карточки. */

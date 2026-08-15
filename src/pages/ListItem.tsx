@@ -11,7 +11,12 @@ import { useAuth } from '../context/AuthContext'
 // Подсказка цен была седьмым местом, где перечислены категории: добавь
 // категорию — и подсказки не будет только здесь, молча.
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+// Числа живут ЗДЕСЬ и подставляются в тексты через {{max}} и {{size}}.
+// До 16.08 «5» была записана и в коде, и словом в трёх словарях: поменяй
+// одно — и продукт начинает обещать одно, а делать другое.
+const MAX_PHOTOS = 5
+const MAX_FILE_SIZE_MB = 5
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024
 
 export default function ListItem() {
   const { t } = useTranslation()
@@ -39,6 +44,9 @@ export default function ListItem() {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState('')
+  // Отказы по фотографиям отдельно от `error`: они показываются у самих
+  // фотографий, а не в шапке формы за несколько экранов оттуда.
+  const [photoNotice, setPhotoNotice] = useState<string[]>([])
   const [isDirty, setIsDirty] = useState(false)
   const [needsPhoto, setNeedsPhoto] = useState(false)
   // Просьбу о фото можно отложить. Отказ живёт в состоянии страницы:
@@ -111,36 +119,65 @@ export default function ListItem() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm(p => ({ ...p, [key]: e.target.value }))
 
+  // Выбор фотографий. Три вещи, которые здесь делались молча, и все три
+  // человек замечал уже после публикации — то есть никогда:
+  //
+  //   1. `.slice(0, 5)` отрезал лишние БЕЗ ЕДИНОГО СЛОВА. Выбрал восемь —
+  //      три исчезли, и владелец уверен, что загрузил восемь;
+  //   2. новый выбор ЗАМЕНЯЛ предыдущий, а не добавлял. Выбрал три, потом
+  //      ещё две — осталось две. На телефоне снимки выбирают по одному из
+  //      галереи, так что это был основной путь, а не край;
+  //   3. один негодный файл отменял ВЕСЬ выбор: пять фотографий, одна на
+  //      6 МБ — не добавилось ничего.
+  //
+  // Теперь: годные добавляются к уже выбранным, негодные пропускаются
+  // поимённо, и человеку говорят, что именно не взяли и почему.
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = Array.from(e.target.files || []).slice(0, 5)
+    const picked = Array.from(e.target.files || [])
 
-    // Validate size + type
-    for (const file of raw) {
+    // Сбрасываем ввод сразу: без этого повторный выбор ТОГО ЖЕ файла не
+    // вызывает `change`, и человек жмёт по кнопке в пустоту.
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (picked.length === 0) return
+
+    const problems: string[] = []
+    const valid: File[] = []
+    setPhotoNotice([])
+    for (const file of picked) {
       if (!file.type.startsWith('image/')) {
-        setError(t('listItem.notAnImage', { name: file.name }))
-        return
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        setError(`${file.name} dépasse la limite de 5 Mo.`)
-        return
+        problems.push(t('listItem.notAnImage', { name: file.name }))
+      } else if (file.size > MAX_FILE_SIZE) {
+        problems.push(t('listItem.photoTooLarge', { name: file.name, size: MAX_FILE_SIZE_MB }))
+      } else {
+        valid.push(file)
       }
     }
 
-    // Revoke any previous previews before replacing
-    photoPreviews.forEach(url => URL.revokeObjectURL(url))
+    const free = Math.max(0, MAX_PHOTOS - photos.length)
+    const added = valid.slice(0, free)
+    const dropped = valid.length - added.length
+    if (dropped > 0) {
+      problems.push(t('listItem.photoLimitReached', { count: dropped, max: MAX_PHOTOS }))
+    }
 
-    setPhotos(raw)
-    setPhotoPreviews(raw.map(f => URL.createObjectURL(f)))
-    setError('')
+    if (added.length > 0) {
+      setPhotos(p => [...p, ...added])
+      setPhotoPreviews(p => [...p, ...added.map(f => URL.createObjectURL(f))])
+    }
+    // Отказы по фотографиям живут рядом с фотографиями, а не в шапке
+    // формы: `error` остаётся за отказами публикации целиком.
+    setPhotoNotice(problems)
   }
 
+  const photosLeft = MAX_PHOTOS - photos.length
+
   const removePhoto = (i: number) => {
-    // Free memory immediately
+    // Освобождаем именно этот URL. Раньше при новом выборе отзывались ВСЕ
+    // превью разом — с добавлением это оставило бы уже показанные
+    // картинки битыми.
     URL.revokeObjectURL(photoPreviews[i])
     setPhotos(p => p.filter((_, idx) => idx !== i))
     setPhotoPreviews(p => p.filter((_, idx) => idx !== i))
-    // Reset native input so the same file can be re-selected
-    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const getLocation = () => {
@@ -341,10 +378,18 @@ export default function ListItem() {
         <form onSubmit={handleSubmit} className="card">
           {error && <div className="error-msg">{error}</div>}
 
-          {/* Photos — первым */}
+          {/* Photos — первым.
+              Правило сказано СЛОВАМИ до того, как в него упрутся, счётчик
+              виден всегда, а отказ стоит здесь же, а не в шапке формы.
+              Раньше здесь была одна серая строчка мелким шрифтом — и всё:
+              сколько можно загрузить, человек узнавал, только упёршись. */}
           <div className="form-group">
             <label htmlFor="li-photos">{t('listItem.photosFirstLabel')}</label>
-            <p className="form-hint">{t('listItem.photosFirstHint')}</p>
+            <p className="form-hint">
+              {t('listItem.photosRule', { max: MAX_PHOTOS, size: MAX_FILE_SIZE_MB })}
+              {' '}
+              {t('listItem.photosWhy')}
+            </p>
 
             <input
               id="li-photos"
@@ -360,19 +405,37 @@ export default function ListItem() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isLocked}
+              disabled={isLocked || photosLeft === 0}
               className="btn btn-secondary"
-              style={{ marginTop: 'var(--space-2)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)', minHeight: '44px' }}
+              style={{ marginTop: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)', minHeight: '44px' }}
             >
               <svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <rect x="1" y="3" width="12" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
                 <circle cx="7" cy="7.5" r="2" stroke="currentColor" strokeWidth="1.2"/>
                 <path d="M5 3V2.5A1.5 1.5 0 0 1 6.5 1h1A1.5 1.5 0 0 1 9 2.5V3" stroke="currentColor" strokeWidth="1.2"/>
               </svg>
-              {photos.length > 0
-                ? `${photos.length} ${t(photos.length > 1 ? 'listItem.photosCount_other' : 'listItem.photosCount_one', { count: photos.length })} — ${t('listItem.photosChange')}`
-                : t('listItem.photosFirstLabel')}
+              {photos.length === 0
+                ? t('listItem.photosChoose')
+                : photosLeft === 0
+                  ? t('listItem.photosFull')
+                  : t('listItem.photosAddMore', { count: photosLeft })}
             </button>
+
+            {/* Сколько уже есть — видно всегда, а не только когда упрёшься. */}
+            {photos.length > 0 && (
+              <p className="form-hint" aria-live="polite">
+                {t('listItem.photosCounter', { count: photos.length, max: MAX_PHOTOS })}
+                {photosLeft === 0 && <> {t('listItem.photosFullNote')}</>}
+              </p>
+            )}
+
+            {/* Отказ — здесь же, поимённо и с причиной. Раньше он уезжал в
+                шапку формы, за несколько экранов от фотографий. */}
+            {photoNotice.length > 0 && (
+              <ul className="form-notice" aria-live="polite">
+                {photoNotice.map((line, i) => <li key={i}>{line}</li>)}
+              </ul>
+            )}
 
             {photoPreviews.length > 0 && (
               <div className="photo-grid" style={{ marginTop: 'var(--space-3)' }}>
@@ -388,7 +451,7 @@ export default function ListItem() {
                         position: 'absolute', top: '2px', right: '2px',
                         background: 'rgba(18,20,23,0.7)', color: 'var(--text-on-dark)',
                         border: 'none', borderRadius: '50%',
-                        width: '22px', height: '22px', fontSize: '13px',
+                        width: '24px', height: '24px', fontSize: '14px',
                         cursor: 'pointer', display: 'flex',
                         alignItems: 'center', justifyContent: 'center',
                         lineHeight: 1,
