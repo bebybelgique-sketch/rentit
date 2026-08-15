@@ -432,7 +432,10 @@
     "locationLabel": "Where",
     "locationPlaceholder": "City, street…",
     "availableFrom": "Available from",
-    "perDay": "/day"
+    "perDay": "/day",
+    "viewGrid": "Grid",
+    "viewMap": "Map",
+    "viewLabel": "View"
   },
   "photoGrid": {
     "titleHandover": "Tool condition at handover",

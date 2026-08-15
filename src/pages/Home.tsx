@@ -373,31 +373,42 @@ export default function Home() {
         </div>
       )}
 
-      {/* View toggle */}
-      <div style={{ display: 'flex', gap: 'var(--space-1)', marginBottom: 'var(--space-4)' }}>
+      {/* Переключатель вида.
+          Активное состояние красили `btn-primary`, то есть `var(--action)` —
+          цветом, который в палитре отдан ДЕЙСТВИЮ и только ему. На витрине
+          это ставило «Grille» вровень с «Déposer votre premier outil»: два
+          красных пятна, из которых одно вообще ничего не делает. Красный —
+          глагол; выбранный режим — не глагол, а состояние, и красится
+          чернилами.
+          Подписи заодно уехали в словари: они были захардкожены
+          по-французски, а храповик их не видит — текст стоял отдельной
+          строкой между тегами, это его известная слепая зона. */}
+      <div className="seg" role="group" aria-label={t('home.viewLabel')}>
         <button
+          type="button"
           onClick={() => setViewMode('grid')}
-          className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '7px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          className={`seg-btn${viewMode === 'grid' ? ' is-on' : ''}`}
+          aria-pressed={viewMode === 'grid'}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <rect x="0" y="0" width="6" height="6" rx="1" fill="currentColor"/>
             <rect x="8" y="0" width="6" height="6" rx="1" fill="currentColor"/>
             <rect x="0" y="8" width="6" height="6" rx="1" fill="currentColor"/>
             <rect x="8" y="8" width="6" height="6" rx="1" fill="currentColor"/>
           </svg>
-          Grille
+          {t('home.viewGrid')}
         </button>
         <button
+          type="button"
           onClick={() => setViewMode('map')}
-          className={`btn ${viewMode === 'map' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ padding: '7px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          className={`seg-btn${viewMode === 'map' ? ' is-on' : ''}`}
+          aria-pressed={viewMode === 'map'}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path d="M7 1C4.79 1 3 2.79 3 5c0 3 4 8 4 8s4-5 4-8c0-2.21-1.79-4-4-4z" stroke="currentColor" strokeWidth="1.3" fill="none"/>
             <circle cx="7" cy="5" r="1.5" fill="currentColor"/>
           </svg>
-          Carte
+          {t('home.viewMap')}
         </button>
       </div>
 
