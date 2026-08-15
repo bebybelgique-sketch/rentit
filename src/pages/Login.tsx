@@ -41,12 +41,12 @@ export default function Login() {
           {error && <div className="error-msg">{error}</div>}
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>{t('email')}</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+              <label htmlFor="login-email">{t('email')}</label>
+              <input id="login-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
             </div>
             <div className="form-group">
-              <label>{t('password')}</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
+              <label htmlFor="login-password">{t('password')}</label>
+              <input id="login-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
             </div>
             <div style={{ textAlign: 'right', marginBottom: '16px', marginTop: '-8px' }}>
               <Link to="/forgot-password" style={{ fontSize: '13px', color: '#999' }}>{t('forgotPassword')}</Link>

@@ -435,7 +435,8 @@
     "perDay": "/jour",
     "viewGrid": "Grille",
     "viewMap": "Carte",
-    "viewLabel": "Affichage"
+    "viewLabel": "Affichage",
+    "availableTo": "au"
   },
   "photoGrid": {
     "titleHandover": "État de l'outil à la remise",

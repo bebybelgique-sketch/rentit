@@ -435,7 +435,8 @@
     "perDay": "/day",
     "viewGrid": "Grid",
     "viewMap": "Map",
-    "viewLabel": "View"
+    "viewLabel": "View",
+    "availableTo": "to"
   },
   "photoGrid": {
     "titleHandover": "Tool condition at handover",

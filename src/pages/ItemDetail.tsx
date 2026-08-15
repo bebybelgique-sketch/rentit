@@ -568,8 +568,9 @@ export default function ItemDetail() {
 
                     {totalDays > 0 && (
                       <div className="form-group" style={{ marginBottom: '16px' }}>
-                        <label style={{ fontSize: '13px', color: 'var(--muted)' }}>{t('itemDetail.messageToOwner')}</label>
+                        <label htmlFor="request-message" style={{ fontSize: '13px', color: 'var(--muted)' }}>{t('itemDetail.messageToOwner')}</label>
                         <textarea
+                          id="request-message"
                           value={requestMessage}
                           onChange={e => setRequestMessage(e.target.value)}
                           placeholder={t('itemDetail.messagePlaceholder')}
@@ -655,20 +656,34 @@ export default function ItemDetail() {
               <div className="success-msg">{t('review.thanks')}</div>
             ) : (
               <form onSubmit={handleReviewSubmit}>
+                {/* Оценка звёздами. `<label>` здесь не годится: она умеет
+                    указывать на ОДНО поле, а тут ряд кнопок. Поэтому
+                    подпись — обычный текст, а группа связана с ней через
+                    `aria-labelledby`.
+                    Сама выбранная оценка сообщалась ТОЛЬКО цветом — диктор
+                    читал пять одинаковых «звёздочка» и не мог сказать, что
+                    выбрано. Теперь у каждой кнопки имя («3 étoiles») и
+                    `aria-pressed`. */}
                 <div className="form-group">
-                  <label>{t('review.ratingLabel')}</label>
-                  <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                  <span id="review-rating-label" className="form-label-text">{t('review.ratingLabel')}</span>
+                  <div
+                    role="group"
+                    aria-labelledby="review-rating-label"
+                    style={{ display: 'flex', gap: '4px', marginTop: '8px' }}
+                  >
                     {[1, 2, 3, 4, 5].map(n => (
                       <button key={n} type="button" onClick={() => setReviewStars(n)}
+                        aria-label={t(n === 1 ? 'booking.reviewStarOne' : 'booking.reviewStarMany', { count: n })}
+                        aria-pressed={n === reviewStars}
                         style={{ fontSize: '28px', background: 'none', border: 'none', cursor: 'pointer', color: n <= reviewStars ? 'var(--warning)' : '#ddd', padding: '0 2px', transition: 'color 0.15s' }}>
-                        ★
+                        <span aria-hidden="true">★</span>
                       </button>
                     ))}
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>{t('review.commentLabel')}</label>
-                  <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder={t('itemDetail.shareExperience')} rows={3} />
+                  <label htmlFor="review-comment">{t('review.commentLabel')}</label>
+                  <textarea id="review-comment" value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder={t('itemDetail.shareExperience')} rows={3} />
                 </div>
                 <button type="submit" className="btn btn-primary" disabled={reviewLoading} style={{ minHeight: '44px' }}>
                   {reviewLoading ? t('common.loading') : t('itemDetail.submitReview')}
