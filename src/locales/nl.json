@@ -435,7 +435,8 @@
     "perDay": "/dag",
     "viewGrid": "Raster",
     "viewMap": "Kaart",
-    "viewLabel": "Weergave"
+    "viewLabel": "Weergave",
+    "availableTo": "tot"
   },
   "photoGrid": {
     "titleHandover": "Staat gereedschap bij overdracht",

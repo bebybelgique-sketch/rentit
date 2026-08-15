@@ -353,7 +353,7 @@ export default function Home() {
             />
           </label>
           <label className="filters-field">
-            <span>au</span>
+            <span>{t('home.availableTo')}</span>
             <input
               type="date"
               value={endDate}

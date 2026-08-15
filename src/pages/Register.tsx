@@ -52,16 +52,20 @@ export default function Register() {
           {error && <div className="error-msg">{error}</div>}
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>{t('fullName')}</label>
-              <input value={name} onChange={e => setName(e.target.value)} required placeholder={t('register.namePlaceholder')} />
+              <label htmlFor="reg-name">{t('fullName')}</label>
+              {/* type="text" задан явно: без атрибута свойство в JS всё
+                  равно 'text', но CSS-селектор `input[type="text"]` мимо —
+                  на этом 14.08 споткнулась моя же проверочная оснастка и
+                  выдала «регистрация сломана», хотя ломалась она сама. */}
+              <input id="reg-name" type="text" value={name} onChange={e => setName(e.target.value)} required placeholder={t('register.namePlaceholder')} autoComplete="name" />
             </div>
             <div className="form-group">
-              <label>{t('email')}</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+              <label htmlFor="reg-email">{t('email')}</label>
+              <input id="reg-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
             </div>
             <div className="form-group">
-              <label>{t('passwordMin')}</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
+              <label htmlFor="reg-password">{t('passwordMin')}</label>
+              <input id="reg-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password" />
             </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
               {loading ? t('creatingAccount') : t('createAccount')}
