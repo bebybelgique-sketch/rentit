@@ -432,7 +432,10 @@
     "locationLabel": "Où",
     "locationPlaceholder": "Commune, rue…",
     "availableFrom": "Disponible du",
-    "perDay": "/jour"
+    "perDay": "/jour",
+    "viewGrid": "Grille",
+    "viewMap": "Carte",
+    "viewLabel": "Affichage"
   },
   "photoGrid": {
     "titleHandover": "État de l'outil à la remise",

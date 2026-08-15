@@ -285,6 +285,32 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   margin-top: 6px;
 }
 
+/* Переключатель вида: единая полоса из двух кнопок, выбранная залита
+   ЧЕРНИЛАМИ, а не красным. Красный в этой палитре означает действие; на
+   состоянии он врал и конкурировал с настоящим призывом на том же
+   экране. Чернила — та же роль, что у шапки: «вот это сейчас». */
+.seg {
+  display: inline-flex;
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--silver-edge);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--card);
+}
+.seg-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px; min-height: 40px;
+  font-family: var(--font-sans); font-size: 13px; font-weight: 600;
+  color: var(--text); background: transparent;
+  border: none; cursor: pointer;
+  transition: background-color 0.12s ease-out, color 0.12s ease-out;
+}
+.seg-btn + .seg-btn { border-left: 1px solid var(--silver-edge); }
+.seg-btn:hover:not(.is-on) { background: var(--surface-sunken); }
+.seg-btn.is-on { background: var(--primary); color: var(--text-on-dark); }
+.seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) { .seg-btn { transition: none; } }
+
 /* Отказ РЯДОМ с полем, а не в шапке формы. Ошибка, показанная за пять
    экранов от места, где произошла, — это не сообщение, а загадка.
    Фон, а не полоса сбоку: полоса сбоку — самый узнаваемый шаблон
@@ -823,13 +849,18 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 .lp-hero-grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
 @media (max-width: 940px) { .lp-hero-grid { grid-template-columns: minmax(0, 1fr); } }
 
-/* Жёлтому на светлом разрешена одна роль — линейка, не текст. */
+/* Сообщение про ноль объявлений. Была жёлтая полоса слева на 5px — самый
+   узнаваемый шаблон машинного оформления, и детектор ловит его по делу.
+   Заменено тем же приёмом, что у отказов в формах (`.form-notice`):
+   утопленная поверхность плюс волосяная рамка. У всех заметок продукта
+   один вид вместо трёх разных способов сказать «обрати внимание».
+   Жёлтый при этом ничего не теряет: его настоящая роль — маркировка на
+   чёрном, а на светлом он давал 1.46:1 и текстом быть не мог. */
 .lp-zero {
   margin-top: var(--space-6); padding: var(--space-4) var(--space-5);
-  background: var(--card); border-left: 5px solid var(--signal);
+  background: var(--surface-sunken); border: 1px solid var(--line);
   border-radius: var(--radius); max-width: 54ch;
   font-family: var(--font-text); font-size: 15.5px; line-height: 1.55; color: var(--text);
-  box-shadow: 0 1px 2px rgba(18,20,23,.05);
 }
 .lp-zero b { font-weight: 600; }
 
@@ -840,7 +871,9 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 .lp-cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-7); }
 @media (max-width: 880px) { .lp-cols3 { grid-template-columns: minmax(0, 1fr); } }
 
-.lp-step { background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--silver-edge); border-radius: var(--radius); padding: var(--space-5); }
+/* Серебряная полоса сверху на 3px убрана: она ничего не сообщала —
+   шаг и так помечен номером в рамке. Декор, неотличимый от шаблона. */
+.lp-step { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-5); }
 .lp-step-n {
   font-family: var(--font-sans); font-weight: 700; font-size: 13px;
   color: var(--primary); background: var(--silver-plate);
@@ -852,7 +885,13 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 
 .lp-warn-head { display: flex; align-items: flex-start; gap: var(--space-4); }
 .lp-warn-mark { flex-shrink: 0; width: 46px; height: 46px; border-radius: var(--radius); background: var(--signal); color: var(--primary); display: flex; align-items: center; justify-content: center; }
-.lp-limit { background: var(--primary-dark); border: 1px solid var(--silver-hair); border-top: 3px solid var(--signal); border-radius: var(--radius); padding: var(--space-5); }
+/* Жёлтая кромка на чёрном остаётся — это язык маркировки на корпусе
+   инструмента, и ровно она делает этот раздел непохожим на шаблон.
+   Убрано СКРУГЛЕНИЕ, а не кромка: претензия была именно к сочетанию
+   толстой кромки со скруглёнными углами, где она читается как случайность.
+   Прямые углы делают её похожей на предупредительную табличку, чем она и
+   является. */
+.lp-limit { background: var(--primary-dark); border: 1px solid var(--silver-hair); border-top: 3px solid var(--signal); padding: var(--space-5); }
 .lp-limit-x { color: var(--signal); display: block; margin-bottom: var(--space-3); }
 
 .lp-cats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-6); }

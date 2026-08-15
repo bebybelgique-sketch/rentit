@@ -432,7 +432,10 @@
     "locationLabel": "Waar",
     "locationPlaceholder": "Plaats, straat…",
     "availableFrom": "Beschikbaar vanaf",
-    "perDay": "/dag"
+    "perDay": "/dag",
+    "viewGrid": "Raster",
+    "viewMap": "Kaart",
+    "viewLabel": "Weergave"
   },
   "photoGrid": {
     "titleHandover": "Staat gereedschap bij overdracht",
