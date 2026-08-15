@@ -11,7 +11,12 @@ import { useAuth } from '../context/AuthContext'
 // Подсказка цен была седьмым местом, где перечислены категории: добавь
 // категорию — и подсказки не будет только здесь, молча.
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+// Числа живут ЗДЕСЬ и подставляются в тексты через {{max}} и {{size}}.
+// До 16.08 «5» была записана и в коде, и словом в трёх словарях: поменяй
+// одно — и продукт начинает обещать одно, а делать другое.
+const MAX_PHOTOS = 5
+const MAX_FILE_SIZE_MB = 5
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024
 
 export default function ListItem() {
   const { t } = useTranslation()
@@ -39,6 +44,9 @@ export default function ListItem() {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState('')
+  // Отказы по фотографиям отдельно от `error`: они показываются у самих
+  // фотографий, а не в шапке формы за несколько экранов оттуда.
+  const [photoNotice, setPhotoNotice] = useState<string[]>([])
   const [isDirty, setIsDirty] = useState(false)
   const [needsPhoto, setNeedsPhoto] = useState(false)
   // Просьбу о фото можно отложить. Отказ живёт в состоянии страницы:
@@ -111,36 +119,65 @@ export default function ListItem() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm(p => ({ ...p, [key]: e.target.value }))
 
+  // Выбор фотографий. Три вещи, которые здесь делались молча, и все три
+  // человек замечал уже после публикации — то есть никогда:
+  //
+  //   1. `.slice(0, 5)` отрезал лишние БЕЗ ЕДИНОГО СЛОВА. Выбрал восемь —
+  //      три исчезли, и владелец уверен, что загрузил восемь;
+  //   2. новый выбор ЗАМЕНЯЛ предыдущий, а не добавлял. Выбрал три, потом
+  //      ещё две — осталось две. На телефоне снимки выбирают по одному из
+  //      галереи, так что это был основной путь, а не край;
+  //   3. один негодный файл отменял ВЕСЬ выбор: пять фотографий, одна на
+  //      6 МБ — не добавилось ничего.
+  //
+  // Теперь: годные добавляются к уже выбранным, негодные пропускаются
+  // поимённо, и человеку говорят, что именно не взяли и почему.
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = Array.from(e.target.files || []).slice(0, 5)
+    const picked = Array.from(e.target.files || [])
 
-    // Validate size + type
-    for (const file of raw) {
+    // Сбрасываем ввод сразу: без этого повторный выбор ТОГО ЖЕ файла не
+    // вызывает `change`, и человек жмёт по кнопке в пустоту.
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (picked.length === 0) return
+
+    const problems: string[] = []
+    const valid: File[] = []
+    setPhotoNotice([])
+    for (const file of picked) {
       if (!file.type.startsWith('image/')) {
-        setError(`${file.name} n'est pas une image.`)
-        return
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        setError(`${file.name} dépasse la limite de 5 Mo.`)
-        return
+        problems.push(t('listItem.notAnImage', { name: file.name }))
+      } else if (file.size > MAX_FILE_SIZE) {
+        problems.push(t('listItem.photoTooLarge', { name: file.name, size: MAX_FILE_SIZE_MB }))
+      } else {
+        valid.push(file)
       }
     }
 
-    // Revoke any previous previews before replacing
-    photoPreviews.forEach(url => URL.revokeObjectURL(url))
+    const free = Math.max(0, MAX_PHOTOS - photos.length)
+    const added = valid.slice(0, free)
+    const dropped = valid.length - added.length
+    if (dropped > 0) {
+      problems.push(t('listItem.photoLimitReached', { count: dropped, max: MAX_PHOTOS }))
+    }
 
-    setPhotos(raw)
-    setPhotoPreviews(raw.map(f => URL.createObjectURL(f)))
-    setError('')
+    if (added.length > 0) {
+      setPhotos(p => [...p, ...added])
+      setPhotoPreviews(p => [...p, ...added.map(f => URL.createObjectURL(f))])
+    }
+    // Отказы по фотографиям живут рядом с фотографиями, а не в шапке
+    // формы: `error` остаётся за отказами публикации целиком.
+    setPhotoNotice(problems)
   }
 
+  const photosLeft = MAX_PHOTOS - photos.length
+
   const removePhoto = (i: number) => {
-    // Free memory immediately
+    // Освобождаем именно этот URL. Раньше при новом выборе отзывались ВСЕ
+    // превью разом — с добавлением это оставило бы уже показанные
+    // картинки битыми.
     URL.revokeObjectURL(photoPreviews[i])
     setPhotos(p => p.filter((_, idx) => idx !== i))
     setPhotoPreviews(p => p.filter((_, idx) => idx !== i))
-    // Reset native input so the same file can be re-selected
-    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const getLocation = () => {
@@ -319,201 +356,43 @@ export default function ListItem() {
           </h1>
         </div>
 
+        {/* ПОРЯДОК ЭКРАНА — не косметика, а обещание лендинга.
+            Лендинг говорит «Cinq minutes, sans frais», а форма показывала
+            ОДИННАДЦАТЬ полей сразу: залог, тариф на 3 дня, тариф на неделю,
+            плату за просрочку — то есть разговор про деньги раньше, чем
+            человек успел показать инструмент. Критика 15.08 замерила это
+            как главное расхождение продукта.
+
+            Теперь на первом экране ровно то, без чего объявления не
+            существует: фотография, название, категория, цена за день.
+            Всё остальное живёт в <details> и НЕ ИСЧЕЗЛО — оно необязательно
+            и правится после публикации через «Modifier».
+
+            Фотография поднята наверх намеренно: для аренды это главный
+            аргумент, а стояла она последней и самым тихим элементом.
+
+            Позиция осталась здесь же, но НАЖАТИЕМ, а не полем: без
+            координат вещь не попадает в поиск «À proximité» вовсе, и
+            владелец об этом никогда не узнает. Адрес текстом — в
+            подробностях, он только показывается арендатору. */}
         <form onSubmit={handleSubmit} className="card">
           {error && <div className="error-msg">{error}</div>}
 
-          {/* Title */}
+          {/* Photos — первым.
+              Правило сказано СЛОВАМИ до того, как в него упрутся, счётчик
+              виден всегда, а отказ стоит здесь же, а не в шапке формы.
+              Раньше здесь была одна серая строчка мелким шрифтом — и всё:
+              сколько можно загрузить, человек узнавал, только упёршись. */}
           <div className="form-group">
-            <label>{t('listItem.titleLabel')}</label>
-            <input
-              value={form.title}
-              onChange={set('title')}
-              placeholder={t('listItem.titlePlaceholder')}
-              required
-              disabled={isLocked}
-            />
-          </div>
-
-          {/* Category + Condition */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div className="form-group">
-              <label>{t('listItem.categoryLabel')}</label>
-              <select value={form.category} onChange={set('category')} disabled={isLocked}>
-                {CATEGORIES.map(c => (
-                  <option key={c.value} value={c.value}>{t(c.labelKey)}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>{t('listItem.conditionLabel')}</label>
-              <select value={form.condition} onChange={set('condition')} disabled={isLocked}>
-                {CONDITIONS.map(c => (
-                  <option key={c.value} value={c.value}>
-                    {t(c.labelKey)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="form-group">
-            <label>{t('form.description')}</label>
-            <textarea
-              value={form.description}
-              onChange={set('description')}
-              placeholder={t('listItem.descriptionHint')}
-              rows={3}
-              disabled={isLocked}
-            />
-          </div>
-
-          {/* Price + Deposit */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div className="form-group">
-              <label>{t('listItem.pricePerDayLabel')}</label>
-              <input
-                type="number"
-                min="0.50"
-                step="0.50"
-                value={form.price_per_day}
-                onChange={set('price_per_day')}
-                placeholder="10.00"
-                required
-                disabled={isLocked}
-              />
-              {form.category && (
-                <p style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginTop: '5px', lineHeight: 1.5 }}>
-                  {t(categoryPriceHintKey(form.category) ?? '')}
-                </p>
-              )}
-            </div>
-            <div className="form-group">
-              <label>{t('listItem.estimatedValueLabel')}</label>
-              <input
-                type="number"
-                value={estimatedValue}
-                onChange={e => handleValueChange(e.target.value)}
-                placeholder="ex. 250"
-                min="0"
-                disabled={isLocked}
-              />
-              <p style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginTop: '5px' }}>
-                {t('listItem.depositHint')}
-              </p>
-            </div>
-          </div>
-
-          {/* Тарифы на срок. Необязательны: пустое поле означает «такого
-              тарифа нет», и счёт идёт по дневной цене. Подсказка про 12/40/70
-              не случайна — без примера человек не понимает, что вводить цену
-              за ВЕСЬ пакет, а не за день внутри него. */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div className="form-group">
-              <label>{t('listItem.package3DaysLabel')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span></label>
-              <input
-                type="number"
-                min="0.50"
-                step="0.50"
-                value={form.price_3days}
-                onChange={set('price_3days')}
-                placeholder={t('listItem.package3DaysHint')}
-                disabled={isLocked}
-              />
-            </div>
-            <div className="form-group">
-              <label>{t('listItem.packageWeekLabel')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span></label>
-              <input
-                type="number"
-                min="0.50"
-                step="0.50"
-                value={form.price_week}
-                onChange={set('price_week')}
-                placeholder={t('listItem.packageWeekHint')}
-                disabled={isLocked}
-              />
-            </div>
-          </div>
-          {tierHint && (
-            <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginTop: '-8px', marginBottom: '16px', lineHeight: 1.5 }}>
-              {tierHint}
+            <label htmlFor="li-photos">{t('listItem.photosFirstLabel')}</label>
+            <p className="form-hint">
+              {t('listItem.photosRule', { max: MAX_PHOTOS, size: MAX_FILE_SIZE_MB })}
+              {' '}
+              {t('listItem.photosWhy')}
             </p>
-          )}
 
-          {/* Deposit */}
-          <div className="form-group">
-            <label>{t('listItem.depositLabel')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.refundableAtReturn')}</span></label>
             <input
-              type="number"
-              min="0"
-              step="1"
-              value={form.deposit}
-              onChange={set('deposit')}
-              placeholder={t('listItem.depositHint')}
-              disabled={isLocked}
-            />
-          </div>
-
-          {/* Просрочка. Платформа её НЕ считает и НЕ удерживает — это цифра,
-              которую владелец объявляет заранее, чтобы при встрече не спорить. */}
-          <div className="form-group">
-            <label>{t('listItem.lateFeeLabel')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span></label>
-            <input
-              type="number"
-              min="0.50"
-              step="0.50"
-              value={form.late_fee_per_day}
-              onChange={set('late_fee_per_day')}
-              placeholder="ex. 10.00"
-              disabled={isLocked}
-            />
-            <p style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginTop: '5px', lineHeight: 1.5 }}>
-              Montant annoncé à l'avance, réglé entre vous à la restitution. RentIt ne le calcule ni ne le prélève.
-            </p>
-          </div>
-
-          {/* Location */}
-          <div className="form-group">
-            <label>{t('listItem.addressLabel')}</label>
-            <input
-              value={form.address}
-              onChange={set('address')}
-              placeholder={t('listItem.addressLabel')}
-              disabled={isLocked}
-            />
-            <div style={{ marginTop: '8px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <button
-                type="button"
-                onClick={getLocation}
-                className="btn btn-secondary btn-sm"
-                disabled={geoLoading || isLocked}
-              >
-                {geoLoading ? t('common.loading') : lat ? t('listItem.locationStatus') : '📍 ' + t('listItem.locationStatus')}
-              </button>
-              {lat && (
-                <span style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
-                  {lat.toFixed(4)}, {lng?.toFixed(4)}
-                </span>
-              )}
-            </div>
-            {/* Адрес текстом и координаты — разные вещи, и человек об этом не
-                догадывается. Поиск «À proximité» отбрасывает вещи без координат
-                целиком: объявление просто не появляется, и владелец никогда не
-                узнает почему. Раз последствие невидимо — предупреждаем до него. */}
-            {lat === null && (
-              <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '8px', lineHeight: 1.5 }}>
-                Sans position, votre outil n'apparaîtra pas dans la recherche
-                «&nbsp;À proximité&nbsp;» — seulement dans la liste complète.
-              </p>
-            )}
-          </div>
-
-          {/* Photos */}
-          <div className="form-group">
-            <label>{t('listItem.photosLabel')}</label>
-
-            {/* Hidden native input */}
-            <input
+              id="li-photos"
               ref={fileInputRef}
               type="file"
               accept="image/*"
@@ -523,24 +402,43 @@ export default function ListItem() {
               disabled={isLocked}
             />
 
-            {/* Custom button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isLocked}
+              disabled={isLocked || photosLeft === 0}
               className="btn btn-secondary"
-              style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+              style={{ marginTop: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)', minHeight: '44px' }}
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <rect x="1" y="3" width="12" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
                 <circle cx="7" cy="7.5" r="2" stroke="currentColor" strokeWidth="1.2"/>
                 <path d="M5 3V2.5A1.5 1.5 0 0 1 6.5 1h1A1.5 1.5 0 0 1 9 2.5V3" stroke="currentColor" strokeWidth="1.2"/>
               </svg>
-              {photos.length > 0 ? `${photos.length} ${t(photos.length > 1 ? 'listItem.photosCount_other' : 'listItem.photosCount_one', { count: photos.length })} — changer` : t('listItem.photosLabel')}
+              {photos.length === 0
+                ? t('listItem.photosChoose')
+                : photosLeft === 0
+                  ? t('listItem.photosFull')
+                  : t('listItem.photosAddMore', { count: photosLeft })}
             </button>
 
+            {/* Сколько уже есть — видно всегда, а не только когда упрёшься. */}
+            {photos.length > 0 && (
+              <p className="form-hint" aria-live="polite">
+                {t('listItem.photosCounter', { count: photos.length, max: MAX_PHOTOS })}
+                {photosLeft === 0 && <> {t('listItem.photosFullNote')}</>}
+              </p>
+            )}
+
+            {/* Отказ — здесь же, поимённо и с причиной. Раньше он уезжал в
+                шапку формы, за несколько экранов от фотографий. */}
+            {photoNotice.length > 0 && (
+              <ul className="form-notice" aria-live="polite">
+                {photoNotice.map((line, i) => <li key={i}>{line}</li>)}
+              </ul>
+            )}
+
             {photoPreviews.length > 0 && (
-              <div className="photo-grid" style={{ marginTop: '12px' }}>
+              <div className="photo-grid" style={{ marginTop: 'var(--space-3)' }}>
                 {photoPreviews.map((src, i) => (
                   <div key={i} style={{ position: 'relative' }}>
                     <img src={src} className="photo-thumb" alt="" />
@@ -551,9 +449,9 @@ export default function ListItem() {
                       aria-label={t('listItem.deletePhoto')}
                       style={{
                         position: 'absolute', top: '2px', right: '2px',
-                        background: 'rgba(0,0,0,0.65)', color: '#fff',
+                        background: 'rgba(18,20,23,0.7)', color: 'var(--text-on-dark)',
                         border: 'none', borderRadius: '50%',
-                        width: '20px', height: '20px', fontSize: '13px',
+                        width: '24px', height: '24px', fontSize: '14px',
                         cursor: 'pointer', display: 'flex',
                         alignItems: 'center', justifyContent: 'center',
                         lineHeight: 1,
@@ -567,16 +465,220 @@ export default function ListItem() {
             )}
           </div>
 
-          {/* Submit */}
+          {/* Title */}
+          <div className="form-group">
+            <label htmlFor="li-title">{t('listItem.titleLabel')}</label>
+            <input
+              id="li-title"
+              value={form.title}
+              onChange={set('title')}
+              placeholder={t('listItem.titlePlaceholder')}
+              required
+              disabled={isLocked}
+            />
+          </div>
+
+          {/* Category */}
+          <div className="form-group">
+            <label htmlFor="li-category">{t('listItem.categoryLabel')}</label>
+            <select id="li-category" value={form.category} onChange={set('category')} disabled={isLocked}>
+              {CATEGORIES.map(c => (
+                <option key={c.value} value={c.value}>{t(c.labelKey)}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Price per day */}
+          <div className="form-group">
+            <label htmlFor="li-price">{t('listItem.pricePerDayLabel')}</label>
+            <input
+              id="li-price"
+              type="number"
+              min="0.50"
+              step="0.50"
+              value={form.price_per_day}
+              onChange={set('price_per_day')}
+              placeholder="10.00"
+              required
+              disabled={isLocked}
+            />
+            {form.category && (
+              <p className="form-hint">{t(categoryPriceHintKey(form.category) ?? '')}</p>
+            )}
+          </div>
+
+          {/* Позиция — одно нажатие. Кнопка называет ОДНО состояние, а не
+              оба сразу: до 15.08 строка словаря была
+              «✓ Position définie / 📍 Ma position», и человек не мог
+              понять, сработало у него или нет. */}
+          <div className="form-group">
+            <button
+              type="button"
+              onClick={getLocation}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', minHeight: '44px' }}
+              disabled={geoLoading || isLocked}
+            >
+              <svg width="15" height="15" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M7 1C4.79 1 3 2.79 3 5c0 3 4 8 4 8s4-5 4-8c0-2.21-1.79-4-4-4z" stroke="currentColor" strokeWidth="1.3"/>
+                <circle cx="7" cy="5" r="1.5" fill="currentColor"/>
+              </svg>
+              {geoLoading ? t('common.loading') : lat !== null ? t('listItem.positionSet') : t('listItem.setPosition')}
+            </button>
+            {lat !== null
+              ? <p className="form-hint">{lat.toFixed(4)}, {lng?.toFixed(4)}</p>
+              : <p className="form-hint">{t('listItem.positionMissing')}</p>}
+          </div>
+
+          {/* Всё необязательное — за раскрытием. Нативный <details>, а не
+              своя реализация: работает с клавиатуры и с диктором без
+              единой строки JS, и это не модальное окно. */}
+          <details className="form-details">
+            <summary>
+              <svg className="form-details-caret" width="9" height="9" viewBox="0 0 9 9" fill="none" aria-hidden="true">
+                <path d="M2.5 1L6.5 4.5L2.5 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {t('listItem.detailsSummary')}
+              <span className="form-details-hint">{t('listItem.detailsHint')}</span>
+            </summary>
+
+            <div className="form-group">
+              <label htmlFor="li-condition">{t('listItem.conditionLabel')}</label>
+              <select id="li-condition" value={form.condition} onChange={set('condition')} disabled={isLocked}>
+                {CONDITIONS.map(c => (
+                  <option key={c.value} value={c.value}>{t(c.labelKey)}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="li-description">{t('form.description')}</label>
+              <textarea
+                id="li-description"
+                value={form.description}
+                onChange={set('description')}
+                placeholder={t('listItem.descriptionHint')}
+                rows={3}
+                disabled={isLocked}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="li-address">{t('listItem.addressLabel')}</label>
+              <input
+                id="li-address"
+                value={form.address}
+                onChange={set('address')}
+                disabled={isLocked}
+              />
+            </div>
+
+            {/* Залог: подсказка стоит ПОДПИСЬЮ, а не в поле. Раньше
+                «Calculée automatiquement à 20% de la valeur» лежало
+                плейсхолдером — то есть текст занимал место, где ждут
+                число, и понять, заполнено оно или нет, было нельзя. */}
+            <div className="form-group">
+              <label htmlFor="li-value">{t('listItem.estimatedValueLabel')}</label>
+              <input
+                id="li-value"
+                type="number"
+                value={estimatedValue}
+                onChange={e => handleValueChange(e.target.value)}
+                min="0"
+                disabled={isLocked}
+              />
+              <p className="form-hint">{t('listItem.depositHint')}</p>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="li-deposit">
+                {t('listItem.depositLabel')}{' '}
+                <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{t('common.refundableAtReturn')}</span>
+              </label>
+              <input
+                id="li-deposit"
+                type="number"
+                min="0"
+                step="1"
+                value={form.deposit}
+                onChange={set('deposit')}
+                disabled={isLocked}
+              />
+            </div>
+
+            {/* Тарифы на срок необязательны: пустое поле означает «такого
+                тарифа нет», и счёт идёт по дневной цене. Подсказка про
+                общую сумму не случайна — без неё человек вводит цену за
+                день внутри пакета, а не за весь пакет. */}
+            {/* auto-fit, а не жёсткие 1fr 1fr: на 390px две колонки резали
+                подсказки до «prix total des 3 jc». Сетка сама схлопывается
+                в одну колонку, без брейкпоинта. */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-4)' }}>
+              <div className="form-group">
+                <label htmlFor="li-p3">
+                  {t('listItem.package3DaysLabel')}{' '}
+                  <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{t('common.optional')}</span>
+                </label>
+                <input
+                  id="li-p3"
+                  type="number"
+                  min="0.50"
+                  step="0.50"
+                  value={form.price_3days}
+                  onChange={set('price_3days')}
+                  placeholder={t('listItem.package3DaysHint')}
+                  disabled={isLocked}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="li-pw">
+                  {t('listItem.packageWeekLabel')}{' '}
+                  <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{t('common.optional')}</span>
+                </label>
+                <input
+                  id="li-pw"
+                  type="number"
+                  min="0.50"
+                  step="0.50"
+                  value={form.price_week}
+                  onChange={set('price_week')}
+                  placeholder={t('listItem.packageWeekHint')}
+                  disabled={isLocked}
+                />
+              </div>
+            </div>
+            {tierHint && <p className="form-hint">{tierHint}</p>}
+
+            {/* Просрочка. Платформа её НЕ считает и НЕ удерживает — это
+                цифра, которую владелец объявляет заранее, чтобы при
+                встрече не спорить. */}
+            <div className="form-group">
+              <label htmlFor="li-late">
+                {t('listItem.lateFeeLabel')}{' '}
+                <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{t('common.optional')}</span>
+              </label>
+              <input
+                id="li-late"
+                type="number"
+                min="0.50"
+                step="0.50"
+                value={form.late_fee_per_day}
+                onChange={set('late_fee_per_day')}
+                disabled={isLocked}
+              />
+              <p className="form-hint">{t('listItem.lateFeeNote')}</p>
+            </div>
+          </details>
+
           <button
             type="submit"
             className="btn btn-primary"
-            style={{ width: '100%', marginTop: '8px', minHeight: '44px' }}
+            style={{ width: '100%', marginTop: 'var(--space-5)', minHeight: '48px' }}
             disabled={isLocked}
           >
             {uploading
               ? photos.length > 0
-                ? `Envoi photo ${uploadProgress}/${photos.length}…`
+                ? t('listItem.uploadingPhoto', { done: uploadProgress, total: photos.length })
                 : t('publishing')
               : t('publishListing')}
           </button>

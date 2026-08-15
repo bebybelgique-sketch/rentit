@@ -43,6 +43,20 @@ export const collectUsedKeys = () => {
 
 const get = (o, path) => path.split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
 
+// Множественное число i18next хранит суффиксами: `photosLeft_one`,
+// `photosLeft_other`. В коде при этом зовут БАЗОВОЕ имя —
+// `t('photosLeft', { count })`, — и суффикс подставляет сама библиотека.
+//
+// Первая версия этой проверки требовала точного совпадения и потому
+// объявляла такие ключи пропавшими. Хуже, чем бесполезно: она толкала
+// писать `t(count > 1 ? 'x_other' : 'x_one')` — то есть вручную повторять
+// правила языка, которых в нидерландском и французском не две штуки.
+// Проверка обязана понимать идиому библиотеки, а не гнуть код под себя.
+const PLURAL_SUFFIXES = ['zero', 'one', 'two', 'few', 'many', 'other'];
+
+const pluralFormsOf = (dict, key) =>
+  PLURAL_SUFFIXES.filter((s) => typeof get(dict, `${key}_${s}`) === 'string');
+
 // Возвращает [{ key, where, missing: ['fr', …], reason }], пустой массив = чисто.
 export const findMissingKeys = () => {
   const used = collectUsedKeys();
@@ -54,12 +68,38 @@ export const findMissingKeys = () => {
   for (const [key, where] of [...used].sort()) {
     const missing = [];
     let reason = 'ключа нет';
+    const pluralSets = {};
+
     for (const [lang, dict] of Object.entries(dicts)) {
       const value = get(dict, key);
       if (typeof value === 'string') continue;
+
+      // Ключ может быть множественным: сам он строкой не лежит, но лежат
+      // его формы. `_other` обязательна — на неё i18next откатывается.
+      const forms = pluralFormsOf(dict, key);
+      if (forms.includes('other')) { pluralSets[lang] = forms.join('/'); continue; }
+      if (forms.length) {
+        missing.push(lang);
+        reason = `есть формы ${forms.join('/')}, но нет обязательной _other`;
+        continue;
+      }
+
       missing.push(lang);
       if (value !== undefined) reason = 'ключ есть, но это объект — i18next напечатает служебную фразу';
     }
+
+    // Набор форм обязан совпадать между языками: если во французском есть
+    // `_one`, а в нидерландском нет, единственное число молча отвалится на
+    // `_other` — и текст будет грамматически неверным ровно в одном языке.
+    const sets = [...new Set(Object.values(pluralSets))];
+    if (!missing.length && sets.length > 1) {
+      problems.push({
+        key, where, missing: Object.keys(pluralSets),
+        reason: `формы множественного числа расходятся: ${Object.entries(pluralSets).map(([l, f]) => `${l}=${f}`).join(', ')}`,
+      });
+      continue;
+    }
+
     if (missing.length) problems.push({ key, where, missing, reason });
   }
   return problems;
