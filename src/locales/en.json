@@ -111,7 +111,7 @@
     "packageWarning": "Attention: {{packages}} will never apply. Renters always pay the lowest rate.",
     "titlePlaceholder": "e.g. drill, pressure washer",
     "essentialsTitle": "The essentials",
-    "detailsSummary": "Details and rates",
+    "detailsSummary": "Quantity, details and rates",
     "detailsHint": "Optional — you can fill these in after publishing.",
     "photosFirstLabel": "Photos of the tool",
     "positionSet": "Position saved",
@@ -131,7 +131,15 @@
     "photosFull": "Maximum reached",
     "photosCounter_one": "1 photo out of {{max}}.",
     "photosCounter_other": "{{count}} photos out of {{max}}.",
-    "photosFullNote": "To swap one, remove it first with the cross."
+    "photosFullNote": "To swap one, remove it first with the cross.",
+    "quantityLabel": "Number of identical units",
+    "quantityHint": "Leave 1 if you only have one. A rental shop with twelve identical chairs enters 12: they are booked separately, and the listing only disappears once every unit is taken.",
+    "noticeLabel": "Advance notice (days)",
+    "noticeHint": "0 = can be booked for today. 2 = renters must book at least two days ahead.",
+    "bufferLabel": "Turnaround after return (days)",
+    "bufferHint": "Days the tool stays unavailable after a rental — time to clean it or let it dry.",
+    "blackoutsLater": "Holidays, repairs, any period you do not rent out: set that after publishing, under \"Edit\".",
+    "numberRange": "{{label}}: enter a whole number between {{min}} and {{max}}."
   },
   "listYourTool": "List your tool",
   "loggingIn": "Logging in…",
@@ -398,7 +406,14 @@
     "messagePlaceholder": "Briefly explain your intended use...",
     "sendRequest": "Send rental request",
     "shareExperience": "Share your experience...",
-    "submitReview": "Submit review"
+    "submitReview": "Submit review",
+    "units_one": "1 unit",
+    "units_other": "{{count}} units",
+    "dayBooked": "Already booked",
+    "dayBlocked": "Unavailable",
+    "dayTooSoon": "Too soon — the owner asks for advance notice",
+    "dayPast": "Past date",
+    "noticeHint": "This owner asks for advance notice: the first bookable date is {{date}}."
   },
   "editItem": {
     "loginToEdit": "Log in to edit a tool",
@@ -499,5 +514,18 @@
     "save": "Save the password",
     "saving": "Saving…"
   },
-  "forgotPassword": "Forgot password?"
+  "forgotPassword": "Forgot password?",
+  "blackouts": {
+    "title": "Unavailable periods",
+    "intro": "Your holidays or a repair, without taking the listing down. Renters see those days as unavailable, without knowing why.",
+    "empty": "No period saved — the tool is offered all year round.",
+    "from": "From",
+    "to": "To",
+    "noteLabel": "Note",
+    "notePrivate": "Visible to you only. The renter only sees that those days are not available.",
+    "add": "Add period",
+    "remove": "Remove",
+    "datesRequired": "Enter both dates.",
+    "endBeforeStart": "The end date cannot be before the start date."
+  }
 }

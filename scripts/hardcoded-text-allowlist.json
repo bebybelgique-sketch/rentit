@@ -9,6 +9,5 @@
   "src/pages/Admin.tsx :: ✓ Phone",
   "src/pages/Home.tsx :: OpenStreetMap",
   "src/pages/Home.tsx :: s.replace(/&/g,'&amp;').replace(/",
-  "src/pages/ItemDetail.tsx :: = r.start_date && ds",
   "src/pages/ItemDetail.tsx :: = startDate && ds"
 ]

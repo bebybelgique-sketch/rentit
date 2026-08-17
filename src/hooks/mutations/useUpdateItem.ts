@@ -29,6 +29,9 @@ export type ItemUpdate = Partial<{
   lng: number | null;
   address: string | null;
   available: boolean;
+  quantity: number;
+  buffer_days: number;
+  min_notice_days: number;
 }>;
 
 interface UpdateItemParams {
@@ -74,6 +77,13 @@ const updateItemById = async ({ id, updates, userId }: UpdateItemParams): Promis
     price_3days: data.price_3days ?? null,
     price_week: data.price_week ?? null,
     late_fee_per_day: data.late_fee_per_day ?? null,
+    // Результат кладётся в кэш через setQueryData и ЗАМЕЩАЕТ прежний
+    // объект: пропустить поле здесь — значит показать в форме «1 единица»
+    // поверх только что сохранённых двенадцати. Тот же класс, что чинили
+    // в PR #19.
+    quantity: data.quantity ?? 1,
+    buffer_days: data.buffer_days ?? 0,
+    min_notice_days: data.min_notice_days ?? 0,
   };
 
   return mappedItem;

@@ -28,6 +28,12 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     price_3days: null,
     price_week: 60,
     late_fee_per_day: 10,
+    // Тот же класс, что у полей выше: результат ЗАМЕЩАЕТ объект в кэше, и
+    // потерянное здесь количество показалось бы в форме как «1 единица»
+    // поверх только что сохранённых двенадцати.
+    quantity: 12,
+    buffer_days: 1,
+    min_notice_days: 2,
   },
   expectedItem: {
     id: 'item-1',
@@ -48,6 +54,9 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     price_3days: null,
     price_week: 60,
     late_fee_per_day: 10,
+    quantity: 12,
+    buffer_days: 1,
+    min_notice_days: 2,
   },
   mockError: new Error('Update item failed'),
 }));

@@ -27,6 +27,13 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     price_3days: null,
     price_week: 60,
     late_fee_per_day: null,
+    // Прокат с двенадцатью одинаковыми стульями. Значения намеренно НЕ
+    // умолчания: пропуск поля в отображении выглядел бы как «одна единица»,
+    // и владелец увидел бы в форме 1 вместо 12. Ровно этот класс чинили
+    // в PR #19.
+    quantity: 12,
+    buffer_days: 1,
+    min_notice_days: 2,
   },
   expectedItem: {
     id: 'item-1',
@@ -49,6 +56,9 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     price_3days: null,
     price_week: 60,
     late_fee_per_day: null,
+    quantity: 12,
+    buffer_days: 1,
+    min_notice_days: 2,
   },
   mockError: new Error('Fetch item failed'),
 }));

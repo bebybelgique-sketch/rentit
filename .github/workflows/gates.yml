@@ -61,6 +61,9 @@ jobs:
       - name: Текст мимо словарей (храповик)
         run: node scripts/check-hardcoded-text.mjs
 
+      - name: Занятость считается в одном месте
+        run: node scripts/check-availability-single-source.mjs
+
       # Отдельно от vitest НАМЕРЕННО: vitest не зовёт tsc. Ровно на этом
       # уже обжигались — локальный прогон тестов был зелёным, а сборка на
       # Vercel возвращала 2 на implicit any в тестовом файле.

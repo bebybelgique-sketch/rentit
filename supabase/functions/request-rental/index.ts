@@ -4,6 +4,8 @@ import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
 import { computeRentalPrice } from '../_shared/pricing.ts'
 import { notifyRental } from '../_shared/notify.ts'
+import { checkRangeAvailable } from '../_shared/availability.ts'
+import type { RpcCaller } from '../_shared/availability.ts'
 
 const supabase = createSupabaseServiceClient()
 
@@ -36,21 +38,19 @@ serve(async (req) => {
     if (end.getTime() < start.getTime()) {
       return new Response(JSON.stringify({ error: 'End date must be after or equal to start date' }), { status: 400, headers: CORS })
     }
-    // Сравниваем ДАТУ с ДАТОЙ, а не дату с моментом.
+    // Проверки «дата не в прошлом» здесь больше нет — не потому, что она
+    // не нужна, а потому, что она стала частным случаем другой.
     //
-    // Было `start.getTime() < Date.now()` — и это резало весь текущий день:
-    // `new Date('2026-08-12')` разбирается как полночь UTC, а `Date.now()`
-    // в момент проверки равнялся 18:22 UTC, поэтому бронь на СЕГОДНЯ
-    // отклонялась всегда. «Нужна дрель сегодня после обеда» — самый частый
-    // случай проката инструмента — не проходил вовсе.
+    // Самая ранняя допустимая дата у вещи — `current_date + min_notice_days`
+    // (функция `item_earliest_start`, миграция 20260817000022). При нулевом
+    // сроке предупреждения это ровно «не раньше сегодня», то есть прежнее
+    // правило целиком. Держать рядом две проверки одного и того же — то, из
+    // чего и выросли семь копий расчёта занятости.
     //
-    // Строки вида YYYY-MM-DD сравниваются лексикографически в том же
-    // порядке, что и даты, поэтому сравнение строк здесь и точнее, и
-    // дешевле разбора в Date.
-    const todayUTC = new Date().toISOString().slice(0, 10)
-    if (start_date < todayUTC) {
-      return new Response(JSON.stringify({ error: 'Start date cannot be in the past' }), { status: 400, headers: CORS })
-    }
+    // Что здесь ОСТАЛОСЬ и почему: разбор дат и порядок концов проверяются
+    // выше, до обращения к базе. И сравнение идёт строками YYYY-MM-DD, а не
+    // датами: 12.08 на сравнении `Date` с моментом резался весь текущий
+    // день, и «нужна дрель сегодня после обеда» не проходило вовсе.
 
     // Fetch item
     const { data: item, error: itemErr } = await supabase
@@ -66,30 +66,35 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Item is not available' }), { status: 400, headers: CORS })
     }
 
-    // Check no blocking conflict (confirmed/active/pending_payment)
-    const { data: conflict } = await supabase
-      .from('bookings')
-      .select('id')
-      .eq('item_id', item_id)
-      .in('status', ['pending_payment', 'confirmed', 'active'])
-      .lte('start_date', end_date)
-      .gte('end_date', start_date)
-      .maybeSingle()
-
-    if (conflict) {
-      return new Response(JSON.stringify({ error: 'Item is not available for selected dates' }), { status: 409, headers: CORS })
+    // Свободны ли даты. Раньше здесь стоял свой запрос с
+    // `.lte('start_date', …).gte('end_date', …)` — пятое место, где даты
+    // пересекались руками, и оно ничего не знало ни о количестве единиц,
+    // ни о перерывах владельца. Теперь тот же вопрос, что задаёт
+    // календарь на странице вещи, и тем же вызовом.
+    const rpc: RpcCaller = (fn, args) => supabase.rpc(fn, args)
+    const problem = await checkRangeAvailable(rpc, item_id, start_date, end_date)
+    if (problem?.code === 'too_soon') {
+      return new Response(
+        JSON.stringify({ error: 'Item requires advance notice', earliest_start: problem.earliestStart }),
+        { status: 409, headers: CORS },
+      )
+    }
+    if (problem) {
+      return new Response(
+        JSON.stringify({ error: 'Item is not available for selected dates', day: problem.day }),
+        { status: 409, headers: CORS },
+      )
     }
 
-    // Prevent duplicate pending_approval from same renter
-    const { data: duplicate } = await supabase
-      .from('bookings')
-      .select('id')
-      .eq('item_id', item_id)
-      .eq('renter_id', user.id)
-      .eq('status', 'pending_approval')
-      .lte('start_date', end_date)
-      .gte('end_date', start_date)
-      .maybeSingle()
+    // Повторная заявка того же человека на пересекающиеся даты. Правило
+    // про арендатора, а не про вещь, но пересечение считает та же
+    // сторона — база (см. миграцию 20260817000022, раздел 9).
+    const { data: duplicate } = await supabase.rpc('renter_has_pending_request', {
+      p_item_id: item_id,
+      p_renter_id: user.id,
+      p_start: start_date,
+      p_end: end_date,
+    })
 
     if (duplicate) {
       return new Response(JSON.stringify({ error: 'You already have a pending request for these dates' }), { status: 409, headers: CORS })

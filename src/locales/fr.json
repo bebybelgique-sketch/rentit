@@ -111,7 +111,7 @@
     "packageWarning": "Attention : {{packages}} ne s'appliquera jamais. Le locataire paiera toujours le tarif le moins cher.",
     "titlePlaceholder": "ex. Perceuse, nettoyeur HP",
     "essentialsTitle": "L'essentiel",
-    "detailsSummary": "Détails et tarifs",
+    "detailsSummary": "Quantité, détails et tarifs",
     "detailsHint": "Facultatif — vous pourrez les compléter après la publication.",
     "photosFirstLabel": "Photos de l'outil",
     "positionSet": "Position enregistrée",
@@ -131,7 +131,15 @@
     "photosFull": "Maximum atteint",
     "photosCounter_one": "1 photo sur {{max}}.",
     "photosCounter_other": "{{count}} photos sur {{max}}.",
-    "photosFullNote": "Pour en changer une, supprimez-la d'abord avec la croix."
+    "photosFullNote": "Pour en changer une, supprimez-la d'abord avec la croix.",
+    "quantityLabel": "Nombre d'exemplaires identiques",
+    "quantityHint": "Laissez 1 si vous n'en avez qu'un. Un loueur qui possède douze chaises identiques met 12 : elles se réservent séparément, et l'annonce ne disparaît que lorsque tout est pris.",
+    "noticeLabel": "Délai de prévenance (jours)",
+    "noticeHint": "0 = réservable pour aujourd'hui. 2 = le locataire doit s'y prendre au moins deux jours à l'avance.",
+    "bufferLabel": "Battement après retour (jours)",
+    "bufferHint": "Jours pendant lesquels l'outil reste indisponible après une location — le temps de le nettoyer ou de le laisser sécher.",
+    "blackoutsLater": "Vacances, réparation, période où vous ne louez pas : cela se règle après la publication, sur « Modifier ».",
+    "numberRange": "{{label}} : indiquez un nombre entier entre {{min}} et {{max}}."
   },
   "listYourTool": "Déposer votre outil",
   "loggingIn": "Connexion...",
@@ -398,7 +406,14 @@
     "messagePlaceholder": "Expliquez brièvement votre usage prévu...",
     "sendRequest": "Envoyer une demande de réservation",
     "shareExperience": "Partagez votre expérience...",
-    "submitReview": "Envoyer l'avis"
+    "submitReview": "Envoyer l'avis",
+    "units_one": "1 exemplaire",
+    "units_other": "{{count}} exemplaires",
+    "dayBooked": "Déjà réservé",
+    "dayBlocked": "Indisponible",
+    "dayTooSoon": "Trop tôt — le propriétaire demande d'être prévenu à l'avance",
+    "dayPast": "Date passée",
+    "noticeHint": "Ce propriétaire demande d'être prévenu à l'avance : première date réservable, le {{date}}."
   },
   "editItem": {
     "loginToEdit": "Se connecter pour modifier un outil",
@@ -499,5 +514,18 @@
     "save": "Enregistrer le mot de passe",
     "saving": "Enregistrement…"
   },
-  "forgotPassword": "Mot de passe oublié ?"
+  "forgotPassword": "Mot de passe oublié ?",
+  "blackouts": {
+    "title": "Périodes d'indisponibilité",
+    "intro": "Vos vacances ou une réparation, sans retirer l'annonce. Le locataire voit ces jours comme indisponibles, sans savoir pourquoi.",
+    "empty": "Aucune période enregistrée — l'outil est proposé toute l'année.",
+    "from": "Du",
+    "to": "Au",
+    "noteLabel": "Note",
+    "notePrivate": "Visible par vous seul. Le locataire voit seulement que ces jours ne sont pas disponibles.",
+    "add": "Ajouter la période",
+    "remove": "Retirer",
+    "datesRequired": "Indiquez les deux dates.",
+    "endBeforeStart": "La date de fin ne peut pas précéder la date de début."
+  }
 }
