@@ -426,7 +426,10 @@
     "seeMyRentals": "Voir mes locations →",
     "contactViaBooking": "Prenez contact via la demande de réservation ci-dessous",
     "currentlyUnavailable": "Cet outil est actuellement indisponible",
-    "cashAtHandover": "Aucun paiement en ligne — le règlement se fait en espèces au propriétaire lors de la remise"
+    "cashAtHandover": "Aucun paiement en ligne — le règlement se fait en espèces au propriétaire lors de la remise",
+    "timesRented_one": "Loué une fois",
+    "timesRented_other": "Loué {{count}} fois",
+    "lastRented": "dernière fois en {{month}}"
   },
   "editItem": {
     "loginToEdit": "Se connecter pour modifier un outil",

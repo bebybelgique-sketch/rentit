@@ -51,6 +51,12 @@ interface Item {
   } | null
 }
 
+// История вещи: сколько раз её уже брали и когда в последний раз. Считает
+// база (`item_history`, миграция 20260817000023) — политики на bookings
+// постороннему чужих броней не показывают, а доверие строится из данных,
+// которые УЖЕ есть: отзыв человек пишет редко, а факт сдачи лежит сам.
+interface ItemHistory { times_rented: number; last_rented: string | null }
+
 // Здесь жила функция `isBooked(date, ranges)` — пятое место в продукте,
 // где даты пересекались руками, и единственное в браузере. С появлением
 // количества единиц она стала прямо неверной: «бронь пересекается» больше
@@ -69,6 +75,7 @@ export default function ItemDetail() {
   const [item, setItem] = useState<Item | null>(null)
   const [loading, setLoading] = useState(true)
   const [calendar, setCalendar] = useState<ItemCalendar | null>(null)
+  const [history, setHistory] = useState<ItemHistory | null>(null)
   const [photoIdx, setPhotoIdx] = useState(0)
   const [shared, setShared] = useState(false)
 
@@ -94,7 +101,7 @@ export default function ItemDetail() {
 
   const fetchItem = async () => {
     try {
-      const [{ data: itemData }, calendarData, { data: reviewData }] = await Promise.all([
+      const [{ data: itemData }, calendarData, { data: reviewData }, { data: historyData }] = await Promise.all([
         supabase
           .from('items')
           .select('*, users!owner_id(id, full_name, avatar_url, phone_verified, rating_as_owner, is_pro)')
@@ -109,10 +116,12 @@ export default function ItemDetail() {
           .eq('item_id', itemId!)
           .eq('review_type', 'item')
           .order('created_at', { ascending: false }),
+        supabase.rpc('item_history', { p_item_id: itemId }),
       ])
       if (itemData) setItem(itemData as unknown as Item)
       setCalendar(calendarData)
       setReviews(reviewData || [])
+      setHistory((historyData as ItemHistory) ?? null)
       if (user && itemData) checkCanReview(itemData.id, itemData.owner_id)
     } catch (err) {
       console.error(err)
@@ -349,6 +358,25 @@ export default function ItemDetail() {
                 )}
                 {!item.available && <span className="tag tag-red">{t('itemDetail.unavailable')}</span>}
               </div>
+
+              {/* История вещи. Появляется ТОЛЬКО когда она есть: «сдавалась
+                  0 раз» на пустой площадке — витрина собственной пустоты, а
+                  не доверие. Ровно поэтому же не показываем «0 avis».
+                  Отзыв человек пишет редко; факт сдачи лежит в базе сам. */}
+              {history && history.times_rented > 0 && (
+                <p style={{ marginTop: 'var(--space-2)', color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
+                  {t('itemDetail.timesRented', { count: history.times_rented })}
+                  {history.last_rented && (
+                    <>
+                      {' · '}
+                      {t('itemDetail.lastRented', {
+                        month: new Date(history.last_rented + 'T00:00:00')
+                          .toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' }),
+                      })}
+                    </>
+                  )}
+                </p>
+              )}
             </div>
             {/* На узком экране блок переносится под заголовок, и выравнивание
                 по правому краю разваливало его посреди пустого места. */}

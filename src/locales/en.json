@@ -426,7 +426,10 @@
     "seeMyRentals": "See my rentals →",
     "contactViaBooking": "Get in touch through the booking request below",
     "currentlyUnavailable": "This tool is currently unavailable",
-    "cashAtHandover": "No online payment — you pay the owner in cash at handover"
+    "cashAtHandover": "No online payment — you pay the owner in cash at handover",
+    "timesRented_one": "Rented once",
+    "timesRented_other": "Rented {{count}} times",
+    "lastRented": "last time in {{month}}"
   },
   "editItem": {
     "loginToEdit": "Log in to edit a tool",
