@@ -426,7 +426,10 @@
     "seeMyRentals": "Mijn huurcontracten bekijken →",
     "contactViaBooking": "Neem contact op via de reservatieaanvraag hieronder",
     "currentlyUnavailable": "Dit gereedschap is momenteel niet beschikbaar",
-    "cashAtHandover": "Geen online betaling — u betaalt de eigenaar cash bij de overhandiging"
+    "cashAtHandover": "Geen online betaling — u betaalt de eigenaar cash bij de overhandiging",
+    "timesRented_one": "Eén keer verhuurd",
+    "timesRented_other": "{{count}} keer verhuurd",
+    "lastRented": "laatst in {{month}}"
   },
   "editItem": {
     "loginToEdit": "Log in om gereedschap te bewerken",
