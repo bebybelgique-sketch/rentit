@@ -6,6 +6,10 @@ import { useTranslation } from 'react-i18next'
 import { categoryLabelKey, conditionLabelKey } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
 import { computeRentalPrice } from '../domain/pricing'
+import {
+  loadItemCalendar, toISODate, daysBetween, firstUnavailableDay, isTooSoon, isSelectable,
+} from '../domain/availability'
+import type { ItemCalendar } from '../domain/availability'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
 // power_tools был 🔌, а на витрине ⚡ — одна и та же категория с двумя
@@ -34,6 +38,9 @@ interface Item {
   lng: number | null
   address: string | null
   available: boolean
+  // Сколько одинаковых единиц. Прокатчик с двенадцатью стульями не станет
+  // заводить двенадцать объявлений — без этого поля он просто не заходит.
+  quantity: number
   users: {
     id: string
     full_name: string
@@ -44,28 +51,24 @@ interface Item {
   } | null
 }
 
-interface BookedRange { start_date: string; end_date: string }
-
-function addDays(date: Date, n: number): Date {
-  const d = new Date(date); d.setDate(d.getDate() + n); return d
-}
-function toISO(d: Date) { return d.toISOString().slice(0, 10) }
-function fromISO(s: string) { return new Date(s + 'T00:00:00') }
-
-function isBooked(date: Date, ranges: BookedRange[]) {
-  const ds = toISO(date)
-  return ranges.some(r => ds >= r.start_date && ds <= r.end_date)
-}
+// Здесь жила функция `isBooked(date, ranges)` — пятое место в продукте,
+// где даты пересекались руками, и единственное в браузере. С появлением
+// количества единиц она стала прямо неверной: «бронь пересекается» больше
+// не значит «занято», потому что у вещи может быть три одинаковых единицы.
+//
+// Теперь занятость считает база (`unavailable_days`, миграция
+// 20260817000022), а страница получает готовый список дней. Календарь
+// ничего не выводит — он только рисует.
 
 export default function ItemDetail() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { id: itemId } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user, accessToken } = useAuth()
 
   const [item, setItem] = useState<Item | null>(null)
   const [loading, setLoading] = useState(true)
-  const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([])
+  const [calendar, setCalendar] = useState<ItemCalendar | null>(null)
   const [photoIdx, setPhotoIdx] = useState(0)
   const [shared, setShared] = useState(false)
 
@@ -91,13 +94,15 @@ export default function ItemDetail() {
 
   const fetchItem = async () => {
     try {
-      const [{ data: itemData }, { data: bookedData }, { data: reviewData }] = await Promise.all([
+      const [{ data: itemData }, calendarData, { data: reviewData }] = await Promise.all([
         supabase
           .from('items')
           .select('*, users!owner_id(id, full_name, avatar_url, phone_verified, rating_as_owner, is_pro)')
           .eq('id', itemId!)
           .single(),
-        supabase.rpc('get_booked_dates', { p_item_id: itemId }).then(r => ({ data: r.data ?? [], error: r.error })),
+        // Один вызов вместо прежнего get_booked_dates: недоступные дни,
+        // самый ранний старт и количество единиц приходят вместе.
+        loadItemCalendar(itemId!),
         supabase
           .from('reviews')
           .select('*, users!from_user_id(full_name, avatar_url)')
@@ -106,7 +111,7 @@ export default function ItemDetail() {
           .order('created_at', { ascending: false }),
       ])
       if (itemData) setItem(itemData as unknown as Item)
-      setBookedRanges(bookedData || [])
+      setCalendar(calendarData)
       setReviews(reviewData || [])
       if (user && itemData) checkCanReview(itemData.id, itemData.owner_id)
     } catch (err) {
@@ -138,30 +143,24 @@ export default function ItemDetail() {
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay()
 
+  const todayISO = toISODate(new Date())
+
   const handleDayClick = (day: number) => {
-    const d = new Date(calMonth.year, calMonth.month, day)
-    if (d < new Date(new Date().toDateString())) return
-    if (isBooked(d, bookedRanges)) return
-    const ds = toISO(d)
+    const ds = toISODate(new Date(calMonth.year, calMonth.month, day))
+    if (!calendar || !isSelectable(calendar, ds, todayISO)) return
     if (!startDate || (startDate && endDate)) {
       setStartDate(ds); setEndDate('')
     } else if (ds < startDate) {
       setStartDate(ds); setEndDate('')
     } else {
-      let cur = fromISO(startDate)
-      let hasConflict = false
-      while (toISO(cur) <= ds) {
-        if (isBooked(cur, bookedRanges)) { hasConflict = true; break }
-        cur = addDays(cur, 1)
-      }
-      if (!hasConflict) setEndDate(ds)
-      else { setStartDate(ds); setEndDate('') }
+      // Внутри выбранного отрезка не должно быть недоступных дней. Проверку
+      // делает общий модуль — здесь её больше нет.
+      if (firstUnavailableDay(calendar, startDate, ds)) { setStartDate(ds); setEndDate('') }
+      else setEndDate(ds)
     }
   }
 
-  const totalDays = startDate && endDate
-    ? Math.round((fromISO(endDate).getTime() - fromISO(startDate).getTime()) / 86400000) + 1
-    : 0
+  const totalDays = startDate && endDate ? daysBetween(startDate, endDate).length : 0
 
   const insuranceFee = totalDays > 0 ? INSURANCE_PER_DAY * totalDays : 0
   // Ту же формулу применяет `request-rental`, когда пишет сумму в бронь —
@@ -341,6 +340,11 @@ export default function ItemDetail() {
               <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
                 <span className="tag tag-gray">{t(categoryLabelKey(item.category) ?? '') || item.category}</span>
                 <span className="tag tag-gray">{t(conditionLabelKey(item.condition) ?? '') || item.condition}</span>
+                {/* Количество показываем, только когда единиц больше одной:
+                    «1 единица» на соседской дрели — шум. */}
+                {item.quantity > 1 && (
+                  <span className="tag tag-gray">{t('itemDetail.units', { count: item.quantity })}</span>
+                )}
                 {!item.available && <span className="tag tag-red">{t('itemDetail.unavailable')}</span>}
               </div>
             </div>
@@ -457,9 +461,19 @@ export default function ItemDetail() {
                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '6px' }}>
                       {t('selectDates')}
                     </p>
-                    <p style={{ color: 'var(--muted)', fontSize: '13px', marginBottom: '20px' }}>
+                    <p style={{ color: 'var(--muted)', fontSize: '13px', marginBottom: calendar && calendar.earliestStart > todayISO ? '6px' : '20px' }}>
                       {t('selectDatesHint')}
                     </p>
+                    {/* Срок предупреждения сказан СЛОВАМИ, а не только серыми
+                        клетками: иначе человек видит недоступное начало
+                        месяца и думает, что вещь разобрана. */}
+                    {calendar && calendar.earliestStart > todayISO && (
+                      <p className="form-hint" style={{ marginBottom: '20px' }}>
+                        {t('itemDetail.noticeHint', {
+                          date: new Date(calendar.earliestStart + 'T00:00:00').toLocaleDateString(i18n.language),
+                        })}
+                      </p>
+                    )}
 
                     {/* Calendar nav */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -491,24 +505,44 @@ export default function ItemDetail() {
                       {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
                       {Array.from({ length: daysCount }).map((_, i) => {
                         const day = i + 1
-                        const d = new Date(year, month, day)
-                        const ds = toISO(d)
-                        const past = d < new Date(new Date().toDateString())
-                        const booked = isBooked(d, bookedRanges)
+                        const ds = toISODate(new Date(year, month, day))
+                        const past = ds < todayISO
+                        // Три разные причины, по которым день не берётся, и
+                        // раньше все три выглядели одинаково — «просто не
+                        // нажимается». Теперь у каждой своё объяснение при
+                        // наведении и для диктора.
+                        const reason = calendar?.unavailable.get(ds)
+                        const tooSoon = !past && !!calendar && isTooSoon(calendar, ds)
+                        const off = past || tooSoon || !!reason
                         const isStart = ds === startDate
                         const isEnd = ds === endDate
                         const inRange = startDate && endDate && ds >= startDate && ds <= endDate
-                        const isToday = ds === toISO(new Date())
+                        const isToday = ds === todayISO
+                        const why = reason === 'booked' ? t('itemDetail.dayBooked')
+                          : reason === 'blocked' ? t('itemDetail.dayBlocked')
+                          : tooSoon ? t('itemDetail.dayTooSoon')
+                          : past ? t('itemDetail.dayPast')
+                          : undefined
                         return (
                           <div
                             key={day}
-                            className={`cal-day ${booked || past ? 'booked' : 'available'}${isToday ? ' today' : ''}`}
+                            className={`cal-day ${off ? 'booked' : 'available'}${isToday ? ' today' : ''}`}
+                            title={why}
+                            aria-disabled={off || undefined}
+                            aria-label={why ? `${day} — ${why}` : undefined}
                             style={{
-                              background: isStart || isEnd ? '#080808' : inRange ? 'rgba(173,255,47,0.15)' : booked ? '#fde8ea' : past ? '#f5f5f5' : undefined,
-                              color: isStart || isEnd ? '#F2F0EB' : booked ? 'var(--danger)' : past ? '#ccc' : undefined,
-                              cursor: past || booked ? 'not-allowed' : 'pointer',
+                              background: isStart || isEnd ? '#080808'
+                                : inRange ? 'rgba(173,255,47,0.15)'
+                                : reason === 'booked' ? '#fde8ea'
+                                : past || tooSoon || reason ? '#f5f5f5'
+                                : undefined,
+                              color: isStart || isEnd ? '#F2F0EB'
+                                : reason === 'booked' ? 'var(--danger)'
+                                : past || tooSoon || reason ? '#ccc'
+                                : undefined,
+                              cursor: off ? 'not-allowed' : 'pointer',
                             }}
-                            onClick={() => !past && !booked && handleDayClick(day)}
+                            onClick={() => !off && handleDayClick(day)}
                           >
                             {day}
                           </div>

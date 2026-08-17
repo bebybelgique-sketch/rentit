@@ -9,6 +9,12 @@ import { CATEGORIES, CONDITIONS } from '../domain/catalog';
 import { useUploadImage } from '../hooks/useUploadImage';
 import { supabase } from '../lib/supabase';
 import { ITEM_PHOTOS_BUCKET, itemPhotoPath } from '../lib/itemPhotos';
+import ItemBlackouts from '../components/ItemBlackouts';
+
+// Те же границы, что проверками в базе (миграция 20260817000022).
+const MAX_QUANTITY = 999;
+const MAX_NOTICE_DAYS = 90;
+const MAX_BUFFER_DAYS = 30;
 
 const EditItem: React.FC = () => {
   const { t } = useTranslation();
@@ -35,6 +41,9 @@ const EditItem: React.FC = () => {
     lat: null as number | null,
     lng: null as number | null,
     available: true,
+    quantity: 1,
+    min_notice_days: 0,
+    buffer_days: 0,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -56,6 +65,9 @@ const EditItem: React.FC = () => {
         lat: item.latitude || null,
         lng: item.longitude || null,
         available: item.is_available,
+        quantity: item.quantity ?? 1,
+        min_notice_days: item.min_notice_days ?? 0,
+        buffer_days: item.buffer_days ?? 0,
       });
     }
   }, [item]);
@@ -93,8 +105,30 @@ const EditItem: React.FC = () => {
     }
   };
 
+  // Целые поля доступности. Общий handleChange гонит любое числовое поле
+  // через parseFloat, и пустая строка стала бы NaN — то есть «одна
+  // единица» превратилось бы в мусор при первом же касании.
+  const handleInt = (key: 'quantity' | 'min_notice_days' | 'buffer_days', min: number) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const n = parseInt(e.target.value, 10);
+      setFormData(prev => ({ ...prev, [key]: Number.isInteger(n) ? n : min }));
+    };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Ответ человеку здесь, а не отказом Postgres по-английски. Границы те
+    // же, что проверками в базе.
+    for (const [value, label, min, max] of [
+      [formData.quantity, t('listItem.quantityLabel'), 1, MAX_QUANTITY],
+      [formData.min_notice_days, t('listItem.noticeLabel'), 0, MAX_NOTICE_DAYS],
+      [formData.buffer_days, t('listItem.bufferLabel'), 0, MAX_BUFFER_DAYS],
+    ] as const) {
+      if (!Number.isInteger(value) || value < min || value > max) {
+        alert(t('listItem.numberRange', { label, min, max }));
+        return;
+      }
+    }
 
     try {
       // Колонки `image_url` в таблице `items` нет — снимки лежат в `photos`.
@@ -277,6 +311,57 @@ const EditItem: React.FC = () => {
             </p>
           </div>
 
+          {/* Доступность: количество единиц, срок предупреждения, зазор
+              после возврата. Занятость по ним считает база — правило одно
+              на витрину, календарь и запись брони. */}
+          <div className="form-group">
+            <label htmlFor="quantity">{t('listItem.quantityLabel')}</label>
+            <input
+              id="quantity"
+              name="quantity"
+              type="number"
+              min="1"
+              max={MAX_QUANTITY}
+              step="1"
+              value={formData.quantity}
+              onChange={handleInt('quantity', 1)}
+              style={{ width: '100%' }}
+            />
+            <p className="form-hint">{t('listItem.quantityHint')}</p>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="min_notice_days">{t('listItem.noticeLabel')}</label>
+            <input
+              id="min_notice_days"
+              name="min_notice_days"
+              type="number"
+              min="0"
+              max={MAX_NOTICE_DAYS}
+              step="1"
+              value={formData.min_notice_days}
+              onChange={handleInt('min_notice_days', 0)}
+              style={{ width: '100%' }}
+            />
+            <p className="form-hint">{t('listItem.noticeHint')}</p>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="buffer_days">{t('listItem.bufferLabel')}</label>
+            <input
+              id="buffer_days"
+              name="buffer_days"
+              type="number"
+              min="0"
+              max={MAX_BUFFER_DAYS}
+              step="1"
+              value={formData.buffer_days}
+              onChange={handleInt('buffer_days', 0)}
+              style={{ width: '100%' }}
+            />
+            <p className="form-hint">{t('listItem.bufferHint')}</p>
+          </div>
+
           <div className="form-group">
             <label htmlFor="category">{t('editItem.categoryLabel')}</label>
             <select
@@ -347,6 +432,10 @@ const EditItem: React.FC = () => {
             {updateItemMutation.isPending ? t('editItem.updating') : t('editItem.updateButton')}
           </button>
         </form>
+
+        {/* Вне <form> намеренно: вложенная форма — невалидная разметка, а
+            перерывы сохраняются сами, отдельно от полей вещи. */}
+        <ItemBlackouts itemId={itemId!} />
       </div>
     </div>
   );

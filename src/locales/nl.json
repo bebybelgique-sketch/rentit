@@ -111,7 +111,7 @@
     "packageWarning": "Opgelet: {{packages}} zal nooit van toepassing zijn. Huurders betalen altijd het laagste tarief.",
     "titlePlaceholder": "bv. boormachine, reiniger",
     "essentialsTitle": "Het essentiële",
-    "detailsSummary": "Details en tarieven",
+    "detailsSummary": "Aantal, details en tarieven",
     "detailsHint": "Optioneel — u kunt dit na publicatie aanvullen.",
     "photosFirstLabel": "Foto's van het gereedschap",
     "positionSet": "Positie opgeslagen",
@@ -131,7 +131,15 @@
     "photosFull": "Maximum bereikt",
     "photosCounter_one": "1 foto van {{max}}.",
     "photosCounter_other": "{{count}} foto's van {{max}}.",
-    "photosFullNote": "Wilt u er een vervangen? Verwijder hem eerst met het kruisje."
+    "photosFullNote": "Wilt u er een vervangen? Verwijder hem eerst met het kruisje.",
+    "quantityLabel": "Aantal identieke exemplaren",
+    "quantityHint": "Laat 1 staan als u er maar één hebt. Een verhuurder met twaalf identieke stoelen vult 12 in: ze worden apart gereserveerd, en de advertentie verdwijnt pas als alles bezet is.",
+    "noticeLabel": "Minimaal aantal dagen vooraf",
+    "noticeHint": "0 = vandaag te reserveren. 2 = de huurder moet minstens twee dagen vooraf reserveren.",
+    "bufferLabel": "Hersteltijd na teruggave (dagen)",
+    "bufferHint": "Dagen waarop het gereedschap na een verhuur onbeschikbaar blijft — tijd om het schoon te maken of te laten drogen.",
+    "blackoutsLater": "Vakantie, herstelling of een periode waarin u niet verhuurt: dat stelt u na publicatie in, via « Bewerken ».",
+    "numberRange": "{{label}}: geef een geheel getal tussen {{min}} en {{max}}."
   },
   "listYourTool": "Plaats je gereedschap",
   "loggingIn": "Bezig met inloggen...",
@@ -398,7 +406,14 @@
     "messagePlaceholder": "Leg kort uit hoe u het gereedschap wilt gebruiken...",
     "sendRequest": "Verhuurverzoek indienen",
     "shareExperience": "Deel uw ervaring...",
-    "submitReview": "Beoordeling verzenden"
+    "submitReview": "Beoordeling verzenden",
+    "units_one": "1 exemplaar",
+    "units_other": "{{count}} exemplaren",
+    "dayBooked": "Al gereserveerd",
+    "dayBlocked": "Niet beschikbaar",
+    "dayTooSoon": "Te vroeg — de eigenaar wil vooraf verwittigd worden",
+    "dayPast": "Datum voorbij",
+    "noticeHint": "Deze eigenaar wil vooraf verwittigd worden: de eerste mogelijke datum is {{date}}."
   },
   "editItem": {
     "loginToEdit": "Log in om gereedschap te bewerken",
@@ -499,5 +514,18 @@
     "save": "Wachtwoord opslaan",
     "saving": "Opslaan…"
   },
-  "forgotPassword": "Wachtwoord vergeten?"
+  "forgotPassword": "Wachtwoord vergeten?",
+  "blackouts": {
+    "title": "Periodes zonder verhuur",
+    "intro": "Uw vakantie of een herstelling, zonder de advertentie weg te halen. Huurders zien die dagen als niet beschikbaar, zonder te weten waarom.",
+    "empty": "Geen periode opgeslagen — het gereedschap wordt het hele jaar aangeboden.",
+    "from": "Van",
+    "to": "Tot",
+    "noteLabel": "Notitie",
+    "notePrivate": "Alleen zichtbaar voor u. De huurder ziet enkel dat die dagen niet beschikbaar zijn.",
+    "add": "Periode toevoegen",
+    "remove": "Verwijderen",
+    "datesRequired": "Geef beide datums op.",
+    "endBeforeStart": "De einddatum kan niet vóór de begindatum liggen."
+  }
 }

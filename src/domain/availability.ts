@@ -1,0 +1,50 @@
+// src/domain/availability.ts
+//
+// НЕ КОПИЯ, А РЕЭКСПОРТ. Правило доступности живёт в базе (функции
+// `unavailable_days` и `item_earliest_start`, миграция 20260817000022), а
+// то, как его спрашивают и толкуют, — в
+// `supabase/functions/_shared/availability.ts`.
+//
+// Здесь только реэкспорт и один переходник к браузерному клиенту, чтобы
+// страницам не приходилось помнить имена RPC. Своей арифметики
+// пересечений в `src/` больше нет нигде — это стережёт
+// `scripts/check-availability-single-source.mjs`.
+
+import { supabase } from '../lib/supabase'
+import {
+  fetchItemCalendar as fetchWithRpc,
+  toISODate,
+} from '../../supabase/functions/_shared/availability'
+import type { ItemCalendar } from '../../supabase/functions/_shared/availability'
+
+export {
+  toISODate,
+  addDaysISO,
+  daysBetween,
+  firstUnavailableDay,
+  isTooSoon,
+  isSelectable,
+  parseCalendar,
+} from '../../supabase/functions/_shared/availability'
+
+export type {
+  ItemCalendar,
+  UnavailableDay,
+  UnavailableReason,
+  RangeProblem,
+} from '../../supabase/functions/_shared/availability'
+
+/** Насколько вперёд страница вещи спрашивает календарь. */
+export const CALENDAR_HORIZON_DAYS = 365
+
+/**
+ * Календарь вещи для браузера. Окно — год вперёд: календарь листается
+ * помесячно без ограничения, а второй раз ходить за теми же данными при
+ * каждом перелистывании незачем.
+ */
+export function loadItemCalendar(itemId: string): Promise<ItemCalendar> {
+  const today = new Date()
+  const from = toISODate(today)
+  const to = toISODate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + CALENDAR_HORIZON_DAYS))
+  return fetchWithRpc((fn, args) => supabase.rpc(fn, args), itemId, from, to)
+}

@@ -32,6 +32,24 @@ export interface Item {
   price_3days?: number | null;
   price_week?: number | null;
   late_fee_per_day?: number | null;
+  // Доступность (миграция 20260817000022): количество одинаковых единиц,
+  // зазор после возврата, срок предупреждения. Саму занятость по ним
+  // считает база — см. `src/domain/availability.ts`.
+  quantity?: number;
+  buffer_days?: number;
+  min_notice_days?: number;
+}
+
+/** Перерыв, объявленный владельцем: отпуск, ремонт, вещь занята для себя. */
+export interface ItemBlackout {
+  id: string;
+  item_id: string;
+  start_date: string;
+  end_date: string;
+  // Заметка видна ТОЛЬКО владельцу: «в отпуске до 20-го» — про него, а не
+  // про вещь. Наружу уходит один факт — день недоступен.
+  note: string | null;
+  created_at: string;
 }
 
 // Краткая карточка человека — то, что одна сторона сделки вправе знать о

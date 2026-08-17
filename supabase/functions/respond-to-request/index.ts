@@ -3,6 +3,8 @@ import { createSupabaseServiceClient } from '../_shared/supabase.ts'
 import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
 import { notifyRental } from '../_shared/notify.ts'
+import { checkRangeAvailable } from '../_shared/availability.ts'
+import type { RpcCaller } from '../_shared/availability.ts'
 
 const supabase = createSupabaseServiceClient()
 
@@ -82,18 +84,18 @@ serve(async (req) => {
     }
 
     // --- APPROVE ---
-    // Double-check no blocking conflict appeared since the request was made
-    const { data: conflict } = await supabase
-      .from('bookings')
-      .select('id')
-      .eq('item_id', item.id)
-      .neq('id', booking_id)
-      .in('status', ['pending_payment', 'confirmed', 'active'])
-      .lte('start_date', booking.end_date)
-      .gte('end_date', booking.start_date)
-      .maybeSingle()
-
-    if (conflict) {
+    // Не заняли ли даты, пока заявка ждала ответа. Раньше здесь стоял свой
+    // запрос с `.lte('start_date', …).gte('end_date', …)` — ещё одна копия
+    // правила занятости, ничего не знавшая ни о количестве единиц, ни о
+    // перерывах владельца. Тот же вопрос задаёт календарь на странице
+    // вещи, и задаёт его теперь тем же вызовом.
+    //
+    // Срок предупреждения здесь НЕ проверяется намеренно: он относится к
+    // тому, кто бронирует, а не к тому, кто отвечает. Иначе владелец не
+    // смог бы одобрить заявку, поданную три дня назад на завтра.
+    const rpc: RpcCaller = (fn, args) => supabase.rpc(fn, args)
+    const problem = await checkRangeAvailable(rpc, item.id, booking.start_date, booking.end_date)
+    if (problem?.code === 'unavailable') {
       return new Response(JSON.stringify({ error: 'These dates are no longer available' }), { status: 409, headers: CORS })
     }
 
@@ -133,15 +135,18 @@ serve(async (req) => {
     }).eq('id', booking_id).eq('status', 'pending_approval').select('id')
     if (!approved || approved.length === 0) return changedMeanwhile()
 
-    // Auto-reject other pending_approval requests for overlapping dates
-    const { data: conflicting } = await supabase
-      .from('bookings')
-      .select('id')
-      .eq('item_id', item.id)
-      .eq('status', 'pending_approval')
-      .neq('id', booking_id)
-      .lte('start_date', booking.end_date)
-      .gte('end_date', booking.start_date)
+    // Заявки, которые после этого одобрения стало невозможно исполнить.
+    //
+    // Раньше отклонялись ВСЕ остальные заявки с пересекающимися датами. С
+    // одной единицей это верно, с двенадцатью одинаковыми стульями — прямой
+    // убыток: владелец одобряет одну заявку и сам отказывает одиннадцати
+    // людям, хотя стулья свободны. Вопрос не «пересекаются ли даты», а
+    // «остались ли на эти дни свободные единицы», и отвечает на него та же
+    // функция базы, что и везде (см. миграцию 20260817000022, раздел 10).
+    const { data: conflicting } = await supabase.rpc('unservable_pending_requests', {
+      p_item_id: item.id,
+      p_exclude_booking: booking_id,
+    })
 
     if (conflicting && conflicting.length > 0) {
       const ids = conflicting.map((b: any) => b.id)

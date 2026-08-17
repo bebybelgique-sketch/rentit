@@ -47,6 +47,11 @@ const fetchItemById = async (id: string): Promise<Item | null> => {
     price_3days: data.price_3days ?? null,
     price_week: data.price_week ?? null,
     late_fee_per_day: data.late_fee_per_day ?? null,
+    // Умолчания те же, что у колонок в базе: старое объявление, прочитанное
+    // до применения миграции, не должно превратиться в «ноль единиц».
+    quantity: data.quantity ?? 1,
+    buffer_days: data.buffer_days ?? 0,
+    min_notice_days: data.min_notice_days ?? 0,
   };
 
   return mappedItem;

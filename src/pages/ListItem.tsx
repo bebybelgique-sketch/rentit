@@ -18,6 +18,13 @@ const MAX_PHOTOS = 5
 const MAX_FILE_SIZE_MB = 5
 const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024
 
+// Границы полей доступности. Те же числа стоят проверками в базе
+// (миграция 20260817000022): здесь они нужны, чтобы человек получил ответ
+// на своей странице, а не отказ Postgres по-английски.
+const MAX_QUANTITY = 999
+const MAX_NOTICE_DAYS = 90
+const MAX_BUFFER_DAYS = 30
+
 export default function ListItem() {
   const { t } = useTranslation()
   const { user } = useAuth()
@@ -35,6 +42,12 @@ export default function ListItem() {
     late_fee_per_day: '',
     deposit: '',
     address: '',
+    // Доступность. Умолчания — ровно прежнее поведение продукта: одна
+    // единица, без зазора, без предупреждения. Сосед с одной дрелью не
+    // заметит, что поля появились; прокатчик со стульями без них не зайдёт.
+    quantity: '1',
+    min_notice_days: '0',
+    buffer_days: '0',
   })
   const [photos, setPhotos] = useState<File[]>([])
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
@@ -247,6 +260,18 @@ export default function ListItem() {
         return setError(`${label} doit être supérieur à 0, ou laissé vide.`)
     }
 
+    // Целые поля доступности. Проверка та же, что в базе, но ответ здесь —
+    // отказ Postgres на французской странице человеку ничего не говорит.
+    for (const [field, label, min, max] of [
+      ['quantity', t('listItem.quantityLabel'), 1, MAX_QUANTITY],
+      ['min_notice_days', t('listItem.noticeLabel'), 0, MAX_NOTICE_DAYS],
+      ['buffer_days', t('listItem.bufferLabel'), 0, MAX_BUFFER_DAYS],
+    ] as const) {
+      const n = parseInt(form[field] || String(min), 10)
+      if (!Number.isInteger(n) || n < min || n > max)
+        return setError(t('listItem.numberRange', { label, min, max }))
+    }
+
     try {
       setUploading(true)
       setUploadProgress(0)
@@ -299,6 +324,9 @@ export default function ListItem() {
         lng,
         address:       form.address.trim() || null,
         available:     true,
+        quantity:        parseInt(form.quantity || '1', 10),
+        min_notice_days: parseInt(form.min_notice_days || '0', 10),
+        buffer_days:     parseInt(form.buffer_days || '0', 10),
       }]).select().single()
 
       if (insertErr) throw insertErr
@@ -541,6 +569,62 @@ export default function ListItem() {
               {t('listItem.detailsSummary')}
               <span className="form-details-hint">{t('listItem.detailsHint')}</span>
             </summary>
+
+            {/* Доступность. Стоит первой в раскрытии не случайно: без
+                количества единиц прокатчик с двенадцатью одинаковыми
+                стульями не выложится вовсе — двенадцать объявлений он
+                заводить не станет. Для соседа с одной дрелью здесь
+                правильные умолчания, и трогать их не нужно. */}
+            <div className="form-group">
+              <label htmlFor="li-quantity">{t('listItem.quantityLabel')}</label>
+              <input
+                id="li-quantity"
+                type="number"
+                min="1"
+                max={MAX_QUANTITY}
+                step="1"
+                value={form.quantity}
+                onChange={set('quantity')}
+                disabled={isLocked}
+              />
+              <p className="form-hint">{t('listItem.quantityHint')}</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-4)' }}>
+              <div className="form-group">
+                <label htmlFor="li-notice">{t('listItem.noticeLabel')}</label>
+                <input
+                  id="li-notice"
+                  type="number"
+                  min="0"
+                  max={MAX_NOTICE_DAYS}
+                  step="1"
+                  value={form.min_notice_days}
+                  onChange={set('min_notice_days')}
+                  disabled={isLocked}
+                />
+                <p className="form-hint">{t('listItem.noticeHint')}</p>
+              </div>
+              <div className="form-group">
+                <label htmlFor="li-buffer">{t('listItem.bufferLabel')}</label>
+                <input
+                  id="li-buffer"
+                  type="number"
+                  min="0"
+                  max={MAX_BUFFER_DAYS}
+                  step="1"
+                  value={form.buffer_days}
+                  onChange={set('buffer_days')}
+                  disabled={isLocked}
+                />
+                <p className="form-hint">{t('listItem.bufferHint')}</p>
+              </div>
+            </div>
+
+            {/* Перерывы (отпуск, ремонт) задаются ПОСЛЕ публикации, на
+                странице «Modifier»: пока вещи нет, привязывать даты не к
+                чему, а лишний блок в форме выкладки стоит дороже. */}
+            <p className="form-hint">{t('listItem.blackoutsLater')}</p>
 
             <div className="form-group">
               <label htmlFor="li-condition">{t('listItem.conditionLabel')}</label>
