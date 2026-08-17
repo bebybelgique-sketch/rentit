@@ -1,5 +1,6 @@
 // src/components/common/ReviewList.tsx
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import RatingStars from './RatingStars';
 
 export interface ReviewListItem {
@@ -16,17 +17,19 @@ interface ReviewListProps {
   emptyLabel?: string;
 }
 
-const dateFmt = new Intl.DateTimeFormat('fr-BE', { day: '2-digit', month: 'short', year: 'numeric' });
-const formatDate = (iso: string) => {
+// Дата форматируется по языку читателя, а не жёстко по 'fr-BE': «15 août»
+// в английском интерфейсе — тот же французский хвост, что и подписи.
+const formatDate = (iso: string, locale: string) => {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '' : dateFmt.format(d);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', year: 'numeric' }).format(d);
 };
 
-const ReviewList: React.FC<ReviewListProps> = ({
-  reviews, emptyLabel = 'Aucun avis pour le moment',
-}) => {
+const ReviewList: React.FC<ReviewListProps> = ({ reviews, emptyLabel }) => {
+  const { t, i18n } = useTranslation();
+
   if (reviews.length === 0) {
-    return <p style={{ fontSize: '13px', color: '#666' }}>{emptyLabel}</p>;
+    return <p style={{ fontSize: '13px', color: '#666' }}>{emptyLabel ?? t('review.empty')}</p>;
   }
 
   return (
@@ -54,9 +57,9 @@ const ReviewList: React.FC<ReviewListProps> = ({
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <strong style={{ fontSize: '14px' }}>{r.authorName}</strong>
-              <RatingStars value={r.rating} size="sm" ariaLabel={`Note de ${r.authorName}`} />
+              <RatingStars value={r.rating} size="sm" ariaLabel={t('review.ratingOf', { name: r.authorName })} />
               <time dateTime={r.createdAt} style={{ fontSize: '12px', color: '#999' }}>
-                {formatDate(r.createdAt)}
+                {formatDate(r.createdAt, i18n.language)}
               </time>
             </div>
             {r.comment && (

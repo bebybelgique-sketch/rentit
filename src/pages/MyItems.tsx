@@ -251,7 +251,7 @@ export default function MyItems() {
                 {pendingRequests.length > 0 && (
                   <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
                     <h4 style={{ fontSize: '13px', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px', fontWeight: '700' }}>
-                      Demandes en attente
+                      {t('myItems.pendingRequests')}
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {pendingRequests.map(booking => (

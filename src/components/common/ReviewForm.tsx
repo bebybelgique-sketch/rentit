@@ -1,5 +1,6 @@
 // src/components/common/ReviewForm.tsx
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import RatingStars from './RatingStars';
 
 interface ReviewFormProps {
@@ -14,15 +15,19 @@ interface ReviewFormProps {
 
 const MAX_COMMENT = 1000;
 
+// Значения по умолчанию были французскими строками прямо в сигнатуре:
+// компонент общий, а говорил на одном языке. Теперь умолчание — ключ
+// словаря, и переопределить его снаружи по-прежнему можно.
 const ReviewForm: React.FC<ReviewFormProps> = ({
-  title = 'Laisser un avis',
-  submitLabel = 'Envoyer',
-  commentPlaceholder = 'Votre commentaire (facultatif)',
+  title,
+  submitLabel,
+  commentPlaceholder,
   submitting = false,
   error = null,
   onSubmit,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
 
@@ -35,17 +40,17 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
       onSubmit={(e) => { e.preventDefault(); if (canSubmit) onSubmit({ rating, comment: comment.trim() }); }}
     >
       <h4 style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700, color: '#666', marginBottom: '10px' }}>
-        {title}
+        {title ?? t('review.leaveTitle')}
       </h4>
 
       <div style={{ marginBottom: '8px' }}>
-        <RatingStars value={rating} interactive onChange={setRating} ariaLabel="Votre note" />
+        <RatingStars value={rating} interactive onChange={setRating} ariaLabel={t('review.ratingLabel')} />
       </div>
 
       <textarea
         value={comment}
         maxLength={MAX_COMMENT}
-        placeholder={commentPlaceholder}
+        placeholder={commentPlaceholder ?? t('review.commentOptional')}
         onChange={(e) => setComment(e.target.value)}
         style={{
           width: '100%', minHeight: '60px', padding: '8px 10px',
@@ -58,11 +63,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
       <div style={{ display: 'flex', gap: '8px' }}>
         <button type="submit" className="btn btn-primary btn-sm" disabled={!canSubmit}>
-          {submitting ? '...' : submitLabel}
+          {submitting ? '...' : (submitLabel ?? t('booking.messageSend'))}
         </button>
         {onCancel && (
           <button type="button" className="btn btn-secondary btn-sm" onClick={onCancel} disabled={submitting}>
-            Annuler
+            {t('rental.cancelButtonShort')}
           </button>
         )}
       </div>

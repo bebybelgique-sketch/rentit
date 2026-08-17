@@ -1,7 +1,13 @@
 // src/hooks/mutations/useCreateUserReview.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
+import i18n from '../../i18n-next';
 import type { UserReviewRole } from '../useUserReviews';
+
+// Сообщения берём у настроенного экземпляра i18n напрямую: сама функция —
+// не компонент, хук `useTranslation` в ней недопустим. Текст этих отказов
+// видит человек, значит он обязан быть на его языке; до 17.08 он был
+// французским для всех.
 
 interface CreateUserReviewParams {
   bookingId: string;
@@ -27,7 +33,7 @@ const createUserReview = async ({
   comment,
 }: CreateUserReviewParams): Promise<void> => {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    throw new Error('La note doit être comprise entre 1 et 5');
+    throw new Error(i18n.t('review.badRating'));
   }
 
   const { error } = await supabase.from('reviews').insert([{
@@ -43,7 +49,7 @@ const createUserReview = async ({
   // 23505 — уникальный ключ (booking_id, from_user_id, review_type).
   // Для человека это не «ошибка базы», а «вы уже оценили эту сделку».
   if (error) {
-    if (error.code === '23505') throw new Error('Vous avez déjà laissé cet avis');
+    if (error.code === '23505') throw new Error(i18n.t('review.alreadyLeft'));
     throw error;
   }
 };
