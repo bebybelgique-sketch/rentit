@@ -59,6 +59,13 @@ const ALLOWED = [
   'Aucun paiement ne transite',
   'No payment goes through',
   'no payment passes through',
+  // 17.08: те же слова по-английски и по-нидерландски. Их тут не было не
+  // потому, что они запрещены, а потому, что строк не существовало вовсе:
+  // отказ от онлайн-оплаты стоял на странице вещи ТОЛЬКО по-французски, и
+  // англичанин с голландцем его не читали. Это ровно то отрицание, ради
+  // которого слово «payment» в правиле и стоит.
+  'No online payment',
+  'Geen online betaling',
   'Er verloopt geen enkele betaling',
   'geen betaling via het platform',
   'ne demandons ni ne conservons aucune coordonnée bancaire',

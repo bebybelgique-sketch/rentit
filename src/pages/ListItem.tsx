@@ -257,7 +257,7 @@ export default function ListItem() {
     ] as const) {
       const raw = form[field]
       if (raw !== '' && !(parseFloat(raw) > 0))
-        return setError(`${label} doit être supérieur à 0, ou laissé vide.`)
+        return setError(t('listItem.tierMustBePositive', { label }))
     }
 
     // Целые поля доступности. Проверка та же, что в базе, но ответ здесь —
@@ -286,7 +286,7 @@ export default function ListItem() {
 
       if (existing && existing.length > 0) {
         const confirmed = window.confirm(
-          `Vous avez déjà une annonce similaire : "${existing[0].title}". Créer une autre ?`
+          t('listItem.duplicateConfirm', { title: existing[0].title })
         )
         if (!confirmed) {
           setUploading(false)

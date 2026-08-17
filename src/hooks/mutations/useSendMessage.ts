@@ -1,6 +1,7 @@
 // src/hooks/mutations/useSendMessage.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
+import i18n from '../../i18n-next';
 
 interface SendMessageParams {
   bookingId: string;
@@ -15,7 +16,7 @@ interface SendMessageParams {
 // Подделать чужое авторство нельзя даже при правке запроса в консоли.
 const sendMessage = async ({ bookingId, senderId, body }: SendMessageParams): Promise<void> => {
   const trimmed = body.trim();
-  if (!trimmed) throw new Error('Le message est vide');
+  if (!trimmed) throw new Error(i18n.t('booking.messageEmpty'));
 
   const { error } = await supabase
     .from('booking_messages')

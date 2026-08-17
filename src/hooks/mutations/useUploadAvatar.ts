@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import i18n from '../../i18n-next';
 import {
   AVATARS_BUCKET,
   AVATAR_EXTENSIONS,
@@ -33,14 +34,20 @@ export function useUploadAvatar() {
       return {
         ok: false,
         reason: 'type',
-        message: `Format non accepté. Choisissez une image ${AVATAR_EXTENSIONS.join(', ')}.`,
+        message: i18n.t('profile.avatarBadFormat', { formats: AVATAR_EXTENSIONS.join(', ') }),
       };
     }
     if (file.size > MAX_BYTES) {
       return {
         ok: false,
         reason: 'size',
-        message: `Image trop lourde (${(file.size / 1024 / 1024).toFixed(1)} Mo). Maximum 5 Mo.`,
+        // «5 Mo» больше не написано словом: предел живёт в MAX_BYTES, и
+        // текст берёт его оттуда. Иначе поменяешь константу — а продукт
+        // продолжит обещать прежнее число.
+        message: i18n.t('profile.avatarTooLarge', {
+          size: (file.size / 1024 / 1024).toFixed(1),
+          max: MAX_BYTES / 1024 / 1024,
+        }),
       };
     }
 

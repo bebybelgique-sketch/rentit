@@ -14,7 +14,7 @@
     "messagePlaceholder": "Your message",
     "messageSend": "Send",
     "messageSendFailed": "Message could not be sent",
-    "messageEmpty": "Message is empty",
+    "messageEmpty": "The message is empty",
     "photosTitle": "Tool condition",
     "photosTitleHandover": "Tool condition — handover",
     "photosTitleReturn": "Tool condition — return",
@@ -139,7 +139,9 @@
     "bufferLabel": "Turnaround after return (days)",
     "bufferHint": "Days the tool stays unavailable after a rental — time to clean it or let it dry.",
     "blackoutsLater": "Holidays, repairs, any period you do not rent out: set that after publishing, under \"Edit\".",
-    "numberRange": "{{label}}: enter a whole number between {{min}} and {{max}}."
+    "numberRange": "{{label}}: enter a whole number between {{min}} and {{max}}.",
+    "tierMustBePositive": "{{label}} must be greater than 0, or left empty.",
+    "duplicateConfirm": "You already have a similar listing: \"{{title}}\". Create another one?"
   },
   "listYourTool": "List your tool",
   "loggingIn": "Logging in…",
@@ -168,7 +170,8 @@
     "requestsTitle": "Rental requests",
     "markHandedOver": "Mark handed over",
     "markReturned": "Mark returned",
-    "rentalInProgress": "Rental in progress"
+    "rentalInProgress": "Rental in progress",
+    "pendingRequests": "Pending requests"
   },
   "myRentals": {
     "approvalSuccess": "Request approved!",
@@ -185,7 +188,9 @@
     "ownerTitle": "Requests for my tools (Owner)",
     "noRequests": "No requests",
     "noRequestsHint": "Rental requests for your tools will appear here.",
-    "listTool": "List a tool"
+    "listTool": "List a tool",
+    "asRenter": "As a renter",
+    "requestsForMyTools": "Requests for my tools"
   },
   "myRentalsAsOwner": "Requests for my Items",
   "myRentalsAsRenter": "As Renter",
@@ -229,7 +234,9 @@
     "deleting": "Deleting...",
     "deleteConfirm": "Are you sure you want to delete your account? This action cannot be undone.",
     "deleteSuccess": "Your account has been deleted.",
-    "deleteError": "Error deleting account."
+    "deleteError": "Error deleting account.",
+    "avatarBadFormat": "Format not accepted. Choose an image in {{formats}}.",
+    "avatarTooLarge": "Image too large ({{size}} MB). Maximum {{max}} MB."
   },
   "publishing": "Publishing…",
   "publishListing": "Publish listing",
@@ -269,7 +276,8 @@
   "share": {
     "copyLink": "Copy link",
     "linkCopied": "✓ Link copied!",
-    "whatsappButton": "Share on WhatsApp"
+    "whatsappButton": "Share on WhatsApp",
+    "whatsappText": "📦 {{title}} — €{{price}}/day on RentIt"
   },
   "cookies": {
     "header": "Privacy notice · GDPR compliant",
@@ -413,7 +421,12 @@
     "dayBlocked": "Unavailable",
     "dayTooSoon": "Too soon — the owner asks for advance notice",
     "dayPast": "Past date",
-    "noticeHint": "This owner asks for advance notice: the first bookable date is {{date}}."
+    "noticeHint": "This owner asks for advance notice: the first bookable date is {{date}}.",
+    "ownerHas24h": "The owner has 24 hours to reply. Follow your request under \"My rentals\".",
+    "seeMyRentals": "See my rentals →",
+    "contactViaBooking": "Get in touch through the booking request below",
+    "currentlyUnavailable": "This tool is currently unavailable",
+    "cashAtHandover": "No online payment — you pay the owner in cash at handover"
   },
   "editItem": {
     "loginToEdit": "Log in to edit a tool",
@@ -493,7 +506,13 @@
     "thanks": "Thank you for your review!",
     "ratingLabel": "Rating",
     "commentLabel": "Comment (optional)",
-    "leaveTitle": "Leave a review"
+    "leaveTitle": "Leave a review",
+    "commentOptional": "Your comment (optional)",
+    "empty": "No reviews yet",
+    "ratingAria": "{{label}}: {{value}} out of {{max}}",
+    "badRating": "The rating must be between 1 and 5",
+    "alreadyLeft": "You have already left this review",
+    "ratingOf": "Rating by {{name}}"
   },
   "form": {
     "description": "Description",

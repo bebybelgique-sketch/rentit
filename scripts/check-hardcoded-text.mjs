@@ -14,9 +14,21 @@
 // попаданий заморожен в hardcoded-text-allowlist.json, а падение даёт
 // только НОВОЕ. Список можно уменьшать, увеличивать — осознанно.
 //
-// ИЗВЕСТНАЯ СЛЕПАЯ ЗОНА: разбор построчный, поэтому текст, стоящий на
-// отдельной строке между тегами, не ловится. Так «Laisser un avis» в
-// ItemDetail.tsx пережил первый скан 14.08 и нашёлся глазами.
+// ДВЕ СЛЕПЫЕ ЗОНЫ ЗАКРЫТЫ 17.08.2026 — обе оказались обитаемы.
+//
+// Зона 1: текст на ОТДЕЛЬНОЙ СТРОКЕ между тегами. Разбор был построчный,
+// и `>` с `<` оказывались на разных строках. Так «Laisser un avis» пережил
+// скан 14.08 и нашёлся глазами. Пряталось там ещё девять строк, включая
+// экран после отправки заявки на странице вещи.
+//
+// Зона 2: текст в СТРОКОВЫХ ЛИТЕРАЛАХ кода, а не в разметке — window.confirm
+// при похожем объявлении, отказы загрузки аватара, «Aucun avis pour le
+// moment». Ещё шесть строк.
+//
+// Итого пятнадцать мест, где трёхъязычный продукт говорил по-французски с
+// англичанином и голландцем, — и гейт, поставленный ровно против этого,
+// их не видел. Правило: гейт, у которого известна слепая зона, обязан
+// либо её закрыть, либо считаться непройденным.
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -37,25 +49,79 @@ const walk = (d) => readdirSync(d).flatMap((f) => {
 
 const TEXT = />([^<>{}]*[A-Za-zÀ-ÿ]{3,}[^<>{}]*)</g
 const ATTR = /\b(placeholder|title|aria-label)="([^"]*[A-Za-zÀ-ÿ]{3,}[^"]*)"/g
+// Зона 2: строковый литерал в коде. Ловим щедро — это храповик, а не
+// запрет: лишнее уходит в замороженный список один раз, зато НОВОЕ уже не
+// проскочит. Скупая регулярка пропустила бы «Aucun avis pour le moment»,
+// где нет ни одного диакритического знака.
+const LITERAL = /(['"`])((?:\\.|(?!\1)[^\\\r\n])*)\1/g
+
+const wordCount = (t) => t.split(/\s+/).filter((w) => /[A-Za-zÀ-ÿ]{2}/.test(w)).length
+
+const isProse = (txt) => {
+  const t = txt.trim()
+  if (t.length < 12) return false
+  if (!/[A-Za-zÀ-ÿ]{3}/.test(t)) return false
+  if (/^https?:|^\//i.test(t)) return false
+  return wordCount(t) >= 3
+}
+
+// Служебные слова французского и нидерландского. В коде идентификаторы
+// английские, поэтому эти слова — надёжный признак строки, которую видит
+// человек. Английский текст ловится первой зоной (он живёт в разметке);
+// сюда он не попадает намеренно — иначе список утонул бы в CSS-значениях
+// и именах классов, а список из девяноста строк шума просто перестают
+// читать, и настоящая строка спрячется прямо в нём.
+const FR_NL = /\b(le|la|les|des|une|vous|votre|vos|est|sont|pas|doit|être|avec|pour|dans|sur|par|déjà|aucun|autre|lors|ligne|van|het|een|niet|uw|moet|geen|wordt|voor|met)\b/i
+
+const isUserFacingLiteral = (txt) => {
+  const t = txt.trim()
+  if (t.length < 12) return false
+  if (/<[a-z]/i.test(t)) return false          // кусок разметки, не фраза
+  if (/var\(--|\dpx|rgba?\(|clamp\(|minmax\(/.test(t)) return false
+  return wordCount(t) >= 3 && FR_NL.test(t)
+}
 
 export const findHardcodedText = () => {
   const files = walk(join(root, 'src'))
-    .filter((f) => /\.tsx$/.test(f) && !SKIP.some((s) => f.includes(s)))
+    .filter((f) => /\.(tsx|ts)$/.test(f) && !SKIP.some((s) => f.includes(s)))
 
   const hits = []
   for (const f of files) {
     const rel = f.slice(root.length + 1).replace(/\\/g, '/')
-    readFileSync(f, 'utf8').split(/\r?\n/).forEach((line) => {
+    const lines = readFileSync(f, 'utf8').split(/\r?\n/)
+    lines.forEach((line, i) => {
       const trimmed = line.trim()
       if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return
-      for (const m of line.matchAll(TEXT)) {
-        const txt = m[1].trim()
-        // Числа, валюты и пунктуация переводить нечего.
-        if (!txt || /^[\d\s.,:%€|—–-]+$/.test(txt)) continue
-        hits.push(`${rel} :: ${txt}`)
+
+      if (/\.tsx$/.test(f)) {
+        for (const m of line.matchAll(TEXT)) {
+          const txt = m[1].trim()
+          // Числа, валюты и пунктуация переводить нечего.
+          if (!txt || /^[\d\s.,:%€|—–-]+$/.test(txt)) continue
+          hits.push(`${rel} :: ${txt}`)
+        }
+        for (const m of line.matchAll(ATTR)) {
+          hits.push(`${rel} :: [${m[1]}] ${m[2].trim()}`)
+        }
+
+        // Зона 1: строка — сплошной текст, а открывающий тег остался на
+        // предыдущей строке. Внутри разметки мы, только если предыдущая
+        // непустая строка заканчивается на `>`.
+        if (trimmed && !/[<>{}=;`]/.test(trimmed) && isProse(trimmed)) {
+          let j = i - 1
+          while (j >= 0 && !lines[j].trim()) j--
+          if (j >= 0 && lines[j].trim().endsWith('>')) hits.push(`${rel} :: ${trimmed}`)
+        }
       }
-      for (const m of line.matchAll(ATTR)) {
-        hits.push(`${rel} :: [${m[1]}] ${m[2].trim()}`)
+
+      // Зона 2 — и в .tsx, и в .ts: подтверждения и отказы живут в хуках,
+      // а видит их тот же человек. `console.*` пропускаем: это адресовано
+      // разработчику, и переводить его незачем.
+      if (!/\bconsole\.\w+\s*\(/.test(trimmed)) {
+        for (const m of line.matchAll(LITERAL)) {
+          const txt = m[2].trim()
+          if (isUserFacingLiteral(txt)) hits.push(`${rel} :: ${txt}`)
+        }
       }
     })
   }

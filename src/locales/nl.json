@@ -14,7 +14,7 @@
     "messagePlaceholder": "Uw bericht",
     "messageSend": "Versturen",
     "messageSendFailed": "Bericht kon niet worden verzonden",
-    "messageEmpty": "Bericht is leeg",
+    "messageEmpty": "Het bericht is leeg",
     "photosTitle": "Staat van het gereedschap",
     "photosTitleHandover": "Staat van het gereedschap — bij overdracht",
     "photosTitleReturn": "Staat van het gereedschap — bij teruggave",
@@ -139,7 +139,9 @@
     "bufferLabel": "Hersteltijd na teruggave (dagen)",
     "bufferHint": "Dagen waarop het gereedschap na een verhuur onbeschikbaar blijft — tijd om het schoon te maken of te laten drogen.",
     "blackoutsLater": "Vakantie, herstelling of een periode waarin u niet verhuurt: dat stelt u na publicatie in, via « Bewerken ».",
-    "numberRange": "{{label}}: geef een geheel getal tussen {{min}} en {{max}}."
+    "numberRange": "{{label}}: geef een geheel getal tussen {{min}} en {{max}}.",
+    "tierMustBePositive": "{{label}} moet groter zijn dan 0, of leeg blijven.",
+    "duplicateConfirm": "U hebt al een gelijkaardige advertentie: « {{title}} ». Nog een aanmaken?"
   },
   "listYourTool": "Plaats je gereedschap",
   "loggingIn": "Bezig met inloggen...",
@@ -168,7 +170,8 @@
     "requestsTitle": "Verhuurverzoeken",
     "markHandedOver": "Markeer overgedragen",
     "markReturned": "Markeer teruggegeven",
-    "rentalInProgress": "Verhuur loopt"
+    "rentalInProgress": "Verhuur loopt",
+    "pendingRequests": "Aanvragen in behandeling"
   },
   "myRentals": {
     "approvalSuccess": "Verzoek goedgekeurd!",
@@ -185,7 +188,9 @@
     "ownerTitle": "Verzoeken voor mijn gereedschap (Eigenaar)",
     "noRequests": "Geen verzoeken",
     "noRequestsHint": "Verhuurverzoeken voor je gereedschap verschijnen hier.",
-    "listTool": "Gereedschap plaatsen"
+    "listTool": "Gereedschap plaatsen",
+    "asRenter": "Als huurder",
+    "requestsForMyTools": "Aanvragen voor mijn gereedschap"
   },
   "myRentalsAsOwner": "Aanvragen voor mijn items",
   "myRentalsAsRenter": "Als huurder",
@@ -229,7 +234,9 @@
     "deleting": "Verwijderen...",
     "deleteConfirm": "Weet u zeker dat u uw account wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
     "deleteSuccess": "Uw account is verwijderd.",
-    "deleteError": "Fout bij verwijderen van account."
+    "deleteError": "Fout bij verwijderen van account.",
+    "avatarBadFormat": "Formaat niet aanvaard. Kies een afbeelding in {{formats}}.",
+    "avatarTooLarge": "Afbeelding te zwaar ({{size}} MB). Maximum {{max}} MB."
   },
   "publishing": "Wordt geplaatst...",
   "publishListing": "Plaats advertentie",
@@ -269,7 +276,8 @@
   "share": {
     "copyLink": "Link kopiëren",
     "linkCopied": "✓ Link gekopieerd!",
-    "whatsappButton": "Delen via WhatsApp"
+    "whatsappButton": "Delen via WhatsApp",
+    "whatsappText": "📦 {{title}} — €{{price}}/dag op RentIt"
   },
   "cookies": {
     "header": "Privacyverklaring · GDPR-conform",
@@ -413,7 +421,12 @@
     "dayBlocked": "Niet beschikbaar",
     "dayTooSoon": "Te vroeg — de eigenaar wil vooraf verwittigd worden",
     "dayPast": "Datum voorbij",
-    "noticeHint": "Deze eigenaar wil vooraf verwittigd worden: de eerste mogelijke datum is {{date}}."
+    "noticeHint": "Deze eigenaar wil vooraf verwittigd worden: de eerste mogelijke datum is {{date}}.",
+    "ownerHas24h": "De eigenaar heeft 24 uur om te antwoorden. Volg uw aanvraag onder « Mijn huurcontracten ».",
+    "seeMyRentals": "Mijn huurcontracten bekijken →",
+    "contactViaBooking": "Neem contact op via de reservatieaanvraag hieronder",
+    "currentlyUnavailable": "Dit gereedschap is momenteel niet beschikbaar",
+    "cashAtHandover": "Geen online betaling — u betaalt de eigenaar cash bij de overhandiging"
   },
   "editItem": {
     "loginToEdit": "Log in om gereedschap te bewerken",
@@ -493,7 +506,13 @@
     "thanks": "Bedankt voor uw beoordeling!",
     "ratingLabel": "Beoordeling",
     "commentLabel": "Opmerking (optioneel)",
-    "leaveTitle": "Een beoordeling achterlaten"
+    "leaveTitle": "Een beoordeling achterlaten",
+    "commentOptional": "Uw commentaar (optioneel)",
+    "empty": "Nog geen beoordelingen",
+    "ratingAria": "{{label}}: {{value}} van {{max}}",
+    "badRating": "De beoordeling moet tussen 1 en 5 liggen",
+    "alreadyLeft": "U hebt deze beoordeling al gegeven",
+    "ratingOf": "Beoordeling van {{name}}"
   },
   "form": {
     "description": "Omschrijving",

@@ -110,13 +110,13 @@ const MyRentals: React.FC = () => {
             onClick={() => document.getElementById('as-renter')?.scrollIntoView({ behavior: 'smooth' })}
             style={{ padding: '10px 20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }}
           >
-            En tant que locataire
+            {t('myRentals.asRenter')}
           </button>
           <button
             onClick={() => document.getElementById('as-owner')?.scrollIntoView({ behavior: 'smooth' })}
             style={{ padding: '10px 20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }}
           >
-            Demandes pour mes outils
+            {t('myRentals.requestsForMyTools')}
           </button>
         </div>
 

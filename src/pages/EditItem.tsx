@@ -306,8 +306,11 @@ const EditItem: React.FC = () => {
               placeholder="ex. 10.00"
               style={{ width: '100%' }}
             />
+            {/* Тот же текст уже жил в словарях как listItem.lateFeeNote —
+                здесь стояла его французская копия, и она же показывалась
+                англичанину. */}
             <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '5px', lineHeight: 1.5 }}>
-              Montant annoncé à l'avance, réglé entre vous à la restitution. RentIt ne le calcule ni ne le prélève.
+              {t('listItem.lateFeeNote')}
             </p>
           </div>
 

@@ -139,7 +139,9 @@
     "bufferLabel": "Battement après retour (jours)",
     "bufferHint": "Jours pendant lesquels l'outil reste indisponible après une location — le temps de le nettoyer ou de le laisser sécher.",
     "blackoutsLater": "Vacances, réparation, période où vous ne louez pas : cela se règle après la publication, sur « Modifier ».",
-    "numberRange": "{{label}} : indiquez un nombre entier entre {{min}} et {{max}}."
+    "numberRange": "{{label}} : indiquez un nombre entier entre {{min}} et {{max}}.",
+    "tierMustBePositive": "{{label}} doit être supérieur à 0, ou laissé vide.",
+    "duplicateConfirm": "Vous avez déjà une annonce similaire : « {{title}} ». Créer une autre ?"
   },
   "listYourTool": "Déposer votre outil",
   "loggingIn": "Connexion...",
@@ -168,7 +170,8 @@
     "requestsTitle": "Réservations",
     "markHandedOver": "Marquer récupéré",
     "markReturned": "Marquer retourné",
-    "rentalInProgress": "Location en cours"
+    "rentalInProgress": "Location en cours",
+    "pendingRequests": "Demandes en attente"
   },
   "myRentals": {
     "approvalSuccess": "La demande a été acceptée !",
@@ -185,7 +188,9 @@
     "ownerTitle": "Demandes pour mes outils (Propriétaire)",
     "noRequests": "Aucune demande",
     "noRequestsHint": "Les demandes de location pour vos outils apparaîtront ici.",
-    "listTool": "Déposer une annonce"
+    "listTool": "Déposer une annonce",
+    "asRenter": "En tant que locataire",
+    "requestsForMyTools": "Demandes pour mes outils"
   },
   "myRentalsAsOwner": "Demandes pour mes outils",
   "myRentalsAsRenter": "En tant que locataire",
@@ -229,7 +234,9 @@
     "deleting": "Suppression...",
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.",
     "deleteSuccess": "Votre compte a été supprimé.",
-    "deleteError": "Erreur lors de la suppression du compte."
+    "deleteError": "Erreur lors de la suppression du compte.",
+    "avatarBadFormat": "Format non accepté. Choisissez une image {{formats}}.",
+    "avatarTooLarge": "Image trop lourde ({{size}} Mo). Maximum {{max}} Mo."
   },
   "publishing": "Publication...",
   "publishListing": "Publier l'annonce",
@@ -269,7 +276,8 @@
   "share": {
     "copyLink": "Copier le lien",
     "linkCopied": "✓ Copié !",
-    "whatsappButton": "Partager sur WhatsApp"
+    "whatsappButton": "Partager sur WhatsApp",
+    "whatsappText": "📦 {{title}} — {{price}} €/jour sur RentIt"
   },
   "cookies": {
     "header": "Mention de confidentialité · conforme RGPD",
@@ -413,7 +421,12 @@
     "dayBlocked": "Indisponible",
     "dayTooSoon": "Trop tôt — le propriétaire demande d'être prévenu à l'avance",
     "dayPast": "Date passée",
-    "noticeHint": "Ce propriétaire demande d'être prévenu à l'avance : première date réservable, le {{date}}."
+    "noticeHint": "Ce propriétaire demande d'être prévenu à l'avance : première date réservable, le {{date}}.",
+    "ownerHas24h": "Le propriétaire a 24 heures pour répondre. Suivez votre demande dans « Mes locations ».",
+    "seeMyRentals": "Voir mes locations →",
+    "contactViaBooking": "Prenez contact via la demande de réservation ci-dessous",
+    "currentlyUnavailable": "Cet outil est actuellement indisponible",
+    "cashAtHandover": "Aucun paiement en ligne — le règlement se fait en espèces au propriétaire lors de la remise"
   },
   "editItem": {
     "loginToEdit": "Se connecter pour modifier un outil",
@@ -493,7 +506,13 @@
     "thanks": "Merci pour votre avis !",
     "ratingLabel": "Note",
     "commentLabel": "Commentaire (facultatif)",
-    "leaveTitle": "Laisser un avis"
+    "leaveTitle": "Laisser un avis",
+    "commentOptional": "Votre commentaire (facultatif)",
+    "empty": "Aucun avis pour le moment",
+    "ratingAria": "{{label}} : {{value}} sur {{max}}",
+    "badRating": "La note doit être comprise entre 1 et 5",
+    "alreadyLeft": "Vous avez déjà laissé cet avis",
+    "ratingOf": "Note de {{name}}"
   },
   "form": {
     "description": "Description",

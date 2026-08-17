@@ -274,7 +274,9 @@ export default function ItemDetail() {
             </button>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(
-                `📦 ${item.title} — €${item.price_per_day}/jour sur RentIt\n${window.location.href}`
+                // «/jour sur RentIt» было по-французски для всех: голландец
+                // делился ссылкой с французским хвостом.
+                `${t('share.whatsappText', { title: item.title, price: item.price_per_day })}\n${window.location.href}`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -431,11 +433,18 @@ export default function ItemDetail() {
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
                 <div style={{ fontSize: '40px', marginBottom: '12px' }}>✅</div>
                 <h3 style={{ fontWeight: '800', marginBottom: '8px' }}>{t('itemDetail.requestSent')}</h3>
+                {/* Здесь стояло «Vous serez notifié par email» — обещание,
+                    которого продукт не держит: ключ Resend не задан, письмо
+                    не уходит вовсе. Но и после того, как ключ появится,
+                    обещать канал нельзя: 30.07 на гараже письмо с тремя
+                    зелёными проверками легло в спам, и Resend показывал
+                    «Delivered». Обещаем то, что зависит от нас, — место,
+                    где ответ будет виден наверняка. */}
                 <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-                  Le propriétaire a 24 heures pour répondre. Vous serez notifié par email.
+                  {t('itemDetail.ownerHas24h')}
                 </p>
                 <a href="/my-rentals" className="btn btn-secondary" style={{ fontSize: '14px' }}>
-                  Voir mes locations →
+                  {t('itemDetail.seeMyRentals')}
                 </a>
               </div>
             ) : (
@@ -448,7 +457,7 @@ export default function ItemDetail() {
                     закрыты миграцией 20260811000014, переписка живёт
                     внутри брони. */}
                 <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '10px', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>
-                  Contacter via la réservation ci-dessous
+                  {t('itemDetail.contactViaBooking')}
                 </div>
 
                 {/* Разделитель «ou demander une réservation» разделял два
@@ -624,7 +633,12 @@ export default function ItemDetail() {
                       {requestLoading ? t('common.loading') : !startDate || !endDate ? t('selectDatesHint') : t('itemDetail.sendRequest')}
                     </button>
                     <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', textAlign: 'center', marginTop: '8px' }}>
-                      Aucun paiement en ligne — le règlement se fait en espèces au propriétaire lors de la remise
+                      {/* Ключ намеренно назван по факту, а не по отрицанию:
+                          `noOnlinePayment` содержал и «payment», и «online»,
+                          и страж утверждений спотыкался о ИМЯ ключа, не
+                          видя текста. Гейт с ложными срабатываниями
+                          перестают читать. */}
+                      {t('itemDetail.cashAtHandover')}
                     </p>
                   </>
                 ) : (
@@ -646,7 +660,7 @@ export default function ItemDetail() {
 
         {!item.available && user?.id !== item.owner_id && (
           <div className="card" style={{ marginBottom: '20px', textAlign: 'center', color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
-            Cet outil est actuellement indisponible
+            {t('itemDetail.currentlyUnavailable')}
           </div>
         )}
 
