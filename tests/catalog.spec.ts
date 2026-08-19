@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Locator } from '@playwright/test'
 import { skipModals, dismissCookies, CATEGORY_LABEL, UI, login } from './helpers/app'
 import { createItem, removeItem, uniqueTitle, type CreatedItem } from './helpers/fixtures'
 
@@ -70,20 +70,34 @@ test.describe('единый справочник', () => {
         category: 'power_tools',
       })
 
+      // Значок сравниваем ГЕОМЕТРИЕЙ, а не текстом.
+      //
+      // Раньше здесь стояло `.toBe('⚡')`: категории рисовались эмодзи, и
+      // расхождение ⚡ против 🔌 читалось прямо в тексте. После #34 обе
+      // страницы рисуют SVG из CategoryIcon, innerText у них пустой — и
+      // проверка сравнивала пустоту с эмодзи, то есть падала при любом
+      // состоянии продукта. Смысл сохранён: один справочник — один рисунок
+      // на обоих экранах, и расхождение снова будет видно.
+      const pathsOf = (svg: Locator) =>
+        svg.locator('path').evaluateAll(nodes => nodes.map(n => n.getAttribute('d')))
+
       // Витрина: значок в карточке без фотографии.
       await page.goto('/browse', { waitUntil: 'load' })
       await dismissCookies(page)
       const card = page.locator('.item-card').filter({ hasText: item.title })
       await expect(card).toBeVisible({ timeout: 20000 })
-      const onBrowse = await card.locator('.item-card-img').innerText()
+      const onBrowse = await pathsOf(card.locator('.item-card-img svg'))
 
-      // Страница вещи: тот же значок. Здесь и было расхождение ⚡ / 🔌.
+      // Страница вещи: тот же значок, но крупнее — 72 против 56. Размер и
+      // берём локатором: своего класса у этого блока нет, а «первый svg на
+      // странице» — это иконка навбара, то есть заведомо не то.
       await page.goto(item.href, { waitUntil: 'load' })
       await expect(page.getByRole('heading', { name: item.title })).toBeVisible({ timeout: 20000 })
-      const onDetail = await page.locator('.card').first().innerText()
+      const onDetail = await pathsOf(page.locator('svg[width="72"]'))
 
-      expect(onBrowse.trim()).toBe('⚡')
-      expect(onDetail).toContain('⚡')
+      // Два пустых списка сравнялись бы между собой — требуем рисунок.
+      expect(onBrowse.length, 'на витрине нет значка категории').toBeGreaterThan(0)
+      expect(onDetail).toEqual(onBrowse)
       void UI
     } finally {
       if (item) {
