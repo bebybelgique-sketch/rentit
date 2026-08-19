@@ -141,7 +141,15 @@
     "blackoutsLater": "Vakantie, herstelling of een periode waarin u niet verhuurt: dat stelt u na publicatie in, via « Bewerken ».",
     "numberRange": "{{label}}: geef een geheel getal tussen {{min}} en {{max}}.",
     "tierMustBePositive": "{{label}} moet groter zijn dan 0, of leeg blijven.",
-    "duplicateConfirm": "U hebt al een gelijkaardige advertentie: « {{title}} ». Nog een aanmaken?"
+    "duplicateConfirm": "U hebt al een gelijkaardige advertentie: « {{title}} ». Nog een aanmaken?",
+    "deliveryToggle": "Ik bied levering aan",
+    "deliveryFeeLabel": "Leveringsprijs (€)",
+    "deliveryFeeHint": "heen en terug, ter plaatse te betalen",
+    "deliveryRadiusLabel": "Straal (km)",
+    "deliveryRadiusHint": "tot waar deze prijs geldt",
+    "deliveryNote": "RentIt neemt niets: de huurder betaalt de levering samen met de huur, bij de overhandiging.",
+    "deliveryFeeRequired": "Vul een leveringsprijs in, of vink het vakje uit.",
+    "deliveryRadiusMustBePositive": "De leveringsstraal moet groter zijn dan 0 km."
   },
   "listYourTool": "Plaats je gereedschap",
   "loggingIn": "Bezig met inloggen...",
@@ -265,7 +273,9 @@
     "transitionFailed": "Fout bij bijwerken",
     "conflict": "De reservering is aangepast terwijl u keek",
     "notYourAction": "Deze actie is niet voor u",
-    "cancelledByYouShort": "u"
+    "cancelledByYouShort": "u",
+    "labelDelivery": "Levering",
+    "deliveryOnSite": "ter plaatse te betalen"
   },
   "searchPlaceholder": "Zoek gereedschap...",
   "selectDates": "Selecteer datums",
@@ -429,7 +439,12 @@
     "cashAtHandover": "Geen online betaling — u betaalt de eigenaar cash bij de overhandiging",
     "timesRented_one": "Eén keer verhuurd",
     "timesRented_other": "{{count}} keer verhuurd",
-    "lastRented": "laatst in {{month}}"
+    "lastRented": "laatst in {{month}}",
+    "deliveryOffer": "Levering €{{fee}}",
+    "deliveryRadius": "(tot {{km}} km)",
+    "deliveryAsk": "Ik wil levering (€{{fee}})",
+    "delivery": "Levering",
+    "deliveryNote": "De eigenaar levert op het afgesproken adres. Ter plaatse te betalen, samen met de huur."
   },
   "editItem": {
     "loginToEdit": "Log in om gereedschap te bewerken",

@@ -141,7 +141,15 @@
     "blackoutsLater": "Vacances, réparation, période où vous ne louez pas : cela se règle après la publication, sur « Modifier ».",
     "numberRange": "{{label}} : indiquez un nombre entier entre {{min}} et {{max}}.",
     "tierMustBePositive": "{{label}} doit être supérieur à 0, ou laissé vide.",
-    "duplicateConfirm": "Vous avez déjà une annonce similaire : « {{title}} ». Créer une autre ?"
+    "duplicateConfirm": "Vous avez déjà une annonce similaire : « {{title}} ». Créer une autre ?",
+    "deliveryToggle": "Je propose la livraison",
+    "deliveryFeeLabel": "Prix de la livraison (€)",
+    "deliveryFeeHint": "aller-retour, réglé sur place",
+    "deliveryRadiusLabel": "Rayon (km)",
+    "deliveryRadiusHint": "jusqu'où ce prix s'applique",
+    "deliveryNote": "RentIt ne perçoit rien : le locataire vous règle la livraison en même temps que la location, lors de la remise.",
+    "deliveryFeeRequired": "Indiquez le prix de la livraison, ou décochez la case.",
+    "deliveryRadiusMustBePositive": "Le rayon de livraison doit être supérieur à 0 km."
   },
   "listYourTool": "Déposer votre outil",
   "loggingIn": "Connexion...",
@@ -265,7 +273,9 @@
     "transitionFailed": "Erreur lors de la mise à jour",
     "conflict": "La réservation a changé entre-temps",
     "notYourAction": "Cette action ne vous appartient pas",
-    "cancelledByYouShort": "vous"
+    "cancelledByYouShort": "vous",
+    "labelDelivery": "Livraison",
+    "deliveryOnSite": "à régler sur place"
   },
   "searchPlaceholder": "Rechercher des outils...",
   "selectDates": "Choisir les dates",
@@ -429,7 +439,12 @@
     "cashAtHandover": "Aucun paiement en ligne — le règlement se fait en espèces au propriétaire lors de la remise",
     "timesRented_one": "Loué une fois",
     "timesRented_other": "Loué {{count}} fois",
-    "lastRented": "dernière fois en {{month}}"
+    "lastRented": "dernière fois en {{month}}",
+    "deliveryOffer": "Livraison €{{fee}}",
+    "deliveryRadius": "(jusqu'à {{km}} km)",
+    "deliveryAsk": "Je souhaite être livré (€{{fee}})",
+    "delivery": "Livraison",
+    "deliveryNote": "Le propriétaire livre à l'adresse convenue. À régler sur place, avec la location."
   },
   "editItem": {
     "loginToEdit": "Se connecter pour modifier un outil",

@@ -32,6 +32,10 @@ interface Item {
   price_3days: number | null
   price_week: number | null
   late_fee_per_day: number | null
+  // Доставка. Непустая цена — единственный признак того, что услуга есть:
+  // пусто, и вторая сторона не видит про доставку ни строчки.
+  delivery_fee: number | null
+  delivery_radius_km: number | null
   deposit: number
   photos: string[]
   lat: number | null
@@ -86,6 +90,10 @@ export default function ItemDetail() {
   })
 
   const [requestMessage, setRequestMessage] = useState('')
+  // Доставку арендатор выбирает сам, и по умолчанию она не выбрана: молча
+  // добавленная в счёт услуга — это сумма, о которой человек узнаёт при
+  // встрече.
+  const [wantsDelivery, setWantsDelivery] = useState(false)
   const [requestLoading, setRequestLoading] = useState(false)
   const [error, setError] = useState('')
   const [requestSent, setRequestSent] = useState(false)
@@ -182,7 +190,11 @@ export default function ItemDetail() {
         totalDays,
       )
     : { total: 0, weeks: 0, packs3: 0, days: 0 }
-  const totalPrice = totalDays > 0 && item ? rental.total + item.deposit + insuranceFee : 0
+  // Доставка — отдельная услуга владельца, а не часть аренды: в
+  // bookings.total_price она не входит (там цена по тарифам, её считает
+  // сервер), но в то, что арендатор отдаст при встрече, — входит.
+  const deliveryFee = item && wantsDelivery && item.delivery_fee != null ? Number(item.delivery_fee) : 0
+  const totalPrice = totalDays > 0 && item ? rental.total + item.deposit + insuranceFee + deliveryFee : 0
   const hasTiers = !!item && (!!item.price_3days || !!item.price_week)
   // Экономия против дневной цены. Показываем, только если она есть: иначе
   // строка «вы экономите 0 €» превращается в насмешку.
@@ -195,7 +207,10 @@ export default function ItemDetail() {
     try {
       setRequestLoading(true); setError('')
       const res = await supabase.functions.invoke('request-rental', {
-        body: { item_id: item.id, start_date: startDate, end_date: endDate, message: requestMessage.trim() || null },
+        // Цену доставки НЕ передаём — только сам выбор. Сумму сервер берёт
+        // из вещи и кладёт в бронь снимком: доверять числу из браузера
+        // здесь так же нельзя, как и в total_price.
+        body: { item_id: item.id, start_date: startDate, end_date: endDate, message: requestMessage.trim() || null, delivery_requested: wantsDelivery },
         headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       })
       if (res.error) throw res.error
@@ -396,6 +411,13 @@ export default function ItemDetail() {
               {item.deposit > 0 && (
                 <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>
                   + €{item.deposit.toFixed(2)} caution
+                </div>
+              )}
+              {/* Доставка показывается, только если владелец её объявил. */}
+              {item.delivery_fee != null && (
+                <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>
+                  {t('itemDetail.deliveryOffer', { fee: Number(item.delivery_fee).toFixed(2) })}
+                  {item.delivery_radius_km != null && ' ' + t('itemDetail.deliveryRadius', { km: item.delivery_radius_km })}
                 </div>
               )}
               {item.late_fee_per_day != null && (
@@ -630,10 +652,37 @@ export default function ItemDetail() {
                             <span>€{item.deposit.toFixed(2)}</span>
                           </div>
                         )}
+                        {deliveryFee > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ color: 'var(--muted)' }}>{t('itemDetail.delivery')}</span>
+                            <span>€{deliveryFee.toFixed(2)}</span>
+                          </div>
+                        )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '20px', letterSpacing: '-0.03em', borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '4px' }}>
                           <span>{t('itemDetail.estimatedTotal')}</span>
                           <span>€{totalPrice.toFixed(2)}</span>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Выбор доставки. Стоит перед сообщением владельцу и
+                        после итога: человек видит, как меняется сумма, до
+                        того как отправит заявку. */}
+                    {totalDays > 0 && item.delivery_fee != null && (
+                      <div className="form-group" style={{ marginBottom: '16px' }}>
+                        <label htmlFor="wants-delivery" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' }}>
+                          <input
+                            id="wants-delivery"
+                            type="checkbox"
+                            checked={wantsDelivery}
+                            onChange={e => setWantsDelivery(e.target.checked)}
+                            style={{ width: 'auto', minHeight: 0 }}
+                          />
+                          {t('itemDetail.deliveryAsk', { fee: Number(item.delivery_fee).toFixed(2) })}
+                        </label>
+                        <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '6px', lineHeight: 1.5 }}>
+                          {t('itemDetail.deliveryNote')}
+                        </p>
                       </div>
                     )}
 

@@ -23,8 +23,8 @@ serve(async (req) => {
     const user = await getUserFromAuthHeader(req)
     if (user instanceof Response) return user
 
-    const body = await req.json() as { item_id?: string; start_date?: string; end_date?: string; message?: string }
-    const { item_id, start_date, end_date, message } = body
+    const body = await req.json() as { item_id?: string; start_date?: string; end_date?: string; message?: string; delivery_requested?: boolean }
+    const { item_id, start_date, end_date, message, delivery_requested } = body
     if (!item_id || !start_date || !end_date) {
       return new Response(JSON.stringify({ error: 'Missing fields' }), { status: 400, headers: CORS })
     }
@@ -54,7 +54,9 @@ serve(async (req) => {
 
     // Fetch item
     const { data: item, error: itemErr } = await supabase
-      .from('items').select('id,owner_id,price_per_day,price_3days,price_week,deposit,available').eq('id', item_id).single()
+      // Столбцы перечислены поимённо: новая колонка, забытая здесь, не
+      // приедет вовсе, и снимок цены доставки записался бы из пустоты.
+      .from('items').select('id,owner_id,price_per_day,price_3days,price_week,deposit,available,delivery_fee').eq('id', item_id).single()
     if (itemErr || !item) {
       return new Response(JSON.stringify({ error: 'Item not found' }), { status: 404, headers: CORS })
     }
@@ -120,6 +122,18 @@ serve(async (req) => {
     }, totalDays)
     const deposit = Number(item.deposit) || 0
 
+    // Доставка. Цену берём ИЗ ВЕЩИ, а не из тела запроса: браузер сообщает
+    // только сам выбор. И отказываем, если услуги у вещи нет — иначе бронь
+    // унесла бы обещание, которого владелец не давал.
+    const deliveryRequested = delivery_requested === true
+    const itemDeliveryFee = item.delivery_fee == null ? null : Number(item.delivery_fee)
+    if (deliveryRequested && !(itemDeliveryFee != null && itemDeliveryFee > 0)) {
+      return new Response(JSON.stringify({ error: 'Delivery is not offered for this item' }), { status: 400, headers: CORS })
+    }
+    // Снимок: последующая правка цены владельцем не меняет условий этой
+    // брони. В total_price доставка НЕ входит — там цена аренды.
+    const deliveryFee = deliveryRequested ? itemDeliveryFee : null
+
     // Create booking with pending_approval
     const { data: booking, error: bookingErr } = await supabase
       .from('bookings')
@@ -133,6 +147,8 @@ serve(async (req) => {
         platform_fee: 0,
         status: 'pending_approval',
         request_message: message?.trim() || null,
+        delivery_requested: deliveryRequested,
+        delivery_fee: deliveryFee,
       }])
       .select('id')
       .single()

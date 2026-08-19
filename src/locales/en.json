@@ -141,7 +141,15 @@
     "blackoutsLater": "Holidays, repairs, any period you do not rent out: set that after publishing, under \"Edit\".",
     "numberRange": "{{label}}: enter a whole number between {{min}} and {{max}}.",
     "tierMustBePositive": "{{label}} must be greater than 0, or left empty.",
-    "duplicateConfirm": "You already have a similar listing: \"{{title}}\". Create another one?"
+    "duplicateConfirm": "You already have a similar listing: \"{{title}}\". Create another one?",
+    "deliveryToggle": "I offer delivery",
+    "deliveryFeeLabel": "Delivery price (€)",
+    "deliveryFeeHint": "round trip, paid on the spot",
+    "deliveryRadiusLabel": "Radius (km)",
+    "deliveryRadiusHint": "how far this price applies",
+    "deliveryNote": "RentIt takes nothing: the renter pays you for the delivery together with the rental, at handover.",
+    "deliveryFeeRequired": "Enter a delivery price, or uncheck the box.",
+    "deliveryRadiusMustBePositive": "The delivery radius must be greater than 0 km."
   },
   "listYourTool": "List your tool",
   "loggingIn": "Logging in…",
@@ -265,7 +273,9 @@
     "transitionFailed": "Error updating",
     "conflict": "The booking changed while you were looking",
     "notYourAction": "This action is not for you",
-    "cancelledByYouShort": "you"
+    "cancelledByYouShort": "you",
+    "labelDelivery": "Delivery",
+    "deliveryOnSite": "paid on the spot"
   },
   "searchPlaceholder": "Drill, pressure washer, sander…",
   "selectDates": "Select dates",
@@ -429,7 +439,12 @@
     "cashAtHandover": "No online payment — you pay the owner in cash at handover",
     "timesRented_one": "Rented once",
     "timesRented_other": "Rented {{count}} times",
-    "lastRented": "last time in {{month}}"
+    "lastRented": "last time in {{month}}",
+    "deliveryOffer": "Delivery €{{fee}}",
+    "deliveryRadius": "(up to {{km}} km)",
+    "deliveryAsk": "I want it delivered (€{{fee}})",
+    "delivery": "Delivery",
+    "deliveryNote": "The owner delivers to the agreed address. Paid on the spot, with the rental."
   },
   "editItem": {
     "loginToEdit": "Log in to edit a tool",

@@ -34,6 +34,11 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     quantity: 12,
     buffer_days: 1,
     min_notice_days: 2,
+    // Владелец доставляет за 15 € до 10 км. Значения не умолчания: потеря
+    // их в мапперe означала бы, что форма редактирования покажет снятую
+    // галку поверх включённой услуги — тот же класс, что у количества.
+    delivery_fee: 15,
+    delivery_radius_km: 10,
   },
   expectedItem: {
     id: 'item-1',
@@ -59,6 +64,8 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     quantity: 12,
     buffer_days: 1,
     min_notice_days: 2,
+    delivery_fee: 15,
+    delivery_radius_km: 10,
   },
   mockError: new Error('Fetch item failed'),
 }));

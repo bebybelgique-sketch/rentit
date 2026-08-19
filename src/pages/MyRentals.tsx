@@ -141,6 +141,12 @@ const MyRentals: React.FC = () => {
                     </p>
                     <p><strong>{t('rental.labelDates')}:</strong> {t('rental.datesRange', { start: formatDate(rental.start_date), end: formatDate(rental.end_date) })}</p>
                     <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status} /></p>
+                    {/* Доставка показывается из СНИМКА в брони, а не из вещи:
+                        владелец мог с тех пор поменять цену, но договорённость
+                        была на этой. */}
+                    {rental.delivery_requested && rental.delivery_fee != null && (
+                      <p><strong>{t('rental.labelDelivery')}:</strong> €{Number(rental.delivery_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
+                    )}
                     {renderCancellation(rental, owner?.full_name || "l'autre partie")}
 
                     {CANCELLABLE_BY_RENTER.includes(rental.status) && (
@@ -197,6 +203,9 @@ const MyRentals: React.FC = () => {
                   <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status} /></p>
                   {/* Поля message в bookings нет: столбец называется
                       request_message, и страница показывала пустоту. */}
+                  {rental.delivery_requested && rental.delivery_fee != null && (
+                    <p><strong>{t('rental.labelDelivery')}:</strong> €{Number(rental.delivery_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
+                  )}
                   {rental.request_message && <p><strong>{t('rental.labelMessage')}:</strong> {rental.request_message}</p>}
                   {renderCancellation(rental, rental.renter?.full_name || "l'autre partie")}
 
