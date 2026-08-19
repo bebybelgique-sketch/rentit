@@ -111,7 +111,7 @@
     "packageWarning": "Attention: {{packages}} will never apply. Renters always pay the lowest rate.",
     "titlePlaceholder": "e.g. drill, pressure washer",
     "essentialsTitle": "The essentials",
-    "detailsSummary": "Quantity, details and rates",
+    "detailsSummary": "Quantity, details, rates and delivery",
     "detailsHint": "Optional — you can fill these in after publishing.",
     "photosFirstLabel": "Photos of the tool",
     "positionSet": "Position saved",

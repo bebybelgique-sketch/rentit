@@ -36,64 +36,63 @@ function formField(page: Page, label: string) {
  * Вызывается под уже вошедшим владельцем.
  */
 export async function ensureProfilePhoto(page: Page) {
-  // Аватар ставим безусловно, а не «если стоит заслон».
+  // Сначала смотрим, стоит ли заслон вообще.
   //
-  // Проверять заслон опросом нельзя: ListItem сначала рисует форму и только
-  // потом, когда вернётся запрос avatar_url, подменяет её заглушкой. Опрос
-  // успевал заглянуть в промежуток, решить «заслона нет» и уйти заполнять
-  // форму — а та отрывалась от DOM прямо посреди ввода. Гонку не сторожат,
-  // её убирают: ставим аватар всегда, потом ждём устоявшегося состояния.
-  //
-  // Поле на /profile заполняется из user_metadata, а не из таблицы users
-  // (см. src/pages/Profile.tsx), поэтому оно выглядит пустым даже когда в базе
-  // значение есть. Лишняя перезапись тем же значением безвредна.
+  // Прежде аватар ставился БЕЗУСЛОВНО, и делалось это через поле со
+  // ссылкой #avatar_url. Такого поля в продукте нет с 13.08: аватар
+  // загружается файлом (#avatar_file, PR #28). Оснастка искала исчезнувший
+  // элемент и падала на нём — а значит НИ ОДИН сценарий, заводящий вещь,
+  // включая «цикл аренды», с того дня не выполнялся вовсе. Playwright не
+  // входит в хук перед push, и падение никому не показалось.
+  await page.goto('/list-item', { waitUntil: 'load' })
+  await dismissCookies(page)
+  await page.waitForLoadState('networkidle', { timeout: 15000 })
+
+  // Ждать формы бесполезно: ListItem рисует её ПЕРВОЙ и только потом,
+  // получив ответ про avatar_url, подменяет заслоном. Поэтому решение
+  // принимаем после тишины в сети — когда ответ уже пришёл.
+  if ((await page.getByText(UI.listItemNeedsPhoto).count()) === 0) {
+    await expect(formField(page, UI.listItemTitleLabel)).toBeVisible({ timeout: 15000 })
+    return
+  }
+
   await page.goto('/profile', { waitUntil: 'load' })
   await dismissCookies(page)
 
-  // Имя обязательно (required) и больше НЕ подставляется почтой: подстановка
-  // публиковала адрес человека, потому что full_name читается анонимом.
-  // Пустое обязательное поле блокирует отправку формы целиком — заполняем,
-  // как заполнил бы человек.
+  // Имя обязательно и уходит тем же запросом, что и ссылка на аватар:
+  // пустым оно завалит сохранение целиком.
   const fullName = page.locator('#full_name')
   await expect(fullName).toBeVisible({ timeout: 20000 })
   if (!(await fullName.inputValue())) await fullName.fill('Propriétaire test')
 
-  const avatar = page.locator('#avatar_url')
-  await expect(avatar).toBeVisible({ timeout: 20000 })
-  // Прозрачный пиксель data-URI: заслон проверяет непустоту поля, а не картинку,
-  // и внешний адрес сюда тянуть незачем — он однажды перестанет отвечать.
-  await avatar.fill(
-    'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+  // Ответ хранилища ловим на лету: всплывашка живёт несколько секунд, и по
+  // её отсутствию потом не отличить «не загрузилось» от «не успели».
+  const upload = page.waitForResponse(
+    r => r.url().includes('/storage/v1/object') && r.request().method() === 'POST',
+    { timeout: 30000 },
   )
-  // Ответ сервера ловим на лету: всплывашка живёт ~4 с, а по её отсутствию
-  // потом уже не отличить «не сохранилось» от «не успели посмотреть».
-  const saveResponse = page.waitForResponse(
-    r => r.request().method() === 'PATCH' && r.url().includes('/rest/v1/users'),
-    { timeout: 20000 },
-  )
-  await page.getByRole('button', { name: UI.profileSubmit }).click()
+  await page.locator('#avatar_file').setInputFiles({
+    name: 'avatar.png',
+    mimeType: 'image/png',
+    // Однопиксельный PNG: заслон проверяет непустоту avatar_url, а не картинку.
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64',
+    ),
+  })
 
-  const response = await saveResponse
+  const response = await upload
   if (!response.ok()) {
-    const body = await response.text().catch(() => '')
-    // Называем причину здесь, иначе прогон падал через три шага на «нет поля
-    // цены» — симптом, по которому до настоящей причины не дойти.
+    const text = await response.text().catch(() => '')
     throw new Error(
-      `Профиль не сохраняется: ${response.status()} ${body.slice(0, 200)}\n` +
-        'Без аватара ListItem не отдаёт форму, поэтому весь цикл аренды непроверяем. ' +
+      `Аватар не загружается: ${response.status()} ${text.slice(0, 200)}\n` +
+        'Без него ListItem не отдаёт форму, поэтому весь цикл аренды непроверяем. ' +
         'Это дефект продукта, а не оснастки.',
     )
   }
+  await expect(page.getByText(UI.profileAvatarSaved)).toBeVisible({ timeout: 20000 })
 
-  // Уходить со страницы сразу после клика нельзя — уход обрывает запрос.
-  await expect(page.getByText(UI.profileSaved)).toBeVisible({ timeout: 20000 })
-
-  // Заслон читает базу, а не форму — убеждаемся, что запись действительно
-  // прошла, и дожидаемся, пока страница перестанет переобуваться.
-  //
-  // Ждать появления формы бесполезно: ListItem рисует её ПЕРВОЙ и только
-  // потом, получив ответ про avatar_url, подменяет заслоном. Значит ждать
-  // надо не элемент, а тишину в сети — момент, когда решение уже принято.
+  // Заслон читает базу, а не форму — убеждаемся, что запись прошла.
   await expect(async () => {
     await page.goto('/list-item', { waitUntil: 'load' })
     await page.waitForLoadState('networkidle', { timeout: 15000 })
@@ -121,6 +120,12 @@ export async function createItem(
      * Координат у такой вещи нет, и поиск «À proximité» её не покажет.
      */
     withPosition?: boolean
+    /**
+     * Объявить доставку. Поля живут за раскрытием «необязательное» и
+     * появляются только после галки — как у живого владельца, который
+     * сперва решает, возит он или нет.
+     */
+    delivery?: { fee: string; radiusKm?: string }
   } = {},
 ): Promise<CreatedItem> {
   const title = opts.title ?? uniqueTitle()
@@ -133,6 +138,20 @@ export async function createItem(
   await formField(page, UI.listItemPriceLabel).fill(pricePerDay)
   if (opts.category) {
     await page.locator('select').first().selectOption(opts.category)
+  }
+  if (opts.delivery) {
+    // Раскрытие нативное (<details>): пока оно закрыто, поля не видны и
+    // Playwright по ним не кликнет — открываем так же, как человек.
+    await page.locator('details.form-details summary').click()
+    const toggle = page.locator('#li-delivers')
+    await expect(toggle).toBeVisible({ timeout: 10000 })
+    await toggle.check()
+    // Поля цены до галки не существует вовсе — ждём появления, а не
+    // спрашиваем о видимости: is-проверки не ждут.
+    const fee = page.locator('#li-delivery-fee')
+    await expect(fee).toBeVisible({ timeout: 10000 })
+    await fee.fill(opts.delivery.fee)
+    if (opts.delivery.radiusKm) await page.locator('#li-delivery-radius').fill(opts.delivery.radiusKm)
   }
   if (opts.withPosition) {
     await page.getByRole('button', { name: /Ma position/ }).click()
