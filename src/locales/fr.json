@@ -564,5 +564,6 @@
     "remove": "Retirer",
     "datesRequired": "Indiquez les deux dates.",
     "endBeforeStart": "La date de fin ne peut pas précéder la date de début."
-  }
+  },
+  "nearbyUnavailable": "Localisation indisponible : le navigateur ne l'a pas autorisée. Autorisez-la, ou indiquez une commune dans les filtres."
 }

@@ -110,3 +110,37 @@ test.describe('поиск по близости', () => {
     await expect(warning).toHaveCount(0)
   })
 })
+
+/**
+ * Отказ в геолокации.
+ *
+ * До 20.08 обработчик отказа в Home.tsx был `() => setGeoLoading(false)`:
+ * кнопка мигала «...» и возвращалась как была. Отказ при этом обычный —
+ * разрешение не дано, прежний отказ запомнен браузером, службы
+ * местоположения выключены в системе, — и снаружи это неотличимо от
+ * «кнопка не работает».
+ *
+ * Поймать это прежний набор не мог по устройству: весь файл идёт под
+ * `permissions: ['geolocation']` с подставленными координатами, то есть
+ * проверяет ТОЛЬКО успешный путь. Разрешение здесь снимается намеренно.
+ */
+test.describe('без разрешения на геолокацию', () => {
+  test.use({ permissions: [] })
+
+  test('кнопка «À proximité» объясняет отказ, а не молчит', async ({ page, context }) => {
+    // Снимаем и то, что могло остаться от контекста: браузер обязан
+    // ответить отказом, иначе проверка ничего не проверяет.
+    await context.clearPermissions()
+
+    await skipModals(page)
+    await page.goto('/browse', { waitUntil: 'load' })
+    await dismissCookies(page)
+
+    await page.getByRole('button', { name: UI.nearby }).click()
+
+    await expect(page.getByText(/Localisation indisponible/i)).toBeVisible({ timeout: 20000 })
+    // И кнопка снова доступна: залипшая в «...» и отключённая навсегда —
+    // второй способ выглядеть сломанной.
+    await expect(page.getByRole('button', { name: UI.nearby })).toBeEnabled({ timeout: 15000 })
+  })
+})

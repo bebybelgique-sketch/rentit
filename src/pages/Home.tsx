@@ -165,6 +165,8 @@ export default function Home() {
     return isCategoryValue(fromUrl) ? fromUrl : ''
   })
   const [nearby, setNearby] = useState(false)
+  // Отказ геолокации: показывается рядом с кнопкой, а не в консоли.
+  const [geoError, setGeoError] = useState('')
   const [radius, setRadius] = useState(10)
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
   const [geoLoading, setGeoLoading] = useState(false)
@@ -246,14 +248,39 @@ export default function Home() {
 
   const toggleNearby = () => {
     if (!nearby && !userPos) {
+      // Отказ браузера ОБЯЗАН быть сказан вслух.
+      //
+      // Здесь стояло `() => setGeoLoading(false)`: кнопка мигала «...» и
+      // возвращалась как была — ни сообщения, ни следа. А отказ обычный:
+      // разрешение не дано, прежний отказ запомнен, службы местоположения
+      // выключены в системе. Снаружи всё это выглядит как «кнопка не
+      // работает», и человеку неоткуда узнать, что решение принял его
+      // браузер, а не продукт.
+      //
+      // В форме выкладки тот же вызов сделан правильно с 12.08
+      // (ListItem.tsx, listItem.geolocationDenied + таймаут) — два
+      // обработчика одного и того же разошлись молча.
+      //
+      // Таймаут обязателен по второй причине: без него getCurrentPosition
+      // на части устройств не отвечает вовсе, и кнопка остаётся навсегда
+      // отключённой с надписью «...».
+      if (!navigator.geolocation) {
+        setGeoError(t('nearbyUnavailable'))
+        return
+      }
       setGeoLoading(true)
+      setGeoError('')
       navigator.geolocation.getCurrentPosition(
         pos => {
           setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude })
           setNearby(true)
           setGeoLoading(false)
         },
-        () => setGeoLoading(false)
+        () => {
+          setGeoLoading(false)
+          setGeoError(t('nearbyUnavailable'))
+        },
+        { timeout: 10000 },
       )
     } else {
       setNearby(prev => !prev)
@@ -315,6 +342,16 @@ export default function Home() {
           </select>
         )}
       </div>
+
+      {/* Отказ показываем ПОД строкой поиска, а не внутри неё: строка —
+          flex-ряд, и абзац в нём разъезжается на телефоне. role="status",
+          чтобы диктор прочитал появившееся сообщение: без него отказ
+          остаётся невидимым ровно для того, кто не увидит и кнопку. */}
+      {geoError && (
+        <p role="status" style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>
+          {geoError}
+        </p>
+      )}
 
       {filtersOpen && (
         <div className="filters-panel">
