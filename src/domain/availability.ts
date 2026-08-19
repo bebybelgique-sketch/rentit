@@ -10,7 +10,10 @@
 // пересечений в `src/` больше нет нигде — это стережёт
 // `scripts/check-availability-single-source.mjs`.
 
-import { supabase } from '../lib/supabase'
+// Клиент подключается ЛЕНИВО, внутри функции. На верхнем уровне его импорт
+// ронял бы весь модуль там, где нет .env: `lib/supabase.ts` бросает при
+// загрузке, если переменных нет. Из-за этого чистые помощники — те, что
+// не ходят в сеть вовсе, — оказывались недоступны в CI.
 import {
   fetchItemCalendar as fetchWithRpc,
   toISODate,
@@ -42,7 +45,8 @@ export const CALENDAR_HORIZON_DAYS = 365
  * помесячно без ограничения, а второй раз ходить за теми же данными при
  * каждом перелистывании незачем.
  */
-export function loadItemCalendar(itemId: string): Promise<ItemCalendar> {
+export async function loadItemCalendar(itemId: string): Promise<ItemCalendar> {
+  const { supabase } = await import('../lib/supabase')
   const today = new Date()
   const from = toISODate(today)
   const to = toISODate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + CALENDAR_HORIZON_DAYS))
