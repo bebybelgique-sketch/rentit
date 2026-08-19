@@ -564,5 +564,6 @@
     "remove": "Verwijderen",
     "datesRequired": "Geef beide datums op.",
     "endBeforeStart": "De einddatum kan niet vóór de begindatum liggen."
-  }
+  },
+  "nearbyUnavailable": "Locatie niet beschikbaar: de browser gaf geen toestemming. Sta het toe, of typ een gemeente in de filters."
 }

@@ -564,5 +564,6 @@
     "remove": "Remove",
     "datesRequired": "Enter both dates.",
     "endBeforeStart": "The end date cannot be before the start date."
-  }
+  },
+  "nearbyUnavailable": "Location unavailable: the browser did not allow it. Allow it, or type a town in the filters."
 }
