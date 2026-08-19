@@ -173,3 +173,39 @@ export async function login(page: Page, email: string, password: string) {
   await page.locator('button[type="submit"]').click()
   await expect(page.getByRole('button', { name: UI.navLogout })).toBeVisible({ timeout: 20000 })
 }
+
+/**
+ * Выбирает язык через переключатель навбара.
+ *
+ * До 13.08 переключатель работал ПО КРУГУ и показывал СЛЕДУЮЩИЙ язык, поэтому
+ * спек кликал по кнопке с надписью «EN». После #31 кнопка показывает ТЕКУЩИЙ
+ * язык и раскрывает список: надписи «EN» на французской странице нет ни при
+ * каком раскладе, и спек ждал её до таймаута — три проверки языка не
+ * выполнялись с того дня.
+ *
+ * Кнопку берём по aria-haspopup, а не по подписи: подпись — это код текущего
+ * языка, она меняется вместе с ним, и локатор ломался бы ровно там, где нужен.
+ * Заодно у кнопки есть aria-label («Choisir la langue»), который переопределяет
+ * видимый текст: getByRole с именем 'FR' не нашёл бы её и сегодня.
+ */
+export async function chooseLanguage(page: Page, code: 'fr' | 'en' | 'nl') {
+  // Названия языков в словарях даны на них самих и одинаковы во всех трёх —
+  // значит выбор не зависит от того, на каком языке сейчас интерфейс.
+  const NAMES = { fr: 'Français', en: 'English', nl: 'Nederlands' } as const
+
+  const trigger = page.locator('button[aria-haspopup="listbox"]')
+  await expect(trigger).toBeVisible({ timeout: 15000 })
+  await trigger.click()
+
+  const option = page.getByRole('option', { name: NAMES[code] })
+  await expect(option).toBeVisible({ timeout: 10000 })
+  await option.click()
+
+  // Список закрывается сам; дожидаемся, иначе следующий клик попадёт в него.
+  await expect(option).toHaveCount(0, { timeout: 10000 })
+}
+
+/** Код языка, который показывает переключатель: FR, EN или NL. */
+export function languageTrigger(page: Page) {
+  return page.locator('button[aria-haspopup="listbox"]')
+}

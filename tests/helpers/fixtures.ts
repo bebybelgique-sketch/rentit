@@ -115,7 +115,7 @@ export async function createItem(
     pricePerDay?: string
     category?: string
     /**
-     * Нажать «📍 Ma position». По умолчанию НЕ нажимаем — и это осознанно:
+     * Нажать «Utiliser ma position». По умолчанию НЕ нажимаем — и это осознанно:
      * так объявление заводит человек, который просто напечатал адрес.
      * Координат у такой вещи нет, и поиск «À proximité» её не покажет.
      */
@@ -154,9 +154,9 @@ export async function createItem(
     if (opts.delivery.radiusKm) await page.locator('#li-delivery-radius').fill(opts.delivery.radiusKm)
   }
   if (opts.withPosition) {
-    await page.getByRole('button', { name: /Ma position/ }).click()
+    await page.getByRole('button', { name: /Utiliser ma position/i }).click()
     // Кнопка сама сообщает об успехе — ждём именно её, а не таймаут.
-    await expect(page.getByRole('button', { name: /Position définie/ }))
+    await expect(page.getByRole('button', { name: /Position enregistrée/i }))
       .toBeVisible({ timeout: 20000 })
   }
 

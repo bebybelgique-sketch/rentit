@@ -16,7 +16,7 @@ test.use({ geolocation: WAVRE, permissions: ['geolocation'] })
  *
  * Суть в том, что вещь БЕЗ координат исчезает из поиска по близости целиком,
  * а владелец об этом не узнаёт: в форме координаты необязательны и ставятся
- * только кнопкой «Ma position». Напечатал адрес руками — объявления в главном
+ * только кнопкой «Utiliser ma position». Напечатал адрес руками — объявления в главном
  * способе поиска нет, и никакого объяснения.
  */
 test.describe('поиск по близости', () => {
@@ -105,8 +105,8 @@ test.describe('поиск по близости', () => {
     await expect(warning).toBeVisible({ timeout: 20000 })
 
     // Поставил позицию — предупреждение уходит, потому что перестало быть правдой.
-    await page.getByRole('button', { name: /Ma position/ }).click()
-    await expect(page.getByRole('button', { name: /Position définie/ })).toBeVisible({ timeout: 20000 })
+    await page.getByRole('button', { name: /Utiliser ma position/i }).click()
+    await expect(page.getByRole('button', { name: /Position enregistrée/i })).toBeVisible({ timeout: 20000 })
     await expect(warning).toHaveCount(0)
   })
 })

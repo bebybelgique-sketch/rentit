@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { skipModals } from './helpers/app'
+import { chooseLanguage, languageTrigger, skipModals } from './helpers/app'
 
 /**
  * Один словарь на весь продукт.
@@ -25,7 +25,7 @@ test.describe('язык', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('outils de votre voisin')
 
     // Один шаг переключателя — английский.
-    await page.getByRole('button', { name: 'EN' }).click()
+    await chooseLanguage(page, 'en')
 
     await expect(page.getByRole('link', { name: 'Browse' })).toBeVisible({ timeout: 15000 })
     // Суть: заголовок ТЕЛА страницы тоже сменился. Раньше он оставался
@@ -35,16 +35,17 @@ test.describe('язык', () => {
 
   test('до нидерландского можно добраться', async ({ page }) => {
     await page.goto('/browse', { waitUntil: 'load' })
-    await expect(page.getByRole('button', { name: 'EN' })).toBeVisible({ timeout: 15000 })
+    // Переключатель показывает ТЕКУЩИЙ язык, а не следующий: на французской
+    // странице это «FR». Именно эта подпись и обманывала — см. #31.
+    await expect(languageTrigger(page)).toHaveText(/FR/, { timeout: 15000 })
 
-    await page.getByRole('button', { name: 'EN' }).click()
-    await page.getByRole('button', { name: 'NL' }).click()
+    await chooseLanguage(page, 'nl')
 
     await expect(page.getByRole('link', { name: 'Bladeren' })).toBeVisible({ timeout: 15000 })
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Gereedschap van je buurman')
 
-    // И круг замыкается обратно на французский.
-    await page.getByRole('button', { name: 'FR' }).click()
+    // И обратно на французский.
+    await chooseLanguage(page, 'fr')
     await expect(page.getByRole('link', { name: 'Parcourir' })).toBeVisible({ timeout: 15000 })
   })
 
@@ -53,7 +54,7 @@ test.describe('язык', () => {
     // сохранение выбора могло молча потеряться, и человек возвращался бы во
     // французский на каждой странице.
     await page.goto('/browse', { waitUntil: 'load' })
-    await page.getByRole('button', { name: 'EN' }).click()
+    await chooseLanguage(page, 'en')
     await expect(page.getByRole('link', { name: 'Browse' })).toBeVisible({ timeout: 15000 })
 
     await page.reload({ waitUntil: 'load' })
