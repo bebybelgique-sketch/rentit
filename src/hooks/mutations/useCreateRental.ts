@@ -12,6 +12,9 @@ interface CreateRentalParams {
   start_date: string; // YYYY-MM-DD
   end_date: string;   // YYYY-MM-DD
   message?: string;
+  // Только сам выбор: цену доставки сервер берёт из вещи и кладёт в бронь
+  // снимком — по той же причине, по какой не принимает total_price.
+  delivery_requested?: boolean;
 }
 
 const createRental = async (params: CreateRentalParams): Promise<{ booking_id: string }> => {

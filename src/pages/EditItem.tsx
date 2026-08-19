@@ -34,6 +34,10 @@ const EditItem: React.FC = () => {
     price_3days: '' as string,
     price_week: '' as string,
     late_fee_per_day: '' as string,
+    // Доставка держится строками по той же причине, что и тарифы: пустое
+    // поле — «услуги нет», и это не ноль.
+    delivery_fee: '' as string,
+    delivery_radius_km: '' as string,
     deposit: 0,
     category: '',
     condition: '',
@@ -46,6 +50,10 @@ const EditItem: React.FC = () => {
     buffer_days: 0,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // Тумблер доставки — интерфейс поверх одного поля: в базе признак услуги
+  // ровно один, непустая delivery_fee. Второй колонки «включено» нет
+  // намеренно, иначе она разойдётся с ценой.
+  const [delivers, setDelivers] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -58,6 +66,8 @@ const EditItem: React.FC = () => {
         price_3days: item.price_3days == null ? '' : String(item.price_3days),
         price_week: item.price_week == null ? '' : String(item.price_week),
         late_fee_per_day: item.late_fee_per_day == null ? '' : String(item.late_fee_per_day),
+        delivery_fee: item.delivery_fee == null ? '' : String(item.delivery_fee),
+        delivery_radius_km: item.delivery_radius_km == null ? '' : String(item.delivery_radius_km),
         deposit: item.deposit || 0,
         category: item.category || '', // Assuming category is part of the Item type
         condition: item.condition || '', // Assuming condition is part of the Item type
@@ -69,6 +79,9 @@ const EditItem: React.FC = () => {
         min_notice_days: item.min_notice_days ?? 0,
         buffer_days: item.buffer_days ?? 0,
       });
+      // Галка восстанавливается из единственного признака услуги — цены.
+      // Отдельного «включено» в базе нет, и хранить его негде.
+      setDelivers(item.delivery_fee != null);
     }
   }, [item]);
 
@@ -145,12 +158,25 @@ const EditItem: React.FC = () => {
         return v;
       };
 
-      const { price_3days, price_week, late_fee_per_day, ...rest } = formData;
+      const { price_3days, price_week, late_fee_per_day, delivery_fee, delivery_radius_km, ...rest } = formData;
+
+      // Включённая доставка без цены — обещание услуги, условий которой
+      // никто не знает. Пустое поле здесь НЕ приводим молча к «услуги нет»:
+      // владелец видел галку включённой и ждёт, что она сохранится.
+      if (delivers && !(parseFloat(delivery_fee) > 0))
+        throw new Error(t('listItem.deliveryFeeRequired'));
+      if (delivers && delivery_radius_km.trim() !== '' && !(parseInt(delivery_radius_km, 10) > 0))
+        throw new Error(t('listItem.deliveryRadiusMustBePositive'));
+
       const updates: ItemUpdate = {
         ...rest,
         price_3days: tier(price_3days, t('listItem.package3Days')),
         price_week: tier(price_week, t('listItem.packageWeek')),
         late_fee_per_day: tier(late_fee_per_day, t('listItem.lateFeesLabel')),
+        // Выключенный тумблер стирает обе колонки: снятая галка обязана
+        // означать «не вожу», а не «вожу, но цену больше не показываю».
+        delivery_fee: delivers ? parseFloat(delivery_fee) : null,
+        delivery_radius_km: delivers && delivery_radius_km.trim() !== '' ? parseInt(delivery_radius_km, 10) : null,
       };
 
       if (imageFile) {
@@ -312,6 +338,63 @@ const EditItem: React.FC = () => {
             <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '5px', lineHeight: 1.5 }}>
               {t('listItem.lateFeeNote')}
             </p>
+          </div>
+
+          {/* Доставка. Галка снята у всех, кто её не включал: услуги не
+              существует, пока владелец не назвал цену. */}
+          <div className="form-group">
+            <label htmlFor="delivers" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                id="delivers"
+                name="delivers"
+                type="checkbox"
+                checked={delivers}
+                onChange={e => {
+                  const on = e.target.checked;
+                  setDelivers(on);
+                  // Снятая галка чистит поля: иначе цена осталась бы в форме
+                  // невидимой и вернулась бы при следующем включении как
+                  // «уже согласованная».
+                  if (!on) setFormData(prev => ({ ...prev, delivery_fee: '', delivery_radius_km: '' }));
+                }}
+                style={{ width: 'auto' }}
+              />
+              {t('listItem.deliveryToggle')}
+            </label>
+
+            {delivers && (
+              <>
+                <label htmlFor="delivery_fee" style={{ marginTop: '10px', display: 'block' }}>{t('listItem.deliveryFeeLabel')}</label>
+                <input
+                  id="delivery_fee"
+                  name="delivery_fee"
+                  type="number"
+                  value={formData.delivery_fee}
+                  onChange={e => setFormData(prev => ({ ...prev, delivery_fee: e.target.value }))}
+                  min="0.50"
+                  step="0.50"
+                  placeholder={t('listItem.deliveryFeeHint')}
+                  style={{ width: '100%' }}
+                />
+                <label htmlFor="delivery_radius_km" style={{ marginTop: '10px', display: 'block' }}>
+                  {t('listItem.deliveryRadiusLabel')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span>
+                </label>
+                <input
+                  id="delivery_radius_km"
+                  name="delivery_radius_km"
+                  type="number"
+                  value={formData.delivery_radius_km}
+                  onChange={e => setFormData(prev => ({ ...prev, delivery_radius_km: e.target.value }))}
+                  min="1"
+                  step="1"
+                  placeholder={t('listItem.deliveryRadiusHint')}
+                  style={{ width: '100%' }}
+                />
+                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '5px', lineHeight: 1.5 }}>
+                  {t('listItem.deliveryNote')}
+                </p>
+              </>
+            )}
           </div>
 
           {/* Доступность: количество единиц, срок предупреждения, зазор

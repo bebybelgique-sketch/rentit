@@ -122,6 +122,45 @@ try {
     check(false, 'бронь для проверки цены создалась', priced.err)
   }
 
+  // ── Доставка ────────────────────────────────────────────────────────
+  // Признак услуги ровно один — непустая items.delivery_fee. Пока её нет,
+  // заявка с доставкой обязана быть отклонена: иначе бронь унесёт
+  // обещание, которого владелец не давал.
+  const noService = await ask({ item_id: itemId, start_date: day(6), end_date: day(7), delivery_requested: true })
+  check(!noService.bookingId, 'доставка у вещи без объявленной услуги отклоняется', noService.err)
+
+  await owner.from('items').update({ delivery_fee: 15, delivery_radius_km: 10 }).eq('id', itemId)
+
+  const delivered = await ask({ item_id: itemId, start_date: day(6), end_date: day(7), delivery_requested: true })
+  if (delivered.bookingId) {
+    const { data: b } = await owner.from('bookings').select('delivery_requested, delivery_fee, total_price').eq('id', delivered.bookingId).single()
+    check(b?.delivery_requested === true, 'выбор доставки записан в бронь')
+    check(Number(b?.delivery_fee) === 15, 'цена доставки записана снимком ИЗ ВЕЩИ, а не из тела запроса', `получено ${b?.delivery_fee}`)
+    // Две суммы живут раздельно: total_price — аренда по тарифам, доставка
+    // считается отдельной строкой и деньгами платформы не является.
+    check(Number(b?.total_price) === 20, 'доставка НЕ входит в total_price (2 дня × 10 €)', `получено ${b?.total_price}`)
+
+    await owner.from('items').update({ delivery_fee: 99 }).eq('id', itemId)
+    const { data: after } = await owner.from('bookings').select('delivery_fee').eq('id', delivered.bookingId).single()
+    check(Number(after?.delivery_fee) === 15, 'правка цены у вещи не меняет условий уже созданной брони', `получено ${after?.delivery_fee}`)
+    await owner.from('items').update({ delivery_fee: 15 }).eq('id', itemId)
+
+    await owner.from('bookings').delete().eq('id', delivered.bookingId)
+  } else {
+    check(false, 'бронь с доставкой создалась', delivered.err)
+  }
+
+  // Не просили — снимка быть не должно. Инвариант базы это и держит:
+  // delivery_requested = (delivery_fee IS NOT NULL).
+  const noDelivery = await ask({ item_id: itemId, start_date: day(8), end_date: day(9) })
+  if (noDelivery.bookingId) {
+    const { data: b } = await owner.from('bookings').select('delivery_requested, delivery_fee').eq('id', noDelivery.bookingId).single()
+    check(b?.delivery_requested === false && b?.delivery_fee === null, 'без просьбы о доставке бронь остаётся чистой', JSON.stringify(b))
+    await owner.from('bookings').delete().eq('id', noDelivery.bookingId)
+  } else {
+    check(false, 'бронь без доставки создалась', noDelivery.err)
+  }
+
   const unauth = await fetch(`${env.VITE_SUPABASE_URL}/functions/v1/request-rental`, {
     method: 'POST',
     headers: { apikey: env.VITE_SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },

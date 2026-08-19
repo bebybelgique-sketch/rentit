@@ -38,6 +38,13 @@ export interface Item {
   quantity?: number;
   buffer_days?: number;
   min_notice_days?: number;
+  // Доставка (миграция 20260819000024). delivery_fee — ЕДИНСТВЕННЫЙ признак
+  // того, что владелец доставляет: пусто — услуги нет, и вторая сторона не
+  // видит про неё ни строчки. Отдельного флага «включено» нет намеренно: два
+  // поля рядом расходятся. Сумму платформа не держит и не считает — расчёт
+  // при встрече, как с платой за просрочку.
+  delivery_fee?: number | null;
+  delivery_radius_km?: number | null;
 }
 
 /** Перерыв, объявленный владельцем: отпуск, ремонт, вещь занята для себя. */
@@ -81,6 +88,11 @@ export interface Rental {
   cancelled_by?: string | null;
   cancelled_at?: string | null;
   cancellation_reason?: string | null;
+  // Доставка: выбор арендатора и СНИМОК цены на момент заявки. Снимок, а не
+  // текущее значение вещи — правка цены владельцем не меняет условий уже
+  // созданной брони. В total_price не входит.
+  delivery_requested?: boolean;
+  delivery_fee?: number | null;
   // Вещь приходит под псевдонимом item (в запросе: `item:items(...)`),
   // вместе с профилем владельца — иначе арендатор не знает, к кому едет.
   item?: Item & { owner?: PartyProfile | null };

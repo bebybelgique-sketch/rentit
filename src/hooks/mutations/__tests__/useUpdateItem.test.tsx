@@ -34,6 +34,11 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     quantity: 12,
     buffer_days: 1,
     min_notice_days: 2,
+    // Результат ЗАМЕЩАЕТ объект в кэше: потеряв доставку здесь, форма сразу
+    // после сохранения показала бы «не доставляю» поверх только что
+    // включённой услуги.
+    delivery_fee: 15,
+    delivery_radius_km: 10,
   },
   expectedItem: {
     id: 'item-1',
@@ -57,6 +62,8 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     quantity: 12,
     buffer_days: 1,
     min_notice_days: 2,
+    delivery_fee: 15,
+    delivery_radius_km: 10,
   },
   mockError: new Error('Update item failed'),
 }));

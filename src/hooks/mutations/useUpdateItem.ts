@@ -32,6 +32,8 @@ export type ItemUpdate = Partial<{
   quantity: number;
   buffer_days: number;
   min_notice_days: number;
+  delivery_fee: number | null;
+  delivery_radius_km: number | null;
 }>;
 
 interface UpdateItemParams {
@@ -84,6 +86,10 @@ const updateItemById = async ({ id, updates, userId }: UpdateItemParams): Promis
     quantity: data.quantity ?? 1,
     buffer_days: data.buffer_days ?? 0,
     min_notice_days: data.min_notice_days ?? 0,
+    // Тот же кэш-класс: без этих двух строк форма после сохранения показала
+    // бы «не доставляю» поверх только что включённой доставки.
+    delivery_fee: data.delivery_fee ?? null,
+    delivery_radius_km: data.delivery_radius_km ?? null,
   };
 
   return mappedItem;

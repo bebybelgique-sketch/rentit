@@ -52,6 +52,10 @@ const fetchItemById = async (id: string): Promise<Item | null> => {
     quantity: data.quantity ?? 1,
     buffer_days: data.buffer_days ?? 0,
     min_notice_days: data.min_notice_days ?? 0,
+    // Доставка. Пустое остаётся пустым: ноль здесь означал бы «вожу
+    // бесплатно», а это другое обещание, чем «не вожу».
+    delivery_fee: data.delivery_fee ?? null,
+    delivery_radius_km: data.delivery_radius_km ?? null,
   };
 
   return mappedItem;

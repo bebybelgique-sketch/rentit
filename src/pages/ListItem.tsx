@@ -40,6 +40,8 @@ export default function ListItem() {
     price_3days: '',
     price_week: '',
     late_fee_per_day: '',
+    delivery_fee: '',
+    delivery_radius_km: '',
     deposit: '',
     address: '',
     // Доступность. Умолчания — ровно прежнее поведение продукта: одна
@@ -67,6 +69,12 @@ export default function ListItem() {
   // навсегда — при следующем объявлении спросим снова, мягко.
   const [photoDeferred, setPhotoDeferred] = useState(false)
   const [estimatedValue, setEstimatedValue] = useState('')
+  // Тумблер доставки. Это ИНТЕРФЕЙС поверх одного поля, а не второе поле:
+  // в базе признак услуги ровно один — непустая delivery_fee. Держать его
+  // отдельной колонкой значило бы завести второй источник правды, который
+  // рано или поздно разойдётся с ценой («доставляю» стоит, цены нет — что
+  // показывать арендатору?). Выключение чистит оба поля.
+  const [delivers, setDelivers] = useState(false)
 
   // Есть ли фото профиля. Раньше отсутствие фото ЗАКРЫВАЛО выкладку:
   // человек нажимал «déposer un outil» и получал вместо формы требование
@@ -260,6 +268,16 @@ export default function ListItem() {
         return setError(t('listItem.tierMustBePositive', { label }))
     }
 
+    // Доставка включена, но цена не названа — объявление обещало бы услугу,
+    // условий которой никто не знает. База такое отклонит инвариантом, но
+    // человеку нужен ответ здесь.
+    if (delivers) {
+      if (!(parseFloat(form.delivery_fee) > 0))
+        return setError(t('listItem.deliveryFeeRequired'))
+      if (form.delivery_radius_km !== '' && !(parseInt(form.delivery_radius_km, 10) > 0))
+        return setError(t('listItem.deliveryRadiusMustBePositive'))
+    }
+
     // Целые поля доступности. Проверка та же, что в базе, но ответ здесь —
     // отказ Postgres на французской странице человеку ничего не говорит.
     for (const [field, label, min, max] of [
@@ -318,6 +336,10 @@ export default function ListItem() {
         price_3days:      form.price_3days      === '' ? null : parseFloat(form.price_3days),
         price_week:       form.price_week       === '' ? null : parseFloat(form.price_week),
         late_fee_per_day: form.late_fee_per_day === '' ? null : parseFloat(form.late_fee_per_day),
+        // Выключенный тумблер уходит как NULL по обоим полям — иначе цена,
+        // набранная и потом отменённая, осталась бы в базе обещанием.
+        delivery_fee:       delivers && form.delivery_fee !== '' ? parseFloat(form.delivery_fee) : null,
+        delivery_radius_km: delivers && form.delivery_radius_km !== '' ? parseInt(form.delivery_radius_km, 10) : null,
         deposit:       parseFloat(form.deposit) || 0,
         photos:        photoUrls,
         lat,
@@ -751,6 +773,65 @@ export default function ListItem() {
                 disabled={isLocked}
               />
               <p className="form-hint">{t('listItem.lateFeeNote')}</p>
+            </div>
+
+            {/* Доставка. Услуги нет ни у кого, пока владелец её не включил:
+                галка снята по умолчанию, и до неё поля цены не существует —
+                сосед с одной дрелью просто не встречает этот вопрос. */}
+            <div className="form-group">
+              <label htmlFor="li-delivers" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer' }}>
+                <input
+                  id="li-delivers"
+                  type="checkbox"
+                  checked={delivers}
+                  onChange={e => {
+                    const on = e.target.checked
+                    setDelivers(on)
+                    // Снятая галка чистит поля: иначе набранная цена ушла бы
+                    // в базу невидимой для формы, которая её больше не
+                    // показывает.
+                    if (!on) setForm(p => ({ ...p, delivery_fee: '', delivery_radius_km: '' }))
+                  }}
+                  disabled={isLocked}
+                  style={{ width: 'auto', minHeight: 0 }}
+                />
+                {t('listItem.deliveryToggle')}
+              </label>
+
+              {delivers && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-4)', marginTop: 'var(--space-3)' }}>
+                  <div className="form-group">
+                    <label htmlFor="li-delivery-fee">{t('listItem.deliveryFeeLabel')}</label>
+                    <input
+                      id="li-delivery-fee"
+                      type="number"
+                      min="0.50"
+                      step="0.50"
+                      value={form.delivery_fee}
+                      onChange={set('delivery_fee')}
+                      placeholder={t('listItem.deliveryFeeHint')}
+                      disabled={isLocked}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="li-delivery-radius">
+                      {t('listItem.deliveryRadiusLabel')}{' '}
+                      <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{t('common.optional')}</span>
+                    </label>
+                    <input
+                      id="li-delivery-radius"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={form.delivery_radius_km}
+                      onChange={set('delivery_radius_km')}
+                      placeholder={t('listItem.deliveryRadiusHint')}
+                      disabled={isLocked}
+                    />
+                  </div>
+                </div>
+              )}
+              {delivers && <p className="form-hint">{t('listItem.deliveryNote')}</p>}
             </div>
           </details>
 
