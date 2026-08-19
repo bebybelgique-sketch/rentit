@@ -15,11 +15,19 @@ import { createClient } from '@supabase/supabase-js'
 
 const PREFIX = 'E2E '
 
-for (const line of readFileSync(new URL('../.env', import.meta.url), 'utf8').split(/\r?\n/)) {
-  const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line)
-  if (m && process.env[m[1]] === undefined) {
-    process.env[m[1]] = m[2].trim().replace(/^(['"])(.*)\1$/, '$2')
+// .env читаем, ЕСЛИ он есть. На CI его нет — переменные приходят из
+// окружения, и без этого try скрипт падал бы на чтении файла ещё до первой
+// строчки работы. Шаг уборки обёрнут в `|| true`, поэтому падение было бы
+// МОЛЧАЛИВЫМ: уборка не выполнялась бы вовсе, и никто бы не узнал.
+try {
+  for (const line of readFileSync(new URL('../.env', import.meta.url), 'utf8').split(/\r?\n/)) {
+    const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line)
+    if (m && process.env[m[1]] === undefined) {
+      process.env[m[1]] = m[2].trim().replace(/^(['"])(.*)\1$/, '$2')
+    }
   }
+} catch {
+  // Файла нет — это нормально: дальше проверяются сами переменные.
 }
 
 const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, TEST_OWNER_EMAIL, TEST_OWNER_PASSWORD } = process.env

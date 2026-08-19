@@ -1,6 +1,6 @@
 // src/pages/EditItem.tsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useItemById } from '../hooks/useItemById';
 import { useUpdateItem, type ItemUpdate } from '../hooks/mutations/useUpdateItem';
@@ -95,7 +95,15 @@ const EditItem: React.FC = () => {
 
   if (itemLoading) return <div className="page"><div className="loading">{t('editItem.loading')}</div></div>;
   if (itemError) return <div className="page"><div className="loading">Erreur: {itemError.message}</div></div>;
-  if (!item) return <div className="page"><div className="loading">{t('editItem.notFound')}</div></div>;
+  // Не просто надпись: со страницы должен быть выход. Страница вещи в том же
+  // случае предлагает «Parcourir» и «Accueil», а здесь человек упирался в
+  // одну строку и навбар — иди догадайся, куда именно.
+  if (!item) return (
+    <div className="page" style={{ textAlign: 'center', paddingTop: '80px' }}>
+      <div className="loading" style={{ marginBottom: '24px' }}>{t('editItem.notFound')}</div>
+      <Link to="/my-items" className="btn btn-primary">{t('editItem.backToMyItems')}</Link>
+    </div>
+  );
 
   // Проверка, является ли пользователь владельцем
   if (item.owner_id !== user.id) {

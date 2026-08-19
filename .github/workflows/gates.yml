@@ -87,3 +87,117 @@ jobs:
       #   Supabase и требует ключей. В CI это значит либо секреты боевой
       #   базы в публичном репозитории, либо мутации прода на каждый PR.
       #   Ни то ни другое.
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Прогон браузером. ПОСЛЕ мержа в main, не на PR.
+  #
+  # ЗАЧЕМ. 19.08 замерено: набор Playwright не запускали с 12.08, и за это
+  # время продукт ушёл вперёд на три PR. Из 55 проверок семь падали на
+  # устаревших подписях, а помощник `ensureProfilePhoto` искал поле,
+  # исчезнувшее 13.08, чем ронял ВСЁ, что заводит вещь, — включая «цикл
+  # аренды», единственную проверку, чей провал означает, что продукт не
+  # делает обещанного. Шесть дней этого никто не видел, потому что
+  # браузерный прогон не входил ни в хук перед push, ни сюда.
+  #
+  # ПОЧЕМУ НЕ НА PR. Сценарии бьют по РАЗВЁРНУТОМУ адресу. На PR это было
+  # бы preview-развёртывание, чей адрес надо ещё вытащить из Vercel и
+  # передать заданию. После мержа адрес известен и постоянен — это прод.
+  # Цена решения названа честно: сломанное успевает попасть в main, и
+  # прогон сообщает об этом через минуту после, а не до.
+  #
+  # ПОЧЕМУ БЕЗ ТРАСС И БЕЗ ВЫГРУЗКИ АРТЕФАКТОВ. Репозиторий ПУБЛИЧНЫЙ, а
+  # артефакты Actions в публичном репозитории скачивает кто угодно. Трасса
+  # Playwright содержит снимки страницы входа вместе с введённым паролем
+  # тестовой учётки. Разбирать падение по журналу — небольшая цена за то,
+  # чтобы не публиковать доступ.
+  browser:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    # Сценарии создают и удаляют НАСТОЯЩИЕ строки в единственной базе
+    # проекта. Два прогона одновременно затопчут друг друга, поэтому
+    # очередь, а не отмена: отменённый прогон оставил бы за собой мусор.
+    concurrency:
+      group: e2e-prod
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Браузер
+        run: npx playwright install --with-deps chromium
+
+      # Прод разворачивается асинхронно: без ожидания прогон проверял бы
+      # ПРЕДЫДУЩУЮ сборку и валился на изменениях, которые только что въехали.
+      - name: Дождаться прод-развёртывания этого коммита
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for i in $(seq 1 40); do
+            id=$(gh api "repos/${{ github.repository }}/deployments?sha=${{ github.sha }}&environment=Production" --jq '.[0].id // empty')
+            if [ -n "$id" ]; then
+              state=$(gh api "repos/${{ github.repository }}/deployments/$id/statuses" --jq '.[0].state // empty')
+              echo "развёртывание $id: ${state:-нет статуса}"
+              [ "$state" = "success" ] && exit 0
+              if [ "$state" = "failure" ] || [ "$state" = "error" ]; then
+                echo "::error::прод не развернулся — проверять нечего"
+                exit 1
+              fi
+            else
+              echo "развёртывания для коммита пока нет"
+            fi
+            sleep 15
+          done
+          echo "::error::прод не развернулся за 10 минут"
+          exit 1
+
+      # Без учёток каждый сценарий сам себя ПРОПУСКАЕТ (test.skip в файлах),
+      # и прогон зеленеет, не проверив ничего. Зелёный гейт, который не мог
+      # увидеть работу, хуже отсутствующего: на него полагаются.
+      - name: Учётки на месте
+        env:
+          TEST_OWNER_EMAIL: ${{ secrets.TEST_OWNER_EMAIL }}
+          TEST_OWNER_PASSWORD: ${{ secrets.TEST_OWNER_PASSWORD }}
+          TEST_RENTER_EMAIL: ${{ secrets.TEST_RENTER_EMAIL }}
+          TEST_RENTER_PASSWORD: ${{ secrets.TEST_RENTER_PASSWORD }}
+        run: |
+          missing=""
+          if [ -z "$TEST_OWNER_EMAIL" ];    then missing="$missing TEST_OWNER_EMAIL"; fi
+          if [ -z "$TEST_OWNER_PASSWORD" ]; then missing="$missing TEST_OWNER_PASSWORD"; fi
+          if [ -z "$TEST_RENTER_EMAIL" ];   then missing="$missing TEST_RENTER_EMAIL"; fi
+          if [ -z "$TEST_RENTER_PASSWORD" ];then missing="$missing TEST_RENTER_PASSWORD"; fi
+          if [ -n "$missing" ]; then
+            echo "::error::нет секретов:$missing — без них сценарии пропускаются, и прогон позеленел бы вхолостую"
+            exit 1
+          fi
+          echo "учётки заданы"
+
+      - name: Сценарии
+        env:
+          TEST_OWNER_EMAIL: ${{ secrets.TEST_OWNER_EMAIL }}
+          TEST_OWNER_PASSWORD: ${{ secrets.TEST_OWNER_PASSWORD }}
+          TEST_RENTER_EMAIL: ${{ secrets.TEST_RENTER_EMAIL }}
+          TEST_RENTER_PASSWORD: ${{ secrets.TEST_RENTER_PASSWORD }}
+        # --trace=off и --reporter=line: см. про публичный репозиторий выше.
+        run: npx playwright test --trace=off --reporter=line
+
+      # Уборка на случай, если прогон оборвался посередине и оставил вещь.
+      # Витрину держат пустой намеренно — мусор, о котором никто не узнаёт,
+      # копится всегда.
+      - name: Убрать остатки прогона
+        if: always()
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          TEST_OWNER_EMAIL: ${{ secrets.TEST_OWNER_EMAIL }}
+          TEST_OWNER_PASSWORD: ${{ secrets.TEST_OWNER_PASSWORD }}
+        run: node scripts/cleanup-e2e-items.mjs || true

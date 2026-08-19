@@ -287,7 +287,8 @@
     "copyLink": "Copier le lien",
     "linkCopied": "✓ Copié !",
     "whatsappButton": "Partager sur WhatsApp",
-    "whatsappText": "📦 {{title}} — {{price}} €/jour sur RentIt"
+    "whatsappText": "📦 {{title}} — {{price}} €/jour sur RentIt",
+    "copyFailed": "Copie impossible — copiez l’adresse depuis la barre du navigateur"
   },
   "cookies": {
     "header": "Mention de confidentialité · conforme RGPD",
@@ -469,7 +470,8 @@
     "selectCondition": "Sélectionnez un état",
     "addressLabel": "Adresse",
     "updateButton": "Mettre à jour",
-    "updating": "Mise à jour en cours..."
+    "updating": "Mise à jour en cours...",
+    "backToMyItems": "Retour à mes outils"
   },
   "home": {
     "altText": "Photo de {{title}}",

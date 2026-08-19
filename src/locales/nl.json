@@ -287,7 +287,8 @@
     "copyLink": "Link kopiëren",
     "linkCopied": "✓ Link gekopieerd!",
     "whatsappButton": "Delen via WhatsApp",
-    "whatsappText": "📦 {{title}} — €{{price}}/dag op RentIt"
+    "whatsappText": "📦 {{title}} — €{{price}}/dag op RentIt",
+    "copyFailed": "Kopiëren mislukt — kopieer het adres uit de browserbalk"
   },
   "cookies": {
     "header": "Privacyverklaring · GDPR-conform",
@@ -469,7 +470,8 @@
     "selectCondition": "Selecteer een staat",
     "addressLabel": "Adres",
     "updateButton": "Bijwerken",
-    "updating": "Bijwerken..."
+    "updating": "Bijwerken...",
+    "backToMyItems": "Terug naar mijn gereedschap"
   },
   "home": {
     "altText": "Foto van {{title}}",
