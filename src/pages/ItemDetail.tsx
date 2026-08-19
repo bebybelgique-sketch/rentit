@@ -81,7 +81,9 @@ export default function ItemDetail() {
   const [calendar, setCalendar] = useState<ItemCalendar | null>(null)
   const [history, setHistory] = useState<ItemHistory | null>(null)
   const [photoIdx, setPhotoIdx] = useState(0)
-  const [shared, setShared] = useState(false)
+  // 'copied' | 'failed' | null. Булево здесь врало: запись в буфер могла не
+  // состояться, а надпись «Lien copié» показывалась всё равно.
+  const [shared, setShared] = useState<'copied' | 'failed' | null>(null)
 
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -150,11 +152,25 @@ export default function ItemDetail() {
   const handleShare = async () => {
     const url = window.location.href
     if (navigator.share) {
+      // Отказ здесь — почти всегда «человек передумал», а не сбой: системное
+      // окно закрыли. Молчать тут правильно, сообщать не о чем.
       await navigator.share({ title: item?.title || 'RentIt', url }).catch(() => {})
-    } else {
-      await navigator.clipboard.writeText(url).catch(() => {})
-      setShared(true); setTimeout(() => setShared(false), 2000)
+      return
     }
+
+    // А здесь молчать было НЕЛЬЗЯ. Стояло:
+    //   await navigator.clipboard.writeText(url).catch(() => {})
+    //   setShared(true)
+    // — то есть надпись «Lien copié» показывалась ВСЕГДА, в том числе когда
+    // запись в буфер не состоялась: доступ к буферу закрыт настройкой,
+    // страница открыта не по HTTPS, самого navigator.clipboard нет в этом
+    // браузере (тогда прежний код и вовсе падал на обращении к writeText, и
+    // кнопка выглядела мёртвой). Человек уходил делиться пустотой.
+    const copied = navigator.clipboard
+      ? await navigator.clipboard.writeText(url).then(() => true).catch(() => false)
+      : false
+    setShared(copied ? 'copied' : 'failed')
+    setTimeout(() => setShared(null), 2500)
   }
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
@@ -294,7 +310,9 @@ export default function ItemDetail() {
               onClick={handleShare}
               style={{ background: 'none', color: 'var(--text)', fontSize: '13px', border: '1.5px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 14px', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'border-color 0.15s' }}
             >
-              {shared ? t('share.linkCopied') : t('share.copyLink')}
+              {shared === 'copied' ? t('share.linkCopied')
+                : shared === 'failed' ? t('share.copyFailed')
+                : t('share.copyLink')}
             </button>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(

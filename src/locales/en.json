@@ -287,7 +287,8 @@
     "copyLink": "Copy link",
     "linkCopied": "✓ Link copied!",
     "whatsappButton": "Share on WhatsApp",
-    "whatsappText": "📦 {{title}} — €{{price}}/day on RentIt"
+    "whatsappText": "📦 {{title}} — €{{price}}/day on RentIt",
+    "copyFailed": "Could not copy — copy the address from the browser bar"
   },
   "cookies": {
     "header": "Privacy notice · GDPR compliant",
@@ -469,7 +470,8 @@
     "selectCondition": "Select a condition",
     "addressLabel": "Address",
     "updateButton": "Update",
-    "updating": "Updating..."
+    "updating": "Updating...",
+    "backToMyItems": "Back to my tools"
   },
   "home": {
     "altText": "Photo of {{title}}",
