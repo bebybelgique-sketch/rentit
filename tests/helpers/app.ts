@@ -65,6 +65,7 @@ export const UI = {
   profileAvatarLabel: "URL de l'avatar",
   profileSubmit: 'Mettre à jour le profil',
   profileSaved: 'Profil mis à jour avec succès!',
+  profileAvatarSaved: 'Photo de profil mise à jour',
 } as const
 
 /** Категории витрины: значение в базе → подпись на экране. */

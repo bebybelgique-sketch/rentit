@@ -111,7 +111,7 @@
     "packageWarning": "Attention : {{packages}} ne s'appliquera jamais. Le locataire paiera toujours le tarif le moins cher.",
     "titlePlaceholder": "ex. Perceuse, nettoyeur HP",
     "essentialsTitle": "L'essentiel",
-    "detailsSummary": "Quantité, détails et tarifs",
+    "detailsSummary": "Quantité, détails, tarifs et livraison",
     "detailsHint": "Facultatif — vous pourrez les compléter après la publication.",
     "photosFirstLabel": "Photos de l'outil",
     "positionSet": "Position enregistrée",
