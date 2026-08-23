@@ -422,7 +422,7 @@
     "deposit": "Caution (remboursable)",
     "estimatedTotal": "Total estimé",
     "messageToOwner": "Message au propriétaire (facultatif)",
-    "messagePlaceholder": "Expliquez brièvement votre usage prévu...",
+    "messagePlaceholder": "Ex. : je passerais vers 18h, et je rends samedi matin.",
     "sendRequest": "Envoyer une demande de réservation",
     "shareExperience": "Partagez votre expérience...",
     "submitReview": "Envoyer l'avis",
@@ -445,7 +445,8 @@
     "deliveryRadius": "(jusqu'à {{km}} km)",
     "deliveryAsk": "Je souhaite être livré (€{{fee}})",
     "delivery": "Livraison",
-    "deliveryNote": "Le propriétaire livre à l'adresse convenue. À régler sur place, avec la location."
+    "deliveryNote": "Le propriétaire livre à l'adresse convenue. À régler sur place, avec la location.",
+    "handoverTimeHint": "Les dates se réservent à la journée : convenez ici de l’heure de remise et de retour."
   },
   "editItem": {
     "loginToEdit": "Se connecter pour modifier un outil",

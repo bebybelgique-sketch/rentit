@@ -422,7 +422,7 @@
     "deposit": "Borg (terugbetaalbaar)",
     "estimatedTotal": "Geschatte totaal",
     "messageToOwner": "Bericht aan eigenaar (optioneel)",
-    "messagePlaceholder": "Leg kort uit hoe u het gereedschap wilt gebruiken...",
+    "messagePlaceholder": "Bijv. ik kom rond 18u langs en breng het zaterdagochtend terug.",
     "sendRequest": "Verhuurverzoek indienen",
     "shareExperience": "Deel uw ervaring...",
     "submitReview": "Beoordeling verzenden",
@@ -445,7 +445,8 @@
     "deliveryRadius": "(tot {{km}} km)",
     "deliveryAsk": "Ik wil levering (€{{fee}})",
     "delivery": "Levering",
-    "deliveryNote": "De eigenaar levert op het afgesproken adres. Ter plaatse te betalen, samen met de huur."
+    "deliveryNote": "De eigenaar levert op het afgesproken adres. Ter plaatse te betalen, samen met de huur.",
+    "handoverTimeHint": "Dagen worden per dag geboekt: spreek hier het uur van ophalen en terugbrengen af."
   },
   "editItem": {
     "loginToEdit": "Log in om gereedschap te bewerken",

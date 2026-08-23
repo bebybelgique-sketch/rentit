@@ -422,7 +422,7 @@
     "deposit": "Deposit (refundable)",
     "estimatedTotal": "Estimated total",
     "messageToOwner": "Message to owner (optional)",
-    "messagePlaceholder": "Briefly explain your intended use...",
+    "messagePlaceholder": "E.g. I would come by around 6pm and bring it back Saturday morning.",
     "sendRequest": "Send rental request",
     "shareExperience": "Share your experience...",
     "submitReview": "Submit review",
@@ -445,7 +445,8 @@
     "deliveryRadius": "(up to {{km}} km)",
     "deliveryAsk": "I want it delivered (€{{fee}})",
     "delivery": "Delivery",
-    "deliveryNote": "The owner delivers to the agreed address. Paid on the spot, with the rental."
+    "deliveryNote": "The owner delivers to the agreed address. Paid on the spot, with the rental.",
+    "handoverTimeHint": "Dates are booked by the day: agree here on the pickup and return time."
   },
   "editItem": {
     "loginToEdit": "Log in to edit a tool",
