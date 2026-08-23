@@ -43,6 +43,12 @@ async function requestBooking(page: Page, item: CreatedItem, message: string) {
   await dismissCookies(page)
 
   await selectBookingRange(page)
+
+  // Часа выдачи в продукте нет — даты хранятся без времени. Приглашение
+  // назвать время в заявке и есть та самая «дешёвая половина»; исчезнет
+  // приглашение — и договариваться о времени станет негде.
+  await expect(page.getByText(/heure de remise et de retour/i)).toBeVisible({ timeout: 10000 })
+
   await page.locator('textarea').fill(message)
 
   const send = page.getByRole('button', { name: SEND_REQUEST_BUTTON })
