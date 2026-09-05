@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Item } from '../types';
+import { photosOf } from '../lib/items';
 
 // Определяем функцию для получения данных
 const fetchItemById = async (id: string): Promise<Item | null> => {
@@ -31,7 +32,6 @@ const fetchItemById = async (id: string): Promise<Item | null> => {
     title: data.title,
     description: data.description,
     price_per_day: data.price_per_day,
-    image_url: Array.isArray(data.photos) && data.photos.length > 0 ? data.photos[0] : '',
     owner_id: data.owner_id,
     location: data.address,
     latitude: data.lat,
@@ -41,7 +41,7 @@ const fetchItemById = async (id: string): Promise<Item | null> => {
     deposit: data.deposit ?? 0,
     category: data.category ?? '',
     condition: data.condition ?? '',
-    photos: Array.isArray(data.photos) ? data.photos : [],
+    photos: photosOf(data),
     // Пустое значение оставляем пустым, а не приводим к нулю: ноль здесь
     // означал бы «неделя бесплатно», и расчёт принял бы его всерьёз.
     price_3days: data.price_3days ?? null,

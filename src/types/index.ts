@@ -14,13 +14,19 @@ export interface Item {
   title: string;
   description: string | null;
   price_per_day: number;
-  image_url: string;
   owner_id: string;
   location: string | null;
   latitude: number | null;
   longitude: number | null;
   is_available: boolean;
   created_at: string;
+  // Снимки объявления. В базе это jsonb, а не массив строк, и после
+  // supabase gen types поле станет Json — читать его надо через
+  // `photosOf` из src/lib/items.ts, а не индексом.
+  //
+  // Поля `image_url` здесь больше нет: колонки с таким именем в items не
+  // существует, а вычислялось оно тремя одинаковыми строчками в трёх
+  // хуках. Обложка — `coverPhoto(item)`.
   // Колонки, которые есть в таблице items и используются формами:
   deposit?: number;
   category?: string;

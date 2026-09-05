@@ -2,16 +2,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { Item } from '../../types';
+import { photosOf } from '../../lib/items';
 
 // Колонки таблицы `items`, которые форма вправе менять. Список явный и
 // закрытый — намеренно.
 //
 // Прежде здесь стояло `Partial<Omit<Item, …>> & Record<string, unknown>`, и
-// это пропускало что угодно. `Item` — тип ПРИЛОЖЕНИЯ: в нём есть `image_url`
-// и `location`, а колонок с такими именами в базе нет. Форма редактирования
+// это пропускало что угодно. `Item` был типом ПРИЛОЖЕНИЯ: в нём жило
+// `image_url`, а колонки с таким именем в базе нет. Форма редактирования
 // слала `image_url`, PostgREST отклонял ЗАПРОС ЦЕЛИКОМ (PGRST204,
 // «Could not find the 'image_url' column»), и страница не сохраняла ничего —
 // ни цену, ни описание. Компилятор при `Record<string, unknown>` молчал.
+// С 05.09 выдуманного поля в `Item` больше нет — уезжать в запрос нечему.
 //
 // Сверено с `information_schema.columns` живой базы 13.08.2026.
 export type ItemUpdate = Partial<{
@@ -60,7 +62,6 @@ const updateItemById = async ({ id, updates, userId }: UpdateItemParams): Promis
     title: data.title,
     description: data.description,
     price_per_day: data.price_per_day,
-    image_url: Array.isArray(data.photos) && data.photos.length > 0 ? data.photos[0] : '',
     owner_id: data.owner_id,
     location: data.address,
     latitude: data.lat,
@@ -75,7 +76,7 @@ const updateItemById = async ({ id, updates, userId }: UpdateItemParams): Promis
     deposit: data.deposit ?? 0,
     category: data.category ?? '',
     condition: data.condition ?? '',
-    photos: Array.isArray(data.photos) ? data.photos : [],
+    photos: photosOf(data),
     price_3days: data.price_3days ?? null,
     price_week: data.price_week ?? null,
     late_fee_per_day: data.late_fee_per_day ?? null,

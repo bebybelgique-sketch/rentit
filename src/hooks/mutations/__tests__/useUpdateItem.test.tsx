@@ -45,7 +45,6 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     title: 'Updated Title',
     description: 'Une perceuse',
     price_per_day: 30,
-    image_url: 'https://example.com/drill.jpg',
     owner_id: 'owner-1',
     location: 'Wavre, BE',
     latitude: 50.71,
