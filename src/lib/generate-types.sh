@@ -35,8 +35,29 @@ if [ -z "$REF" ]; then
   exit 1
 fi
 
-echo "Генерация типов из проекта $REF → ${OUT#"$ROOT"/}"
-npx supabase gen types typescript --project-id "$REF" --schema public > "$OUT"
+OUT_REL="${OUT#$ROOT/}"
+echo "Генерация типов из проекта $REF → $OUT_REL"
+TMP_OUT="$(mktemp)"
+trap 'rm -f "$TMP_OUT"' EXIT
+
+npx supabase gen types typescript --project-id "$REF" --schema public > "$TMP_OUT"
+
+python - "$TMP_OUT" "$OUT" <<'PY'
+import pathlib, sys
+src = pathlib.Path(sys.argv[1])
+dst = pathlib.Path(sys.argv[2])
+raw = src.read_bytes()
+if raw.startswith(b'\xff\xfe'):
+    text = raw.decode('utf-16le')
+else:
+    try:
+        text = raw.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        text = raw.decode('utf-8', errors='strict')
+text = text.replace('\r\n', '\n').replace('\r', '\n')
+with open(dst, 'w', encoding='utf-8', newline='\n') as fh:
+    fh.write(text)
+PY
 
 # Пустой или обрезанный файл хуже отсутствующего: он собирается, но
 # описывает пустую схему, и `tsc` перестаёт ловить расхождения.
@@ -45,5 +66,13 @@ if ! grep -q "items:" "$OUT"; then
   git -C "$ROOT" checkout -- "$OUT" 2>/dev/null || rm -f "$OUT"
   exit 1
 fi
+
+python - "$OUT" <<'PY'
+import pathlib, sys
+p = pathlib.Path(sys.argv[1])
+raw = p.read_bytes()
+if raw.startswith(b'\xff\xfe'):
+    raise SystemExit('БОМ UTF-16LE обнаружена: аннулирую сгенерированный файл и прерываю прогон')
+PY
 
 echo "Готово. Дальше: createClient<Database> в src/lib/supabase.ts и npx tsc --noEmit"

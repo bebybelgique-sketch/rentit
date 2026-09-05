@@ -14,29 +14,41 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (password.length < 8) return setError(t('register.passwordMinimum'))
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setSuccess('')
 
-    const { data, error } = await supabase.auth.signUp({
+    let referrerId: string | null = null
+    if (refCode) {
+      const { data: referrer, error: referrerError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('referral_code', refCode.toUpperCase())
+        .maybeSingle()
+
+      if (referrerError) {
+        console.error('Referral lookup failed', referrerError)
+      }
+      if (referrer) referrerId = referrer.id
+    }
+
+    const { error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { full_name: name.trim() } },
+      options: {
+        data: {
+          full_name: name.trim(),
+          ...(referrerId ? { referred_by: referrerId } : {}),
+        },
+      },
     })
 
     if (error) { setError(error.message); setLoading(false); return }
 
-    // Apply referral
-    if (refCode && data.user) {
-      const { data: referrer } = await supabase
-        .from('users').select('id').eq('referral_code', refCode.toUpperCase()).single()
-      if (referrer) {
-        await supabase.from('users').update({ referred_by: referrer.id }).eq('id', data.user.id)
-      }
-    }
-
-    navigate('/')
+    setSuccess(t('register.checkInbox'))
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -49,6 +61,7 @@ export default function Register() {
               {t('invitedMsg')}
             </div>
           )}
+          {success && <div className="success-msg" style={{ marginBottom: '16px' }}>{success}</div>}
           {error && <div className="error-msg">{error}</div>}
           <form onSubmit={handleSubmit}>
             <div className="form-group">
