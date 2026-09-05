@@ -1,6 +1,5 @@
 // src/hooks/useItemById.ts
 import { useQuery } from '@tanstack/react-query';
-import { photosOf } from '../lib/items';
 import { supabase } from '../lib/supabase';
 import { Item } from '../types';
 

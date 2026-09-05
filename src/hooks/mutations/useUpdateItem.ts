@@ -1,6 +1,5 @@
 // src/hooks/mutations/useUpdateItem.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { photosOf } from '../../lib/items';
 import { supabase } from '../../lib/supabase';
 import type { Tables } from '../../types/database.types';
 import { Item } from '../../types';

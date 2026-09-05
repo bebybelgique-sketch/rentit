@@ -1,6 +1,5 @@
 // src/hooks/useRentals.ts
 import { useQuery } from '@tanstack/react-query';
-import { photosOf } from '../lib/items';
 import { supabase } from '../lib/supabase';
 import { Rental } from '../types';
 

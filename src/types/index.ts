@@ -18,7 +18,7 @@ export type Item = {
   price_week?: number | null;
   deposit?: number | null;
   late_fee_per_day?: number | null;
-  photos: string[];
+  photos: unknown;
   lat?: number | null;
   lng?: number | null;
   address?: string | null;
