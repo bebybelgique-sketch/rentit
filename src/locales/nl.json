@@ -565,6 +565,8 @@
     "confirmRevoke": "Adminrechten van {{name}} intrekken?"
   },
   "serverErrors": {
+    "network": "Geen verbinding. Controleer uw netwerk en probeer opnieuw.",
+    "service_unavailable": "De dienst is even onbereikbaar. Probeer het zo opnieuw.",
     "unauthorized": "Uw sessie is verlopen. Meld u opnieuw aan.",
     "forbidden": "U hebt geen rechten voor deze actie.",
     "bad_request": "Ongeldige aanvraag. Herlaad de pagina en probeer opnieuw.",

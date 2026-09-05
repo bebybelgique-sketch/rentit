@@ -565,6 +565,8 @@
     "confirmRevoke": "Remove admin rights from {{name}}?"
   },
   "serverErrors": {
+    "network": "No connection. Check your network and try again.",
+    "service_unavailable": "The service is momentarily unreachable. Try again in a moment.",
     "unauthorized": "Your session has expired. Please sign in again.",
     "forbidden": "You do not have the rights for this action.",
     "bad_request": "Invalid request. Reload the page and try again.",

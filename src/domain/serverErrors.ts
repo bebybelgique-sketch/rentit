@@ -26,6 +26,11 @@
 
 /** Коды, о которых знает интерфейс, и их ключи в словарях. */
 export const SERVER_ERROR_KEYS = {
+  // Транспорт: до функции не дошёл запрос. Кодов сервера здесь нет и быть
+  // не может — их ставит edgeInvoke, разбирая тип ошибки supabase-js.
+  network: 'serverErrors.network',
+  service_unavailable: 'serverErrors.service_unavailable',
+
   // Общие
   unauthorized: 'serverErrors.unauthorized',
   forbidden: 'serverErrors.forbidden',

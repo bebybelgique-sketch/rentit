@@ -203,6 +203,67 @@ try {
     check(r.status === 404, `${fn} не развёрнута`, `HTTP ${r.status}`)
   }
 
+  // ── respond-to-request: двойное одобрение ───────────────────────────
+  //
+  // Единственная проверка, что вещь нельзя выдать дважды на одни даты. В
+  // коде эту гарантию держат три разных механизма, и ни один из них не
+  // виден статическим гейтам: повторная проверка занятости через
+  // item_calendar, авто-отклонение ставших неисполнимыми заявок
+  // (unservable_pending_requests) и условие по исходному статусу в самом
+  // UPDATE. Если RPC занятости однажды откажет, checkRangeAvailable вернёт
+  // null и одобрение пойдёт дальше — последним рубежом остаётся триггер
+  // базы. Здесь проверяется ИТОГ, а не то, кто именно сработал.
+  console.log('\nrespond-to-request: двойное одобрение')
+
+  const first = await ask({ item_id: itemId, start_date: day(20), end_date: day(22) })
+  const second = await ask({ item_id: itemId, start_date: day(20), end_date: day(22) })
+  check(!!first.bookingId && !!second.bookingId,
+    'две заявки на одни даты создаются (pending_approval вещь не держит)',
+    `${first.err ?? ''} ${second.err ?? ''}`)
+
+  if (first.bookingId && second.bookingId) {
+    const approve = async (bookingId) => {
+      const r = await fetch(`${env.VITE_SUPABASE_URL}/functions/v1/respond-to-request`, {
+        method: 'POST',
+        headers: {
+          apikey: env.VITE_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${(await owner.auth.getSession()).data.session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ booking_id: bookingId, action: 'approve' }),
+      })
+      let json = {}
+      try { json = await r.json() } catch { /* тело может быть пустым */ }
+      return { status: r.status, json }
+    }
+
+    const ok1 = await approve(first.bookingId)
+    check(ok1.status === 200, 'первое одобрение проходит', `HTTP ${ok1.status} ${JSON.stringify(ok1.json)}`)
+
+    const ok2 = await approve(second.bookingId)
+    // Два законных кода, и оба означают одно и то же для человека:
+    //   dates_unavailable — календарь уже занят подтверждённой бронью;
+    //   not_pending       — вторую заявку успело снять авто-отклонение
+    //                       при первом одобрении (обычный случай).
+    // Требовать конкретно dates_unavailable значило бы закрепить тестом
+    // порядок срабатывания механизмов, а не саму гарантию.
+    check(ok2.status === 409 && ['dates_unavailable', 'not_pending'].includes(ok2.json.error),
+      'второе одобрение отклонено с 409', `HTTP ${ok2.status} ${JSON.stringify(ok2.json)}`)
+
+    const { data: confirmed } = await owner.from('bookings')
+      .select('id, status').eq('item_id', itemId).eq('status', 'confirmed')
+    check((confirmed ?? []).length === 1,
+      'в базе ровно одна подтверждённая бронь на эти даты', `строк ${(confirmed ?? []).length}`)
+
+    const { data: both } = await owner.from('bookings')
+      .select('id, status').in('id', [first.bookingId, second.bookingId])
+    const statuses = (both ?? []).map(b => b.status).sort().join(',')
+    check(statuses === 'confirmed,rejected',
+      'вторая заявка закрыта, а не осталась висеть у человека как живая', `статусы: ${statuses}`)
+
+    await owner.from('bookings').delete().in('id', [first.bookingId, second.bookingId])
+  }
+
   // ── admin-action ────────────────────────────────────────────────────
   //
   // Единственная функция, которая пишет в ЧУЖИЕ строки служебным ключом,
@@ -374,6 +435,22 @@ try {
   }
   const { error: eGeo } = await renter.from('users').select('id, lat, lng').limit(1)
   check(eGeo?.code === '42501', 'домашние координаты закрыты', eGeo ? eGeo.code : 'запрос ПРОШЁЛ')
+
+  // Почта. По миграциям столбца email в public.users НЕТ ВОВСЕ (адреса
+  // живут в auth.users, схема auth наружу не выставлена), но миграции в
+  // этом проекте применяют руками — файл в репозитории ничего не
+  // доказывает о живой базе. Проверяем поведением.
+  //
+  // Допустимых исходов ровно два: 42703 «столбца нет» и 42501 «прав нет».
+  // УСПЕШНЫЙ запрос здесь означает утечку почты всех пользователей
+  // площадки любому, кто открыл консоль браузера, — это P0, а не
+  // замечание.
+  for (const [client, who] of [[anon, 'аноним'], [renter, 'залогиненный']]) {
+    const { data: mail, error: eMail } = await client.from('users').select('id, email').limit(1)
+    check(eMail?.code === '42703' || eMail?.code === '42501',
+      `${who} не читает email`,
+      eMail ? eMail.code : `запрос ПРОШЁЛ, строк ${(mail ?? []).length} — УТЕЧКА`)
+  }
 
 } catch (err) {
   failed++

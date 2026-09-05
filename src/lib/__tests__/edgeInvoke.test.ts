@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { FunctionsFetchError, FunctionsRelayError, FunctionsHttpError } from '@supabase/supabase-js';
 import { invokeEdge, EdgeError } from '../edgeInvoke';
 
 // Ради чего этот модуль вообще существует: supabase-js при не-2xx кладёт
@@ -55,7 +56,29 @@ describe('invokeEdge', () => {
     });
   });
 
-  it('сетевой сбой без тела даёт общий код', async () => {
+  // Три вида отказа supabase-js — три разных совета человеку. Пока они
+  // сваливались в один 'internal_error', в метро при пропавшей сети люди
+  // читали «что-то пошло не так на сервере» и жали кнопку ещё раз.
+  it('офлайн — это network, а не «ошибка сервера»', async () => {
+    invoke.mockResolvedValue({ data: null, error: new FunctionsFetchError({}) });
+    await expect(invokeEdge('admin-action', {})).rejects.toMatchObject({ code: 'network' });
+  });
+
+  it('недоступный релей — service_unavailable', async () => {
+    // Здесь человек бессилен: помогает только «попробуйте позже».
+    invoke.mockResolvedValue({ data: null, error: new FunctionsRelayError({}) });
+    await expect(invokeEdge('admin-action', {})).rejects.toMatchObject({ code: 'service_unavailable' });
+  });
+
+  it('не-2xx остаётся кодом сервера, а не транспортом', async () => {
+    const error = new FunctionsHttpError({});
+    (error as unknown as { context: Response }).context =
+      new Response(JSON.stringify({ error: 'forbidden' }), { status: 403 });
+    invoke.mockResolvedValue({ data: null, error });
+    await expect(invokeEdge('admin-action', {})).rejects.toMatchObject({ code: 'forbidden', status: 403 });
+  });
+
+  it('неизвестный вид ошибки без тела даёт общий код', async () => {
     invoke.mockResolvedValue({ data: null, error: new Error('Failed to fetch') });
     await expect(invokeEdge('admin-action', {})).rejects.toMatchObject({ code: 'internal_error' });
   });
