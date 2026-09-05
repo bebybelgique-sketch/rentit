@@ -162,9 +162,6 @@
   "manageIt": "manage it",
   "maxPrice": "Max €/day",
   "myItems": {
-    "responseError": "Error responding",
-    "updateError": "Error updating",
-    "cancellationPrompt": "Why are you cancelling this rental?",
     "deleteConfirm": "Delete this listing? This action cannot be undone.",
     "title": "My tools",
     "newListing": "+ New listing",
@@ -176,18 +173,12 @@
     "view": "View",
     "edit": "Edit",
     "requestsTitle": "Rental requests",
-    "markHandedOver": "Mark handed over",
-    "markReturned": "Mark returned",
     "rentalInProgress": "Rental in progress",
     "pendingRequests": "Pending requests"
   },
   "myRentals": {
     "approvalSuccess": "Request approved!",
-    "approvalError": "Error approving:",
-    "approvalErrorGeneric": "Error approving",
     "rejectionSuccess": "Request rejected.",
-    "rejectionError": "Error rejecting:",
-    "rejectionErrorGeneric": "Error rejecting",
     "loginRequired": "Log in to view your rentals",
     "renterTitle": "My rentals (Renter)",
     "noRentals": "No active rentals",
@@ -262,19 +253,19 @@
     "cancelPrompt": "Why are you cancelling?",
     "cancelPromptOwner": "Why are you cancelling this booking?",
     "cancelSuccess": "The booking has been cancelled.",
-    "cancelFailed": "Error cancelling",
     "cancelledByYou": "Cancelled by you",
     "cancelledByOther": "Cancelled by the other party",
     "cancelledOn": "on {{date}}",
     "cancelledNoReason": "no reason given",
     "markHandedOver": "Mark handed over",
     "markReturned": "Mark returned",
-    "transitionFailed": "Error updating",
-    "conflict": "The booking changed while you were looking",
-    "notYourAction": "This action is not for you",
     "cancelledByYouShort": "you",
     "labelDelivery": "Delivery",
-    "deliveryOnSite": "paid on the spot"
+    "deliveryOnSite": "paid on the spot",
+    "approve": "Accept",
+    "reject": "Decline",
+    "handoverSuccess": "Tool marked as handed over.",
+    "completeSuccess": "Rental completed. You can leave a review."
   },
   "searchPlaceholder": "Drill, pressure washer, sander…",
   "selectDates": "Select dates",
@@ -567,5 +558,25 @@
     "datesRequired": "Enter both dates.",
     "endBeforeStart": "The end date cannot be before the start date."
   },
-  "nearbyUnavailable": "Location unavailable: the browser did not allow it. Allow it, or type a town in the filters."
+  "nearbyUnavailable": "Location unavailable: the browser did not allow it. Allow it, or type a town in the filters.",
+  "admin": {
+    "confirmGrant": "Give admin rights to {{name}}? This person will have access to all data.",
+    "confirmRevoke": "Remove admin rights from {{name}}?"
+  },
+  "serverErrors": {
+    "unauthorized": "Your session has expired. Please sign in again.",
+    "forbidden": "You do not have the rights for this action.",
+    "bad_request": "Invalid request. Reload the page and try again.",
+    "update_failed": "The update did not go through. Please try again.",
+    "internal_error": "Something went wrong. Please try again later.",
+    "booking_not_found": "This booking could not be found.",
+    "item_not_found": "This listing no longer exists.",
+    "not_pending": "This request is no longer awaiting an answer.",
+    "booking_changed": "The booking changed in the meantime. Reload the page.",
+    "dates_unavailable": "These dates are no longer available.",
+    "transition_not_allowed": "This action is no longer possible in the booking's current state.",
+    "not_your_action": "This action is not yours to take.",
+    "cannot_demote_self": "You cannot remove your own admin rights.",
+    "target_not_found": "This entry no longer exists. Reload the list."
+  }
 }

@@ -1,10 +1,29 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { useAdminAction } from '../hooks/mutations/useAdminAction'
+import { serverErrorKey } from '../domain/serverErrors'
+
+// Действия над ЧУЖИМИ строками идут через edge-функцию admin-action.
+//
+// Прямой `supabase.from(...).update(...)` отсюда убран не ради стиля: он
+// не работал. Грант на UPDATE у роли authenticated выдан поимённо на шесть
+// столбцов профиля (миграция 20260812000017), роли в списке нет; политика
+// на items разрешает менять только СВОИ объявления. То есть «Make admin» и
+// «Hide» на чужой вещи молча не делали ничего, а страница при этом
+// перекрашивала бейдж — и он возвращался после перезагрузки.
+//
+// Чтение списков остаётся прямым: политика «Public user names/ratings
+// visible» и «Items are public» разрешают SELECT всем, а колоночные гранты
+// уже прячут phone_otp и прочее служебное. Заводить ради этого серверные
+// list_*-действия значило бы дублировать RLS в коде функции.
 
 export default function Admin() {
   const { user } = useAuth()
+  const { t } = useTranslation()
+  const adminAction = useAdminAction()
   const navigate = useNavigate()
   const [tab, setTab] = useState<'stats' | 'items' | 'users'>('stats')
   const [authorized, setAuthorized] = useState<boolean | null>(null)
@@ -24,6 +43,14 @@ export default function Admin() {
     })
   }, [user])
 
+  // ИЗВЕСТНАЯ ЛОЖЬ НА ЭКРАНЕ, не закрытая этим заходом: счётчики ниже
+  // считаются под правами самого администратора, а RLS на bookings и
+  // payments показывает человеку только ЕГО строки. Значит «Bookings» и
+  // «Revenue» на вкладке Stats — это цифры одного пользователя, а не
+  // площадки, и выглядят они при этом как общие. Чинится либо действием
+  // `get_stats` в admin-action (служебный ключ), либо SECURITY DEFINER
+  // функцией со счётчиками. Отдельная задача: здесь править нечего, кроме
+  // источника данных.
   const fetchAll = async () => {
     const [
       { count: uCount },
@@ -47,25 +74,41 @@ export default function Admin() {
     setLoading(false)
   }
 
+  // Отказ приходит кодом ('forbidden', 'cannot_demote_self'), текст
+  // подбирает словарь: src/domain/serverErrors.ts.
+  const showError = (error: unknown) => {
+    setAdminError(t(serverErrorKey(error instanceof Error ? error.message : null)))
+  }
+
   const toggleItem = async (id: string, available: boolean) => {
-    const { error } = await supabase.from('items').update({ available: !available }).eq('id', id)
-    if (error) { setAdminError(error.message); return }
-    setItems(p => p.map(i => i.id === id ? { ...i, available: !available } : i))
+    setAdminError('')
+    try {
+      const res = await adminAction.mutateAsync({ type: 'set_item_available', item_id: id, available: !available })
+      // Показываем состояние, ПРИШЕДШЕЕ из базы, а не то, которое
+      // собирались получить: иначе экран снова расходится с базой.
+      const next = res.item?.available ?? !available
+      setItems(p => p.map(i => i.id === id ? { ...i, available: next } : i))
+    } catch (error) {
+      showError(error)
+    }
   }
 
   const toggleAdmin = async (id: string, isAdmin: boolean) => {
     const role = isAdmin ? 'user' : 'admin'
     const name = users.find(u => u.id === id)?.full_name || id
-    const msg = isAdmin
-      ? `Retirer les droits admin de ${name} ?`
-      : `Donner les droits admin à ${name} ? Cette personne aura accès à toutes les données.`
+    const msg = isAdmin ? t('admin.confirmRevoke', { name }) : t('admin.confirmGrant', { name })
     if (!confirm(msg)) return
-    const { error } = await supabase.from('users').update({ role }).eq('id', id)
-    if (error) { setAdminError(error.message); return }
-    setUsers(p => p.map(u => u.id === id ? { ...u, role } : u))
+    setAdminError('')
+    try {
+      const res = await adminAction.mutateAsync({ type: 'set_user_role', user_id: id, role })
+      const next = res.user?.role ?? role
+      setUsers(p => p.map(u => u.id === id ? { ...u, role: next } : u))
+    } catch (error) {
+      showError(error)
+    }
   }
 
-  if (authorized === null || loading) return <div className="page"><div className="loading">Chargement...</div></div>
+  if (authorized === null || loading) return <div className="page"><div className="loading">{t('common.loading')}</div></div>
 
   return (
     <div className="page">

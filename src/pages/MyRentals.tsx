@@ -5,12 +5,12 @@ import { useRentals } from '../hooks/useRentals';
 import BookingStatusBadge from '../components/common/BookingStatusBadge';
 import EmptyState from '../components/common/EmptyState';
 import BookingThread from '../components/booking/BookingThread';
+import BookingOwnerActions from '../components/booking/BookingOwnerActions';
 import CancellationNotice from '../components/common/CancellationNotice';
 import UserRatingBadge from '../components/common/UserRatingBadge';
 import { useRentalsAsOwner } from '../hooks/useRentalsAsOwner';
-import { useApproveRental } from '../hooks/mutations/useApproveRental';
-import { useRejectRental } from '../hooks/mutations/useRejectRental';
 import { useTransitionBooking } from '../hooks/mutations/useTransitionBooking';
+import { serverErrorKey } from '../domain/serverErrors';
 import type { Rental } from '../types';
 // Импортируем toast
 import toast from 'react-hot-toast';
@@ -36,36 +36,11 @@ const MyRentals: React.FC = () => {
   // Получаем аренды, где пользователь - владелец
   const { data: ownerRentals, isLoading: ownerRentalsLoading, error: ownerRentalsError } = useRentalsAsOwner(user?.id);
 
-  // Инициализируем мутации
-  const approveRentalMutation = useApproveRental();
-  const rejectRentalMutation = useRejectRental();
+  // Отмена арендатором — единственное действие, которое эта страница
+  // делает сама. Всё, что доступно ВЛАДЕЛЬЦУ (одобрить, отклонить,
+  // передать, вернуть, отменить), собрано в BookingOwnerActions и живёт
+  // одинаково здесь и в /my-items.
   const transitionMutation = useTransitionBooking();
-
-  const handleApprove = async (rentalId: string) => {
-    if (!user) return;
-    try {
-      await approveRentalMutation.mutateAsync({ bookingId: rentalId });
-      // Уведомления об успехе через toast
-      toast.success(t('myRentals.approvalSuccess'));
-    } catch (error: any) {
-      console.error("Erreur lors de l'approbation:", error);
-      // Уведомления об ошибке через toast
-      toast.error(error.message || t('myRentals.approvalErrorGeneric'));
-    }
-  };
-
-  const handleReject = async (rentalId: string) => {
-    if (!user) return;
-    try {
-      await rejectRentalMutation.mutateAsync({ bookingId: rentalId });
-      // Уведомления об успехе через toast
-      toast.success(t('myRentals.rejectionSuccess'));
-    } catch (error: any) {
-      console.error("Erreur lors du rejet:", error);
-      // Уведомления об ошибке через toast
-      toast.error(error.message || t('myRentals.rejectionErrorGeneric'));
-    }
-  };
 
   const handleCancel = async (rentalId: string) => {
     const reason = prompt(t('rental.cancelPrompt'));
@@ -73,10 +48,10 @@ const MyRentals: React.FC = () => {
     try {
       await transitionMutation.mutateAsync({ bookingId: rentalId, action: 'cancel', reason });
       toast.success(t('rental.cancelSuccess'));
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 409 от сервера означает, что вторая сторона уже изменила бронь.
-      // Показываем как есть: тихо «успешно» здесь было бы враньём.
-      toast.error(error.message || t('rental.cancelFailed'));
+      // Показываем причину, а не «успешно»: тихий успех здесь был бы враньём.
+      toast.error(t(serverErrorKey(error instanceof Error ? error.message : null)));
     }
   };
 
@@ -209,34 +184,17 @@ const MyRentals: React.FC = () => {
                   {rental.request_message && <p><strong>{t('rental.labelMessage')}:</strong> {rental.request_message}</p>}
                   {renderCancellation(rental, rental.renter?.full_name || "l'autre partie")}
 
-                  {rental.status === 'pending_approval' && (
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                      <button
-                        className="btn btn-primary"
-                        style={{ padding: '4px 8px', fontSize: '12px' }}
-                        onClick={() => handleApprove(rental.id)}
-                        disabled={approveRentalMutation.isPending}
-                      >
-                        {approveRentalMutation.isPending ? '...' : 'Accepter'}
-                      </button>
-                      <button
-                        className="btn btn-secondary"
-                        style={{ padding: '4px 8px', fontSize: '12px' }}
-                        onClick={() => handleReject(rental.id)}
-                        disabled={rejectRentalMutation.isPending}
-                      >
-                        {rejectRentalMutation.isPending ? '...' : 'Refuser'}
-                      </button>
-                    </div>
-                  )}
+                  {/* Весь путь сделки владельца — от ответа на заявку до
+                      возврата — не покидая эту страницу. Раньше здесь
+                      кончалось на «Accepter/Refuser», а «передана» и
+                      «возвращена» надо было искать в /my-items.
 
-                  {/* Отображение ошибки мутации для конкретной аренды, если есть */}
-                  {(approveRentalMutation.isError || rejectRentalMutation.isError) && (
-                     <p style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                       {(approveRentalMutation.isError && approveRentalMutation.variables?.bookingId === rental.id ? approveRentalMutation.error.message :
-                         rejectRentalMutation.isError && rejectRentalMutation.variables?.bookingId === rental.id ? rejectRentalMutation.error.message : '')}
-                     </p>
-                   )}
+                      Ошибку показывает сам компонент: прежний блок ниже
+                      печатал сырое error.message, то есть служебную фразу
+                      supabase-js вместо причины отказа. */}
+                  <div style={{ marginTop: '8px' }}>
+                    <BookingOwnerActions bookingId={rental.id} status={rental.status} />
+                  </div>
 
                   {rental.renter && (
                     <BookingThread

@@ -48,7 +48,9 @@
 
 ## 3. Настоящая схема базы
 
-Таблицы: **`items`, `bookings`, `users`, `reviews`, `payments`, `events`**.
+Таблицы: **`items`, `bookings`, `users`, `reviews`, `payments`, `events`**,
+плюс служебные: `item_blackouts`, `admin_audit_log` (журнал действий
+администратора; RLS включён, политик нет — пишет только service_role).
 
 **Таблиц `rentals` и `profiles` НЕ существует** — оба имени отдают 404.
 Аренда — это `bookings`. Профиль — это `users` (её `id` = `auth.uid()`).
@@ -101,17 +103,41 @@ request-rental      { item_id, start_date, end_date, message? } -> { booking_id 
                     pending_approval, шлёт письма. Цену считает сервер.
 
 respond-to-request  { booking_id, action: 'approve' | 'reject' } -> { ok: true }
-                    Проверка владельца, Stripe, запись в payments,
-                    авто-отклонение пересечений, письма обеим сторонам.
+                    Проверка владельца, повторная проверка занятости дат,
+                    авто-отклонение заявок, ставших неисполнимыми, письма
+                    обеим сторонам. Платежей нет: approve сразу ставит
+                    confirmed, расчёт наличными при передаче.
+
+transition-booking  { booking_id, action: 'cancel'|'handover'|'complete',
+                      reason? } -> { ok: true, status }
+                    Единственный владелец машины состояний брони:
+                    confirmed --handover--> active --complete--> completed.
+                    Статуса in_progress НЕ существует.
+
+admin-action        { type: 'set_user_role', user_id, role: 'user'|'admin' }
+                    { type: 'set_item_available', item_id, available }
+                    -> { ok: true, user | item }
+                    Действия админа над ЧУЖИМИ строками. Роль проверяется
+                    по таблице users служебным ключом, каждое действие
+                    пишется в admin_audit_log. Прямой update из браузера
+                    не работает: гранты сняты (20260812000017).
 
 delete-account      {} (нужен Authorization) -> 409, если есть активные брони
 
-Ещё есть: notify-rental, expire-bookings, create-payment-intent,
-create-rental-intent, create-pro-checkout, create-business-checkout,
-stripe-webhook, verify-phone.
+Ещё есть: notify-rental, expire-bookings, cleanup-orphan-photos, verify-phone.
 ```
 
-Вызов: `supabase.functions.invoke('имя', { body: {...} })`.
+Вызов: `supabase.functions.invoke('имя', { body: {...} })` — а лучше
+`invokeEdge('имя', {...})` из `src/lib/edgeInvoke.ts`: при не-2xx supabase-js
+кладёт тело ответа в `error.context`, а НЕ в `data`, поэтому привычная
+строчка `data?.error || error.message` всегда показывала человеку
+«Edge Function returned a non-2xx status code» вместо причины.
+
+**Отказы функций — КОДЫ, не фразы.** Сервер отвечает `{ error: 'forbidden' }`,
+`{ error: 'dates_unavailable' }`; текст подбирает клиент через
+`serverErrorKey()` из `src/domain/serverErrors.ts` (новый код — строка в трёх
+словарях и запись в этой карте, иначе человек увидит общий текст). Фраза,
+вшитая в edge-функцию, непереводима по построению: словари туда не заглядывают.
 
 ---
 

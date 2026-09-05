@@ -66,22 +66,39 @@ describe('useApproveRental', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
-  it('should handle error on approve rental failure', async () => {
-    // Configure mock response for error
+  // Отказ функции приходит НЕ в `data`, а телом внутри error.context —
+  // именно поэтому прежняя проверка `data?.error || error.message`
+  // показывала человеку «Edge Function returned a non-2xx status code»
+  // вместо причины. Хук обязан достать код.
+  it('достаёт код отказа из тела ответа', async () => {
+    mockInvokeResponseData = null;
+    mockInvokeResponseError = Object.assign(new Error('Edge Function returned a non-2xx status code'), {
+      context: new Response(JSON.stringify({ error: 'booking_changed' }), { status: 409 }),
+    });
+
+    const { result } = renderHook(() => useApproveRental(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({ bookingId: 'booking-1' }).catch(() => undefined);
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error?.message).toBe('booking_changed');
+  });
+
+  it('без тела отдаёт общий код, а не фразу supabase-js', async () => {
+    // Сетевой сбой: тела нет вовсе. Показывать служебную фразу библиотеки
+    // нельзя — по коду 'internal_error' словарь даст человеческий текст.
     mockInvokeResponseData = null;
     mockInvokeResponseError = mockError;
 
     const { result } = renderHook(() => useApproveRental(), { wrapper });
 
     await act(async () => {
-      try {
-        await result.current.mutateAsync({ bookingId: 'booking-1' });
-      } catch (e) {
-        // Ожидаем, что mutateAsync выбросит ошибку
-      }
+      await result.current.mutateAsync({ bookingId: 'booking-1' }).catch(() => undefined);
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toEqual(mockError);
+    expect(result.current.error?.message).toBe('internal_error');
   });
 });
