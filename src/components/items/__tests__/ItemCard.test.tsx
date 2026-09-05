@@ -12,9 +12,9 @@ const mockItem = {
   photos: ['https://example.com/drill.jpg'],
   owner_id: 'owner1',
   address: 'Brussels, BE',
-  latitude: 50.8503,
-  longitude: 4.3517,
-  is_available: true,
+  lat: 50.8503,
+  lng: 4.3517,
+  available: true,
   created_at: '2023-01-01T00:00:00Z',
 };
 

@@ -4,10 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useUpdateItem } from '../useUpdateItem';
 import { supabase } from '../../../lib/supabase';
 
-// Hoist mock data and response config to module level
-// База отдаёт сырую строку items, а хук возвращает преобразованный Item —
-// поэтому ожидание описано отдельно.
-const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
+// База отдаёт строку items, и хук возвращает её как есть — отдельного
+// «ожидаемого» объекта больше нет. Это же значение уходит в кэш через
+// setQueryData(['item', id]), поэтому урезать его нельзя.
+const { mockItemData, mockError } = vi.hoisted(() => ({
   mockItemData: {
     id: 'item-1',
     title: 'Updated Title',
@@ -38,30 +38,6 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     // Результат ЗАМЕЩАЕТ объект в кэше: потеряв доставку здесь, форма сразу
     // после сохранения показала бы «не доставляю» поверх только что
     // включённой услуги.
-    delivery_fee: 15,
-    delivery_radius_km: 10,
-  },
-  expectedItem: {
-    id: 'item-1',
-    title: 'Updated Title',
-    description: 'Une perceuse',
-    price_per_day: 30,
-    owner_id: 'owner-1',
-    address: 'Wavre, BE',
-    latitude: 50.71,
-    longitude: 4.61,
-    is_available: true,
-    created_at: '2026-01-01T00:00:00Z',
-    deposit: 50,
-    category: 'power_tools',
-    condition: 'good',
-    photos: ['https://example.com/drill.jpg'],
-    price_3days: null,
-    price_week: 60,
-    late_fee_per_day: 10,
-    quantity: 12,
-    buffer_days: 1,
-    min_notice_days: 2,
     delivery_fee: 15,
     delivery_radius_km: 10,
   },
@@ -123,7 +99,10 @@ describe('useUpdateItem', () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual(expectedItem);
+    // toBe: результат кладётся в кэш и ЗАМЕЩАЕТ прежний объект. Пока хук
+    // собирал свой, форма сразу после сохранения показывала «1 единицу»
+    // поверх только что сохранённых двенадцати.
+    expect(result.current.data).toBe(mockItemData);
   });
 
   it('should handle error on update item failure', async () => {

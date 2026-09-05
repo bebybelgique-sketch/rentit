@@ -65,32 +65,14 @@ describe('useItems', () => {
     mockResponseData = mockRawItems;
     mockResponseError = null;
 
-    // Expected processed items based on raw data transformation logic
-    // Поля результата: id, title, description, price_per_day, owner_id,
-    // address, latitude, longitude, is_available, created_at, photos.
-    // Выдуманного image_url среди них больше нет: обложку считает
-    // coverPhoto по месту показа.
-    const expectedProcessedItems = mockRawItems.map(raw => ({
-      id: raw.id,
-      title: raw.title,
-      description: raw.description,
-      price_per_day: raw.price_per_day,
-      owner_id: raw.owner_id,
-      address: raw.address,
-      latitude: raw.lat, // Transformation logic from useItems
-      longitude: raw.lng, // Transformation logic from useItems
-      is_available: raw.available, // Transformation logic from useItems
-      created_at: raw.created_at,
-      photos: raw.photos ?? [],
-      // Explicitly exclude other raw fields that are transformed or not part of the final object
-      // deposit, condition, photos, available, address, lat, lng are not present in the final object
-    }));
-
+    // Отдельного «ожидаемого» списка нет: хук возвращает строки как есть.
+    // Прежде здесь дублировалась логика маппера — тест повторял код хука и
+    // потому не мог поймать в нём ошибку, только его переписывание.
     const { result } = renderHook(() => useItems(), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data).toEqual(expectedProcessedItems);
+    expect(result.current.data).toEqual(mockRawItems);
   });
 
   it('should handle fetch error', async () => {
