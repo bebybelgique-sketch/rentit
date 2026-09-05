@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { CATEGORIES, CONDITIONS, categoryPriceHintKey } from '../domain/catalog'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import type { Database } from '../types/database.types'
 
 // Категории и состояния — из src/domain/catalog.ts. Здесь была четвёртая
 // копия списка категорий и третья копия состояний.
@@ -31,7 +32,23 @@ export default function ListItem() {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    title: string;
+    description: string;
+    category: string;
+    condition: Database['public']['Enums']['item_condition'];
+    price_per_day: string;
+    price_3days: string;
+    price_week: string;
+    late_fee_per_day: string;
+    delivery_fee: string;
+    delivery_radius_km: string;
+    deposit: string;
+    address: string;
+    quantity: string;
+    min_notice_days: string;
+    buffer_days: string;
+  }>({
     title: '',
     description: '',
     category: CATEGORIES[0].value as string,

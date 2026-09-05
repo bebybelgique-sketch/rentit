@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase';
 import { ITEM_PHOTOS_BUCKET, itemPhotoPath } from '../lib/itemPhotos';
 import { photosOf } from '../lib/items';
 import ItemBlackouts from '../components/ItemBlackouts';
+import type { Database } from '../types/database.types';
 
 // Те же границы, что проверками в базе (миграция 20260817000022).
 const MAX_QUANTITY = 999;
@@ -26,7 +27,26 @@ const EditItem: React.FC = () => {
   const updateItemMutation = useUpdateItem();
   const [uploadImage, uploading, uploadError] = useUploadImage();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    price_per_day: number;
+    price_3days: string;
+    price_week: string;
+    late_fee_per_day: string;
+    delivery_fee: string;
+    delivery_radius_km: string;
+    deposit: number;
+    category: string;
+    condition: Database['public']['Enums']['item_condition'];
+    address: string;
+    lat: number | null;
+    lng: number | null;
+    available: boolean;
+    quantity: number;
+    min_notice_days: number;
+    buffer_days: number;
+  }>({
     title: '',
     description: '',
     price_per_day: 0,
@@ -41,7 +61,7 @@ const EditItem: React.FC = () => {
     delivery_radius_km: '' as string,
     deposit: 0,
     category: '',
-    condition: '',
+    condition: 'good',
     address: '',
     lat: null as number | null,
     lng: null as number | null,
@@ -71,7 +91,7 @@ const EditItem: React.FC = () => {
         delivery_radius_km: item.delivery_radius_km == null ? '' : String(item.delivery_radius_km),
         deposit: item.deposit || 0,
         category: item.category || '', // Assuming category is part of the Item type
-        condition: item.condition || '', // Assuming condition is part of the Item type
+        condition: (item.condition as Database['public']['Enums']['item_condition']) || 'good',
         address: item.address ?? '',
         lat: item.lat,
         lng: item.lng,
