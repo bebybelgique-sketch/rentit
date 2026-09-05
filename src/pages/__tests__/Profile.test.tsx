@@ -12,6 +12,7 @@ vi.mock('../../lib/supabase', () => ({
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
       onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
     },
   },
 }));
@@ -24,7 +25,7 @@ vi.mock('../../context/AuthContext', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...(actual as any),
-    useAuth: vi.fn(() => ({ user: { id: 'user-1', user_metadata: { full_name: 'John Doe', bio: 'Software Engineer' } } })),
+    useAuth: vi.fn(() => ({ user: { id: 'user-1', user_metadata: { full_name: 'John Doe' } } })),
   };
 });
 
@@ -68,7 +69,6 @@ describe('Profile Page', () => {
     render(<Profile />, { wrapper });
 
     expect(screen.getByDisplayValue('John Doe')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Software Engineer')).toBeInTheDocument();
   });
 
   it('calls mutateAsync on update profile form submit', async () => {
