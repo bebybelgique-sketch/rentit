@@ -85,7 +85,14 @@ export default function MyItems() {
     // Статус приходит строкой из колбэка компонента. Незнакомое значение
     // не пишем в список (там enum booking_status), а перечитываем список у
     // базы: показать выдуманный статус хуже, чем сходить за настоящим.
-    if (!isBookingStatus(newStatus)) { fetchItems(); return }
+    if (!isBookingStatus(newStatus)) {
+      // Молчать здесь нельзя: список перечитается, карточка съедет, и
+      // никто не узнает, что сервер прислал статус, которого продукт не
+      // знает. Само значение — в консоль, иначе дрейф схемы невидим.
+      console.warn('Неизвестный статус брони от сервера:', newStatus)
+      fetchItems()
+      return
+    }
     setItems(p => p.map(item => item.id === itemId ? {
       ...item,
       bookings: item.bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b),
