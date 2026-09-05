@@ -59,7 +59,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>
-            {item.location?.split(',')[0] || 'Bruxelles'}
+            {item.address?.split(',')[0] || 'Bruxelles'}
           </span>
           <span className="L-mono" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500' }}>
             €{item.price_per_day}/jour

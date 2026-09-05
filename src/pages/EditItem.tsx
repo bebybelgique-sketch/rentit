@@ -71,7 +71,7 @@ const EditItem: React.FC = () => {
         deposit: item.deposit || 0,
         category: item.category || '', // Assuming category is part of the Item type
         condition: item.condition || '', // Assuming condition is part of the Item type
-        address: item.location || '', // Map location to address
+        address: item.address ?? '',
         lat: item.latitude || null,
         lng: item.longitude || null,
         available: item.is_available,

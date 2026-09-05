@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useUpdateItem } from '../useUpdateItem';
+import { supabase } from '../../../lib/supabase';
 
 // Hoist mock data and response config to module level
 // База отдаёт сырую строку items, а хук возвращает преобразованный Item —
@@ -46,7 +47,7 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     description: 'Une perceuse',
     price_per_day: 30,
     owner_id: 'owner-1',
-    location: 'Wavre, BE',
+    address: 'Wavre, BE',
     latitude: 50.71,
     longitude: 4.61,
     is_available: true,
@@ -142,5 +143,30 @@ describe('useUpdateItem', () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toEqual(mockError);
+  });
+
+  // Колонка items.location существует, но это geography (generated always as
+  // ST_SetSRID(ST_MakePoint(lng, lat))) — точка на карте, а не «Wavre, BE».
+  // Пока поле приложения звалось так же, адрес и геометрия отличались только
+  // тем, кто их читает. Имени location в результате быть не должно, а в
+  // запросе на запись Postgres такую колонку отверг бы целиком: писать в
+  // generated-колонку нельзя.
+  it('в результате адрес зовётся address, а location не появляется', async () => {
+    mockUpdateResponseData = mockItemData;
+    mockUpdateResponseError = null;
+
+    const { result } = renderHook(() => useUpdateItem(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({ id: 'item-1', userId: 'owner-1', updates: { address: 'Namur, BE' } });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toHaveProperty('address', 'Wavre, BE');
+    expect(result.current.data).not.toHaveProperty('location');
+
+    const calls = (supabase.from('items').update as unknown as Mock).mock.calls;
+    const sent = calls[calls.length - 1][0];
+    expect(sent).not.toHaveProperty('location');
   });
 });

@@ -11,7 +11,7 @@ const mockItem = {
   price_per_day: 25,
   photos: ['https://example.com/drill.jpg'],
   owner_id: 'owner1',
-  location: 'Brussels, BE',
+  address: 'Brussels, BE',
   latitude: 50.8503,
   longitude: 4.3517,
   is_available: true,
