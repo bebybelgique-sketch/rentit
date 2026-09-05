@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { photosOf, coverPhoto } from '../items';
+import { photosOf, coverPhoto, itemHistoryOf } from '../items';
 
 // Колонка photos в базе — jsonb, а не string[]. Пока типы писались руками,
 // приложение верило себе на слово; после supabase gen types поле станет
@@ -45,5 +45,42 @@ describe('coverPhoto', () => {
     // null читается вызывающим как «показать заглушку».
     expect(coverPhoto({ photos: [] })).toBeNull();
     expect(coverPhoto(undefined)).toBeNull();
+  });
+});
+
+// item_history объявлена RETURNS jsonb: после gen types её ответ — Json.
+// Страница вещи строит из last_rented дату (`+ 'T00:00:00'`), и мусор в
+// этом поле давал бы «Invalid Date» посреди фразы о доверии к владельцу.
+
+describe('itemHistoryOf', () => {
+  it('читает нормальный ответ функции', () => {
+    expect(itemHistoryOf({ times_rented: 7, last_rented: '2026-07-31' }))
+      .toEqual({ times_rented: 7, last_rented: '2026-07-31' });
+  });
+
+  it('вещь ещё не сдавали: count 0, дата null', () => {
+    expect(itemHistoryOf({ times_rented: 0, last_rented: null }))
+      .toEqual({ times_rented: 0, last_rented: null });
+  });
+
+  it('не объект — сведений нет', () => {
+    // Ошибка RPC отдаёт data: null, и блок истории просто не показывается.
+    expect(itemHistoryOf(null)).toBeNull();
+    expect(itemHistoryOf(undefined)).toBeNull();
+    expect(itemHistoryOf('7')).toBeNull();
+    expect(itemHistoryOf([{ times_rented: 7 }])).toBeNull();
+  });
+
+  it('дата не в формате YYYY-MM-DD отбрасывается', () => {
+    // Лучше не показать дату, чем показать Invalid Date.
+    expect(itemHistoryOf({ times_rented: 2, last_rented: '31/07/2026' })?.last_rented).toBeNull();
+    expect(itemHistoryOf({ times_rented: 2, last_rented: 1234 })?.last_rented).toBeNull();
+  });
+
+  it('нечисловой или отрицательный счётчик читается как ноль', () => {
+    // Ноль скрывает блок целиком — это честнее, чем «сдавали -1 раз».
+    expect(itemHistoryOf({ times_rented: '7' })?.times_rented).toBe(0);
+    expect(itemHistoryOf({ times_rented: -3 })?.times_rented).toBe(0);
+    expect(itemHistoryOf({})?.times_rented).toBe(0);
   });
 });

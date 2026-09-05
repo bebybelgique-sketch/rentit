@@ -45,3 +45,41 @@ export function photosOf(source: WithPhotos | null | undefined): string[] {
 export function coverPhoto(source: WithPhotos | null | undefined): string | null {
   return photosOf(source)[0] ?? null;
 }
+
+// ---------------------------------------------------------------------------
+// История вещи: результат RPC `item_history` (миграция 20260817000023).
+//
+// Функция объявлена `RETURNS jsonb`, то есть после `supabase gen types` её
+// возврат станет `Json` — ровно как `photos`. До сих пор страница вещи брала
+// его приведением (`historyData as ItemHistory`): приведение молча обещает
+// компилятору форму, которой никто не проверял, и на любом расхождении даёт
+// не отказ, а «Invalid Date» в тексте про доверие к владельцу.
+// ---------------------------------------------------------------------------
+
+/** Сколько раз вещь брали и когда вернули в последний раз. */
+export interface ItemHistory {
+  times_rented: number;
+  /** Дата ВОЗВРАТА (YYYY-MM-DD) или null, если вещь ещё не сдавали. */
+  last_rented: string | null;
+}
+
+/**
+ * Разбор ответа `item_history`. `null` — сведений нет; вызывающий тогда не
+ * показывает блок вовсе, а не рисует «сдавали 0 раз».
+ */
+export function itemHistoryOf(raw: unknown): ItemHistory | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  // count(*) из jsonb приходит числом; дробное или отрицательное значение
+  // означало бы, что мы читаем не то поле.
+  const times = typeof r.times_rented === 'number' && Number.isInteger(r.times_rented) && r.times_rented >= 0
+    ? r.times_rented
+    : 0;
+  // Дата нужна ровно в виде YYYY-MM-DD: страница дописывает к ней
+  // 'T00:00:00' и строит Date. Всё остальное — пустота, а не «Invalid Date»
+  // посреди фразы.
+  const last = typeof r.last_rented === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.last_rented)
+    ? r.last_rented
+    : null;
+  return { times_rented: times, last_rented: last };
+}
