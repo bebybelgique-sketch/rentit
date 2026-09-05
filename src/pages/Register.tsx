@@ -21,21 +21,31 @@ export default function Register() {
     if (password.length < 8) return setError(t('register.passwordMinimum'))
     setLoading(true); setError(''); setSuccess('')
 
-    const { data, error } = await supabase.auth.signUp({
+    let referrerId: string | null = null
+    if (refCode) {
+      const { data: referrer, error: referrerError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('referral_code', refCode.toUpperCase())
+        .maybeSingle()
+
+      if (referrerError) {
+        console.error('Referral lookup failed', referrerError)
+      }
+      if (referrer) referrerId = referrer.id
+    }
+
+    const { error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { full_name: name.trim() } },
+      options: {
+        data: {
+          full_name: name.trim(),
+          ...(referrerId ? { referred_by: referrerId } : {}),
+        },
+      },
     })
 
     if (error) { setError(error.message); setLoading(false); return }
-
-    // Apply referral
-    if (refCode && data.user) {
-      const { data: referrer } = await supabase
-        .from('users').select('id').eq('referral_code', refCode.toUpperCase()).single()
-      if (referrer) {
-        await supabase.from('users').update({ referred_by: referrer.id }).eq('id', data.user.id)
-      }
-    }
 
     setSuccess(t('register.checkInbox'))
     navigate('/login', { replace: true })

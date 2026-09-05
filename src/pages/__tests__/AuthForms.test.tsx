@@ -6,11 +6,12 @@ import Login from '../Login'
 import { supabase } from '../../lib/supabase'
 
 const navigateMock = vi.hoisted(() => vi.fn())
+const searchParamsMock = vi.hoisted(() => ({ value: new URLSearchParams() }))
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => navigateMock,
-  useSearchParams: () => [new URLSearchParams()],
+  useSearchParams: () => [searchParamsMock.value],
 }))
 
 vi.mock('../../lib/supabase', () => ({
@@ -19,6 +20,7 @@ vi.mock('../../lib/supabase', () => ({
       signUp: vi.fn(),
       signInWithPassword: vi.fn(),
     },
+    from: vi.fn(),
   },
 }))
 
@@ -26,6 +28,7 @@ describe('Auth forms hardening', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     navigateMock.mockReset()
+    searchParamsMock.value = new URLSearchParams()
   })
 
   it('redirects new signups to login and tells them to verify email', async () => {
@@ -33,9 +36,16 @@ describe('Auth forms hardening', () => {
       data: { user: { id: 'user-1' } },
       error: null,
     } as any)
+    vi.mocked(supabase.from).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'referrer-1' }, error: null }),
+    } as any)
+
+    searchParamsMock.value = new URLSearchParams('ref=ABC123')
 
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/register?ref=ABC123']}>
         <Register />
       </MemoryRouter>
     )
@@ -46,7 +56,15 @@ describe('Auth forms hardening', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create account|Créer un compte|Maak account/i }))
 
     await waitFor(() => {
-      expect(supabase.auth.signUp).toHaveBeenCalled()
+      expect(supabase.from).toHaveBeenCalledWith('users')
+      expect(supabase.auth.signUp).toHaveBeenCalledWith(expect.objectContaining({
+        options: expect.objectContaining({
+          data: expect.objectContaining({
+            full_name: 'Jane Doe',
+            referred_by: 'referrer-1',
+          }),
+        }),
+      }))
       expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true })
     })
 
