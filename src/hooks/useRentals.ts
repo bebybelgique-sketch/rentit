@@ -21,10 +21,7 @@ const fetchRentals = async (userId: string | undefined): Promise<Rental[]> => {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map(rental => ({
-    ...rental,
-    item: rental.item ? { ...rental.item, photos: photosOf(rental.item) } : null,
-  }));
+  return data ?? [];
 };
 
 // Экспортируем хук, используя useQuery

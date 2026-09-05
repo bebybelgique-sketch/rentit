@@ -19,10 +19,7 @@ const fetchRentalsAsOwner = async (userId: string | undefined): Promise<Rental[]
     .eq('item.owner_id', userId);
 
   if (error) throw error;
-  return (data ?? []).map(rental => ({
-    ...rental,
-    item: rental.item ? { ...rental.item, photos: photosOf(rental.item) } : null,
-  }));
+  return data ?? [];
 };
 
 export const useRentalsAsOwner = (userId: string | undefined) => {

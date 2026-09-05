@@ -21,7 +21,7 @@ const fetchItems = async (params?: { limit?: number; sortBy?: string; search?: s
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []).map(item => ({ ...item, photos: photosOf(item) }));
+  return data ?? [];
 };
 
 export const useItems = (params?: { limit?: number; sortBy?: string; search?: string }) => {

@@ -28,8 +28,7 @@ const fetchItemById = async (id: string): Promise<Item | null> => {
   // маппера не нужна: имена в типе теперь совпадают с колонками, снимки
   // читает photosOf по месту показа, а умолчания подставляет форма — там,
   // где известно, что значит пустое поле в конкретном поле ввода.
-  if (!data) return null;
-  return { ...data, photos: photosOf(data) };
+  return data ?? null;
 };
 
 // Экспортируем хук, используя useQuery
