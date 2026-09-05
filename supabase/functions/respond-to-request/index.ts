@@ -8,9 +8,6 @@ import type { RpcCaller } from '../_shared/availability.ts'
 
 const supabase = createSupabaseServiceClient()
 
-const PLATFORM_FEE_PCT = 0.00
-const INSURANCE_PER_DAY = 0
-
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
@@ -32,7 +29,7 @@ serve(async (req) => {
     // Fetch booking with item
     const { data: booking, error: bookingErr } = await supabase
       .from('bookings')
-      .select('id,start_date,end_date,status,items(id,owner_id,price_per_day,deposit)')
+      .select('id,start_date,end_date,status,total_price,deposit_amount,items(id,owner_id,price_per_day,deposit)')
       .eq('id', booking_id)
       .single()
 
@@ -99,29 +96,15 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'These dates are no longer available' }), { status: 409, headers: CORS })
     }
 
-    // Check if owner is Pro or B2B
-    const { data: ownerProfile } = await supabase
-      .from('users').select('is_pro, business_plan').eq('id', user.id).single()
-    const isPro = ownerProfile?.is_pro === true || ownerProfile?.business_plan != null
-
-    // Calculate amounts
-    const start = new Date(booking.start_date)
-    const end = new Date(booking.end_date)
-    const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
-    const pricePerDay = Number(item.price_per_day)
-    if (isNaN(pricePerDay) || pricePerDay <= 0) {
-      return new Response(JSON.stringify({ error: 'Invalid item price' }), { status: 400, headers: CORS })
-    }
-    const rentalPrice = pricePerDay * totalDays
-    const deposit = Number(item.deposit) || 0
-    const platformFee = isPro ? 0 : rentalPrice * PLATFORM_FEE_PCT
-    const insuranceFee = INSURANCE_PER_DAY * totalDays
-
     // Платежей в платформе нет: расчёт наличными между арендатором и
     // владельцем при передаче вещи. Поэтому одобрение сразу подтверждает
     // бронь — промежуточный статус pending_payment больше не используется,
     // Stripe не вызывается, запись в payments не создаётся.
-    // Суммы ниже сохраняем: они показываются сторонам как ориентир.
+    //
+    // Итоговая сумма (total_price) и залог (deposit_amount) зафиксированы
+    // снимком при создании заявки в request-rental (с учётом тарифов 3д/неделя).
+    // Повторно их здесь не пересчитываем, чтобы не затереть скидки.
+    //
     // Условие по исходному статусу обязательно. Без него отменённая
     // арендатором заявка поднималась обратно в `confirmed`: он считал бронь
     // отменённой, владелец — подтверждённой, вещь блокировалась на эти даты,
@@ -129,9 +112,6 @@ serve(async (req) => {
     const { data: approved } = await supabase.from('bookings').update({
       status: 'confirmed',
       approved_at: new Date().toISOString(),
-      total_price: rentalPrice,
-      deposit_amount: deposit,
-      platform_fee: platformFee,
     }).eq('id', booking_id).eq('status', 'pending_approval').select('id')
     if (!approved || approved.length === 0) return changedMeanwhile()
 

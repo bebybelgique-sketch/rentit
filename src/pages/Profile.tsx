@@ -1,7 +1,10 @@
 // src/pages/Profile.tsx
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next'; // Импортируем хук
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { useProfile } from '../hooks/useProfile';
 import { useUpdateProfile } from '../hooks/mutations/useUpdateProfile';
 import { useDeleteAccount } from '../hooks/mutations/useDeleteAccount';
@@ -11,6 +14,8 @@ import toast from 'react-hot-toast';
 const Profile: React.FC = () => {
   const { t } = useTranslation(); // Используем хук
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const updateProfileMutation = useUpdateProfile();
   const deleteAccountMutation = useDeleteAccount();
   const { upload: uploadAvatar, uploading: avatarUploading } = useUploadAvatar();
@@ -25,7 +30,6 @@ const Profile: React.FC = () => {
     // трогая имя, публиковал свой почтовый адрес. Проверено 12.08: в базе
     // такая строка уже была — её создал обычный путь через интерфейс.
     full_name: user?.user_metadata?.full_name || '',
-    bio: user?.user_metadata?.bio || '',
     avatar_url: user?.user_metadata?.avatar_url || '',
   });
 
@@ -72,11 +76,6 @@ const Profile: React.FC = () => {
     }
 
     try {
-      // Поля перечислены поимённо, а не `...profileData`. В состоянии формы
-      // живёт ещё и `bio`, а колонки `bio` в таблице `users` НЕТ — PostgREST
-      // отклонил бы весь запрос целиком (PGRST204), файл лёг бы в бакет, а
-      // ссылка не сохранилась. Ровно то, что чинили в PR #19 на странице
-      // «Modifier»: одно лишнее поле — и не сохраняется ничего.
       await updateProfileMutation.mutateAsync({
         userId: user.id,
         updates: { full_name: profileData.full_name, avatar_url: result.url },
@@ -90,14 +89,19 @@ const Profile: React.FC = () => {
     }
   };
 
+  const isUnchanged =
+    profileData.full_name.trim() === (storedProfile?.full_name || '').trim() &&
+    profileData.avatar_url === (storedProfile?.avatar_url || '');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUnchanged) return;
 
     try {
       await updateProfileMutation.mutateAsync({
         userId: user.id,
         updates: {
-          full_name: profileData.full_name,
+          full_name: profileData.full_name.trim(),
           avatar_url: profileData.avatar_url,
         }
       });
@@ -115,10 +119,10 @@ const Profile: React.FC = () => {
 
     try {
       await deleteAccountMutation.mutateAsync();
+      await supabase.auth.signOut().catch(() => {});
+      queryClient.clear();
       toast.success(t('profile.deleteSuccess')); // Новая строка в i18n
-      // Здесь нужно выполнить разлогин и перенаправление
-      // await supabase.auth.signOut(); // Это может быть вызвано в AuthContext
-      // navigate('/'); // Перенаправление на главную
+      navigate('/', { replace: true });
     } catch (error: any) {
       console.error(t('profile.deleteError'), error);
       toast.error(error.message || t('profile.deleteError')); // Новая строка в i18n
@@ -140,17 +144,6 @@ const Profile: React.FC = () => {
               value={profileData.full_name}
               onChange={handleChange}
               required
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="bio">{t('profile.biography')}</label> {/* Новая строка в i18n */}
-            <textarea
-              id="bio"
-              name="bio"
-              value={profileData.bio}
-              onChange={handleChange}
               style={{ width: '100%' }}
             />
           </div>
@@ -192,7 +185,7 @@ const Profile: React.FC = () => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={updateProfileMutation.isPending}
+            disabled={updateProfileMutation.isPending || isUnchanged}
             style={{ width: '100%', minHeight: '44px' }}
           >
             {updateProfileMutation.isPending ? t('profile.updating') : t('profile.updateButton')} {/* Новые строки в i18n */}

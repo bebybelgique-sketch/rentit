@@ -75,6 +75,8 @@ reviews   id, booking_id, from_user_id, to_user_id, item_id, review_type,
 
 Значений `pending`, `approved`, `canceled` в базе нет — запись с ними падает.
 
+**`total_price` в `bookings` — snapshot на момент заявки; никакие функции не пересчитывают его после создания.**
+
 ---
 
 ## 4. Чего нельзя делать из браузера

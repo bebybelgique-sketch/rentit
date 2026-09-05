@@ -225,7 +225,6 @@
   "profile": {
     "title": "Mijn Profiel",
     "fullName": "Volledige naam",
-    "biography": "Biografie",
     "avatarLabel": "Profielfoto",
     "avatarHint": "JPG, PNG of WEBP, maximaal 5 MB. Wordt meteen opgeslagen.",
     "avatarUploading": "Foto wordt verzonden…",
