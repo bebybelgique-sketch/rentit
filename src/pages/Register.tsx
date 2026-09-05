@@ -14,11 +14,12 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (password.length < 8) return setError(t('register.passwordMinimum'))
-    setLoading(true); setError('')
+    setLoading(true); setError(''); setSuccess('')
 
     const { data, error } = await supabase.auth.signUp({
       email, password,
@@ -36,7 +37,8 @@ export default function Register() {
       }
     }
 
-    navigate('/')
+    setSuccess(t('register.checkInbox'))
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -49,6 +51,7 @@ export default function Register() {
               {t('invitedMsg')}
             </div>
           )}
+          {success && <div className="success-msg" style={{ marginBottom: '16px' }}>{success}</div>}
           {error && <div className="error-msg">{error}</div>}
           <form onSubmit={handleSubmit}>
             <div className="form-group">

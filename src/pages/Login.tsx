@@ -22,11 +22,19 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const friendlyAuthError = (message: string) => {
+    const normalized = message.toLowerCase()
+    if (normalized.includes('not confirmed') || normalized.includes('confirm your email') || normalized.includes('email') && normalized.includes('verification')) {
+      return t('auth.login.emailNotConfirmed')
+    }
+    return message
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true); setError('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false) }
+    if (error) { setError(friendlyAuthError(error.message)); setLoading(false) }
     // replace, а не push: страница входа не должна оставаться в истории
     // позади вошедшего человека — «назад» возвращало бы его на форму,
     // которую он уже прошёл.
