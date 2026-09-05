@@ -494,7 +494,13 @@
   },
   "register": {
     "passwordMinimum": "Password must contain at least 8 characters",
-    "namePlaceholder": "Your name"
+    "namePlaceholder": "Your name",
+    "checkInbox": "Check your inbox and confirm your email to continue."
+  },
+  "auth": {
+    "login": {
+      "emailNotConfirmed": "Please check your inbox and confirm your email before signing in."
+    }
   },
   "routeError": "This page could not load. A newer version of the site may be available.",
   "routeRetry": "Reload the page",

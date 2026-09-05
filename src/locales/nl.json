@@ -494,7 +494,13 @@
   },
   "register": {
     "passwordMinimum": "Wachtwoord moet minstens 8 tekens bevatten",
-    "namePlaceholder": "Uw naam"
+    "namePlaceholder": "Uw naam",
+    "checkInbox": "Controleer uw inbox en bevestig uw e-mailadres om door te gaan."
+  },
+  "auth": {
+    "login": {
+      "emailNotConfirmed": "Controleer uw inbox en bevestig uw e-mailadres voordat u inlogt."
+    }
   },
   "routeError": "Deze pagina kon niet laden. Een nieuwere versie van de site is misschien beschikbaar.",
   "routeRetry": "Pagina herladen",
