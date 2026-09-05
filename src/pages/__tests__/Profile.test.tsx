@@ -4,6 +4,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../../context/AuthContext'; // Предполагаем, что AuthProvider экспортируется
+import { supabase } from '../../lib/supabase';
+
+const navigateMock = vi.hoisted(() => vi.fn());
+
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router-dom')>()),
+  useNavigate: () => navigateMock,
+}));
 
 // AuthProvider на монтировании зовёт supabase.auth.getSession() и подписку —
 // без заглушек рендер падает ещё до самой страницы.
@@ -122,6 +130,28 @@ describe('Profile Page', () => {
       // Удаление идёт через edge-функцию, пользователя она берёт из токена,
       // поэтому аргументов у мутации нет.
       expect(mockMutateAsync).toHaveBeenCalledWith();
+    });
+
+    confirmMock.mockRestore();
+  });
+
+  it('redirects even when signOut fails after account deletion', async () => {
+    const mockMutateAsync = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useDeleteAccount).mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isPending: false,
+      isError: false,
+      error: null,
+    } as never);
+    vi.mocked(supabase.auth.signOut).mockRejectedValueOnce(new Error('sign out failed'));
+    const confirmMock = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(<Profile />, { wrapper });
+    fireEvent.click(screen.getByText(/Supprimer mon compte/i));
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith();
+      expect(navigateMock).toHaveBeenCalledWith('/', { replace: true });
     });
 
     confirmMock.mockRestore();
