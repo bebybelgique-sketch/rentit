@@ -1,5 +1,6 @@
 // src/hooks/mutations/useUpdateItem.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { photosOf } from '../../lib/items';
 import { supabase } from '../../lib/supabase';
 import type { Tables } from '../../types/database.types';
 import { Item } from '../../types';
@@ -62,7 +63,7 @@ const updateItemById = async ({ id, updates, userId }: UpdateItemParams): Promis
   // урезанный объект ЗАМЕЩАЛ полный, и форма, открытая сразу после
   // сохранения, показывала пустую категорию и «1 единицу» поверх только
   // что сохранённых. Возвращая строку целиком, замещать нечем.
-  return data as Item;
+  return { ...data, photos: photosOf(data) };
 };
 
 export const useUpdateItem = () => {

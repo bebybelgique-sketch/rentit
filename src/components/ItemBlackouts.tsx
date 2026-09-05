@@ -37,7 +37,7 @@ export default function ItemBlackouts({ itemId }: { itemId: string }) {
       .eq('item_id', itemId)
       .order('start_date', { ascending: true })
     if (err) setError(err.message)
-    setRows((data as ItemBlackout[]) ?? [])
+    setRows(data ?? [])
     setLoading(false)
   }
 

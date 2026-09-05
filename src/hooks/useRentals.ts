@@ -1,5 +1,6 @@
 // src/hooks/useRentals.ts
 import { useQuery } from '@tanstack/react-query';
+import { photosOf } from '../lib/items';
 import { supabase } from '../lib/supabase';
 import { Rental } from '../types';
 
@@ -20,7 +21,10 @@ const fetchRentals = async (userId: string | undefined): Promise<Rental[]> => {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return (data ?? []).map(rental => ({
+    ...rental,
+    item: rental.item ? { ...rental.item, photos: photosOf(rental.item) } : null,
+  }));
 };
 
 // Экспортируем хук, используя useQuery

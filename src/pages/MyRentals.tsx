@@ -144,8 +144,8 @@ const MyRentals: React.FC = () => {
                       <strong>{t('rental.labelOwner')}:</strong> {owner?.full_name || t('rental.unknownUser')}{' '}
                       <UserRatingBadge rating={owner?.rating_as_owner ?? null} role="owner" />
                     </p>
-                    <p><strong>{t('rental.labelDates')}:</strong> {t('rental.datesRange', { start: formatDate(rental.start_date), end: formatDate(rental.end_date) })}</p>
-                    <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status} /></p>
+                    <p><strong>{t('rental.labelDates')}:</strong> {t('rental.datesRange', { start: formatDate(rental.start_date ?? ''), end: formatDate(rental.end_date ?? '') })}</p>
+                    <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status ?? 'pending_approval'} /></p>
                     {/* Доставка показывается из СНИМКА в брони, а не из вещи:
                         владелец мог с тех пор поменять цену, но договорённость
                         была на этой. */}
@@ -154,7 +154,7 @@ const MyRentals: React.FC = () => {
                     )}
                     {renderCancellation(rental, owner?.full_name || "l'autre partie")}
 
-                    {CANCELLABLE_BY_RENTER.includes(rental.status) && (
+                    {CANCELLABLE_BY_RENTER.includes(rental.status ?? '') && (
                       <div style={{ marginTop: '8px' }}>
                         <button
                           className="btn btn-secondary btn-sm"
@@ -169,11 +169,11 @@ const MyRentals: React.FC = () => {
                     {owner && (
                       <BookingThread
                         bookingId={rental.id}
-                        itemId={rental.item_id}
+                        itemId={rental.item_id ?? ''}
                         currentUserId={user.id}
                         counterpartyId={owner.id}
                         counterpartyName={owner.full_name || 'Utilisateur'}
-                        status={rental.status}
+                        status={rental.status ?? 'pending_approval'}
                         role="renter"
                       />
                     )}
@@ -209,8 +209,8 @@ const MyRentals: React.FC = () => {
                     <UserRatingBadge rating={rental.renter?.rating_as_renter ?? null} role="renter" />
                   </p>
                   <p><strong>{t('rental.labelItem')}:</strong> {rental.item?.title || 'N/A'}</p>
-                  <p><strong>{t('rental.labelDates')}:</strong> {t('rental.datesRange', { start: formatDate(rental.start_date), end: formatDate(rental.end_date) })}</p>
-                  <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status} /></p>
+                  <p><strong>{t('rental.labelDates')}:</strong> {t('rental.datesRange', { start: formatDate(rental.start_date ?? ''), end: formatDate(rental.end_date ?? '') })}</p>
+                  <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status ?? 'pending_approval'} /></p>
                   {/* Поля message в bookings нет: столбец называется
                       request_message, и страница показывала пустоту. */}
                   {rental.delivery_requested && rental.delivery_fee != null && (
@@ -223,22 +223,22 @@ const MyRentals: React.FC = () => {
                       возврата — не покидая эту страницу. Раньше здесь
                       кончалось на «Accepter/Refuser», а «передана» и
                       «возвращена» надо было искать в /my-items.
-
+ 
                       Ошибку показывает сам компонент: прежний блок ниже
                       печатал сырое error.message, то есть служебную фразу
                       supabase-js вместо причины отказа. */}
                   <div style={{ marginTop: '8px' }}>
-                    <BookingOwnerActions bookingId={rental.id} status={rental.status} />
+                    <BookingOwnerActions bookingId={rental.id} status={rental.status ?? 'pending_approval'} />
                   </div>
 
                   {rental.renter && (
                     <BookingThread
                       bookingId={rental.id}
-                      itemId={rental.item_id}
+                      itemId={rental.item_id ?? ''}
                       currentUserId={user.id}
                       counterpartyId={rental.renter.id}
                       counterpartyName={rental.renter.full_name || 'Utilisateur'}
-                      status={rental.status}
+                      status={rental.status ?? 'pending_approval'}
                       role="owner"
                     />
                   )}

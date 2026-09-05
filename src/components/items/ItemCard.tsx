@@ -27,7 +27,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}>
           <img
             src={cover}
-            alt={item.title}
+            alt={item.title ?? 'Item'}
             style={{
               width: '100%',
               height: '100%',
@@ -62,7 +62,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
             {item.address?.split(',')[0] || 'Bruxelles'}
           </span>
           <span className="L-mono" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500' }}>
-            €{item.price_per_day}/jour
+            €{item.price_per_day ?? 0}/jour
           </span>
         </div>
       </div>

@@ -10,7 +10,7 @@ import {
   loadItemCalendar, toISODate, daysBetween, firstUnavailableDay, isTooSoon, isSelectable,
 } from '../domain/availability'
 import type { ItemCalendar } from '../domain/availability'
-import { itemHistoryOf, type ItemHistory } from '../lib/items'
+import { itemHistoryOf, photosOf, type ItemHistory } from '../lib/items'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
 // power_tools был 🔌, а на витрине ⚡ — одна и та же категория с двумя
@@ -132,7 +132,7 @@ export default function ItemDetail() {
           .order('created_at', { ascending: false }),
         supabase.rpc('item_history', { p_item_id: itemId }),
       ])
-      if (itemData) setItem(itemData as unknown as Item)
+      if (itemData) setItem({ ...itemData, photos: photosOf(itemData) })
       setCalendar(calendarData)
       setReviews(reviewData || [])
       setHistory(itemHistoryOf(historyData))
@@ -793,7 +793,7 @@ export default function ItemDetail() {
               {reviews.map(r => (
                 <div key={r.id} style={{ borderTop: '1px solid var(--border)', paddingTop: '14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <strong style={{ fontSize: '14px' }}>{(r.users as any)?.full_name || 'Anonyme'}</strong>
+                    <strong style={{ fontSize: '14px' }}>{r.users?.full_name || 'Anonyme'}</strong>
                     <span className="rating" style={{ fontSize: '13px' }}>{'★'.repeat(r.rating)}</span>
                   </div>
                   {r.comment && <p style={{ color: '#555', fontSize: '14px', lineHeight: 1.6 }}>{r.comment}</p>}

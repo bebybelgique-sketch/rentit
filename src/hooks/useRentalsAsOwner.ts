@@ -1,5 +1,6 @@
 // src/hooks/useRentalsAsOwner.ts
 import { useQuery } from '@tanstack/react-query';
+import { photosOf } from '../lib/items';
 import { supabase } from '../lib/supabase';
 import { Rental } from '../types';
 
@@ -14,11 +15,14 @@ const fetchRentalsAsOwner = async (userId: string | undefined): Promise<Rental[]
     .from('bookings')
     // Псевдоним item — по той же причине, что и в useRentals: страница
     // читает rental.item, а PostgREST без псевдонима отдаёт "items".
-    .select('*, item:items!inner(id, title, owner_id, photos), renter:users!renter_id(id, full_name, avatar_url, rating_as_renter)')
+    .select('*, item:items!inner(*), renter:users!renter_id(id, full_name, avatar_url, rating_as_renter)')
     .eq('item.owner_id', userId);
 
   if (error) throw error;
-  return (data || []) as unknown as Rental[];
+  return (data ?? []).map(rental => ({
+    ...rental,
+    item: rental.item ? { ...rental.item, photos: photosOf(rental.item) } : null,
+  }));
 };
 
 export const useRentalsAsOwner = (userId: string | undefined) => {
