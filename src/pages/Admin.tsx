@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useAdminAction } from '../hooks/mutations/useAdminAction'
+import { useAdminStats } from '../hooks/useAdminStats'
 import { serverErrorKey } from '../domain/serverErrors'
 
 // Действия над ЧУЖИМИ строками идут через edge-функцию admin-action.
@@ -28,7 +29,6 @@ export default function Admin() {
   const [tab, setTab] = useState<'stats' | 'items' | 'users'>('stats')
   const [authorized, setAuthorized] = useState<boolean | null>(null)
 
-  const [stats, setStats] = useState({ users: 0, items: 0, bookings: 0, revenue: 0 })
   const [items, setItems] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,32 +43,24 @@ export default function Admin() {
     })
   }, [user])
 
-  // ИЗВЕСТНАЯ ЛОЖЬ НА ЭКРАНЕ, не закрытая этим заходом: счётчики ниже
-  // считаются под правами самого администратора, а RLS на bookings и
-  // payments показывает человеку только ЕГО строки. Значит «Bookings» и
-  // «Revenue» на вкладке Stats — это цифры одного пользователя, а не
-  // площадки, и выглядят они при этом как общие. Чинится либо действием
-  // `get_stats` в admin-action (служебный ключ), либо SECURITY DEFINER
-  // функцией со счётчиками. Отдельная задача: здесь править нечего, кроме
-  // источника данных.
+  // Счётчики считает сервер (admin-action → get_stats), и это не
+  // придирка к архитектуре: под правами самого администратора цифры
+  // выходили ЛИЧНЫЕ. RLS на bookings отдаёт ему только его брони, на
+  // payments — только его платежи, поэтому «Bookings» показывал число
+  // собственных сделок, а «Revenue» — почти всегда ноль. Подпись при этом
+  // была общая, и отличить одно от другого на экране было нельзя.
+  const stats = useAdminStats(authorized === true)
+
+  // Списки читаются напрямую и остаются здесь: политики
+  // «Public user names/ratings visible» и «Items are public» это
+  // разрешают, а телефон и координаты уже закрыты колоночными грантами
+  // (20260811000014). Заводить ради этого серверное list_*-действие
+  // значило бы переписать RLS во второй раз в коде функции.
   const fetchAll = async () => {
-    const [
-      { count: uCount },
-      { count: iCount },
-      { count: bCount },
-      { data: payData },
-      { data: itemData },
-      { data: userData },
-    ] = await Promise.all([
-      supabase.from('users').select('*', { count: 'exact', head: true }),
-      supabase.from('items').select('*', { count: 'exact', head: true }),
-      supabase.from('bookings').select('*', { count: 'exact', head: true }),
-      supabase.from('payments').select('platform_fee').eq('status', 'succeeded'),
+    const [{ data: itemData }, { data: userData }] = await Promise.all([
       supabase.from('items').select('*, users!owner_id(full_name)').order('created_at', { ascending: false }).limit(50),
       supabase.from('users').select('id, full_name, role, created_at, phone_verified').order('created_at', { ascending: false }).limit(100),
     ])
-    const revenue = (payData || []).reduce((s: number, p: any) => s + (p.platform_fee || 0), 0)
-    setStats({ users: uCount || 0, items: iCount || 0, bookings: bCount || 0, revenue: revenue / 100 })
     setItems(itemData || [])
     setUsers(userData || [])
     setLoading(false)
@@ -121,13 +113,24 @@ export default function Admin() {
         <button className={`tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>Users</button>
       </div>
 
+      {/* Плитки «Revenue (platform fee)» здесь больше нет: платформа не
+          берёт комиссию и не держит денег, а плитка обещала доход от
+          модели, которой в продукте не существует. На её месте — число
+          доведённых до конца сделок: единственная цифра, по которой видно,
+          что площадка работает. */}
+      {tab === 'stats' && stats.isError && (
+        <div className="error-msg" style={{ marginBottom: '16px' }}>
+          {t(serverErrorKey(stats.error.message))}
+        </div>
+      )}
+
       {tab === 'stats' && (
         <div className="grid grid-2">
           {[
-            { label: 'Users', value: stats.users, emoji: '👥' },
-            { label: 'Listings', value: stats.items, emoji: '📦' },
-            { label: 'Bookings', value: stats.bookings, emoji: '📅' },
-            { label: 'Revenue (platform fee)', value: `€${stats.revenue.toFixed(2)}`, emoji: '💰' },
+            { label: 'Users', value: stats.isLoading ? '…' : stats.data?.users ?? 0, emoji: '👥' },
+            { label: 'Listings', value: stats.isLoading ? '…' : stats.data?.items ?? 0, emoji: '📦' },
+            { label: 'Bookings', value: stats.isLoading ? '…' : stats.data?.bookings ?? 0, emoji: '📅' },
+            { label: 'Completed rentals', value: stats.isLoading ? '…' : stats.data?.completed ?? 0, emoji: '✅' },
           ].map(s => (
             <div key={s.label} className="card" style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '36px', marginBottom: '8px' }}>{s.emoji}</div>

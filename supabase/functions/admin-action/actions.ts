@@ -17,6 +17,11 @@
 export type AdminAction =
   | { type: 'set_user_role'; user_id: string; role: 'user' | 'admin' }
   | { type: 'set_item_available'; item_id: string; available: boolean }
+  // Чтение, а не действие: счётчики площадки целиком. Живёт здесь, потому
+  // что под правами самого администратора их не сосчитать — RLS на
+  // bookings показывает ему только его собственные брони, и вкладка Stats
+  // годами показывала личные цифры под видом общих.
+  | { type: 'get_stats' }
 
 /** Куда пишет действие: таблица и строка, ради журнала и ради update. */
 export interface AdminTarget {
@@ -55,19 +60,30 @@ export function parseAction(raw: unknown): AdminAction | null {
       return { type: 'set_item_available', item_id: b.item_id, available: b.available }
     }
 
+    case 'get_stats':
+      return { type: 'get_stats' }
+
     default:
       return null
   }
 }
 
-/** Над чем действие работает. Одна карта на update и на журнал — чтобы в
- *  логе не оказалось таблицы, отличной от той, куда на самом деле писали. */
-export function targetOf(action: AdminAction): AdminTarget {
+/**
+ * Над чем действие работает. Одна карта на update и на журнал — чтобы в
+ * логе не оказалось таблицы, отличной от той, куда на самом деле писали.
+ *
+ * `null` — действие ничего не меняет (чтение). Такие в журнал не пишутся:
+ * строка на каждое открытие вкладки Stats утопила бы в шуме те записи,
+ * ради которых журнал заведён.
+ */
+export function targetOf(action: AdminAction): AdminTarget | null {
   switch (action.type) {
     case 'set_user_role':
       return { table: 'users', id: action.user_id }
     case 'set_item_available':
       return { table: 'items', id: action.item_id }
+    case 'get_stats':
+      return null
   }
 }
 
@@ -78,6 +94,8 @@ export function patchOf(action: AdminAction): Record<string, unknown> {
       return { role: action.role }
     case 'set_item_available':
       return { available: action.available }
+    case 'get_stats':
+      return {}
   }
 }
 

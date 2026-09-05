@@ -116,11 +116,16 @@ transition-booking  { booking_id, action: 'cancel'|'handover'|'complete',
 
 admin-action        { type: 'set_user_role', user_id, role: 'user'|'admin' }
                     { type: 'set_item_available', item_id, available }
+                    { type: 'get_stats' }  -> { ok: true, stats }
                     -> { ok: true, user | item }
                     Действия админа над ЧУЖИМИ строками. Роль проверяется
-                    по таблице users служебным ключом, каждое действие
-                    пишется в admin_audit_log. Прямой update из браузера
-                    не работает: гранты сняты (20260812000017).
+                    по таблице users служебным ключом, каждое ИЗМЕНЯЮЩЕЕ
+                    действие пишется в admin_audit_log. Прямой update из
+                    браузера не работает: гранты сняты (20260812000017).
+                    get_stats — счётчики площадки: под правами самого
+                    админа RLS показывает ему только ЕГО брони и платежи,
+                    поэтому считать их в браузере нельзя. Выручки среди
+                    них нет: платформа не берёт комиссию.
 
 delete-account      {} (нужен Authorization) -> 409, если есть активные брони
 

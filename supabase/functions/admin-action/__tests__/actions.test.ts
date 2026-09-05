@@ -20,6 +20,12 @@ describe('parseAction', () => {
       .toEqual({ type: 'set_item_available', item_id: OTHER, available: false });
   });
 
+  it('принимает чтение счётчиков', () => {
+    expect(parseAction({ type: 'get_stats' })).toEqual({ type: 'get_stats' });
+    // Лишние поля не делают чтение чем-то другим.
+    expect(parseAction({ type: 'get_stats', user_id: OTHER })).toEqual({ type: 'get_stats' });
+  });
+
   it('отвергает неизвестное действие', () => {
     expect(parseAction({ type: 'delete_user', user_id: OTHER })).toBeNull();
     expect(parseAction({ type: 'set_user_role_v2', user_id: OTHER, role: 'admin' })).toBeNull();
@@ -70,6 +76,13 @@ describe('parseAction', () => {
 });
 
 describe('targetOf / patchOf', () => {
+  // Журнал заведён ради действий над строками. Строка на каждое открытие
+  // вкладки Stats утопила бы в шуме именно те записи, ради которых он есть.
+  it('у чтения счётчиков цели нет — и в журнал оно не идёт', () => {
+    expect(targetOf({ type: 'get_stats' })).toBeNull();
+    expect(patchOf({ type: 'get_stats' })).toEqual({});
+  });
+
   it('роль пишется в users, доступность — в items', () => {
     expect(targetOf({ type: 'set_user_role', user_id: OTHER, role: 'user' }))
       .toEqual({ table: 'users', id: OTHER });

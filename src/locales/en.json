@@ -265,7 +265,8 @@
     "approve": "Accept",
     "reject": "Decline",
     "handoverSuccess": "Tool marked as handed over.",
-    "completeSuccess": "Rental completed. You can leave a review."
+    "completeSuccess": "Rental completed. You can leave a review.",
+    "openConversation": "Open the conversation"
   },
   "searchPlaceholder": "Drill, pressure washer, sander…",
   "selectDates": "Select dates",

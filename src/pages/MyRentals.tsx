@@ -1,5 +1,6 @@
 // src/pages/MyRentals.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useRentals } from '../hooks/useRentals';
 import BookingStatusBadge from '../components/common/BookingStatusBadge';
@@ -30,6 +31,13 @@ const MyRentals: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
 
+  // Ссылка вида /my-rentals?booking=<id> ведёт К КОНКРЕТНОЙ брони.
+  // Без этого ссылка из /my-items была декоративной: человек попадал на
+  // страницу с двумя списками и искал свою сделку глазами — а на десятке
+  // броней это уже поиск, а не переход.
+  const [searchParams] = useSearchParams();
+  const focusId = searchParams.get('booking');
+
   // Получаем аренды, где пользователь - арендатор
   const { data: userRentals, isLoading: userRentalsLoading, error: userRentalsError } = useRentals(user?.id);
 
@@ -54,6 +62,23 @@ const MyRentals: React.FC = () => {
       toast.error(t(serverErrorKey(error instanceof Error ? error.message : null)));
     }
   };
+
+  // Прокрутка после того, как списки отрисованы: до этого узла с нужным
+  // id на странице просто нет. Зависимости — длины обоих списков: бронь
+  // может оказаться в любом из них.
+  useEffect(() => {
+    if (!focusId) return;
+    const node = document.getElementById(`booking-${focusId}`);
+    if (!node) return;
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focusId, userRentals?.length, ownerRentals?.length]);
+
+  // Подсветка карточки: прокрутка сама по себе не отвечает на вопрос «а
+  // которая из них моя», если на экране помещается несколько.
+  const focusStyle = (id: string): React.CSSProperties =>
+    id === focusId
+      ? { outline: '2px solid var(--primary)', outlineOffset: '2px' }
+      : {};
 
   if (!user) {
     return (
@@ -108,7 +133,12 @@ const MyRentals: React.FC = () => {
               {userRentals.map(rental => {
                 const owner = rental.item?.owner;
                 return (
-                  <div key={rental.id} className="card" style={{ padding: '16px', marginBottom: '12px' }}>
+                  <div
+                    key={rental.id}
+                    id={`booking-${rental.id}`}
+                    className="card"
+                    style={{ padding: '16px', marginBottom: '12px', ...focusStyle(rental.id) }}
+                  >
                     <p><strong>{t('rental.labelItem')}:</strong> {rental.item?.title || 'N/A'}</p>
                     <p>
                       <strong>{t('rental.labelOwner')}:</strong> {owner?.full_name || t('rental.unknownUser')}{' '}
@@ -165,7 +195,12 @@ const MyRentals: React.FC = () => {
           {ownerRentals && ownerRentals.length > 0 && (
             <div>
               {ownerRentals.map(rental => (
-                <div key={rental.id} className="card" style={{ padding: '16px', marginBottom: '12px' }}>
+                <div
+                  key={rental.id}
+                  id={`booking-${rental.id}`}
+                  className="card"
+                  style={{ padding: '16px', marginBottom: '12px', ...focusStyle(rental.id) }}
+                >
                   {/* Здесь стоял rental.renter_id — владелец видел сырой UUID
                       вместо человека, к которому поедет. Профиль приходит
                       вместе с бронью (useRentalsAsOwner). */}

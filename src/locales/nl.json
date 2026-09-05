@@ -265,7 +265,8 @@
     "approve": "Aanvaarden",
     "reject": "Weigeren",
     "handoverSuccess": "Gereedschap gemarkeerd als overhandigd.",
-    "completeSuccess": "Verhuur afgerond. U kunt een beoordeling achterlaten."
+    "completeSuccess": "Verhuur afgerond. U kunt een beoordeling achterlaten.",
+    "openConversation": "Gesprek openen"
   },
   "searchPlaceholder": "Zoek gereedschap...",
   "selectDates": "Selecteer datums",

@@ -265,7 +265,8 @@
     "approve": "Accepter",
     "reject": "Refuser",
     "handoverSuccess": "Outil marqué comme remis.",
-    "completeSuccess": "Location terminée. Vous pouvez laisser un avis."
+    "completeSuccess": "Location terminée. Vous pouvez laisser un avis.",
+    "openConversation": "Ouvrir la conversation"
   },
   "searchPlaceholder": "Rechercher des outils...",
   "selectDates": "Choisir les dates",

@@ -241,7 +241,7 @@ export default function MyItems() {
                               {booking.start_date} → {booking.end_date} · {booking.total_days} jour{booking.total_days !== 1 ? 's' : ''} · €{Number(booking.total_price).toFixed(2)}
                             </div>
                           </div>
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                             <span className={`tag ${
                               booking.status === 'confirmed' ? 'tag-green' :
                               booking.status === 'active' ? 'tag-yellow' :
@@ -249,6 +249,14 @@ export default function MyItems() {
                             }`}>
                               {t(statusLabelKey(booking.status) ?? '') || booking.status}
                             </span>
+                            {/* Переписка, фотографии передачи и отзыв живут
+                                в /my-rentals: здесь их дублировать незачем,
+                                а бросать владельца искать свою бронь глазами
+                                — тем более. Параметр ?booking= прокручивает
+                                страницу к нужной карточке. */}
+                            <Link to={`/my-rentals?booking=${booking.id}`} className="btn btn-secondary btn-sm">
+                              {t('rental.openConversation')}
+                            </Link>
                             <BookingOwnerActions
                               bookingId={booking.id}
                               status={booking.status}

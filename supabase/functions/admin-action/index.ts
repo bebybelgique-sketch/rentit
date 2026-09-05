@@ -64,7 +64,18 @@ serve(async (req) => {
     // 4. Предохранитель от «последний админ разлогинил админку».
     if (isSelfDemotion(action, user.id)) return json({ error: 'cannot_demote_self' }, 400)
 
+    // 5. Чтение счётчиков — отдельная ветка: ни строки не меняет, в журнал
+    // не пишется. Считает служебный клиент, потому что под правами самого
+    // администратора цифры получаются ЛИЧНЫЕ: RLS на bookings и payments
+    // показывает ему только его собственные строки, а выглядят они на
+    // вкладке Stats как общие по площадке.
+    if (action.type === 'get_stats') return await stats()
+
     const target = targetOf(action)
+    // Недостижимо: цель есть у каждого изменяющего действия, а
+    // единственное читающее разобрано выше. Строка нужна ради ошибки
+    // компиляции, если появится третий вид действий.
+    if (!target) return json({ error: 'bad_request' }, 400)
 
     const { data, error } = await supabase
       .from(target.table)
@@ -94,6 +105,36 @@ serve(async (req) => {
 })
 
 /**
+ * Счётчики площадки целиком.
+ *
+ * Комиссии и выручки среди них нет намеренно: платформа денег не берёт и
+ * не держит (см. scripts/check-claims.mjs). Плитка «Revenue (platform fee)»
+ * в /admin показывала сумму platform_fee из payments — то есть обещала
+ * доход от модели, которой в продукте больше нет.
+ */
+async function stats() {
+  const count = async (table: string, apply?: (q: any) => any) => {
+    const base = supabase.from(table).select('*', { count: 'exact', head: true })
+    const { count: n, error } = await (apply ? apply(base) : base)
+    if (error) throw error
+    return n ?? 0
+  }
+
+  try {
+    const [users, items, bookings, completed] = await Promise.all([
+      count('users'),
+      count('items'),
+      count('bookings'),
+      count('bookings', (q: any) => q.eq('status', 'completed')),
+    ])
+    return json({ ok: true, stats: { users, items, bookings, completed } })
+  } catch (error) {
+    console.error('[admin-action] stats failed', { error })
+    return json({ error: 'internal_error' }, 500)
+  }
+}
+
+/**
  * Строка в журнал. Пишется ПОСЛЕ успешной записи: журнал обязан отражать
  * то, что произошло, а не то, что собирались сделать.
  *
@@ -103,6 +144,7 @@ serve(async (req) => {
  */
 async function audit(actorId: string, action: AdminAction) {
   const target = targetOf(action)
+  if (!target) return
   const { error } = await supabase.from('admin_audit_log').insert({
     actor_id: actorId,
     action: action.type,
