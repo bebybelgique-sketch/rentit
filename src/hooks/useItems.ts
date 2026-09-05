@@ -2,7 +2,6 @@
 import { useQuery } from '@tanstack/react-query'; // ИМПОРТ useQuery
 import { supabase } from '../lib/supabase';
 import { Item } from '../types';
-import { photosOf } from '../lib/items';
 
 // Определяем функцию для получения данных
 const fetchItems = async (params?: { limit?: number; sortBy?: string; search?: string }): Promise<Item[]> => {
@@ -25,23 +24,10 @@ const fetchItems = async (params?: { limit?: number; sortBy?: string; search?: s
   const { data, error } = await query;
   if (error) throw error;
 
-  const transformedItems: Item[] = data.map(rawItem => ({
-    id: rawItem.id,
-    title: rawItem.title,
-    description: rawItem.description,
-    price_per_day: rawItem.price_per_day,
-    owner_id: rawItem.owner_id,
-    address: rawItem.address,
-    latitude: rawItem.lat,
-    longitude: rawItem.lng,
-    is_available: rawItem.available,
-    created_at: rawItem.created_at,
-    // Снимки переносятся как есть: обложку считает coverPhoto по месту
-    // показа. Прежде здесь вычислялось поле image_url, которого в базе нет.
-    photos: photosOf(rawItem),
-  }));
-
-  return transformedItems || [];
+  // Строки возвращаются как есть: маппер переписывал имена колонок
+  // (lat → latitude), а теперь имена в типе им и равны. Приведение уйдёт
+  // на шаге 1, когда клиент станет типизированным.
+  return (data ?? []) as Item[];
 };
 
 // Экспортируем хук, используя useQuery

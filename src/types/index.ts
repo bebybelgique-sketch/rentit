@@ -26,9 +26,15 @@ export interface Item {
   // возьмёт `location` из ответа базы, получит бинарную геометрию и вызовет
   // на ней .split(',').
   address: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  is_available: boolean;
+  // Координаты и доступность названы так же, как колонки: lat, lng,
+  // available. Прежде тип приложения звал их latitude/longitude/is_available
+  // и три хука переписывали имена на входе. Перевод имён — это работа,
+  // которую кто-то должен делать ПРАВИЛЬНО в каждом новом месте чтения, и
+  // цена ошибки несимметрична: пропущенное поле молча становится
+  // undefined, а форма показывает пустоту поверх заполненного.
+  lat: number | null;
+  lng: number | null;
+  available: boolean;
   created_at: string;
   // Снимки объявления. В базе это jsonb, а не массив строк, и после
   // supabase gen types поле станет Json — читать его надо через
@@ -41,7 +47,11 @@ export interface Item {
   deposit?: number;
   category?: string;
   condition?: string;
-  photos?: string[];
+  // Снимки объявления читаются ТОЛЬКО через `photosOf` из src/lib/items.ts
+  // — отсюда `unknown`. В базе это jsonb; после `supabase gen types` тип
+  // станет `Json`, и объявлять здесь `string[]` значит обещать то, чего
+  // база не гарантирует: в массиве законно лежит null или объект.
+  photos?: unknown;
   // Тарифы на срок и объявленная плата за просрочку. `null` — владелец их не
   // назначил, и тогда счёт идёт по дневной цене. Платформа эти суммы не
   // держит и не считает: расчёт наличными между сторонами.
