@@ -4,7 +4,8 @@
 # Генерация типов базы: единственный источник правды о схеме на стороне
 # клиента. Запускать из корня репозитория:
 #
-#   SUPABASE_PROJECT_REF=<ref> bash src/lib/generate-types.sh
+#   npm run generate-types            (ref берётся из .env)
+#   SUPABASE_PROJECT_REF=<ref> npm run generate-types
 #
 # Нужен вход в Supabase CLI (`npx supabase login`) — ключа из .env для
 # этого недостаточно: gen types ходит в Management API, а не в базу.
