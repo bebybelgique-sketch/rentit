@@ -60,10 +60,11 @@ serve(async (req) => {
 
   try {
     const user = await getUserFromAuthHeader(req)
-    if (user instanceof Response) return user
+    // Наружу — код, текст подбирает клиент по языку человека.
+    if (user instanceof Response) return json({ error: 'unauthorized' }, 401)
 
     const body = await req.json().catch(() => null)
-    if (!body) return json({ error: 'Invalid JSON body' }, 400)
+    if (!body) return json({ error: 'bad_request' }, 400)
 
     const { booking_id, action, reason } = body as {
       booking_id?: string
@@ -72,10 +73,10 @@ serve(async (req) => {
     }
 
     if (!booking_id || !action || !ACTIONS.includes(action)) {
-      return json({ error: 'Missing or invalid fields: booking_id, action' }, 400)
+      return json({ error: 'bad_request' }, 400)
     }
     if (reason != null && typeof reason !== 'string') {
-      return json({ error: 'reason must be a string' }, 400)
+      return json({ error: 'bad_request' }, 400)
     }
 
     const { data: booking, error: bookingErr } = await supabase
@@ -84,7 +85,7 @@ serve(async (req) => {
       .eq('id', booking_id)
       .single()
 
-    if (bookingErr || !booking) return json({ error: 'Booking not found' }, 404)
+    if (bookingErr || !booking) return json({ error: 'booking_not_found' }, 404)
 
     const ownerId = (booking.items as unknown as { owner_id: string }).owner_id
 
@@ -93,17 +94,20 @@ serve(async (req) => {
     let party: Party | null = null
     if (booking.renter_id === user.id) party = 'renter'
     else if (ownerId === user.id) party = 'owner'
-    if (!party) return json({ error: 'Forbidden' }, 403)
+    if (!party) return json({ error: 'forbidden' }, 403)
 
     const rule = RULES.find((r) => r.action === action && r.from === booking.status)
     if (!rule) {
-      return json(
-        { error: `Impossible: action "${action}" depuis le statut "${booking.status}"` },
-        409,
-      )
+      // Код один на все несостоявшиеся переходы, подробность — в логе:
+      // человеку важно «так сейчас нельзя», а не имя внутреннего статуса,
+      // которого он нигде не видел.
+      console.warn('[transition-booking] transition not allowed', {
+        booking_id, action, from: booking.status, party,
+      })
+      return json({ error: 'transition_not_allowed' }, 409)
     }
     if (!rule.who.includes(party)) {
-      return json({ error: 'Cette action ne vous appartient pas' }, 403)
+      return json({ error: 'not_your_action' }, 403)
     }
 
     const patch: Record<string, unknown> = { status: rule.to }
@@ -123,9 +127,14 @@ serve(async (req) => {
       .eq('status', rule.from)
       .select('id, status')
 
-    if (updateErr) return json({ error: updateErr.message }, 500)
+    // Сообщение базы наружу не отдаём: человеку оно ничего не говорит, а
+    // имена столбцов и триггеров показывать незачем.
+    if (updateErr) {
+      console.error('[transition-booking] update failed', { booking_id, action, updateErr })
+      return json({ error: 'update_failed' }, 500)
+    }
     if (!updated || updated.length === 0) {
-      return json({ error: 'La réservation a changé entre-temps' }, 409)
+      return json({ error: 'booking_changed' }, 409)
     }
 
     // Письма не должны валить переход: он уже произошёл и зафиксирован.
@@ -134,6 +143,7 @@ serve(async (req) => {
 
     return json({ ok: true, status: rule.to })
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : 'Unexpected error' }, 500)
+    console.error('[transition-booking] unhandled', err)
+    return json({ error: 'internal_error' }, 500)
   }
 })

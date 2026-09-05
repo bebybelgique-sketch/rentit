@@ -162,9 +162,6 @@
   "manageIt": "beheren",
   "maxPrice": "Max €/dag",
   "myItems": {
-    "responseError": "Fout bij reageren",
-    "updateError": "Fout bij bijwerken",
-    "cancellationPrompt": "Waarom annuleert u deze verhuur?",
     "deleteConfirm": "Deze advertentie verwijderen? Dit kan niet ongedaan worden gemaakt.",
     "title": "Mijn gereedschap",
     "newListing": "+ Nieuwe advertentie",
@@ -176,18 +173,12 @@
     "view": "Bekijken",
     "edit": "Bewerken",
     "requestsTitle": "Verhuurverzoeken",
-    "markHandedOver": "Markeer overgedragen",
-    "markReturned": "Markeer teruggegeven",
     "rentalInProgress": "Verhuur loopt",
     "pendingRequests": "Aanvragen in behandeling"
   },
   "myRentals": {
     "approvalSuccess": "Verzoek goedgekeurd!",
-    "approvalError": "Fout bij goedkeuren:",
-    "approvalErrorGeneric": "Fout bij goedkeuren",
     "rejectionSuccess": "Verzoek geweigerd.",
-    "rejectionError": "Fout bij weigeren:",
-    "rejectionErrorGeneric": "Fout bij weigeren",
     "loginRequired": "Log in om uw verhuren te bekijken",
     "renterTitle": "Mijn verhuren (Huurder)",
     "noRentals": "Geen actieve verhuren",
@@ -262,19 +253,20 @@
     "cancelPrompt": "Waarom annuleert u?",
     "cancelPromptOwner": "Waarom annuleert u deze reservering?",
     "cancelSuccess": "De reservering is geannuleerd.",
-    "cancelFailed": "Fout bij annuleren",
     "cancelledByYou": "Geannuleerd door u",
     "cancelledByOther": "Geannuleerd door de andere partij",
     "cancelledOn": "op {{date}}",
     "cancelledNoReason": "geen reden opgegeven",
     "markHandedOver": "Markeer als overgedragen",
     "markReturned": "Markeer als teruggegeven",
-    "transitionFailed": "Fout bij bijwerken",
-    "conflict": "De reservering is aangepast terwijl u keek",
-    "notYourAction": "Deze actie is niet voor u",
     "cancelledByYouShort": "u",
     "labelDelivery": "Levering",
-    "deliveryOnSite": "ter plaatse te betalen"
+    "deliveryOnSite": "ter plaatse te betalen",
+    "approve": "Aanvaarden",
+    "reject": "Weigeren",
+    "handoverSuccess": "Gereedschap gemarkeerd als overhandigd.",
+    "completeSuccess": "Verhuur afgerond. U kunt een beoordeling achterlaten.",
+    "openConversation": "Gesprek openen"
   },
   "searchPlaceholder": "Zoek gereedschap...",
   "selectDates": "Selecteer datums",
@@ -567,5 +559,27 @@
     "datesRequired": "Geef beide datums op.",
     "endBeforeStart": "De einddatum kan niet vóór de begindatum liggen."
   },
-  "nearbyUnavailable": "Locatie niet beschikbaar: de browser gaf geen toestemming. Sta het toe, of typ een gemeente in de filters."
+  "nearbyUnavailable": "Locatie niet beschikbaar: de browser gaf geen toestemming. Sta het toe, of typ een gemeente in de filters.",
+  "admin": {
+    "confirmGrant": "Adminrechten geven aan {{name}}? Deze persoon krijgt toegang tot alle gegevens.",
+    "confirmRevoke": "Adminrechten van {{name}} intrekken?"
+  },
+  "serverErrors": {
+    "network": "Geen verbinding. Controleer uw netwerk en probeer opnieuw.",
+    "service_unavailable": "De dienst is even onbereikbaar. Probeer het zo opnieuw.",
+    "unauthorized": "Uw sessie is verlopen. Meld u opnieuw aan.",
+    "forbidden": "U hebt geen rechten voor deze actie.",
+    "bad_request": "Ongeldige aanvraag. Herlaad de pagina en probeer opnieuw.",
+    "update_failed": "De wijziging is niet doorgevoerd. Probeer opnieuw.",
+    "internal_error": "Er is iets misgegaan. Probeer het later opnieuw.",
+    "booking_not_found": "Deze reservering is niet gevonden.",
+    "item_not_found": "Deze advertentie bestaat niet meer.",
+    "not_pending": "Deze aanvraag wacht niet meer op een antwoord.",
+    "booking_changed": "De reservering is ondertussen gewijzigd. Herlaad de pagina.",
+    "dates_unavailable": "Deze data zijn niet meer beschikbaar.",
+    "transition_not_allowed": "Deze actie is niet meer mogelijk in de huidige staat van de reservering.",
+    "not_your_action": "Deze actie is niet aan u.",
+    "cannot_demote_self": "U kunt uw eigen adminrechten niet intrekken.",
+    "target_not_found": "Dit item bestaat niet meer. Herlaad de lijst."
+  }
 }

@@ -73,6 +73,7 @@ DO $$ BEGIN
       AND udt_name = 'item_category'
   ) THEN
     -- Convert to text FIRST so any string value becomes valid for UPDATE
+    ALTER TABLE public.items ALTER COLUMN category DROP DEFAULT;
     ALTER TABLE public.items ALTER COLUMN category TYPE text;
     DROP TYPE IF EXISTS item_category;
     -- Now safe to remap legacy values with plain string comparisons

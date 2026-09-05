@@ -1,6 +1,6 @@
 // src/hooks/mutations/useTransitionBooking.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../lib/supabase';
+import { invokeEdge, EdgeError } from '../../lib/edgeInvoke';
 
 export type BookingAction = 'cancel' | 'handover' | 'complete';
 
@@ -19,17 +19,15 @@ const transitionBooking = async ({
   action,
   reason,
 }: TransitionBookingParams): Promise<string> => {
-  const { data, error } = await supabase.functions.invoke<{
-    ok?: boolean;
-    status?: string;
-    error?: string;
-  }>('transition-booking', {
-    body: { booking_id: bookingId, action, reason: reason ?? null },
+  const data = await invokeEdge<{ ok?: boolean; status?: string }>('transition-booking', {
+    booking_id: bookingId,
+    action,
+    reason: reason ?? null,
   });
 
-  if (error) throw new Error(data?.error || error.message);
-  if (data?.error) throw new Error(data.error);
-  if (!data?.status) throw new Error('Réponse inattendue du serveur');
+  // Ответ 2xx без статуса — не «почти получилось»: мы не знаем, в каком
+  // состоянии бронь, и рисовать по догадке нельзя.
+  if (!data.status) throw new EdgeError('internal_error');
 
   return data.status;
 };

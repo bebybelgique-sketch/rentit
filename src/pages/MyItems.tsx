@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { statusLabelKey } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
+import BookingOwnerActions from '../components/booking/BookingOwnerActions'
 
 // Собственные карты убраны в src/domain/catalog.ts. Здесь было две беды:
 // категории `tools` и `other`, которых в продукте нет вовсе, и вторая карта
@@ -36,7 +37,7 @@ interface Item {
 
 export default function MyItems() {
   const { t } = useTranslation()
-  const { user, accessToken } = useAuth()
+  const { user } = useAuth()
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'active' | 'all'>('active')
@@ -46,8 +47,6 @@ export default function MyItems() {
   // у которого список не загрузился, видел «у вас нет инструментов».
   // Пустой список и сломанный список выглядели одинаково.
   const [loadError, setLoadError] = useState('')
-  const [respondingId, setRespondingId] = useState<string | null>(null)
-  const [transitioningId, setTransitioningId] = useState<string | null>(null)
 
   useEffect(() => { if (user) fetchItems() }, [user])
 
@@ -78,71 +77,16 @@ export default function MyItems() {
     setItems(p => p.map(i => i.id === id ? { ...i, available: !current } : i))
   }
 
-  const respondToRequest = async (bookingId: string, itemId: string, action: 'approve' | 'reject') => {
-    setActionError('')
-    setRespondingId(bookingId)
-    try {
-      const res = await supabase.functions.invoke('respond-to-request', {
-        body: { booking_id: bookingId, action },
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-      })
-      if (res.error) throw res.error
-      // Одобрение сразу подтверждает бронь: платежей в платформе нет,
-      // расчёт наличными при передаче. Показывать «Paiement en attente»
-      // значит сообщать состояние, которого в базе не существует.
-      const newStatus = action === 'approve' ? 'confirmed' : 'rejected'
-      setItems(p => p.map(item => item.id === itemId ? {
-        ...item,
-        bookings: item.bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b),
-      } : item))
-    } catch (err: any) {
-      setActionError(err.message || t('myItems.responseError'))
-    } finally {
-      setRespondingId(null)
-    }
-  }
-
-  // Раньше здесь стоял прямой update статуса. Переходы теперь принадлежат
-  // transition-booking: там записано, кто вправе и из какого состояния, там
-  // же защита от гонки и письма обеим сторонам. Политики UPDATE на bookings
-  // сняты миграцией 20260811000012 — прямой путь больше не существует.
-  const transitionBooking = async (
-    bookingId: string,
-    itemId: string,
-    action: 'handover' | 'complete' | 'cancel',
-    reason?: string,
-  ) => {
-    setActionError('')
-    setTransitioningId(bookingId)
-    try {
-      const res = await supabase.functions.invoke<{ ok?: boolean; status?: string; error?: string }>(
-        'transition-booking',
-        {
-          body: { booking_id: bookingId, action, reason: reason ?? null },
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        },
-      )
-      if (res.error) throw new Error(res.data?.error || res.error.message)
-      if (res.data?.error) throw new Error(res.data.error)
-
-      const newStatus = res.data?.status
-      if (newStatus) {
-        setItems(p => p.map(item => item.id === itemId ? {
-          ...item,
-          bookings: item.bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b),
-        } : item))
-      }
-    } catch (err: any) {
-      setActionError(err.message || t('myItems.updateError'))
-    } finally {
-      setTransitioningId(null)
-    }
-  }
-
-  const cancelBooking = async (bookingId: string, itemId: string) => {
-    const reason = prompt(t('myItems.cancellationPrompt'))
-    if (reason === null) return
-    await transitionBooking(bookingId, itemId, 'cancel', reason)
+  // Ответ на заявку и переходы брони живут в BookingOwnerActions —
+  // одном компоненте на /my-items и /my-rentals. Здесь остаётся только
+  // применить пришедший статус к локальному списку: страница держит
+  // объявления в useState, а не в react-query, поэтому инвалидация
+  // ключей из хуков её сама не обновит.
+  const applyBookingStatus = (itemId: string, bookingId: string, newStatus: string) => {
+    setItems(p => p.map(item => item.id === itemId ? {
+      ...item,
+      bookings: item.bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b),
+    } : item))
   }
 
   const deleteItem = async (id: string) => {
@@ -271,23 +215,11 @@ export default function MyItems() {
                               )}
                             </div>
                           </div>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                              onClick={() => respondToRequest(booking.id, item.id, 'approve')}
-                              disabled={respondingId === booking.id}
-                              className="btn btn-primary btn-sm"
-                            >
-                              {respondingId === booking.id ? '...' : 'Approuver'}
-                            </button>
-                            <button
-                              onClick={() => respondToRequest(booking.id, item.id, 'reject')}
-                              disabled={respondingId === booking.id}
-                              className="btn btn-sm"
-                              style={{ color: 'var(--danger)', border: '1.5px solid var(--danger)', background: 'transparent' }}
-                            >
-                              Refuser
-                            </button>
-                          </div>
+                          <BookingOwnerActions
+                            bookingId={booking.id}
+                            status={booking.status}
+                            onDone={(newStatus) => applyBookingStatus(item.id, booking.id, newStatus)}
+                          />
                         </div>
                       ))}
                     </div>
@@ -309,7 +241,7 @@ export default function MyItems() {
                               {booking.start_date} → {booking.end_date} · {booking.total_days} jour{booking.total_days !== 1 ? 's' : ''} · €{Number(booking.total_price).toFixed(2)}
                             </div>
                           </div>
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                             <span className={`tag ${
                               booking.status === 'confirmed' ? 'tag-green' :
                               booking.status === 'active' ? 'tag-yellow' :
@@ -317,33 +249,19 @@ export default function MyItems() {
                             }`}>
                               {t(statusLabelKey(booking.status) ?? '') || booking.status}
                             </span>
-                            {booking.status === 'confirmed' && (
-                              <>
-                                <button
-                                  onClick={() => transitionBooking(booking.id, item.id, 'handover')}
-                                  className="btn btn-primary btn-sm"
-                                  disabled={transitioningId === booking.id}
-                                >
-                                  {transitioningId === booking.id ? t('common.loading') : t('myItems.markHandedOver')}
-                                </button>
-                                <button
-                                  onClick={() => cancelBooking(booking.id, item.id)}
-                                  className="btn btn-secondary btn-sm"
-                                  disabled={transitioningId === booking.id}
-                                >
-                                  Annuler
-                                </button>
-                              </>
-                            )}
-                            {booking.status === 'active' && (
-                              <button
-                                onClick={() => transitionBooking(booking.id, item.id, 'complete')}
-                                className="btn btn-primary btn-sm"
-                                disabled={transitioningId === booking.id}
-                              >
-                                {transitioningId === booking.id ? t('common.loading') : t('myItems.markReturned')}
-                              </button>
-                            )}
+                            {/* Переписка, фотографии передачи и отзыв живут
+                                в /my-rentals: здесь их дублировать незачем,
+                                а бросать владельца искать свою бронь глазами
+                                — тем более. Параметр ?booking= прокручивает
+                                страницу к нужной карточке. */}
+                            <Link to={`/my-rentals?booking=${booking.id}`} className="btn btn-secondary btn-sm">
+                              {t('rental.openConversation')}
+                            </Link>
+                            <BookingOwnerActions
+                              bookingId={booking.id}
+                              status={booking.status}
+                              onDone={(newStatus) => applyBookingStatus(item.id, booking.id, newStatus)}
+                            />
                           </div>
                         </div>
                       ))}

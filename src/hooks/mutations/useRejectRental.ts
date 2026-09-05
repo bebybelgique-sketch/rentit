@@ -1,6 +1,6 @@
 // src/hooks/mutations/useRejectRental.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../lib/supabase';
+import { invokeEdge } from '../../lib/edgeInvoke';
 
 // Как и одобрение — через respond-to-request: она проверяет, что отвечает
 // владелец, что заявка ещё в статусе pending_approval, ставит 'rejected' и
@@ -10,14 +10,12 @@ interface RejectRentalParams {
   bookingId: string;
 }
 
+// Как и одобрение: отказ приходит кодом, разбирает его invokeEdge.
 const rejectRental = async ({ bookingId }: RejectRentalParams): Promise<void> => {
-  const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>(
-    'respond-to-request',
-    { body: { booking_id: bookingId, action: 'reject' } }
-  );
-
-  if (error) throw new Error(data?.error || error.message);
-  if (data?.error) throw new Error(data.error);
+  await invokeEdge<{ ok?: boolean }>('respond-to-request', {
+    booking_id: bookingId,
+    action: 'reject',
+  });
 };
 
 export const useRejectRental = () => {

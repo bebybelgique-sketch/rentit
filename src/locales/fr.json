@@ -162,9 +162,6 @@
   "manageIt": "la gérer",
   "maxPrice": "Max €/jour",
   "myItems": {
-    "responseError": "Erreur lors de la réponse",
-    "updateError": "Erreur lors de la mise à jour",
-    "cancellationPrompt": "Pourquoi annulez-vous cette réservation ?",
     "deleteConfirm": "Supprimer cette annonce ? Cette action est irréversible.",
     "title": "Mes outils",
     "newListing": "+ Nouvelle annonce",
@@ -176,18 +173,12 @@
     "view": "Voir",
     "edit": "Modifier",
     "requestsTitle": "Réservations",
-    "markHandedOver": "Marquer récupéré",
-    "markReturned": "Marquer retourné",
     "rentalInProgress": "Location en cours",
     "pendingRequests": "Demandes en attente"
   },
   "myRentals": {
     "approvalSuccess": "La demande a été acceptée !",
-    "approvalError": "Erreur lors de l'approbation",
-    "approvalErrorGeneric": "Erreur lors de l'approbation",
     "rejectionSuccess": "La demande a été refusée.",
-    "rejectionError": "Erreur lors du rejet",
-    "rejectionErrorGeneric": "Erreur lors du rejet",
     "loginRequired": "Se connecter pour voir vos locations",
     "renterTitle": "Mes locations (Locataire)",
     "noRentals": "Aucune location en cours",
@@ -262,19 +253,20 @@
     "cancelPrompt": "Pourquoi annulez-vous ?",
     "cancelPromptOwner": "Pourquoi annulez-vous cette réservation ?",
     "cancelSuccess": "La réservation est annulée.",
-    "cancelFailed": "Erreur lors de l'annulation",
     "cancelledByYou": "Annulée par vous",
     "cancelledByOther": "Annulée par l'autre partie",
     "cancelledOn": "le {{date}}",
     "cancelledNoReason": "aucune raison indiquée",
     "markHandedOver": "Marquer récupéré",
     "markReturned": "Marquer retourné",
-    "transitionFailed": "Erreur lors de la mise à jour",
-    "conflict": "La réservation a changé entre-temps",
-    "notYourAction": "Cette action ne vous appartient pas",
     "cancelledByYouShort": "vous",
     "labelDelivery": "Livraison",
-    "deliveryOnSite": "à régler sur place"
+    "deliveryOnSite": "à régler sur place",
+    "approve": "Accepter",
+    "reject": "Refuser",
+    "handoverSuccess": "Outil marqué comme remis.",
+    "completeSuccess": "Location terminée. Vous pouvez laisser un avis.",
+    "openConversation": "Ouvrir la conversation"
   },
   "searchPlaceholder": "Rechercher des outils...",
   "selectDates": "Choisir les dates",
@@ -567,5 +559,27 @@
     "datesRequired": "Indiquez les deux dates.",
     "endBeforeStart": "La date de fin ne peut pas précéder la date de début."
   },
-  "nearbyUnavailable": "Localisation indisponible : le navigateur ne l'a pas autorisée. Autorisez-la, ou indiquez une commune dans les filtres."
+  "nearbyUnavailable": "Localisation indisponible : le navigateur ne l'a pas autorisée. Autorisez-la, ou indiquez une commune dans les filtres.",
+  "admin": {
+    "confirmGrant": "Donner les droits admin à {{name}} ? Cette personne aura accès à toutes les données.",
+    "confirmRevoke": "Retirer les droits admin de {{name}} ?"
+  },
+  "serverErrors": {
+    "network": "Pas de connexion. Vérifiez votre réseau et réessayez.",
+    "service_unavailable": "Le service est momentanément injoignable. Réessayez dans un instant.",
+    "unauthorized": "Session expirée. Reconnectez-vous.",
+    "forbidden": "Vous n'avez pas les droits pour cette action.",
+    "bad_request": "Demande invalide. Rechargez la page et réessayez.",
+    "update_failed": "La mise à jour n'a pas abouti. Réessayez.",
+    "internal_error": "Une erreur est survenue. Veuillez réessayer plus tard.",
+    "booking_not_found": "Cette réservation est introuvable.",
+    "item_not_found": "Cette annonce n'existe plus.",
+    "not_pending": "Cette demande n'est plus en attente de réponse.",
+    "booking_changed": "La réservation a changé entre-temps. Rechargez la page.",
+    "dates_unavailable": "Ces dates ne sont plus disponibles.",
+    "transition_not_allowed": "Cette action n'est plus possible dans l'état actuel de la réservation.",
+    "not_your_action": "Cette action ne vous appartient pas.",
+    "cannot_demote_self": "Vous ne pouvez pas retirer vos propres droits admin.",
+    "target_not_found": "Cet élément n'existe plus. Rechargez la liste."
+  }
 }
