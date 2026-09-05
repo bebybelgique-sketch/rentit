@@ -89,14 +89,19 @@ const Profile: React.FC = () => {
     }
   };
 
+  const isUnchanged =
+    profileData.full_name.trim() === (storedProfile?.full_name || '').trim() &&
+    profileData.avatar_url === (storedProfile?.avatar_url || '');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUnchanged) return;
 
     try {
       await updateProfileMutation.mutateAsync({
         userId: user.id,
         updates: {
-          full_name: profileData.full_name,
+          full_name: profileData.full_name.trim(),
           avatar_url: profileData.avatar_url,
         }
       });
@@ -114,7 +119,7 @@ const Profile: React.FC = () => {
 
     try {
       await deleteAccountMutation.mutateAsync();
-      await supabase.auth.signOut();
+      await supabase.auth.signOut().catch(() => {});
       queryClient.clear();
       toast.success(t('profile.deleteSuccess')); // Новая строка в i18n
       navigate('/', { replace: true });
@@ -180,7 +185,7 @@ const Profile: React.FC = () => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={updateProfileMutation.isPending}
+            disabled={updateProfileMutation.isPending || isUnchanged}
             style={{ width: '100%', minHeight: '44px' }}
           >
             {updateProfileMutation.isPending ? t('profile.updating') : t('profile.updateButton')} {/* Новые строки в i18n */}
