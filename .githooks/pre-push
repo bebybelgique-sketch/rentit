@@ -47,6 +47,7 @@ run_gate "страж утверждений"  node scripts/check-claims.mjs
 run_gate "словари"            node scripts/check-i18n-keys.mjs
 run_gate "текст мимо словарей" node scripts/check-hardcoded-text.mjs
 run_gate "занятость в одном месте" node scripts/check-availability-single-source.mjs
+run_gate "прямой доступ к базе"    node scripts/check-db-access.mjs
 # Прямой бинарник, а не npx: тот же результат, но без разрешения пакета
 # на каждом запуске. Запасной путь — если хук зовут там, где зависимости
 # лежат иначе.

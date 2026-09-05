@@ -1,0 +1,8 @@
+{
+  "src/components/ItemBlackouts.tsx": 3,
+  "src/domain/availability.ts": 1,
+  "src/pages/Admin.tsx": 3,
+  "src/pages/ItemDetail.tsx": 7,
+  "src/pages/ListItem.tsx": 3,
+  "src/pages/Register.tsx": 1
+}
