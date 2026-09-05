@@ -215,8 +215,20 @@ try {
   // базы. Здесь проверяется ИТОГ, а не то, кто именно сработал.
   console.log('\nrespond-to-request: двойное одобрение')
 
-  const first = await ask({ item_id: itemId, start_date: day(20), end_date: day(22) })
-  const second = await ask({ item_id: itemId, start_date: day(20), end_date: day(22) })
+   // Повторную заявку одного арендатора request-rental обязан отклонять.
+   // Для проверки конкурирующих заявок нужны два разных authenticated users.
+   if (!hasAdmin) {
+     skip('две заявки на одни даты создаются', 'нужна вторая staging-учётка')
+   } else {
+     const secondRenter = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY)
+     const { error: eSecondRenter } = await secondRenter.auth.signInWithPassword({
+       email: env.TEST_ADMIN_EMAIL,
+       password: env.TEST_ADMIN_PASSWORD,
+     })
+     if (eSecondRenter) throw new Error(`вход второй тестовой учётки не удался: ${eSecondRenter.message}`)
+
+     const first = await ask({ item_id: itemId, start_date: day(20), end_date: day(22) })
+     const second = await ask({ item_id: itemId, start_date: day(20), end_date: day(22) }, secondRenter)
   check(!!first.bookingId && !!second.bookingId,
     'две заявки на одни даты создаются (pending_approval вещь не держит)',
     `${first.err ?? ''} ${second.err ?? ''}`)
@@ -263,6 +275,7 @@ try {
 
     await owner.from('bookings').delete().in('id', [first.bookingId, second.bookingId])
   }
+   }
 
   // ── admin-action ────────────────────────────────────────────────────
   //
