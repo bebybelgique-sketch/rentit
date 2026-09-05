@@ -31,7 +31,7 @@ const fetchItems = async (params?: { limit?: number; sortBy?: string; search?: s
     description: rawItem.description,
     price_per_day: rawItem.price_per_day,
     owner_id: rawItem.owner_id,
-    location: rawItem.address,
+    address: rawItem.address,
     latitude: rawItem.lat,
     longitude: rawItem.lng,
     is_available: rawItem.available,

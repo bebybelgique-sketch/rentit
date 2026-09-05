@@ -67,7 +67,7 @@ describe('useItems', () => {
 
     // Expected processed items based on raw data transformation logic
     // Поля результата: id, title, description, price_per_day, owner_id,
-    // location, latitude, longitude, is_available, created_at, photos.
+    // address, latitude, longitude, is_available, created_at, photos.
     // Выдуманного image_url среди них больше нет: обложку считает
     // coverPhoto по месту показа.
     const expectedProcessedItems = mockRawItems.map(raw => ({
@@ -76,7 +76,7 @@ describe('useItems', () => {
       description: raw.description,
       price_per_day: raw.price_per_day,
       owner_id: raw.owner_id,
-      location: raw.address, // Transformation logic from useItems
+      address: raw.address,
       latitude: raw.lat, // Transformation logic from useItems
       longitude: raw.lng, // Transformation logic from useItems
       is_available: raw.available, // Transformation logic from useItems

@@ -63,7 +63,7 @@ const updateItemById = async ({ id, updates, userId }: UpdateItemParams): Promis
     description: data.description,
     price_per_day: data.price_per_day,
     owner_id: data.owner_id,
-    location: data.address,
+    address: data.address,
     latitude: data.lat,
     longitude: data.lng,
     is_available: data.available,

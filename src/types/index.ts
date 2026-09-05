@@ -15,7 +15,15 @@ export interface Item {
   description: string | null;
   price_per_day: number;
   owner_id: string;
-  location: string | null;
+  // Адрес объявления одной строкой, как его ввёл владелец. Колонка так и
+  // называется — `address`. Прежде поле звалось `location`, и это было не
+  // просто другое имя: в таблице items ЕСТЬ колонка `location`, но она
+  // geography (generated always as ST_SetSRID(ST_MakePoint(lng, lat))) и
+  // читается PostGIS-запросами, а не как текст. Одинаковое имя для точки на
+  // карте и для строки «Wavre, BE» — заготовленная путаница: любой, кто
+  // возьмёт `location` из ответа базы, получит бинарную геометрию и вызовет
+  // на ней .split(',').
+  address: string | null;
   latitude: number | null;
   longitude: number | null;
   is_available: boolean;
