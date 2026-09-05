@@ -10,6 +10,7 @@ import {
   loadItemCalendar, toISODate, daysBetween, firstUnavailableDay, isTooSoon, isSelectable,
 } from '../domain/availability'
 import type { ItemCalendar } from '../domain/availability'
+import { itemHistoryOf, type ItemHistory } from '../lib/items'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
 // power_tools был 🔌, а на витрине ⚡ — одна и та же категория с двумя
@@ -59,7 +60,9 @@ interface Item {
 // база (`item_history`, миграция 20260817000023) — политики на bookings
 // постороннему чужих броней не показывают, а доверие строится из данных,
 // которые УЖЕ есть: отзыв человек пишет редко, а факт сдачи лежит сам.
-interface ItemHistory { times_rented: number; last_rented: string | null }
+// Тип и разбор ответа живут в src/lib/items.ts: функция объявлена
+// RETURNS jsonb, и читать её приведением — то же самое, что читать photos
+// как string[].
 
 // Здесь жила функция `isBooked(date, ranges)` — пятое место в продукте,
 // где даты пересекались руками, и единственное в браузере. С появлением
@@ -131,7 +134,7 @@ export default function ItemDetail() {
       if (itemData) setItem(itemData as unknown as Item)
       setCalendar(calendarData)
       setReviews(reviewData || [])
-      setHistory((historyData as ItemHistory) ?? null)
+      setHistory(itemHistoryOf(historyData))
       if (user && itemData) checkCanReview(itemData.id, itemData.owner_id)
     } catch (err) {
       console.error(err)
