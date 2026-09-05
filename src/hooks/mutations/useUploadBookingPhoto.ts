@@ -1,5 +1,6 @@
 // src/hooks/mutations/useUploadBookingPhoto.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { bookingKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import { BOOKING_PHOTOS_BUCKET, type BookingPhotoPhase } from '../useBookingPhotos';
 
@@ -63,7 +64,7 @@ export const useUploadBookingPhoto = () => {
   return useMutation({
     mutationFn: uploadBookingPhoto,
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['bookingPhotos', variables.bookingId] });
+      void queryClient.invalidateQueries({ queryKey: bookingKeys.photos(variables.bookingId) });
     },
   });
 };

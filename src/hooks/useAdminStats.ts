@@ -1,6 +1,7 @@
 // src/hooks/useAdminStats.ts
 import { useQuery } from '@tanstack/react-query';
 import { invokeEdge } from '../lib/edgeInvoke';
+import { adminKeys } from '../lib/queryKeys';
 
 // Счётчики площадки считает сервер служебным ключом — и только поэтому они
 // верны. Прежняя вкладка Stats считала их запросами из браузера под правами
@@ -22,7 +23,7 @@ export interface AdminStats {
 
 export const useAdminStats = (enabled: boolean) =>
   useQuery<AdminStats, Error>({
-    queryKey: ['admin', 'stats'],
+    queryKey: adminKeys.stats,
     queryFn: async () => {
       const data = await invokeEdge<{ ok: boolean; stats: AdminStats }>('admin-action', {
         type: 'get_stats',

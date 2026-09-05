@@ -1,5 +1,6 @@
 // src/hooks/useItems.ts
 import { useQuery } from '@tanstack/react-query';
+import { itemKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
 import type { Item } from '../types';
 
@@ -25,7 +26,7 @@ const fetchItems = async (params?: { limit?: number; sortBy?: string; search?: s
 
 export const useItems = (params?: { limit?: number; sortBy?: string; search?: string }) => {
   return useQuery<Item[], Error>({
-    queryKey: ['items', params],
+    queryKey: itemKeys.list(params),
     queryFn: () => fetchItems(params),
     staleTime: 30000,
   });

@@ -1,5 +1,6 @@
 // src/hooks/mutations/useRejectRental.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { invalidateBookingCaches } from '../../lib/queryKeys';
 import { invokeEdge } from '../../lib/edgeInvoke';
 
 // Как и одобрение — через respond-to-request: она проверяет, что отвечает
@@ -24,9 +25,11 @@ export const useRejectRental = () => {
   return useMutation({
     mutationFn: rejectRental,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rentals'] });
-      queryClient.invalidateQueries({ queryKey: ['rentalsAsOwner'] });
-      queryClient.invalidateQueries({ queryKey: ['bookedDates'] });
+      // Оба списка броней и списки вещей: заявка видна владельцу в «Моих
+      // вещах», а занятость дат — на витрине. Набор ключей один на все
+      // мутации броней (src/lib/queryKeys.ts); мёртвый ключ занятых дат из
+      // него удалён — такой запрос не объявлял никто.
+      invalidateBookingCaches(queryClient);
     },
   });
 };

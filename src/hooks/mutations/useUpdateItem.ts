@@ -1,5 +1,6 @@
 // src/hooks/mutations/useUpdateItem.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { itemKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import type { Tables } from '../../types/database.types';
 import type { Item } from '../../types';
@@ -70,9 +71,10 @@ export const useUpdateItem = () => {
     mutationFn: updateItemById,
     onSuccess: (updatedItem) => {
       // Инвалидируем кэш для списка вещей
-      queryClient.invalidateQueries({ queryKey: ['items'] });
-      // Обновляем конкретный элемент в кэше
-      queryClient.setQueryData(['item', updatedItem.id], updatedItem);
+      void queryClient.invalidateQueries({ queryKey: itemKeys.all });
+      // Обновляем конкретный элемент в кэше. Ключ в единственном числе:
+      // префикс ['items'] его не задевает (см. src/lib/queryKeys.ts).
+      queryClient.setQueryData(itemKeys.one(updatedItem.id), updatedItem);
     },
   });
 };

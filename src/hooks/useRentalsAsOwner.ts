@@ -1,5 +1,6 @@
 // src/hooks/useRentalsAsOwner.ts
 import { useQuery } from '@tanstack/react-query';
+import { bookingKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
 import type { RentalWithRenter } from '../types';
 
@@ -23,7 +24,7 @@ const fetchRentalsAsOwner = async (userId: string | undefined): Promise<RentalWi
 
 export const useRentalsAsOwner = (userId: string | undefined) => {
   return useQuery<RentalWithRenter[], Error>({
-    queryKey: ['rentalsAsOwner', userId],
+    queryKey: bookingKeys.asOwner(userId),
     queryFn: () => fetchRentalsAsOwner(userId),
     enabled: !!userId, // Запрос выполняется только если userId существует
     staleTime: 60000, // Данные считаются актуальными 1 минуту

@@ -1,5 +1,6 @@
 // src/hooks/useProfile.ts
 import { useQuery } from '@tanstack/react-query';
+import { profileKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
 import type { ProfileSummary } from '../types';
 
@@ -22,7 +23,7 @@ const COLUMNS = 'id, full_name, avatar_url, village';
  */
 export function useProfile(userId: string | undefined) {
   return useQuery({
-    queryKey: ['profile', userId],
+    queryKey: profileKeys.one(userId),
     enabled: !!userId,
     queryFn: async (): Promise<ProfileSummary | null> => {
       const { data, error } = await supabase

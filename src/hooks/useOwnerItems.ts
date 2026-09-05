@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { itemKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
 import type { OwnerItem } from '../types';
 
@@ -28,7 +29,10 @@ const fetchOwnerItems = async (userId: string | undefined): Promise<OwnerItem[]>
 
 export const useOwnerItems = (userId: string | undefined) => {
   return useQuery<OwnerItem[], Error>({
-    queryKey: ['bookings', userId],
+    // Ключ объявлен в src/lib/queryKeys: до 06.09 здесь стоял
+    // ['bookings', userId] — вещи, названные бронями, и ни одна мутация
+    // этот ключ не инвалидировала.
+    queryKey: itemKeys.asOwner(userId),
     queryFn: () => fetchOwnerItems(userId),
     enabled: !!userId,
     staleTime: 30000,

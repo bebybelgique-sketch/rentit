@@ -1,5 +1,6 @@
 // src/hooks/mutations/useUpdateProfile.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { profileKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../types/database.types';
 import type { ProfileSummary } from '../../types';
@@ -56,7 +57,7 @@ export const useUpdateProfile = () => {
   return useMutation({
     mutationFn: updateProfile,
     onSuccess: (updatedProfile) => {
-      queryClient.invalidateQueries({ queryKey: ['profile', updatedProfile.id] });
+      void queryClient.invalidateQueries({ queryKey: profileKeys.one(updatedProfile.id) });
     },
   });
 };

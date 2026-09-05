@@ -1,5 +1,6 @@
 // src/hooks/useItemById.ts
 import { useQuery } from '@tanstack/react-query';
+import { itemKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
 import { Item } from '../types';
 
@@ -33,7 +34,7 @@ const fetchItemById = async (id: string): Promise<Item | null> => {
 // Экспортируем хук, используя useQuery
 export const useItemById = (id: string | undefined) => {
   return useQuery<Item | null, Error>({
-    queryKey: ['item', id],
+    queryKey: itemKeys.one(id),
     queryFn: () => fetchItemById(id!),
     enabled: !!id, // Запрос выполняется только если id существует
     staleTime: 30000, // Данные считаются актуальными 30 секунд
