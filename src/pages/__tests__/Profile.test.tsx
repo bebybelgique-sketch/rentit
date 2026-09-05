@@ -89,7 +89,7 @@ describe('Profile Page', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      // Поля bio в таблице users нет — оно убрано и из типа, и из формы.
+      // Лишнее поле в таблице users отсутствует — оно убрано и из типа, и из формы.
       expect(mockMutateAsync).toHaveBeenCalledWith({
         userId: 'user-1',
         updates: {
