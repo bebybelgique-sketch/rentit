@@ -6,16 +6,29 @@ import ItemCard from '../ItemCard';
 
 const mockItem = {
   id: '1',
+  owner_id: 'owner1',
   title: 'Test Drill',
   description: 'A powerful drill',
+  category: 'tools',
+  condition: 'good',
   price_per_day: 25,
+  price_3days: 60,
+  price_week: 140,
+  late_fee_per_day: 5,
+  deposit: 30,
   photos: ['https://example.com/drill.jpg'],
-  owner_id: 'owner1',
-  address: 'Brussels, BE',
   lat: 50.8503,
   lng: 4.3517,
+  address: 'Brussels, BE',
   available: true,
+  quantity: 1,
+  buffer_days: 2,
+  min_notice_days: 1,
+  delivery_fee: null,
+  delivery_radius_km: null,
   created_at: '2023-01-01T00:00:00Z',
+  location: null,
+  is_business: false,
 };
 
 describe('ItemCard', () => {

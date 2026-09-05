@@ -570,9 +570,9 @@ export default function Home() {
                       </div>
                     )}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
-                      {(item.users as any)?.rating_as_owner ? (
+                      {item.users?.rating_as_owner != null ? (
                         <span className="rating" style={{ fontSize: '12px' }}>
-                          ★ {Number((item.users as any).rating_as_owner).toFixed(1)}
+                          ★ {Number(item.users.rating_as_owner).toFixed(1)}
                         </span>
                       ) : (
                         <span style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>

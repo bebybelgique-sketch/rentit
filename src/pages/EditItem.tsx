@@ -79,9 +79,9 @@ const EditItem: React.FC = () => {
   useEffect(() => {
     if (item) {
       setFormData({
-        title: item.title,
-        description: item.description || '',
-        price_per_day: item.price_per_day,
+        title: item.title ?? '',
+        description: item.description ?? '',
+        price_per_day: item.price_per_day ?? 0,
         // `?? ''` намеренно вместо `|| ''`: тариф в 0 база не допустит, но
         // приводить пустое к строке надо ровно там, где оно пустое.
         price_3days: item.price_3days == null ? '' : String(item.price_3days),
@@ -89,13 +89,13 @@ const EditItem: React.FC = () => {
         late_fee_per_day: item.late_fee_per_day == null ? '' : String(item.late_fee_per_day),
         delivery_fee: item.delivery_fee == null ? '' : String(item.delivery_fee),
         delivery_radius_km: item.delivery_radius_km == null ? '' : String(item.delivery_radius_km),
-        deposit: item.deposit || 0,
-        category: item.category || '', // Assuming category is part of the Item type
-        condition: (item.condition as Database['public']['Enums']['item_condition']) || 'good',
+        deposit: item.deposit ?? 0,
+        category: item.category ?? '',
+        condition: ((item.condition as Database['public']['Enums']['item_condition']) ?? 'good'),
         address: item.address ?? '',
-        lat: item.lat,
-        lng: item.lng,
-        available: item.available,
+        lat: item.lat ?? null,
+        lng: item.lng ?? null,
+        available: item.available ?? true,
         quantity: item.quantity ?? 1,
         min_notice_days: item.min_notice_days ?? 0,
         buffer_days: item.buffer_days ?? 0,

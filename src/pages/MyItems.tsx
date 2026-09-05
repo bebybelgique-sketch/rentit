@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -6,97 +7,42 @@ import { useTranslation } from 'react-i18next'
 import { statusLabelKey, isBookingStatus } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
 import BookingOwnerActions from '../components/booking/BookingOwnerActions'
-import type { Rental } from '../types'
-
-// Собственные карты убраны в src/domain/catalog.ts. Здесь было две беды:
-// категории `tools` и `other`, которых в продукте нет вовсе, и вторая карта
-// подписей статусов — она разошлась с бейджем (Actif/En cours,
-// Rejeté/Refusé), и одна бронь называлась по-разному на соседних экранах.
-
-// Строка bookings описана один раз — в src/types (`Rental`). Здесь стоял
-// свой `interface Booking`: те же колонки, но `status: string` вместо enum
-// и `users: { full_name }` вместо `renter`. Два имени для одной строки
-// расходятся молча — под именем `users` лежала связь users!renter_id, и
-// код читал её через `as any`, потому что собственный же тип обещал не то,
-// что приходило.
-interface Item {
-  id: string
-  title: string
-  category: string
-  price_per_day: number
-  deposit: number
-  photos: string[]
-  available: boolean
-  created_at: string
-  bookings: Rental[]
-}
+import { photosOf } from '../lib/items'
+import { useOwnerItems, type OwnerItem } from '../hooks/useOwnerItems'
 
 export default function MyItems() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
+  const { data: items = [], isLoading: loading, isError } = useOwnerItems(user?.id)
   const [tab, setTab] = useState<'active' | 'all'>('active')
   const [actionError, setActionError] = useState('')
-  // Ошибка ЗАГРУЗКИ списка, отдельно от ошибки действия. Раньше её не
-  // было вовсе: `catch (err) { console.error(err) }` — и владелец,
-  // у которого список не загрузился, видел «у вас нет инструментов».
-  // Пустой список и сломанный список выглядели одинаково.
-  const [loadError, setLoadError] = useState('')
-
-  useEffect(() => { if (user) fetchItems() }, [user])
-
-  const fetchItems = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('items')
-        // Псевдоним renter — по имени поля в `Rental`, как в
-        // useRentalsAsOwner. Без него PostgREST кладёт связь в ключ "users",
-        // и страница читала её приведением к any.
-        .select('*, bookings(id, item_id, renter_id, status, start_date, end_date, total_price, total_days, request_message, created_at, renter:users!renter_id(id, full_name, avatar_url))')
-        .eq('owner_id', user!.id)
-        .order('created_at', { ascending: false })
-      if (error) throw error
-      setItems(data as unknown as Item[])
-      setLoadError('')
-    } catch (err) {
-      // Техническое — в консоль, человеку — объяснение и путь дальше.
-      // Молчание здесь опаснее ошибки: владелец решает, что его
-      // объявления пропали, и уходит.
-      console.error(err)
-      setLoadError(t('loadFailed'))
-    }
-    finally { setLoading(false) }
-  }
+  const loadError = isError ? t('loadFailed') : ''
 
   const toggleAvailable = async (id: string, current: boolean) => {
     setActionError('')
     const { error } = await supabase.from('items').update({ available: !current }).eq('id', id)
     if (error) { setActionError(error.message); return }
-    setItems(p => p.map(i => i.id === id ? { ...i, available: !current } : i))
+
+    queryClient.setQueryData<OwnerItem[]>(['bookings', user?.id], (currentItems) => {
+      if (!currentItems) return currentItems
+      return currentItems.map(item => item.id === id ? { ...item, available: !current } : item)
+    })
   }
 
-  // Ответ на заявку и переходы брони живут в BookingOwnerActions —
-  // одном компоненте на /my-items и /my-rentals. Здесь остаётся только
-  // применить пришедший статус к локальному списку: страница держит
-  // объявления в useState, а не в react-query, поэтому инвалидация
-  // ключей из хуков её сама не обновит.
   const applyBookingStatus = (itemId: string, bookingId: string, newStatus: string) => {
-    // Статус приходит строкой из колбэка компонента. Незнакомое значение
-    // не пишем в список (там enum booking_status), а перечитываем список у
-    // базы: показать выдуманный статус хуже, чем сходить за настоящим.
     if (!isBookingStatus(newStatus)) {
-      // Молчать здесь нельзя: список перечитается, карточка съедет, и
-      // никто не узнает, что сервер прислал статус, которого продукт не
-      // знает. Само значение — в консоль, иначе дрейф схемы невидим.
       console.warn('Неизвестный статус брони от сервера:', newStatus)
-      fetchItems()
       return
     }
-    setItems(p => p.map(item => item.id === itemId ? {
-      ...item,
-      bookings: item.bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b),
-    } : item))
+
+    queryClient.setQueryData<OwnerItem[]>(['bookings', user?.id], (currentItems) => {
+      if (!currentItems) return currentItems
+      return currentItems.map(item => item.id === itemId ? {
+        ...item,
+        bookings: item.bookings.map(booking => booking.id === bookingId ? { ...booking, status: newStatus } : booking),
+      } : item)
+    })
   }
 
   const deleteItem = async (id: string) => {
@@ -104,7 +50,11 @@ export default function MyItems() {
     setActionError('')
     const { error } = await supabase.from('items').delete().eq('id', id)
     if (error) { setActionError(error.message); return }
-    setItems(p => p.filter(i => i.id !== id))
+
+    queryClient.setQueryData<OwnerItem[]>(['bookings', user?.id], (currentItems) => {
+      if (!currentItems) return currentItems
+      return currentItems.filter(item => item.id !== id)
+    })
   }
 
   const filtered = tab === 'active' ? items.filter(i => i.available) : items
@@ -119,13 +69,6 @@ export default function MyItems() {
       {loadError && (
         <div className="error-msg" style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>{loadError}</span>
-          <button
-            className="btn btn-secondary btn-sm"
-            style={{ minHeight: '40px' }}
-            onClick={() => { setLoading(true); fetchItems() }}
-          >
-            {t('retry')}
-          </button>
         </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -147,30 +90,31 @@ export default function MyItems() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {filtered.map(item => {
+            const itemPhotos = photosOf(item)
             const pendingRequests = item.bookings.filter(b => b.status === 'pending_approval')
             const activeBooking = item.bookings.find(b => b.status === 'active')
             return (
               <div key={item.id} className="card">
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'start' }}>
-                  {item.photos?.[0] ? (
-                    <img src={item.photos[0]} alt="" style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                  {itemPhotos[0] ? (
+                   <img src={itemPhotos[0]} alt={item.title ?? 'Item'} style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
                   ) : (
                     <div style={{ width: '80px', height: '80px', borderRadius: '8px', background: 'var(--surface)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexShrink: 0 }}>
-                      <CategoryIcon category={item.category} size={32} />
+                     <CategoryIcon category={item.category ?? ''} size={32} />
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '8px' }}>
                       <div>
-                        <h3 style={{ marginBottom: '4px' }}>{item.title}</h3>
+                        <h3 style={{ marginBottom: '4px' }}>{item.title ?? 'Untitled item'}</h3>
                         <div style={{ color: '#999', fontSize: '13px' }}>
-                          €{item.price_per_day}/jour
-                          {item.deposit > 0 && ` · €${item.deposit} caution`}
+                          €{item.price_per_day ?? 0}/jour
+                          {(item.deposit ?? 0) > 0 && ` · €${item.deposit ?? 0} caution`}
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <span className={`tag ${item.available ? 'tag-green' : 'tag-gray'}`}>
-                          {item.available ? t('landing.finalCta') : t('myItems.hidden')}
+                        <span className={`tag ${(item.available ?? false) ? 'tag-green' : 'tag-gray'}`}>
+                          {(item.available ?? false) ? t('landing.finalCta') : t('myItems.hidden')}
                         </span>
                         {pendingRequests.length > 0 && (
                           <span className="tag tag-yellow">
@@ -185,10 +129,10 @@ export default function MyItems() {
                       <Link to={`/item/${item.id}`} className="btn btn-secondary btn-sm">{t('myItems.view')}</Link>
                       <Link to={`/edit-item/${item.id}`} className="btn btn-secondary btn-sm">{t('myItems.edit')}</Link>
                       <button
-                        onClick={() => toggleAvailable(item.id, item.available)}
+                        onClick={() => toggleAvailable(item.id, item.available ?? false)}
                         className="btn btn-secondary btn-sm"
                       >
-                        {item.available ? 'Masquer' : 'Afficher'}
+                        {(item.available ?? false) ? 'Masquer' : 'Afficher'}
                       </button>
                       <button
                         onClick={() => deleteItem(item.id)}
@@ -213,10 +157,10 @@ export default function MyItems() {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
                             <div>
                               <div style={{ fontWeight: '700', fontSize: '14px' }}>
-                                {booking.renter?.full_name}
+                                {booking.renter?.full_name ?? 'Utilisateur'}
                               </div>
                               <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>
-                                {booking.start_date} → {booking.end_date} · {booking.total_days} jour{booking.total_days !== 1 ? 's' : ''} · €{Number(booking.total_price).toFixed(2)}
+                                {(booking.start_date ?? '')} → {(booking.end_date ?? '')} · {(booking.total_days ?? 0)} jour{(booking.total_days ?? 0) !== 1 ? 's' : ''} · €{Number(booking.total_price ?? 0).toFixed(2)}
                               </div>
                               {booking.request_message && (
                                 <div style={{ fontSize: '13px', color: '#555', marginTop: '6px', fontStyle: 'italic' }}>
@@ -227,7 +171,7 @@ export default function MyItems() {
                           </div>
                           <BookingOwnerActions
                             bookingId={booking.id}
-                            status={booking.status}
+                            status={booking.status ?? 'pending_approval'}
                             onDone={(newStatus) => applyBookingStatus(item.id, booking.id, newStatus)}
                           />
                         </div>
@@ -237,27 +181,27 @@ export default function MyItems() {
                 )}
 
                 {/* Confirmed / active bookings */}
-                {item.bookings.filter(b => ['confirmed', 'active', 'pending_payment'].includes(b.status)).length > 0 && (
+                {item.bookings.filter(b => ['confirmed', 'active', 'pending_payment'].includes(b.status ?? '')).length > 0 && (
                   <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
                     <h4 style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px', fontWeight: '700' }}>{t('myItems.requestsTitle')}</h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {item.bookings.filter(b => ['confirmed', 'active', 'pending_payment'].includes(b.status)).map(booking => (
+                      {item.bookings.filter(b => ['confirmed', 'active', 'pending_payment'].includes(b.status ?? '')).map(booking => (
                         <div key={booking.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8f9ff', padding: '10px 14px', borderRadius: '8px', flexWrap: 'wrap', gap: '10px' }}>
                           <div>
                             <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                              {booking.renter?.full_name}
+                              {booking.renter?.full_name ?? 'Utilisateur'}
                             </div>
                             <div style={{ fontSize: '13px', color: '#666' }}>
-                              {booking.start_date} → {booking.end_date} · {booking.total_days} jour{booking.total_days !== 1 ? 's' : ''} · €{Number(booking.total_price).toFixed(2)}
+                              {(booking.start_date ?? '')} → {(booking.end_date ?? '')} · {(booking.total_days ?? 0)} jour{(booking.total_days ?? 0) !== 1 ? 's' : ''} · €{Number(booking.total_price ?? 0).toFixed(2)}
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                             <span className={`tag ${
-                              booking.status === 'confirmed' ? 'tag-green' :
-                              booking.status === 'active' ? 'tag-yellow' :
-                              booking.status === 'pending_payment' ? 'tag-yellow' : 'tag-gray'
+                              (booking.status ?? '') === 'confirmed' ? 'tag-green' :
+                              (booking.status ?? '') === 'active' ? 'tag-yellow' :
+                              (booking.status ?? '') === 'pending_payment' ? 'tag-yellow' : 'tag-gray'
                             }`}>
-                              {t(statusLabelKey(booking.status) ?? '') || booking.status}
+                              {t(statusLabelKey(booking.status ?? 'pending_approval') ?? '') || (booking.status ?? 'pending_approval')}
                             </span>
                             {/* Переписка, фотографии передачи и отзыв живут
                                 в /my-rentals: здесь их дублировать незачем,
@@ -269,7 +213,7 @@ export default function MyItems() {
                             </Link>
                             <BookingOwnerActions
                               bookingId={booking.id}
-                              status={booking.status}
+                              status={booking.status ?? 'pending_approval'}
                               onDone={(newStatus) => applyBookingStatus(item.id, booking.id, newStatus)}
                             />
                           </div>

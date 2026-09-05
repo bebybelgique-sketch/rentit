@@ -27,10 +27,7 @@ const fetchItemById = async (id: string): Promise<Item | null> => {
   // маппера не нужна: имена в типе теперь совпадают с колонками, снимки
   // читает photosOf по месту показа, а умолчания подставляет форма — там,
   // где известно, что значит пустое поле в конкретном поле ввода.
-  //
-  // Приведение уйдёт на шаге 1 Sprint 2: с createClient<Database> клиент
-  // сам знает, что отдаёт .from('items').
-  return data as Item;
+  return data ?? null;
 };
 
 // Экспортируем хук, используя useQuery

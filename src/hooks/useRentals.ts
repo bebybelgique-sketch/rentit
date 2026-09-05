@@ -20,7 +20,7 @@ const fetchRentals = async (userId: string | undefined): Promise<Rental[]> => {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 };
 
 // Экспортируем хук, используя useQuery

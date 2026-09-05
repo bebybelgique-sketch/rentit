@@ -1,6 +1,7 @@
 // src/hooks/mutations/useUpdateProfile.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
+import type { Database } from '../../types/database.types';
 import { Profile } from '../../types';
 
 // Профиль лежит в таблице users (её id = auth.uid()), а не в profiles —
@@ -8,7 +9,7 @@ import { Profile } from '../../types';
 // phone, village. Поля bio в базе нет, поэтому из типа оно убрано.
 interface UpdateProfileParams {
   userId: string;
-  updates: Partial<Omit<Profile, 'id'>>;
+  updates: Database['public']['Tables']['users']['Update'];
 }
 
 // Столбцы перечислены поимённо, и это обязательно, а не стилистика.
