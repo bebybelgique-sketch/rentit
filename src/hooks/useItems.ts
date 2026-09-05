@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query'; // ИМПОРТ useQuery
 import { supabase } from '../lib/supabase';
 import { Item } from '../types';
+import { photosOf } from '../lib/items';
 
 // Определяем функцию для получения данных
 const fetchItems = async (params?: { limit?: number; sortBy?: string; search?: string }): Promise<Item[]> => {
@@ -29,13 +30,15 @@ const fetchItems = async (params?: { limit?: number; sortBy?: string; search?: s
     title: rawItem.title,
     description: rawItem.description,
     price_per_day: rawItem.price_per_day,
-    image_url: Array.isArray(rawItem.photos) && rawItem.photos.length > 0 ? rawItem.photos[0] : '',
     owner_id: rawItem.owner_id,
     location: rawItem.address,
     latitude: rawItem.lat,
     longitude: rawItem.lng,
     is_available: rawItem.available,
     created_at: rawItem.created_at,
+    // Снимки переносятся как есть: обложку считает coverPhoto по месту
+    // показа. Прежде здесь вычислялось поле image_url, которого в базе нет.
+    photos: photosOf(rawItem),
   }));
 
   return transformedItems || [];
