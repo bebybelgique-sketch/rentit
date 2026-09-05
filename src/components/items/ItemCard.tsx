@@ -1,7 +1,7 @@
 // src/components/items/ItemCard.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Item } from '../../types';
+import type { Item } from '../../types';
 import { coverPhoto } from '../../lib/items';
 
 interface ItemCardProps {

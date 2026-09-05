@@ -8,7 +8,8 @@ import { statusLabelKey, isBookingStatus } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
 import BookingOwnerActions from '../components/booking/BookingOwnerActions'
 import { photosOf } from '../lib/items'
-import { useOwnerItems, type OwnerItem } from '../hooks/useOwnerItems'
+import { useOwnerItems } from '../hooks/useOwnerItems'
+import type { OwnerItem } from '../types'
 
 export default function MyItems() {
   const { t } = useTranslation()

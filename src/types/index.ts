@@ -1,106 +1,173 @@
-import type { Database } from './database.types';
+// src/types/index.ts
+//
+// Типы приложения — это схема базы, а не её пересказ.
+//
+// ЗАЧЕМ. До 05.09 `Item`, `Rental` и `Profile` были написаны руками и
+// разошлись с базой: `image_url` против jsonb-колонки `photos`,
+// `latitude`/`longitude` против `lat`/`lng`, `is_available` против
+// `available`. Расхождения находили в проде. Форма редактирования однажды
+// отправила выдуманное поле в UPDATE, и PostgREST отклонил запрос ЦЕЛИКОМ
+// (PGRST204, «Could not find the 'image_url' column») — страница не сохранила
+// ни цену, ни описание.
+//
+// Первый шаг (05.09) убрал явные приведения к типу Item, сделав все поля
+// необязательными, а `photos`/`location` — `unknown`. Стало тише, но не
+// честнее: связь со схемой осталась обещанием, а не выводом. Исчезни колонка
+// в базе — `tsc` промолчал бы, потому что поле и так необязательное. Дрейф,
+// ради которого затевался `npm run generate-types`, не ловился.
+//
+// Теперь каждый тип строки — это `Tables<'…'>` из сгенерированного файла.
+// Править этот файл руками можно ровно в одном случае: нужна ПРОЕКЦИЯ —
+// связка строк, которую PostgREST собирает по select-строке хука. Проекции
+// ниже собраны из `Pick`/`Omit` тех же сгенерированных типов: переименование
+// или удаление колонки ломает сборку здесь, а не показывает undefined на
+// экране.
+//
+// `database.types.ts` руками не правится никогда — только
+// `npm run generate-types` (см. src/lib/generate-types.sh).
 
+import type { Database, Tables } from './database.types';
+
+/* ─────────────────────────── Enum'ы базы ─────────────────────────── */
+
+/**
+ * Значения `public.booking_status`.
+ *
+ * Объявление ЕДИНСТВЕННОЕ. Второе жило в `src/domain/catalog.ts` и выводилось
+ * из набранной руками таблицы `BOOKING_STATUSES`: наборы совпадали, но связи
+ * между ними не было, и новое значение в базе скомпилировалось бы молча.
+ * Теперь справочник подписей закреплён за этим типом через `satisfies` и
+ * проверку исчерпываемости — расхождение ломает сборку.
+ */
 export type BookingStatusValue = Database['public']['Enums']['booking_status'];
 
-export type ItemRow = Database['public']['Tables']['items']['Row'];
-export type RentalRow = Database['public']['Tables']['bookings']['Row'];
-export type ProfileRow = Database['public']['Tables']['users']['Row'];
+/** Значения `public.item_condition` — та же история, что и со статусами. */
+export type ItemConditionValue = Database['public']['Enums']['item_condition'];
 
-export type Item = {
-  id: string;
-  owner_id?: string | null;
-  title?: string | null;
-  description?: string | null;
-  category?: string | null;
-  condition?: string | null;
-  price_per_day?: number | null;
-  price_3days?: number | null;
-  price_week?: number | null;
-  deposit?: number | null;
-  late_fee_per_day?: number | null;
-  photos: unknown;
-  lat?: number | null;
-  lng?: number | null;
-  address?: string | null;
-  location?: unknown;
-  available?: boolean | null;
-  quantity?: number | null;
-  buffer_days?: number | null;
-  min_notice_days?: number | null;
-  delivery_fee?: number | null;
-  delivery_radius_km?: number | null;
-  created_at?: string | null;
-  is_business?: boolean | null;
-  users?: {
-   id: string;
-   full_name: string | null;
-   avatar_url: string | null;
-   phone_verified?: boolean;
-   rating_as_owner?: number | null;
-   is_pro?: boolean;
-  } | null;
-  distance_m?: number | null;
+/* ────────────────────────── Строки таблиц ────────────────────────── */
+
+/** Объявление: строка таблицы `items`. */
+export type Item = Tables<'items'>;
+
+/** Бронь: строка таблицы `bookings`. В продукте она зовётся «арендой». */
+export type Rental = Tables<'bookings'>;
+
+/** Перерыв владельца: строка таблицы `item_blackouts`. */
+export type ItemBlackout = Tables<'item_blackouts'>;
+
+/**
+ * Профиль — строка `users` БЕЗ колонки, которую клиент читать не вправе.
+ *
+ * Миграция 20260905000027 выдала anon/authenticated право SELECT не на
+ * таблицу, а поимённо на 16 столбцов; 20260905000028 повторила тот же список
+ * и отдельно сняла `phone`, `lat`, `lng`. `phone_otp`, `phone_otp_expires_at`
+ * и `stripe_customer_id` не выдавались никогда — ради них табличное право и
+ * снимали (миграция 20260328000007).
+ *
+ * Поэтому здесь `Pick`, а не `Tables<'users'>`: полный алиас описывал бы
+ * строку, которую PostgREST не отдаст. Тип обещал бы больше, чем разрешает
+ * база, — та же болезнь, что и `image_url`, только в другую сторону. Если
+ * грант изменится, менять надо этот список, и изменение будет видно в ревью.
+ */
+export type Profile = Pick<
+  Tables<'users'>,
+  | 'id'
+  | 'full_name'
+  | 'avatar_url'
+  | 'phone_verified'
+  | 'village'
+  | 'role'
+  | 'referral_code'
+  | 'referred_by'
+  | 'rating_as_owner'
+  | 'rating_as_renter'
+  | 'is_pro'
+  | 'pro_expires_at'
+  | 'business_name'
+  | 'business_plan'
+  | 'business_plan_expires_at'
+  | 'created_at'
+>;
+
+/**
+ * Четыре колонки, которые действительно приходят из `useProfile` и
+ * `useUpdateProfile`: оба запроса перечисляют столбцы поимённо
+ * (`'id, full_name, avatar_url, village'`) — пустой `.select()` ушёл бы как
+ * `select=*` и получил 403 на табличном праве.
+ *
+ * `Pick` от `Profile`, а не от `Tables<'users'>`: если колонку отзовут,
+ * проекция отвалится вместе с грантом, а не после 42501 в консоли.
+ */
+export type ProfileSummary = Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'village'>;
+
+/**
+ * Чужой профиль в том объёме, в каком его показывают другому человеку.
+ *
+ * Обязательны только три колонки, которые запрашивает каждый join; рейтинг,
+ * галочка телефона и признак про-аккаунта — `Partial`, потому что разные
+ * связки просят разное: владельцу вещи нужен `rating_as_owner`, арендатору —
+ * `rating_as_renter`, а список вещей владельца не спрашивает ни того, ни
+ * другого. Выдумывать под каждую связку свой тип — значит размножить то, что
+ * мы только что собрали в одно место.
+ */
+export type PartyProfile = Pick<Profile, 'id' | 'full_name' | 'avatar_url'> &
+  Partial<Pick<Profile, 'rating_as_owner' | 'rating_as_renter' | 'phone_verified' | 'is_pro'>>;
+
+/* ─────────────── Проекции связок (select-строки хуков) ─────────────── */
+
+/**
+ * Бронь со связками — взгляд АРЕНДАТОРА (`useRentals`):
+ * `'*, item:items(*, owner:users!owner_id(…))'`.
+ *
+ * Псевдоним `item` — часть запроса, а не украшение типа: без псевдонима
+ * PostgREST кладёт связь под именем таблицы («items»), а страница читает
+ * `rental.item` и получает undefined — «N/A» вместо названия вещи.
+ *
+ * `item` может быть null: связь левая, вещь могла быть удалена. Объявить её
+ * обязательной — значит научить страницу падать.
+ */
+export type RentalWithItemOwner = Rental & {
+  item: (Item & { owner: PartyProfile | null }) | null;
 };
 
-export type Rental = {
-  id: string;
-  item_id?: string | null;
-  renter_id?: string | null;
-  status?: BookingStatusValue | null;
-  start_date?: string | null;
-  end_date?: string | null;
-  total_price?: number | null;
-  request_message?: string | null;
-  created_at?: string | null;
-  amount_paid?: number | null;
-  approved_at?: string | null;
-  cancelled_at?: string | null;
-  cancelled_by?: string | null;
-  cancellation_reason?: string | null;
-  auto_closed_at?: string | null;
-  delivery_fee?: number | null;
-  delivery_requested?: boolean | null;
-  deposit_amount?: number | null;
-  insurance_amount?: number | null;
-  platform_fee?: number | null;
-  stripe_payment_intent_id?: string | null;
-  total_days?: number | null;
-  item?: (Item & {
-   owner?: {
-     id: string;
-     full_name: string | null;
-     avatar_url: string | null;
-     rating_as_owner?: number | null;
-   } | null;
-  }) | null;
-  renter?: {
-   id: string;
-   full_name: string | null;
-   avatar_url: string | null;
-   rating_as_renter?: number | null;
-  } | null;
+/**
+ * Бронь со связками — взгляд ВЛАДЕЛЬЦА вещи (`useRentalsAsOwner`):
+ * `'*, item:items!inner(*), renter:users!renter_id(…)'`.
+ *
+ * ДВЕ проекции вместо одной общей — намеренно. Один тип
+ * `Rental & { item, renter, item.owner }` был бы ложью для обоих хуков:
+ * арендатору профиль арендатора не запрашивается (это он сам), а владельцу —
+ * профиль владельца вещи (это он сам). Общая проекция с необязательными
+ * полями вернула бы ровно то, от чего мы уходим: хук забыл связку — компилятор
+ * промолчал, страница показала «Utilisateur». Здесь каждый тип описывает
+ * ровно то, что приходит по его select-строке.
+ *
+ * `item` обязателен: join помечен `!inner`, строки без вещи не приходит.
+ */
+export type RentalWithRenter = Rental & {
+  item: Item;
+  renter: PartyProfile | null;
 };
 
-export type Profile = {
-  id?: string;
-  full_name?: string | null;
-  avatar_url?: string | null;
-  village?: string | null;
-};
+/**
+ * Бронь в списке вещей владельца: проекция, а не полная строка.
+ * `useOwnerItems` просит у базы десять колонок брони — объявлять здесь
+ * `Rental` значило бы пообещать `amount_paid` и `stripe_payment_intent_id`,
+ * которых в ответе нет.
+ */
+export type OwnerBooking = Pick<
+  Rental,
+  | 'id'
+  | 'item_id'
+  | 'renter_id'
+  | 'status'
+  | 'start_date'
+  | 'end_date'
+  | 'total_price'
+  | 'total_days'
+  | 'request_message'
+  | 'created_at'
+> & { renter: PartyProfile | null };
 
-export interface ItemBlackout {
-  id: string;
-  item_id: string;
-  start_date: string;
-  end_date: string;
-  note: string | null;
-  created_at: string;
-}
-
-export interface PartyProfile {
-  id: string;
-  full_name: string | null;
-  avatar_url: string | null;
-  rating_as_owner?: number | null;
-  rating_as_renter?: number | null;
-}
+/** Вещь владельца вместе с её бронями (`useOwnerItems`). */
+export type OwnerItem = Item & { bookings: OwnerBooking[] };

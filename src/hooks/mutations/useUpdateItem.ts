@@ -2,7 +2,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import type { Tables } from '../../types/database.types';
-import { Item } from '../../types';
+import type { Item } from '../../types';
 
 // Колонки таблицы `items`, которые форма вправе менять. Список явный и
 // закрытый — намеренно.

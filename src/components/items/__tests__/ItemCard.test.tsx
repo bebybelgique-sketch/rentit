@@ -3,13 +3,23 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ItemCard from '../ItemCard';
+import type { Item } from '../../../types';
 
-const mockItem = {
+// Заготовка объявлена типом строки таблицы, а не «похожим объектом»: с
+// 06.09 `Item` — это `Tables<'items'>`, и `condition` в нём enum из базы
+// ('new' | 'like_new' | 'good' | 'fair'), а не string. Без аннотации
+// фикстура компилировалась, пока тип был написан руками, и перестала —
+// как только тип стал выводиться из схемы. Это и есть работа типа:
+// значение 'tools'/'good' проверяется по базе, а не на глаз.
+//
+// `category` заодно приведена к настоящему значению справочника: 'tools' в
+// продукте нет и никогда не было (см. комментарий в src/domain/catalog.ts).
+const mockItem: Item = {
   id: '1',
   owner_id: 'owner1',
   title: 'Test Drill',
   description: 'A powerful drill',
-  category: 'tools',
+  category: 'power_tools',
   condition: 'good',
   price_per_day: 25,
   price_3days: 60,
@@ -68,7 +78,10 @@ describe('ItemCard', () => {
   // Такой элемент не должен доехать до src картинки пустой строкой —
   // отсюда фильтрация в photosOf, а не просто photos[0].
   it('мусор внутри photos не превращается в битую картинку', () => {
-    const itemWithJunk = { ...mockItem, photos: [null, '', { url: 'x' }] as unknown as string[] };
+    // Приведение `as unknown as string[]` снято: в базе photos — jsonb, в
+    // типе — `Json`, и мусорный массив законен сам по себе. Приведение
+    // обещало компилятору «это массив строк» ровно там, где это неправда.
+    const itemWithJunk: Item = { ...mockItem, photos: [null, '', { url: 'x' }] };
     render(
       <MemoryRouter>
         <ItemCard item={itemWithJunk} />

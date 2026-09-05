@@ -1,10 +1,10 @@
 // src/hooks/useRentals.ts
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import { Rental } from '../types';
+import type { RentalWithItemOwner } from '../types';
 
 // Определяем функцию для получения данных
-const fetchRentals = async (userId: string | undefined): Promise<Rental[]> => {
+const fetchRentals = async (userId: string | undefined): Promise<RentalWithItemOwner[]> => {
   if (!userId) return [];
 
   // Владелец приходит вложенным в вещь: арендатору нужно имя человека, у
@@ -25,7 +25,7 @@ const fetchRentals = async (userId: string | undefined): Promise<Rental[]> => {
 
 // Экспортируем хук, используя useQuery
 export const useRentals = (userId: string | undefined) => {
-  return useQuery<Rental[], Error>({
+  return useQuery<RentalWithItemOwner[], Error>({
     queryKey: ['rentals', userId],
     queryFn: () => fetchRentals(userId),
     enabled: !!userId, // Запрос выполняется только если userId существует
