@@ -9,6 +9,7 @@ import { CATEGORIES, CONDITIONS } from '../domain/catalog';
 import { useUploadImage } from '../hooks/useUploadImage';
 import { supabase } from '../lib/supabase';
 import { ITEM_PHOTOS_BUCKET, itemPhotoPath } from '../lib/itemPhotos';
+import { photosOf } from '../lib/items';
 import ItemBlackouts from '../components/ItemBlackouts';
 
 // Те же границы, что проверками в базе (миграция 20260817000022).
@@ -71,10 +72,10 @@ const EditItem: React.FC = () => {
         deposit: item.deposit || 0,
         category: item.category || '', // Assuming category is part of the Item type
         condition: item.condition || '', // Assuming condition is part of the Item type
-        address: item.location || '', // Map location to address
-        lat: item.latitude || null,
-        lng: item.longitude || null,
-        available: item.is_available,
+        address: item.address ?? '',
+        lat: item.lat,
+        lng: item.lng,
+        available: item.available,
         quantity: item.quantity ?? 1,
         min_notice_days: item.min_notice_days ?? 0,
         buffer_days: item.buffer_days ?? 0,
@@ -197,7 +198,7 @@ const EditItem: React.FC = () => {
         // то есть первый. Остальные снимки объявления остаются: прежний код
         // слал photos: [imageUrl] и на объявлении с тремя снимками молча
         // оставлял один.
-        const previous = item.photos ?? [];
+        const previous = photosOf(item);
         updates.photos = [newUrl, ...previous.slice(1)];
 
         // Заменённый файл больше ничем не удерживается. Не удалить его

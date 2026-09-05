@@ -117,6 +117,16 @@ export function statusLabelKey(value: string | null | undefined): string | null 
   return (value && STATUS_BY_VALUE.get(value)?.labelKey) || null
 }
 
+/**
+ * Проверка принадлежности к enum booking_status. Нужна там, где статус
+ * приходит строкой из чужих рук (ответ функции, колбэк компонента) и
+ * укладывается в типизированную строку брони: без проверки на этом месте
+ * стоял бы `as`, то есть обещание компилятору вместо знания.
+ */
+export function isBookingStatus(value: string | null | undefined): value is BookingStatusValue {
+  return !!value && STATUS_BY_VALUE.has(value)
+}
+
 export function statusTone(value: string | null | undefined): StatusTone | null {
   return (value && STATUS_BY_VALUE.get(value)?.tone) || null
 }

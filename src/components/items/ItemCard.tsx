@@ -2,12 +2,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Item } from '../../types';
+import { coverPhoto } from '../../lib/items';
 
 interface ItemCardProps {
   item: Item;
 }
 
 const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
+  const cover = coverPhoto(item);
+
   return (
     <Link
       to={`/item/${item.id}`}
@@ -20,10 +23,10 @@ const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--muted)')}
       onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
     >
-      {item.image_url ? (
+      {cover ? (
         <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}>
           <img
-            src={item.image_url}
+            src={cover}
             alt={item.title}
             style={{
               width: '100%',
@@ -56,7 +59,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span className="L-mono" style={{ fontSize: '11px', color: 'var(--muted)' }}>
-            {item.location?.split(',')[0] || 'Bruxelles'}
+            {item.address?.split(',')[0] || 'Bruxelles'}
           </span>
           <span className="L-mono" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '500' }}>
             €{item.price_per_day}/jour

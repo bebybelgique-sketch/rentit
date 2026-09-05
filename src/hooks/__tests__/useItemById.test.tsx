@@ -3,10 +3,10 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useItemById } from '../useItemById';
 
-// Hoist mock data and response config to module level
-// Заглушка отдаёт СЫРУЮ строку таблицы items (photos/address/lat/lng/available),
-// а хук возвращает преобразованный Item — поэтому ожидание отдельное.
-const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
+// Заглушка отдаёт строку таблицы items. Отдельного «ожидаемого» объекта
+// больше нет: хук возвращает строку как есть, и проверка это утверждает —
+// тот же объект, а не похожий.
+const { mockItemData, mockError } = vi.hoisted(() => ({
   mockItemData: {
     id: 'item-1',
     title: 'Test Item',
@@ -37,33 +37,6 @@ const { mockItemData, expectedItem, mockError } = vi.hoisted(() => ({
     // Владелец доставляет за 15 € до 10 км. Значения не умолчания: потеря
     // их в мапперe означала бы, что форма редактирования покажет снятую
     // галку поверх включённой услуги — тот же класс, что у количества.
-    delivery_fee: 15,
-    delivery_radius_km: 10,
-  },
-  expectedItem: {
-    id: 'item-1',
-    title: 'Test Item',
-    description: 'Une perceuse',
-    price_per_day: 10,
-    image_url: 'https://example.com/drill.jpg',
-    owner_id: 'owner-1',
-    location: 'Wavre, BE',
-    latitude: 50.71,
-    longitude: 4.61,
-    is_available: true,
-    created_at: '2026-01-01T00:00:00Z',
-    // Ниже — поля, которых хук не переносил: форма редактирования читает
-    // именно их и подставляла пустые значения поверх заполненных.
-    deposit: 50,
-    category: 'power_tools',
-    condition: 'good',
-    photos: ['https://example.com/drill.jpg', 'https://example.com/drill-2.jpg'],
-    price_3days: null,
-    price_week: 60,
-    late_fee_per_day: null,
-    quantity: 12,
-    buffer_days: 1,
-    min_notice_days: 2,
     delivery_fee: 15,
     delivery_radius_km: 10,
   },
@@ -127,7 +100,11 @@ describe('useItemById', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data).toEqual(expectedItem);
+    // toBe, а не toEqual: хук обязан отдать ТУ ЖЕ строку. Маппер, который
+    // здесь стоял, переписывал имена колонок, подставлял умолчания вместо
+    // NULL и терял поля — форма редактирования получала пустую категорию
+    // поверх сохранённой (PR #19). Тождество объекта закрывает весь класс.
+    expect(result.current.data).toBe(mockItemData);
   });
 
   it('should handle fetch error', async () => {

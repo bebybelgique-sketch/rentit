@@ -52,12 +52,19 @@
 плюс служебные: `item_blackouts`, `admin_audit_log` (журнал действий
 администратора; RLS включён, политик нет — пишет только service_role).
 
+**У `admin_audit_log` нет политик НАМЕРЕННО.** Если журнал понадобится
+показать в `/admin` — это действие `list_audit` в `admin-action`, а НЕ
+политика: политика на чтение открывает журнал всем, кому её условие
+подойдёт, и делает это молча, тогда как функция проверяет роль в одном
+месте и сама попадает в журнал.
+
 **Таблиц `rentals` и `profiles` НЕ существует** — оба имени отдают 404.
 Аренда — это `bookings`. Профиль — это `users` (её `id` = `auth.uid()`).
 
 ```
 items     id, owner_id, title, description, category, condition, price_per_day,
-          deposit, photos (jsonb), lat, lng, address, available, created_at
+          deposit, photos (jsonb), lat, lng, address, available, created_at,
+          location (geography, GENERATED ALWAYS — см. ниже)
 
 bookings  id, item_id, renter_id, start_date, end_date, total_days (generated),
           total_price, deposit_amount, platform_fee, status, amount_paid,
@@ -71,11 +78,26 @@ reviews   id, booking_id, from_user_id, to_user_id, item_id, review_type,
           rating, comment, created_at
 ```
 
+**`items.location` НИКТО не заполняет.** Это
+`geography(Point,4326) GENERATED ALWAYS AS (…ST_MakePoint(lng, lat)…) STORED`
+(миграция `20260812000016_geo_postgis`): точку считает Postgres из `lat`/`lng`,
+разойтись с ними она не может, а INSERT/UPDATE, который её называет, Postgres
+отклоняет целиком. Ни клиент, ни триггер к ней не прикасаются. Адрес строкой —
+это `address`; одинаковых имён для точки и для строки в коде быть не должно.
+Вещь без координат остаётся с `location IS NULL` и в поиск по радиусу не
+попадает — это условие прямо записано в `browse_items`.
+
 **enum `booking_status`** — других значений не бывает:
 `pending_approval`, `pending_payment`, `confirmed`, `active`, `completed`,
 `cancelled`, `disputed`, `rejected`, `expired`, `payment_expired`.
 
 Значений `pending`, `approved`, `canceled` в базе нет — запись с ними падает.
+Это настоящий тип Postgres (`create type booking_status as enum`, значения
+`pending_approval`/`rejected`/`expired`/`payment_expired` добавлены миграцией
+`20260402000010_approval_flow`), поэтому `supabase gen types` отдаст его как
+`Enums['booking_status']`, а не как `string`. Список в
+`src/domain/catalog.ts` (`BOOKING_STATUSES` — подписи, цвета, `isBookingStatus`)
+после генерации становится ПРОИЗВОДНЫМ от него, а не вторым источником правды.
 
 **`total_price` в `bookings` — snapshot на момент заявки; никакие функции не пересчитывают его после создания.**
 

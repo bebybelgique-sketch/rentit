@@ -12,6 +12,7 @@
     "test:unit": "vitest",
     "test:unit:ui": "vitest --ui",
     "type-check": "tsc --noEmit",
+    "generate-types": "bash src/lib/generate-types.sh",
     "test:edge": "node supabase/tests/edge-functions.mjs",
     "prepare": "git config core.hooksPath .githooks || true"
   },

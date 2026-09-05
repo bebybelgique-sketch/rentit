@@ -24,21 +24,10 @@ const fetchItems = async (params?: { limit?: number; sortBy?: string; search?: s
   const { data, error } = await query;
   if (error) throw error;
 
-  const transformedItems: Item[] = data.map(rawItem => ({
-    id: rawItem.id,
-    title: rawItem.title,
-    description: rawItem.description,
-    price_per_day: rawItem.price_per_day,
-    image_url: Array.isArray(rawItem.photos) && rawItem.photos.length > 0 ? rawItem.photos[0] : '',
-    owner_id: rawItem.owner_id,
-    location: rawItem.address,
-    latitude: rawItem.lat,
-    longitude: rawItem.lng,
-    is_available: rawItem.available,
-    created_at: rawItem.created_at,
-  }));
-
-  return transformedItems || [];
+  // Строки возвращаются как есть: маппер переписывал имена колонок
+  // (lat → latitude), а теперь имена в типе им и равны. Приведение уйдёт
+  // на шаге 1, когда клиент станет типизированным.
+  return (data ?? []) as Item[];
 };
 
 // Экспортируем хук, используя useQuery
