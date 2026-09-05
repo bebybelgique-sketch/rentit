@@ -1,3 +1,5 @@
+import type { BookingStatusValue } from '../domain/catalog';
+
 // Здесь был выдуманный интерфейс Database с таблицами `rentals` и `profiles`.
 // Таких таблиц в базе НЕТ (проверено обращением к живой базе 10.08.2026:
 // оба имени отдают 404). Настоящие: items, bookings, users, reviews, payments,
@@ -84,16 +86,30 @@ export interface PartyProfile {
   rating_as_renter?: number | null;
 }
 
-// Тип для Rental. Может быть заменен на Tables<'rentals'>['Row'] из supabase.ts
+// Строка таблицы bookings. Имя `Rental` историческое (таблицы `rentals` в
+// базе нет — проверено 10.08.2026, имя отдаёт 404), но менять его сейчас
+// значило бы переименовать все хуки разом; это отдельный шаг.
+//
+// Второго типа для этой же строки быть не должно. До 05.09 он был:
+// MyItems.tsx держал свой `interface Booking` со `status: string` и без
+// половины колонок, и статусы в нём не проверялись ничем. Схождение
+// проверяется наличием ровно одного объявления на таблицу.
 export interface Rental {
   id: string;
   item_id: string;
   renter_id: string;
   start_date: string;
   end_date: string;
+  // Колонка generated always as (end_date - start_date + 1) stored: считает
+  // её база, клиент только читает. Необязательное — не всякий запрос её
+  // выбирает.
+  total_days?: number;
   total_price: number;
-  // Значения строго из enum booking_status в базе (сверено 10.08.2026)
-  status: 'pending_approval' | 'pending_payment' | 'confirmed' | 'active' | 'completed' | 'cancelled' | 'disputed' | 'rejected' | 'expired' | 'payment_expired';
+  // Значения строго из enum booking_status в базе (сверено 10.08.2026).
+  // Список живёт в одном месте — src/domain/catalog.ts, там же подписи и
+  // цвета бейджей; дублировать его здесь значило бы завести вторую правду
+  // о том, какие статусы бывают.
+  status: BookingStatusValue;
   // Столбец в базе называется request_message. Поля message в bookings нет
   // и не было: страница выводила `rental.message` и показывала пустоту.
   request_message?: string | null;

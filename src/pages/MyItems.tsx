@@ -3,26 +3,22 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
-import { statusLabelKey } from '../domain/catalog'
+import { statusLabelKey, isBookingStatus } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
 import BookingOwnerActions from '../components/booking/BookingOwnerActions'
+import type { Rental } from '../types'
 
 // Собственные карты убраны в src/domain/catalog.ts. Здесь было две беды:
 // категории `tools` и `other`, которых в продукте нет вовсе, и вторая карта
 // подписей статусов — она разошлась с бейджем (Actif/En cours,
 // Rejeté/Refusé), и одна бронь называлась по-разному на соседних экранах.
 
-interface Booking {
-  id: string
-  status: string
-  start_date: string
-  end_date: string
-  total_price: number
-  total_days: number
-  request_message: string | null
-  users: { full_name: string }
-}
-
+// Строка bookings описана один раз — в src/types (`Rental`). Здесь стоял
+// свой `interface Booking`: те же колонки, но `status: string` вместо enum
+// и `users: { full_name }` вместо `renter`. Два имени для одной строки
+// расходятся молча — под именем `users` лежала связь users!renter_id, и
+// код читал её через `as any`, потому что собственный же тип обещал не то,
+// что приходило.
 interface Item {
   id: string
   title: string
@@ -32,7 +28,7 @@ interface Item {
   photos: string[]
   available: boolean
   created_at: string
-  bookings: Booking[]
+  bookings: Rental[]
 }
 
 export default function MyItems() {
@@ -54,7 +50,10 @@ export default function MyItems() {
     try {
       const { data, error } = await supabase
         .from('items')
-        .select('*, bookings(id, status, start_date, end_date, total_price, total_days, request_message, users!renter_id(full_name))')
+        // Псевдоним renter — по имени поля в `Rental`, как в
+        // useRentalsAsOwner. Без него PostgREST кладёт связь в ключ "users",
+        // и страница читала её приведением к any.
+        .select('*, bookings(id, item_id, renter_id, status, start_date, end_date, total_price, total_days, request_message, created_at, renter:users!renter_id(id, full_name, avatar_url))')
         .eq('owner_id', user!.id)
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -83,6 +82,10 @@ export default function MyItems() {
   // объявления в useState, а не в react-query, поэтому инвалидация
   // ключей из хуков её сама не обновит.
   const applyBookingStatus = (itemId: string, bookingId: string, newStatus: string) => {
+    // Статус приходит строкой из колбэка компонента. Незнакомое значение
+    // не пишем в список (там enum booking_status), а перечитываем список у
+    // базы: показать выдуманный статус хуже, чем сходить за настоящим.
+    if (!isBookingStatus(newStatus)) { fetchItems(); return }
     setItems(p => p.map(item => item.id === itemId ? {
       ...item,
       bookings: item.bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b),
@@ -203,7 +206,7 @@ export default function MyItems() {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
                             <div>
                               <div style={{ fontWeight: '700', fontSize: '14px' }}>
-                                {(booking.users as any)?.full_name}
+                                {booking.renter?.full_name}
                               </div>
                               <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>
                                 {booking.start_date} → {booking.end_date} · {booking.total_days} jour{booking.total_days !== 1 ? 's' : ''} · €{Number(booking.total_price).toFixed(2)}
@@ -235,7 +238,7 @@ export default function MyItems() {
                         <div key={booking.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8f9ff', padding: '10px 14px', borderRadius: '8px', flexWrap: 'wrap', gap: '10px' }}>
                           <div>
                             <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                              {(booking.users as any)?.full_name}
+                              {booking.renter?.full_name}
                             </div>
                             <div style={{ fontSize: '13px', color: '#666' }}>
                               {booking.start_date} → {booking.end_date} · {booking.total_days} jour{booking.total_days !== 1 ? 's' : ''} · €{Number(booking.total_price).toFixed(2)}
