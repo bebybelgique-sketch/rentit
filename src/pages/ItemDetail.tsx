@@ -113,6 +113,7 @@ export default function ItemDetail() {
   useEffect(() => { if (itemId) fetchItem() }, [itemId])
 
   const fetchItem = async () => {
+    if (!itemId) return
     try {
       const [{ data: itemData }, calendarData, { data: reviewData }, { data: historyData }] = await Promise.all([
         supabase

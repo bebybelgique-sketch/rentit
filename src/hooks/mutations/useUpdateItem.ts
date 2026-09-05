@@ -1,6 +1,7 @@
 // src/hooks/mutations/useUpdateItem.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
+import type { Tables } from '../../types/database.types';
 import { Item } from '../../types';
 
 // Колонки таблицы `items`, которые форма вправе менять. Список явный и
@@ -15,27 +16,28 @@ import { Item } from '../../types';
 // С 05.09 выдуманного поля в `Item` больше нет — уезжать в запрос нечему.
 //
 // Сверено с `information_schema.columns` живой базы 13.08.2026.
-export type ItemUpdate = Partial<{
-  title: string;
-  description: string | null;
-  category: string;
-  condition: string;
-  price_per_day: number;
-  price_3days: number | null;
-  price_week: number | null;
-  late_fee_per_day: number | null;
-  deposit: number;
-  photos: string[];
-  lat: number | null;
-  lng: number | null;
-  address: string | null;
-  available: boolean;
-  quantity: number;
-  buffer_days: number;
-  min_notice_days: number;
-  delivery_fee: number | null;
-  delivery_radius_km: number | null;
-}>;
+export type ItemUpdate = Partial<Pick<
+  Tables<'items'>,
+  | 'title'
+  | 'description'
+  | 'category'
+  | 'condition'
+  | 'price_per_day'
+  | 'price_3days'
+  | 'price_week'
+  | 'late_fee_per_day'
+  | 'deposit'
+  | 'photos'
+  | 'lat'
+  | 'lng'
+  | 'address'
+  | 'available'
+  | 'quantity'
+  | 'buffer_days'
+  | 'min_notice_days'
+  | 'delivery_fee'
+  | 'delivery_radius_km'
+>>;
 
 interface UpdateItemParams {
   id: string;

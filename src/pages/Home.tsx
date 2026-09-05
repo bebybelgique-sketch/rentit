@@ -204,16 +204,16 @@ export default function Home() {
       // включена близость. Так расстояние приходит и для показа на карточке,
       // а отбор по радиусу остаётся отдельным решением человека.
       const { data, error } = await supabase.rpc('browse_items', {
-        p_lat: userPos?.lat ?? null,
-        p_lng: userPos?.lng ?? null,
-        p_radius_km: nearby && userPos ? radius : null,
-        p_category: category || null,
-        p_search: search.trim() || null,
-        p_max_price: maxPrice ? parseFloat(maxPrice) : null,
-        p_place: place.trim() || null,
-        p_start: startDate && endDate && endDate >= startDate ? startDate : null,
-        p_end: startDate && endDate && endDate >= startDate ? endDate : null,
-      })
+        p_lat: userPos?.lat,
+        p_lng: userPos?.lng,
+        p_radius_km: nearby && userPos ? radius : undefined,
+        p_category: category || undefined,
+        p_search: search.trim() || undefined,
+        p_max_price: maxPrice ? parseFloat(maxPrice) : undefined,
+        p_place: place.trim() || undefined,
+        p_start: startDate && endDate && endDate >= startDate ? startDate : undefined,
+        p_end: startDate && endDate && endDate >= startDate ? endDate : undefined,
+      } as Record<string, unknown>)
       if (error) throw error
 
       // Форма карточки не меняется: владелец собирается обратно в users.

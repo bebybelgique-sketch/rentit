@@ -50,5 +50,9 @@ export async function loadItemCalendar(itemId: string): Promise<ItemCalendar> {
   const today = new Date()
   const from = toISODate(today)
   const to = toISODate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + CALENDAR_HORIZON_DAYS))
-  return fetchWithRpc((fn, args) => supabase.rpc(fn, args), itemId, from, to)
+  const rpc = supabase.rpc as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => PromiseLike<{ data: unknown; error: unknown }>
+  return fetchWithRpc((fn, args) => rpc(fn, args), itemId, from, to)
 }
