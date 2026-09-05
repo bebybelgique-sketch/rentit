@@ -113,6 +113,23 @@ export type ProfileSummary = Pick<Profile, 'id' | 'full_name' | 'avatar_url' | '
 export type PartyProfile = Pick<Profile, 'id' | 'full_name' | 'avatar_url'> &
   Partial<Pick<Profile, 'rating_as_owner' | 'rating_as_renter' | 'phone_verified' | 'is_pro'>>;
 
+/* ───────────────────── Строки функций базы ───────────────────── */
+
+/**
+ * Строка витрины: то, что возвращает `browse_items`.
+ *
+ * Объявлять её руками нельзя, и до 06.09 на витрине жили ДВА самодельных
+ * типа — `BrowseRow` («как должно приходить») и локальный `interface Item`
+ * («как удобно рисовать»), а между ними стояло приведение
+ * `(data || []) as BrowseRow[]`. Приведение обещало форму, которую никто не
+ * проверял: расхождение с функцией дало бы не отказ сборки, а пустые карточки.
+ * Здесь обе половины — из сгенерированной схемы.
+ */
+export type BrowseRow = Database['public']['Functions']['browse_items']['Returns'][number];
+
+/** Аргументы `browse_items`. Все необязательны — так их объявила функция. */
+export type BrowseArgs = Database['public']['Functions']['browse_items']['Args'];
+
 /* ─────────────── Проекции связок (select-строки хуков) ─────────────── */
 
 /**

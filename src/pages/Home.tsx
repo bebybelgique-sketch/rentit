@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 import { useTranslation } from 'react-i18next'
 import {
   CATEGORIES, categoryLabelKey, conditionLabelKey, isCategoryValue,
 } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
+import { coverPhoto } from '../lib/items'
+import { useBrowseItems } from '../hooks/useBrowseItems'
+import type { BrowseRow } from '../types'
 
 // Leaflet берётся из зависимостей проекта, а не с unpkg.
 //
@@ -21,10 +23,12 @@ import CategoryIcon from '../components/icons/CategoryIcon'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-function MapView({ items, userPos }: { items: Item[], userPos: { lat: number; lng: number } | null }) {
+function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: number; lng: number } | null }) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<any>(null)
+  // L.Map вместо any: карта — единственное место, где Leaflet трогает DOM,
+  // и тип из пакета избавляет от remove()/setView() наугад.
+  const mapRef = useRef<L.Map | null>(null)
 
   useEffect(() => {
     // Проверка на window.L снята: L теперь импорт, а не глобальная
@@ -46,7 +50,7 @@ function MapView({ items, userPos }: { items: Item[], userPos: { lat: number; ln
     // number | null и ругается на L.marker. Проверка та же самая,
     // просто теперь она видна и типам.
     const placed = items.filter(
-      (i): i is Item & { lat: number; lng: number } => i.lat != null && i.lng != null
+      (i): i is BrowseRow & { lat: number; lng: number } => i.lat != null && i.lng != null
     )
 
     placed.forEach(item => {
@@ -61,7 +65,8 @@ function MapView({ items, userPos }: { items: Item[], userPos: { lat: number; ln
         iconAnchor: [28, 14],
       })
       const marker = L.marker([item.lat, item.lng], { icon }).addTo(map)
-      const safePhotoUrl = item.photos?.[0]?.replace(/"/g, '') || ''
+      // Обложка — через coverPhoto: photos в базе jsonb, а не массив строк.
+      const safePhotoUrl = coverPhoto(item)?.replace(/"/g, '') || ''
       const photo = safePhotoUrl ? `<img src="${safePhotoUrl}" alt="${t('home.altText', { title: esc(item.title) })}" style="width:100%;height:90px;object-fit:cover;border-radius:3px;margin-bottom:8px;display:block">` : ''
       marker.bindPopup(`
         <div style="min-width:180px;font-family:inherit">
@@ -83,40 +88,12 @@ function MapView({ items, userPos }: { items: Item[], userPos: { lat: number; ln
 // src/domain/catalog.ts. Прежняя копия разошлась с копией на странице вещи
 // (⚡ против 🔌 для одной и той же категории).
 
-interface Item {
-  id: string
-  title: string
-  category: string
-  price_per_day: number
-  deposit: number
-  photos: string[]
-  lat: number | null
-  lng: number | null
-  address: string | null
-  condition: string
-  users: { full_name: string; rating_as_owner: number | null; is_pro: boolean }
-  /** Метры от точки посетителя. Считает база; null, если точки нет. */
-  distance_m: number | null
-}
-
-/** Строка, как её отдаёт функция browse_items. */
-type BrowseRow = {
-  id: string
-  title: string
-  category: string
-  price_per_day: number
-  deposit: number
-  photos: string[] | null
-  lat: number | null
-  lng: number | null
-  address: string | null
-  condition: string
-  owner_id: string
-  owner_full_name: string | null
-  owner_rating: number | null
-  owner_is_pro: boolean | null
-  distance_m: number | null
-}
+// Локальных `interface Item` и `type BrowseRow` здесь больше нет: строка
+// витрины — это `BrowseRow` из src/types, то есть
+// Functions['browse_items']['Returns'][number] из сгенерированной схемы.
+// Между ними стояло приведение `(data || []) as BrowseRow[]` — обещание
+// формы, которую никто не проверял, и расхождение с функцией дало бы не
+// отказ сборки, а пустые карточки.
 
 /**
  * Расстояние в том виде, в каком его читает человек: до километра — в метрах
@@ -127,6 +104,91 @@ function formatDistance(km: number): string {
   if (km < 1) return `à ${Math.max(50, Math.round(km * 1000 / 50) * 50)} m`
   if (km < 10) return `à ${km.toFixed(1).replace('.', ',')} km`
   return `à ${Math.round(km)} km`
+}
+
+/**
+ * Карточка витрины.
+ *
+ * Строка — `BrowseRow`, то есть ровно то, что вернула функция browse_items:
+ * ничего не переупаковывается в «удобный» тип. Вынесена из map по той же
+ * причине, по какой из страницы убран загрузчик: обложка считается через
+ * coverPhoto (photos в базе jsonb, а не массив строк), а для этого в
+ * колбэке map нужен блок, а не выражение.
+ */
+function BrowseCard({ item }: { item: BrowseRow }) {
+  const { t } = useTranslation()
+  // Обложка — через coverPhoto, а не `photos[0]`: внутри jsonb может лежать
+  // null или объект, и такой элемент не должен доехать до src пустой строкой.
+  const cover = coverPhoto(item)
+
+  return (
+    <Link to={`/item/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+      <div className="item-card">
+        {cover ? (
+          <img
+            src={cover}
+            alt={item.title}
+            className="item-card-img"
+            loading="lazy"
+          />
+        ) : (
+          <div className="item-card-img">
+            <CategoryIcon category={item.category} size={56} />
+          </div>
+        )}
+        <div className="item-card-body">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+            <span className="tag tag-gray">
+              {t(categoryLabelKey(item.category) ?? '') || item.category}
+            </span>
+            <span className="tag tag-gray">
+              {t(conditionLabelKey(item.condition) ?? '') || item.condition}
+            </span>
+          </div>
+          <div className="item-card-title">{item.title}</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginTop: '4px' }}>
+            <span className="item-card-price">€{item.price_per_day.toFixed(2)}</span>
+            <span style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{t('home.perDay')}</span>
+          </div>
+          {item.deposit > 0 && (
+            <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
+              + €{item.deposit.toFixed(2)} caution
+            </div>
+          )}
+          <div className="item-card-meta">
+            {item.address && `📍 ${item.address}`}
+          </div>
+          {/* Расстояние уже посчитано для фильтра по радиусу, но до
+              сих пор не доходило до экрана. Близость — главное
+              обещание витрины («Les outils de votre voisin»), и
+              человеку важно видеть, идти ему 800 м или 12 км. */}
+          {item.distance_m != null && (
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: '11px',
+              color: 'var(--muted)', marginTop: '4px',
+            }}>
+              {formatDistance(item.distance_m / 1000)}
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
+            {/* Рейтинг приходит плоской колонкой функции
+                (owner_rating), а не вложенным профилем: собирать
+                его обратно в `users` значило бы держать второй тип
+                на одну строку. */}
+            {item.owner_rating != null ? (
+              <span className="rating" style={{ fontSize: '12px' }}>
+                ★ {Number(item.owner_rating).toFixed(1)}
+              </span>
+            ) : (
+              <span style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
+                {t('newOwner')}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
 }
 
 function SkeletonCard() {
@@ -146,8 +208,6 @@ function SkeletonCard() {
 export default function Home() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
-  const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
   // Лендинг клал в адрес ?where=..., а витрина его не читала — поле на
   // первом экране выглядело рабочим и молча ничего не делало. Фальшивый
@@ -190,61 +250,30 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const fetchItems = useCallback(async () => {
-    setLoading(true)
-    try {
-      // Всю выборку делает база одной функцией: радиус по GiST-индексу,
-      // категория, цена, текст, место и занятость на выбранные даты.
-      //
-      // Раньше браузер забирал все подходящие вещи и отсеивал их по радиусу
-      // сам. На пустой витрине разницы не видно, но чинить это надо до
-      // наплыва: под нагрузкой переписывать фильтр — худший момент.
-      //
-      // Точку передаём всегда, когда она известна, а радиус — только когда
-      // включена близость. Так расстояние приходит и для показа на карточке,
-      // а отбор по радиусу остаётся отдельным решением человека.
-      const { data, error } = await supabase.rpc('browse_items', {
-        p_lat: userPos?.lat,
-        p_lng: userPos?.lng,
-        p_radius_km: nearby && userPos ? radius : undefined,
-        p_category: category || undefined,
-        p_search: search.trim() || undefined,
-        p_max_price: maxPrice ? parseFloat(maxPrice) : undefined,
-        p_place: place.trim() || undefined,
-        p_start: startDate && endDate && endDate >= startDate ? startDate : undefined,
-        p_end: startDate && endDate && endDate >= startDate ? endDate : undefined,
-      } as Record<string, unknown>)
-      if (error) throw error
-
-      // Форма карточки не меняется: владелец собирается обратно в users.
-      const result: Item[] = ((data || []) as BrowseRow[]).map(row => ({
-        id: row.id,
-        title: row.title,
-        category: row.category,
-        price_per_day: Number(row.price_per_day),
-        deposit: Number(row.deposit),
-        photos: row.photos ?? [],
-        lat: row.lat,
-        lng: row.lng,
-        address: row.address,
-        condition: row.condition,
-        users: {
-          full_name: row.owner_full_name ?? '',
-          rating_as_owner: row.owner_rating,
-          is_pro: row.owner_is_pro ?? false,
-        },
-        distance_m: row.distance_m,
-      }))
-
-      setItems(result)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [search, category, nearby, radius, userPos, maxPrice, startDate, endDate, place])
-
-  useEffect(() => { fetchItems() }, [fetchItems])
+  // Витрина — запрос, а не состояние страницы.
+  //
+  // До 06.09 здесь жили `useState<Item[]>`, загрузчик в useCallback,
+  // useEffect на него и ДВА приведения: аргументы RPC приводились к
+  // `Record<string, unknown>`, а ответ — к самодельному BrowseRow. Первое
+  // отключало проверку аргументов по схеме (опечатка в имени p_category
+  // уехала бы в вызов и молча отфильтровала витрину в ноль), второе обещало
+  // форму ответа, которую никто не сверял с функцией.
+  //
+  // Теперь запрос живёт в src/hooks/useBrowseItems.ts, типы строки и
+  // аргументов — из схемы, а ВСЕ фильтры входят в ключ кэша: сменился
+  // фильтр — сменился ключ, а не «перезапустили загрузчик».
+  const { data: items = [], isPending, isError, refetch } = useBrowseItems({
+    search,
+    category,
+    maxPrice: maxPrice ? Number(maxPrice) : undefined,
+    place,
+    startDate,
+    endDate,
+    nearby,
+    radiusKm: radius,
+    lat: userPos?.lat ?? null,
+    lng: userPos?.lng ?? null,
+  })
 
   const toggleNearby = () => {
     if (!nearby && !userPos) {
@@ -463,16 +492,27 @@ export default function Home() {
       </div>
 
       {/* Map view */}
-      {viewMode === 'map' && !loading && (
+      {viewMode === 'map' && !isPending && (
         <div style={{ borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border)', marginBottom: '24px', height: '40vh', minHeight: '280px' }}>
           <MapView items={items} userPos={userPos} />
         </div>
       )}
 
       {/* Results */}
-      {loading ? (
+      {isPending ? (
         <div className="grid grid-3">
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : isError ? (
+        // Отказ запроса больше не прячется за «ничего не нашлось». Раньше
+        // загрузчик ловил ошибку в console.error, список оставался пустым, и
+        // человек читал «в этом районе пока нет инструментов» вместо «витрина
+        // не загрузилась» — то есть продукт утверждал ложь о своём содержимом.
+        <div className="error-msg" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
+          <p style={{ marginBottom: 'var(--space-4)' }}>{t('errors.generic')}</p>
+          <button onClick={() => void refetch()} className="btn btn-secondary" style={{ minHeight: '44px' }}>
+            {t('retry')}
+          </button>
         </div>
       ) : items.length === 0 ? (
         <div style={{
@@ -520,70 +560,7 @@ export default function Home() {
             {t('toolsAvailable', { count: items.length })}
           </div>
           <div className="grid grid-3">
-            {items.map(item => (
-              <Link key={item.id} to={`/item/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="item-card">
-                  {item.photos && item.photos.length > 0 ? (
-                    <img
-                      src={item.photos[0]}
-                      alt={item.title}
-                      className="item-card-img"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="item-card-img">
-                      <CategoryIcon category={item.category} size={56} />
-                    </div>
-                  )}
-                  <div className="item-card-body">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                      <span className="tag tag-gray">
-                        {t(categoryLabelKey(item.category) ?? '') || item.category}
-                      </span>
-                      <span className="tag tag-gray">
-                        {t(conditionLabelKey(item.condition) ?? '') || item.condition}
-                      </span>
-                    </div>
-                    <div className="item-card-title">{item.title}</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginTop: '4px' }}>
-                      <span className="item-card-price">€{item.price_per_day.toFixed(2)}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{t('home.perDay')}</span>
-                    </div>
-                    {item.deposit > 0 && (
-                      <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
-                        + €{item.deposit.toFixed(2)} caution
-                      </div>
-                    )}
-                    <div className="item-card-meta">
-                      {item.address && `📍 ${item.address}`}
-                    </div>
-                    {/* Расстояние уже посчитано для фильтра по радиусу, но до
-                        сих пор не доходило до экрана. Близость — главное
-                        обещание витрины («Les outils de votre voisin»), и
-                        человеку важно видеть, идти ему 800 м или 12 км. */}
-                    {item.distance_m != null && (
-                      <div style={{
-                        fontFamily: 'var(--font-mono)', fontSize: '11px',
-                        color: 'var(--muted)', marginTop: '4px',
-                      }}>
-                        {formatDistance(item.distance_m / 1000)}
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
-                      {item.users?.rating_as_owner != null ? (
-                        <span className="rating" style={{ fontSize: '12px' }}>
-                          ★ {Number(item.users.rating_as_owner).toFixed(1)}
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: '11px', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
-                          {t('newOwner')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+            {items.map(item => <BrowseCard key={item.id} item={item} />)}
           </div>
         </>
       )}

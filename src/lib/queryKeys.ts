@@ -36,6 +36,12 @@ export const itemKeys = {
   all: ['items'],
   /** Витрина с фильтрами (useItems). */
   list: (params?: { limit?: number; sortBy?: string; search?: string }) => ['items', params],
+  /**
+   * Витрина: все фильтры в ключе. Ключ, в который не вошёл фильтр, — это
+   * кэш, который не обновится при его изменении (или обновится, когда не
+   * надо): поэтому объект целиком, а не «основные» поля.
+   */
+  browse: (filters: Record<string, unknown>) => ['items', 'browse', filters],
   /** Вещи владельца вместе с бронями (useOwnerItems). */
   asOwner: (userId: string | undefined) => ['items', 'asOwner', userId],
   /** Одна вещь (useItemById). Единственное число — см. шапку файла. */
