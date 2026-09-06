@@ -465,6 +465,95 @@ try {
       eMail ? eMail.code : `запрос ПРОШЁЛ, строк ${(mail ?? []).length} — УТЕЧКА`)
   }
 
+  // ── Триггер регистрации: referred_by ────────────────────────────────
+  //
+  // handle_new_user() (миграции 01 → 30 → 31) пишет public.users.referred_by
+  // из user_metadata. Столбец связан внешним ключом users_referred_by_fkey с
+  // public.users(id) без ON DELETE, поэтому до миграции 31 правильный по
+  // синтаксису, но отсутствующий UUID ронял INSERT — а с ним и всю
+  // регистрацию: триггер висит AFTER INSERT на auth.users.
+  //
+  // Учётку создаём обычным signUp анонимного клиента — ровно так это делает
+  // Register.tsx, и ровно так же это может сделать кто угодно: user_metadata
+  // приходит в signUp дословно, поэтому проверять надо серверную сторону, а
+  // не клиентскую. Домен @rentit-test.example — зарезервирован для тестов,
+  // не резолвится и проходит стандартную проверку формы email.
+  // (см. supabase/tests/cleanup_test_accounts.sql): он не резолвится, письма
+  // туда не уходят.
+  console.log('\nтриггер регистрации: referred_by')
+  {
+    const tmpIds = []
+    const stamp = Date.now()
+    const password = `progon-${stamp}-Aa1`
+    try {
+      // UUID, которого в public.users точно нет. Проверяем, а не надеемся:
+      // случайное совпадение превратило бы неприменённую миграцию в зелёный
+      // прогон.
+      const ghost = crypto.randomUUID()
+      const { data: ghostRow } = await anon.from('users').select('id').eq('id', ghost).maybeSingle()
+      check(!ghostRow, 'оснастка: реферера-призрака в базе нет', ghostRow ? `id=${ghostRow.id}` : '')
+
+      // 1. Устаревшее или выдуманное приглашение. До миграции 31 signUp
+      //    вернёт ошибку, причём GoTrue прячет нарушение внешнего ключа за
+      //    обтекаемым «Database error saving new user» — это и есть признак
+      //    неприменённой миграции.
+      if (!service) throw new Error('SUPABASE_SERVICE_ROLE_KEY нужен для referral-проверки')
+      const { data: stale, error: eStale } = await service.auth.admin.createUser({
+        email: `edge-referral-stale-${stamp}@rentit-test.example`,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: 'E2E прогон (устаревшее приглашение)', referred_by: ghost },
+      })
+      check(!eStale, 'регистрация с несуществующим реферером проходит',
+        eStale ? `${eStale.message} — похоже, миграция 31 не применена` : '')
+      if (stale?.user) {
+        tmpIds.push(stale.user.id)
+        const { data: row } = await anon.from('users').select('referred_by').eq('id', stale.user.id).single()
+        check(row?.referred_by === null, 'referred_by не хранит отсутствующий UUID',
+          `referred_by=${row?.referred_by ?? 'строки профиля нет'}`)
+      } else {
+        check(false, 'referred_by не хранит отсутствующий UUID', 'учётка не создалась')
+      }
+
+      // 2. Живое приглашение. Положительный случай обязателен: без него
+      //    прогон был бы зелёным и у функции, которая просто перестала
+      //    записывать реферера.
+      const { data: fresh, error: eFresh } = await service.auth.admin.createUser({
+        email: `edge-referral-fresh-${stamp}@rentit-test.example`,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: 'E2E прогон (живое приглашение)', referred_by: ownerUser.user.id },
+      })
+      check(!eFresh, 'регистрация с существующим реферером проходит',
+        eFresh ? eFresh.message : '')
+      if (fresh?.user) {
+        tmpIds.push(fresh.user.id)
+        const { data: row } = await anon.from('users').select('referred_by').eq('id', fresh.user.id).single()
+        check(row?.referred_by === ownerUser.user.id, 'referred_by хранит существующего реферера',
+          `referred_by=${row?.referred_by ?? 'строки профиля нет'}`)
+      } else {
+        check(false, 'referred_by хранит существующего реферера', 'учётка не создалась')
+      }
+    } finally {
+      // Уборка. Триггера на удаление auth.users в проекте нет (есть только
+      // AFTER INSERT из миграции 01), но внешний ключ
+      // public.users.id → auth.users(id) объявлен ON DELETE CASCADE, поэтому
+      // удаление auth-пользователя уносит строку профиля само. Удалить его
+      // может только служебный ключ; без него учётки остаются, и это
+      // печатается пропуском со ссылкой на штатный SQL-веник, а не
+      // засчитывается как успех.
+      if (service) {
+        for (const id of tmpIds) await service.auth.admin.deleteUser(id)
+        const { count: leftovers } = await service
+          .from('users').select('id', { count: 'exact', head: true }).in('id', tmpIds)
+        check(leftovers === 0, 'уборка: учётки прогона удалены', `осталось ${leftovers ?? '?'}`)
+      } else {
+        skip('уборка: учётки прогона удалены',
+          `нет SUPABASE_SERVICE_ROLE_KEY; сметите учётки ${tmpIds.length} шт. через supabase/tests/cleanup_test_accounts.sql`)
+      }
+    }
+  }
+
 } catch (err) {
   failed++
   console.log(`\nПРОВАЛ прогона: ${err.message}`)
