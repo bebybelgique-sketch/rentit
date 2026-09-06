@@ -473,13 +473,11 @@ try {
   // синтаксису, но отсутствующий UUID ронял INSERT — а с ним и всю
   // регистрацию: триггер висит AFTER INSERT на auth.users.
   //
-  // Учётку создаём обычным signUp анонимного клиента — ровно так это делает
-  // Register.tsx, и ровно так же это может сделать кто угодно: user_metadata
-  // приходит в signUp дословно, поэтому проверять надо серверную сторону, а
-  // не клиентскую. Домен @rentit-test.example — зарезервирован для тестов,
-  // не резолвится и проходит стандартную проверку формы email.
-  // (см. supabase/tests/cleanup_test_accounts.sql): он не резолвится, письма
-  // туда не уходят.
+  // Учётки создаём через service.auth.admin.createUser: это всё равно INSERT
+  // в auth.users и тот же AFTER INSERT trigger, но без email rate limit.
+  // user_metadata совпадает с тем, что Register.tsx передаёт через signUp,
+  // поэтому проверяется серверная сторона. Домен @rentit-test.example
+  // зарезервирован для тестов и не принимает почту.
   console.log('\nтриггер регистрации: referred_by')
   {
     const tmpIds = []
@@ -493,11 +491,14 @@ try {
       const { data: ghostRow } = await anon.from('users').select('id').eq('id', ghost).maybeSingle()
       check(!ghostRow, 'оснастка: реферера-призрака в базе нет', ghostRow ? `id=${ghostRow.id}` : '')
 
-      // 1. Устаревшее или выдуманное приглашение. До миграции 31 signUp
+      // 1. Устаревшее или выдуманное приглашение. До миграции 31 создание
       //    вернёт ошибку, причём GoTrue прячет нарушение внешнего ключа за
       //    обтекаемым «Database error saving new user» — это и есть признак
       //    неприменённой миграции.
-      if (!service) throw new Error('SUPABASE_SERVICE_ROLE_KEY нужен для referral-проверки')
+      if (!service) {
+        skip('регистрация с несуществующим реферером проходит', 'нет SUPABASE_SERVICE_ROLE_KEY')
+        skip('referred_by не хранит отсутствующий UUID', 'проверка невозможна без service-role ключа')
+      } else {
       const { data: stale, error: eStale } = await service.auth.admin.createUser({
         email: `edge-referral-stale-${stamp}@rentit-test.example`,
         password,
@@ -533,6 +534,7 @@ try {
           `referred_by=${row?.referred_by ?? 'строки профиля нет'}`)
       } else {
         check(false, 'referred_by хранит существующего реферера', 'учётка не создалась')
+      }
       }
     } finally {
       // Уборка. Триггера на удаление auth.users в проекте нет (есть только
