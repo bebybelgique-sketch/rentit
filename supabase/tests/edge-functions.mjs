@@ -476,7 +476,8 @@ try {
   // Учётку создаём обычным signUp анонимного клиента — ровно так это делает
   // Register.tsx, и ровно так же это может сделать кто угодно: user_metadata
   // приходит в signUp дословно, поэтому проверять надо серверную сторону, а
-  // не клиентскую. Домен @rentit-test.local — принятая в прогонах оснастка
+  // не клиентскую. Домен @rentit-test.example — зарезервирован для тестов,
+  // не резолвится и проходит стандартную проверку формы email.
   // (см. supabase/tests/cleanup_test_accounts.sql): он не резолвится, письма
   // туда не уходят.
   console.log('\nтриггер регистрации: referred_by')
@@ -496,10 +497,12 @@ try {
       //    вернёт ошибку, причём GoTrue прячет нарушение внешнего ключа за
       //    обтекаемым «Database error saving new user» — это и есть признак
       //    неприменённой миграции.
-      const { data: stale, error: eStale } = await anon.auth.signUp({
-        email: `edge-referral-stale-${stamp}@rentit-test.local`,
+      if (!service) throw new Error('SUPABASE_SERVICE_ROLE_KEY нужен для referral-проверки')
+      const { data: stale, error: eStale } = await service.auth.admin.createUser({
+        email: `edge-referral-stale-${stamp}@rentit-test.example`,
         password,
-        options: { data: { full_name: 'E2E прогон (устаревшее приглашение)', referred_by: ghost } },
+        email_confirm: true,
+        user_metadata: { full_name: 'E2E прогон (устаревшее приглашение)', referred_by: ghost },
       })
       check(!eStale, 'регистрация с несуществующим реферером проходит',
         eStale ? `${eStale.message} — похоже, миграция 31 не применена` : '')
@@ -515,10 +518,11 @@ try {
       // 2. Живое приглашение. Положительный случай обязателен: без него
       //    прогон был бы зелёным и у функции, которая просто перестала
       //    записывать реферера.
-      const { data: fresh, error: eFresh } = await anon.auth.signUp({
-        email: `edge-referral-fresh-${stamp}@rentit-test.local`,
+      const { data: fresh, error: eFresh } = await service.auth.admin.createUser({
+        email: `edge-referral-fresh-${stamp}@rentit-test.example`,
         password,
-        options: { data: { full_name: 'E2E прогон (живое приглашение)', referred_by: ownerUser.user.id } },
+        email_confirm: true,
+        user_metadata: { full_name: 'E2E прогон (живое приглашение)', referred_by: ownerUser.user.id },
       })
       check(!eFresh, 'регистрация с существующим реферером проходит',
         eFresh ? eFresh.message : '')

@@ -9,7 +9,7 @@
 
 WITH removed AS (
   DELETE FROM auth.users
-  WHERE email LIKE '%@rentit-test.local'
+  WHERE email LIKE '%@rentit-test.%'
   RETURNING id
 )
 SELECT count(*) AS "удалено учёток" FROM removed;
