@@ -1,13 +1,14 @@
 // src/hooks/useRentalsAsOwner.ts
 import { useQuery } from '@tanstack/react-query';
+import { bookingKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
-import { Rental } from '../types';
+import type { RentalWithRenter } from '../types';
 
 // Профиль арендатора берётся здесь, а не догружается страницей по одному
 // запросу на строку: до 11.08 его не брали вовсе, и владелец видел в списке
 // сырой UUID вместо человека, с которым ему предстоит встретиться.
 // Связь users!renter_id — это внешний ключ bookings_renter_id_fkey.
-const fetchRentalsAsOwner = async (userId: string | undefined): Promise<Rental[]> => {
+const fetchRentalsAsOwner = async (userId: string | undefined): Promise<RentalWithRenter[]> => {
   if (!userId) return [];
 
   const { data, error } = await supabase
@@ -22,8 +23,8 @@ const fetchRentalsAsOwner = async (userId: string | undefined): Promise<Rental[]
 };
 
 export const useRentalsAsOwner = (userId: string | undefined) => {
-  return useQuery<Rental[], Error>({
-    queryKey: ['rentalsAsOwner', userId],
+  return useQuery<RentalWithRenter[], Error>({
+    queryKey: bookingKeys.asOwner(userId),
     queryFn: () => fetchRentalsAsOwner(userId),
     enabled: !!userId, // Запрос выполняется только если userId существует
     staleTime: 60000, // Данные считаются актуальными 1 минуту

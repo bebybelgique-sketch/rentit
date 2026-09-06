@@ -1,60 +1,46 @@
 import { useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
-import { statusLabelKey, isBookingStatus } from '../domain/catalog'
+import { statusLabelKey } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
 import BookingOwnerActions from '../components/booking/BookingOwnerActions'
 import { photosOf } from '../lib/items'
-import { useOwnerItems, type OwnerItem } from '../hooks/useOwnerItems'
+import { useOwnerItems } from '../hooks/useOwnerItems'
+import { useSetItemAvailability } from '../hooks/mutations/useSetItemAvailability'
+import { useDeleteItem } from '../hooks/mutations/useDeleteItem'
 
+// Прямых обращений к базе и ручных setQueryData на этой странице больше нет.
+//
+// До 06.09 «скрыть» и «удалить» звали supabase из компонента и сами правили
+// кэш: список «Моих вещей» был согласован ровно настолько, насколько эта
+// страница помнила все свои состояния. Заявка, подтверждённая из /my-rentals
+// (или вторым владельцем из другой вкладки), не обновляла список здесь: ключ
+// этого запроса не инвалидировала ни одна мутация — он и звался-то чужим
+// словом (вещи под именем броней). Человек видел устаревшую заявку, пока не
+// обновлял страницу руками.
+//
+// Теперь действия — мутации (useSetItemAvailability, useDeleteItem), статусы
+// броней приходят перечитыванием списка после invalidateBookingCaches, а
+// отказ живёт в мутации: react-query сбрасывает его сам, когда начинается
+// следующее действие, поэтому отдельного setActionError('') больше нет.
 export default function MyItems() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const queryClient = useQueryClient()
   const { data: items = [], isLoading: loading, isError } = useOwnerItems(user?.id)
+  const setAvailability = useSetItemAvailability()
+  const removeItem = useDeleteItem()
   const [tab, setTab] = useState<'active' | 'all'>('active')
-  const [actionError, setActionError] = useState('')
   const loadError = isError ? t('loadFailed') : ''
+  const actionError = setAvailability.error?.message ?? removeItem.error?.message ?? ''
 
-  const toggleAvailable = async (id: string, current: boolean) => {
-    setActionError('')
-    const { error } = await supabase.from('items').update({ available: !current }).eq('id', id)
-    if (error) { setActionError(error.message); return }
-
-    queryClient.setQueryData<OwnerItem[]>(['bookings', user?.id], (currentItems) => {
-      if (!currentItems) return currentItems
-      return currentItems.map(item => item.id === id ? { ...item, available: !current } : item)
-    })
+  const toggleAvailable = (id: string, current: boolean) => {
+    setAvailability.mutate({ id, available: !current })
   }
 
-  const applyBookingStatus = (itemId: string, bookingId: string, newStatus: string) => {
-    if (!isBookingStatus(newStatus)) {
-      console.warn('Неизвестный статус брони от сервера:', newStatus)
-      return
-    }
-
-    queryClient.setQueryData<OwnerItem[]>(['bookings', user?.id], (currentItems) => {
-      if (!currentItems) return currentItems
-      return currentItems.map(item => item.id === itemId ? {
-        ...item,
-        bookings: item.bookings.map(booking => booking.id === bookingId ? { ...booking, status: newStatus } : booking),
-      } : item)
-    })
-  }
-
-  const deleteItem = async (id: string) => {
+  const askDeleteItem = (id: string) => {
     if (!confirm(t('myItems.deleteConfirm'))) return
-    setActionError('')
-    const { error } = await supabase.from('items').delete().eq('id', id)
-    if (error) { setActionError(error.message); return }
-
-    queryClient.setQueryData<OwnerItem[]>(['bookings', user?.id], (currentItems) => {
-      if (!currentItems) return currentItems
-      return currentItems.filter(item => item.id !== id)
-    })
+    removeItem.mutate({ id })
   }
 
   const filtered = tab === 'active' ? items.filter(i => i.available) : items
@@ -135,7 +121,7 @@ export default function MyItems() {
                         {(item.available ?? false) ? 'Masquer' : 'Afficher'}
                       </button>
                       <button
-                        onClick={() => deleteItem(item.id)}
+                        onClick={() => askDeleteItem(item.id)}
                         className="btn btn-sm"
                         style={{ color: 'var(--danger)', border: '1.5px solid var(--danger)', background: 'transparent' }}
                       >
@@ -169,11 +155,7 @@ export default function MyItems() {
                               )}
                             </div>
                           </div>
-                          <BookingOwnerActions
-                            bookingId={booking.id}
-                            status={booking.status ?? 'pending_approval'}
-                            onDone={(newStatus) => applyBookingStatus(item.id, booking.id, newStatus)}
-                          />
+                          <BookingOwnerActions bookingId={booking.id} status={booking.status} />
                         </div>
                       ))}
                     </div>
@@ -211,11 +193,7 @@ export default function MyItems() {
                             <Link to={`/my-rentals?booking=${booking.id}`} className="btn btn-secondary btn-sm">
                               {t('rental.openConversation')}
                             </Link>
-                            <BookingOwnerActions
-                              bookingId={booking.id}
-                              status={booking.status ?? 'pending_approval'}
-                              onDone={(newStatus) => applyBookingStatus(item.id, booking.id, newStatus)}
-                            />
+                            <BookingOwnerActions bookingId={booking.id} status={booking.status} />
                           </div>
                         </div>
                       ))}

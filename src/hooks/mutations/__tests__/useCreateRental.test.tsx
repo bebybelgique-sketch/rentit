@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { bookingKeys, itemKeys } from '../../../lib/queryKeys';
 import { useCreateRental } from '../useCreateRental';
 // import { supabase } from '../../../lib/supabase'; // Import to mock - not needed if we mock the whole export
 
@@ -90,5 +91,29 @@ describe('useCreateRental', () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toEqual(mockError);
+  });
+
+  // Ключи инвалидации — суть правки 06.09. До неё хук бил по одному имени
+  // списка броней и по мёртвому ключу занятых дат (такой запрос не объявлял
+  // никто), а ни списка броней владельца, ни списка «Моих вещей» —
+  // ['items', 'asOwner', userId] — не трогал вовсе: новая заявка не
+  // появлялась у владельца вещей вообще.
+  it('после успеха инвалидирует брони и вещи — ключи из общего справочника', async () => {
+    mockInvokeResponseData = mockRentalResponse;
+    mockInvokeResponseError = null;
+
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useCreateRental(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({ item_id: 'item-1', start_date: '2026-09-10', end_date: '2026-09-12' });
+    });
+
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: bookingKeys.all }));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: itemKeys.all });
+    // Ровно два вызова: ни мёртвого ключа занятых дат, ни прежних двух имён
+    // списков броней здесь больше нет — оба взгляда ловит один префикс.
+    expect(invalidate).toHaveBeenCalledTimes(2);
   });
 });

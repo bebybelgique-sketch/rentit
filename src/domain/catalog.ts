@@ -20,6 +20,14 @@
 // Правило простое: здесь лежит СТРУКТУРА (какие значения существуют, какой
 // ключ подписи), ТЕКСТ живёт в словарях, а ОФОРМЛЕНИЕ — в компонентах.
 // Копия структуры в странице — это будущее расхождение, а не удобство.
+//
+// А состав значений, которые приходят ИЗ БАЗЫ, здесь больше не объявляется:
+// он импортируется из схемы (src/types → database.types.ts) и закреплён за
+// таблицами ниже через `satisfies` и проверку исчерпываемости. Справочник
+// отвечает на вопрос «какая подпись и какой тон у значения», а не «какие
+// значения существуют» — на него отвечает база.
+
+import type { BookingStatusValue, ItemConditionValue } from '../types'
 
 /* ─────────────────────────── Категории ─────────────────────────── */
 
@@ -68,14 +76,27 @@ export function isCategoryValue(value: string | null | undefined): value is Cate
 
 /* ──────────────────────── Состояние вещи ───────────────────────── */
 
+// `satisfies` оставляет тип literals (значения читаются как 'new', а не
+// string) и одновременно проверяет их по схеме: опечатка в значении или
+// удаление enum'а в базе ломает сборку здесь, а не показывает пустую подпись.
 export const CONDITIONS = [
   { value: 'new',      labelKey: 'conditions.new'      },
   { value: 'like_new', labelKey: 'conditions.like_new' },
   { value: 'good',     labelKey: 'conditions.good'     },
   { value: 'fair',     labelKey: 'conditions.fair'     },
-] as const
+] as const satisfies readonly { value: ItemConditionValue; labelKey: string }[]
 
 export type ConditionValue = (typeof CONDITIONS)[number]['value']
+
+/**
+ * Значения enum'а, которым НЕ досталось подписи. Пустое множество — и это
+ * проверяется на уровне типов: `AssertEmpty` не примет ничего, кроме `never`.
+ * Появится в базе пятое состояние — сборка встанет здесь с именем значения,
+ * а не покажет человеку код вместо подписи.
+ */
+export type UncoveredConditionValue = Exclude<ItemConditionValue, ConditionValue>
+type AssertEmpty<T extends never> = T
+export type ConditionTableCoversEnum = AssertEmpty<UncoveredConditionValue>
 
 const CONDITION_BY_VALUE = new Map(CONDITIONS.map(c => [c.value as string, c]))
 
@@ -106,10 +127,36 @@ export const BOOKING_STATUSES = [
   { value: 'expired',          labelKey: 'status.expired',          tone: 'gray'   },
   { value: 'payment_expired',  labelKey: 'status.payment_expired',  tone: 'gray'   },
   { value: 'disputed',         labelKey: 'status.disputed',         tone: 'purple' },
-] as const
+] as const satisfies readonly BookingStatusEntry[]
 
-export type BookingStatusValue = (typeof BOOKING_STATUSES)[number]['value']
-export type StatusTone = (typeof BOOKING_STATUSES)[number]['tone']
+/**
+ * Тон бейджа — закрытый список, хотя это и оформление: «серый» однажды
+ * становится «grey», и один статус из десяти уезжает в другой цвет. Объявлен
+ * ДО таблицы, чтобы `satisfies` мог на него сослаться; выводить его из самой
+ * таблицы значило бы проверять таблицу самой собой.
+ */
+export const STATUS_TONES = ['orange', 'green', 'blue', 'gray', 'red', 'purple'] as const
+export type StatusTone = (typeof STATUS_TONES)[number]
+
+interface BookingStatusEntry {
+  value: BookingStatusValue
+  labelKey: string
+  tone: StatusTone
+}
+
+/**
+ * Значения enum'а без подписи. Должно быть пусто — и это не пожелание, а
+ * проверка типов: `AssertEmpty` объявлен выше и не принимает ничего, кроме
+ * `never`.
+ *
+ * ЗАЧЕМ. До 06.09 `BookingStatusValue` объявлялся ЗДЕСЬ — выводом из этой же
+ * таблицы. Наборы с enum'ом базы совпадали (те же десять значений), но связи
+ * между ними не было никакой: новое значение в `public.booking_status`
+ * компилировалось молча, а бейдж показывал бы его кодом. Второй экспорт того
+ * же имени из `src/types` делал расхождение вопросом времени.
+ */
+export type UncoveredBookingStatus = Exclude<BookingStatusValue, (typeof BOOKING_STATUSES)[number]['value']>
+export type BookingStatusTableCoversEnum = AssertEmpty<UncoveredBookingStatus>
 
 const STATUS_BY_VALUE = new Map(BOOKING_STATUSES.map(s => [s.value as string, s]))
 

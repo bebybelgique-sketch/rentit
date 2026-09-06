@@ -1,7 +1,8 @@
 // src/hooks/useProfile.ts
 import { useQuery } from '@tanstack/react-query';
+import { profileKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
-import { Profile } from '../types';
+import type { ProfileSummary } from '../types';
 
 // Столбцы перечислены поимённо, и это обязательно: у роли authenticated нет
 // ТАБЛИЧНОГО права SELECT на public.users (миграция 07 сняла его нарочно,
@@ -22,9 +23,9 @@ const COLUMNS = 'id, full_name, avatar_url, village';
  */
 export function useProfile(userId: string | undefined) {
   return useQuery({
-    queryKey: ['profile', userId],
+    queryKey: profileKeys.one(userId),
     enabled: !!userId,
-    queryFn: async (): Promise<Profile | null> => {
+    queryFn: async (): Promise<ProfileSummary | null> => {
       const { data, error } = await supabase
         .from('users')
         .select(COLUMNS)
@@ -32,14 +33,11 @@ export function useProfile(userId: string | undefined) {
         .maybeSingle();
 
       if (error) throw error;
-      if (!data) return null;
-
-      return {
-        id: data.id,
-        full_name: data.full_name ?? '',
-        avatar_url: data.avatar_url,
-        village: data.village,
-      };
+      // Строка возвращается как есть: COLUMNS перечисляет ровно те четыре
+      // колонки, из которых собран ProfileSummary, поэтому маппера здесь нет.
+      // Он стоял до 06.09 и подставлял `full_name ?? ''` — умолчание вместо
+      // значения, которое колонка NOT NULL и так гарантирует.
+      return data ?? null;
     },
   });
 }

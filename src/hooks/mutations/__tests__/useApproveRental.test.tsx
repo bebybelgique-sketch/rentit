@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { bookingKeys, itemKeys } from '../../../lib/queryKeys';
 import { useApproveRental } from '../useApproveRental';
 
 // Hoist mock data and response config to module level
@@ -100,5 +101,30 @@ describe('useApproveRental', () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe('internal_error');
+  });
+
+  // Ключи инвалидации — суть правки 06.09. До неё хук бил по двум разным
+  // именам списков броней и по мёртвому ключу занятых дат (такой запрос не
+  // объявлял никто), а список «Моих вещей» — ['items', 'asOwner', userId] —
+  // не трогал вовсе: владелец, одобривший заявку из /my-rentals, видел её в
+  // «Моих вещах» как новую, пока не обновлял страницу руками.
+  it('после успеха инвалидирует брони и вещи — ключи из общего справочника', async () => {
+    mockInvokeResponseData = mockSuccessResponse;
+    mockInvokeResponseError = null;
+
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useApproveRental(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({ bookingId: 'booking-1' });
+    });
+
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: bookingKeys.all }));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: itemKeys.all });
+    // Оба префикса — из src/lib/queryKeys; набор один на все мутации броней.
+    // Ровно два вызова: ни мёртвого ключа занятых дат, ни прежних двух имён
+    // списков броней здесь больше нет — оба взгляда ловит один префикс.
+    expect(invalidate).toHaveBeenCalledTimes(2);
   });
 });

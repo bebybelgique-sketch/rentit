@@ -1,5 +1,6 @@
 // src/hooks/useBookingPhotos.ts
 import { useQuery } from '@tanstack/react-query';
+import { bookingKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
 
 export const BOOKING_PHOTOS_BUCKET = 'booking-photos';
@@ -64,7 +65,7 @@ const fetchBookingPhotos = async (bookingId: string | undefined): Promise<Bookin
 
 export const useBookingPhotos = (bookingId: string | undefined) => {
   return useQuery<BookingPhoto[], Error>({
-    queryKey: ['bookingPhotos', bookingId],
+    queryKey: bookingKeys.photos(bookingId),
     queryFn: () => fetchBookingPhotos(bookingId),
     enabled: !!bookingId,
     // Меньше срока жизни подписи, иначе из кеша придёт протухшая ссылка.

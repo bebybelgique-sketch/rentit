@@ -1,7 +1,8 @@
 // src/components/common/BookingStatusBadge.tsx
 
 import { useTranslation } from 'react-i18next';
-import { statusLabelKey, statusTone, type BookingStatusValue } from '../../domain/catalog';
+import { statusLabelKey, statusTone } from '../../domain/catalog';
+import type { BookingStatusValue } from '../../types';
 
 type StatusType = BookingStatusValue;
 
@@ -12,7 +13,9 @@ interface BookingStatusBadgeProps {
 // Собственного словаря подписей здесь больше нет. Он был вторым — рядом жила
 // карта в MyItems, и они разошлись: «Actif» против «En cours», «Rejeté»
 // против «Refusé». Одна бронь называлась по-разному на соседних экранах.
-// Подписи теперь в словарях, состав и цвет — в src/domain/catalog.ts.
+// Подписи теперь в словарях, состав и цвет — в src/domain/catalog.ts, а сам
+// набор значений — в схеме: BookingStatusValue объявлен ровно один раз, в
+// src/types, выводом из Enums['booking_status'].
 
 const BookingStatusBadge: React.FC<BookingStatusBadgeProps> = ({ status }) => {
   const { t } = useTranslation();

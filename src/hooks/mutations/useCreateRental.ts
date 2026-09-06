@@ -1,5 +1,6 @@
 // src/hooks/mutations/useCreateRental.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { invalidateBookingCaches } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 
 // Заявку на аренду НЕЛЬЗЯ создать из браузера: политика вставки в bookings
@@ -38,8 +39,10 @@ export const useCreateRental = () => {
   return useMutation({
     mutationFn: createRental,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rentals'] });
-      queryClient.invalidateQueries({ queryKey: ['bookedDates'] });
+      // Новая заявка меняет и свои брони, и вещи владельца: до 06.09 здесь
+      // не было ни ['rentalsAsOwner'], ни ключа «Моих вещей» — владелец
+      // видел заявку только после перезагрузки страницы.
+      invalidateBookingCaches(queryClient);
     },
   });
 };

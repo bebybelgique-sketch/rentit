@@ -1,20 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
-import { photosOf } from '../lib/items';
+import { itemKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
-import type { Item, Rental } from '../types';
+import type { OwnerItem } from '../types';
 
-export type OwnerItem = Item & {
-  bookings: Array<
-    Rental & {
-      renter?: {
-        id: string;
-        full_name: string | null;
-        avatar_url: string | null;
-      } | null;
-    }
-  >;
-};
-
+// Вещи владельца вместе с бронями: один запрос вместо «вещи» + «брони по
+// каждой вещи». Связка приходит из базы, а тип строки — `OwnerItem` из
+// src/types: это `Item` (то есть `Tables<'items'>`) плюс проекция брони,
+// собранная ровно из тех колонок, которые перечислены в select ниже.
+//
+// Строка возвращается КАК ЕСТЬ. Здесь стоял маппер, который переписывал
+// `photos` в `string[]` и подставлял `renter: null` вместо отсутствующего
+// поля; с типами из схемы оба действия лишние — `photos` читает `photosOf`
+// по месту показа (src/lib/items.ts), а `renter` и так приходит `| null`.
+// Маппер в хуке — это второй тип на одну строку и та же болезнь, из-за
+// которой форма редактирования однажды потеряла сохранённые поля (PR #19).
 const fetchOwnerItems = async (userId: string | undefined): Promise<OwnerItem[]> => {
   if (!userId) return [];
 
@@ -25,19 +24,15 @@ const fetchOwnerItems = async (userId: string | undefined): Promise<OwnerItem[]>
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map(item => ({
-    ...item,
-    photos: photosOf(item),
-    bookings: (item.bookings ?? []).map(booking => ({
-      ...booking,
-      renter: booking.renter ?? null,
-    })),
-  }));
+  return data ?? [];
 };
 
 export const useOwnerItems = (userId: string | undefined) => {
   return useQuery<OwnerItem[], Error>({
-    queryKey: ['bookings', userId],
+    // Ключ объявлен в src/lib/queryKeys: до 06.09 здесь стоял
+    // ['bookings', userId] — вещи, названные бронями, и ни одна мутация
+    // этот ключ не инвалидировала.
+    queryKey: itemKeys.asOwner(userId),
     queryFn: () => fetchOwnerItems(userId),
     enabled: !!userId,
     staleTime: 30000,

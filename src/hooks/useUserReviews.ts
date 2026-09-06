@@ -1,5 +1,6 @@
 // src/hooks/useUserReviews.ts
 import { useQuery } from '@tanstack/react-query';
+import { reviewKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
 
 export type UserReviewRole = 'owner' | 'renter';
@@ -53,7 +54,7 @@ const fetchUserReviews = async (
 
 export const useUserReviews = (userId: string | undefined, role: UserReviewRole) => {
   return useQuery<UserReview[], Error>({
-    queryKey: ['userReviews', userId, role],
+    queryKey: reviewKeys.list(userId, role),
     queryFn: () => fetchUserReviews(userId, role),
     enabled: !!userId,
     staleTime: 60000,

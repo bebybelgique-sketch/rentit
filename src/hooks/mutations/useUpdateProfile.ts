@@ -1,12 +1,15 @@
 // src/hooks/mutations/useUpdateProfile.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { profileKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../types/database.types';
-import { Profile } from '../../types';
+import type { ProfileSummary } from '../../types';
 
 // Профиль лежит в таблице users (её id = auth.uid()), а не в profiles —
-// такой таблицы в базе нет. Поля сверены со схемой: full_name, avatar_url,
-// phone, village. Поля bio в базе нет, поэтому из типа оно убрано.
+// такой таблицы в базе нет. Возвращаемый тип — ProfileSummary из src/types:
+// это `Pick` от строки users, составленный из колонок выданных грантом
+// (миграция 20260905000028). Поля bio в базе нет, поэтому в типе его нет;
+// сверять список со схемой руками больше не нужно — он выводится.
 interface UpdateProfileParams {
   userId: string;
   updates: Database['public']['Tables']['users']['Update'];
@@ -27,11 +30,12 @@ interface UpdateProfileParams {
 // выложить инструмент.
 //
 // phone здесь НЕ запрашивается: миграция 14 сняла SELECT (phone, lat, lng)
-// и с authenticated тоже, так что человек не читает даже свой номер. Тип
-// Profile объявляет phone необязательным, поэтому пропуск законен.
+// и с authenticated тоже, так что человек не читает даже свой номер. В типе
+// ProfileSummary этих колонок нет вовсе — не «необязательные», а отсутствующие:
+// спросить их запросом можно, а объявить в типе уже нельзя.
 const RETURNING_COLUMNS = 'id, full_name, avatar_url, village';
 
-const updateProfile = async ({ userId, updates }: UpdateProfileParams): Promise<Profile> => {
+const updateProfile = async ({ userId, updates }: UpdateProfileParams): Promise<ProfileSummary> => {
   const { data, error } = await supabase
     .from('users')
     .update(updates)
@@ -42,12 +46,9 @@ const updateProfile = async ({ userId, updates }: UpdateProfileParams): Promise<
   if (error) throw error;
   if (!data) throw new Error('Profile update failed');
 
-  return {
-    id: data.id,
-    full_name: data.full_name,
-    avatar_url: data.avatar_url,
-    village: data.village,
-  };
+  // RETURNING_COLUMNS — это в точности состав ProfileSummary, поэтому строка
+  // уходит в кэш без переписывания полей.
+  return data;
 };
 
 export const useUpdateProfile = () => {
@@ -56,7 +57,7 @@ export const useUpdateProfile = () => {
   return useMutation({
     mutationFn: updateProfile,
     onSuccess: (updatedProfile) => {
-      queryClient.invalidateQueries({ queryKey: ['profile', updatedProfile.id] });
+      void queryClient.invalidateQueries({ queryKey: profileKeys.one(updatedProfile.id) });
     },
   });
 };

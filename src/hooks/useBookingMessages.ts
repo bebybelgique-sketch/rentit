@@ -1,5 +1,6 @@
 // src/hooks/useBookingMessages.ts
 import { useQuery } from '@tanstack/react-query';
+import { bookingKeys } from '../lib/queryKeys';
 import { supabase } from '../lib/supabase';
 
 export interface BookingMessage {
@@ -41,7 +42,7 @@ const fetchBookingMessages = async (bookingId: string | undefined): Promise<Book
 
 export const useBookingMessages = (bookingId: string | undefined) => {
   return useQuery<BookingMessage[], Error>({
-    queryKey: ['bookingMessages', bookingId],
+    queryKey: bookingKeys.messages(bookingId),
     queryFn: () => fetchBookingMessages(bookingId),
     enabled: !!bookingId,
     // Реального времени в этом выпуске нет: переписка нужна, чтобы

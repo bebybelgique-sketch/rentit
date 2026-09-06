@@ -1,5 +1,6 @@
 // src/hooks/mutations/useSendMessage.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { bookingKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import i18n from '../../i18n-next';
 
@@ -31,7 +32,7 @@ export const useSendMessage = () => {
   return useMutation({
     mutationFn: sendMessage,
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['bookingMessages', variables.bookingId] });
+      void queryClient.invalidateQueries({ queryKey: bookingKeys.messages(variables.bookingId) });
     },
   });
 };

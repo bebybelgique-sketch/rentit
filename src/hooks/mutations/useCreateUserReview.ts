@@ -1,5 +1,6 @@
 // src/hooks/mutations/useCreateUserReview.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { itemKeys, profileKeys, reviewKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import i18n from '../../i18n-next';
 import type { UserReviewRole } from '../useUserReviews';
@@ -60,12 +61,12 @@ export const useCreateUserReview = () => {
   return useMutation({
     mutationFn: createUserReview,
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['userReviews', variables.toUserId] });
+      void queryClient.invalidateQueries({ queryKey: reviewKeys.of(variables.toUserId) });
       // Рейтинг в users пересчитывает триггер recompute_user_rating,
       // поэтому профиль обязан перечитаться — иначе на экране останется
       // прежнее число, которого в базе уже нет.
-      queryClient.invalidateQueries({ queryKey: ['profile', variables.toUserId] });
-      queryClient.invalidateQueries({ queryKey: ['item', variables.itemId] });
+      void queryClient.invalidateQueries({ queryKey: profileKeys.one(variables.toUserId) });
+      void queryClient.invalidateQueries({ queryKey: itemKeys.one(variables.itemId) });
     },
   });
 };
