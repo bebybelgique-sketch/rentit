@@ -499,42 +499,42 @@ try {
         skip('регистрация с несуществующим реферером проходит', 'нет SUPABASE_SERVICE_ROLE_KEY')
         skip('referred_by не хранит отсутствующий UUID', 'проверка невозможна без service-role ключа')
       } else {
-      const { data: stale, error: eStale } = await service.auth.admin.createUser({
-        email: `edge-referral-stale-${stamp}@rentit-test.example`,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: 'E2E прогон (устаревшее приглашение)', referred_by: ghost },
-      })
-      check(!eStale, 'регистрация с несуществующим реферером проходит',
-        eStale ? `${eStale.message} — похоже, миграция 31 не применена` : '')
-      if (stale?.user) {
-        tmpIds.push(stale.user.id)
-        const { data: row } = await anon.from('users').select('referred_by').eq('id', stale.user.id).single()
-        check(row?.referred_by === null, 'referred_by не хранит отсутствующий UUID',
-          `referred_by=${row?.referred_by ?? 'строки профиля нет'}`)
-      } else {
-        check(false, 'referred_by не хранит отсутствующий UUID', 'учётка не создалась')
-      }
+        const { data: stale, error: eStale } = await service.auth.admin.createUser({
+          email: `edge-referral-stale-${stamp}@rentit-test.example`,
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: 'E2E прогон (устаревшее приглашение)', referred_by: ghost },
+        })
+        check(!eStale, 'регистрация с несуществующим реферером проходит',
+          eStale ? `${eStale.message} — похоже, миграция 31 не применена` : '')
+        if (stale?.user) {
+          tmpIds.push(stale.user.id)
+          const { data: row } = await anon.from('users').select('referred_by').eq('id', stale.user.id).single()
+          check(row?.referred_by === null, 'referred_by не хранит отсутствующий UUID',
+            `referred_by=${row?.referred_by ?? 'строки профиля нет'}`)
+        } else {
+          check(false, 'referred_by не хранит отсутствующий UUID', 'учётка не создалась')
+        }
 
-      // 2. Живое приглашение. Положительный случай обязателен: без него
-      //    прогон был бы зелёным и у функции, которая просто перестала
-      //    записывать реферера.
-      const { data: fresh, error: eFresh } = await service.auth.admin.createUser({
-        email: `edge-referral-fresh-${stamp}@rentit-test.example`,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: 'E2E прогон (живое приглашение)', referred_by: ownerUser.user.id },
-      })
-      check(!eFresh, 'регистрация с существующим реферером проходит',
-        eFresh ? eFresh.message : '')
-      if (fresh?.user) {
-        tmpIds.push(fresh.user.id)
-        const { data: row } = await anon.from('users').select('referred_by').eq('id', fresh.user.id).single()
-        check(row?.referred_by === ownerUser.user.id, 'referred_by хранит существующего реферера',
-          `referred_by=${row?.referred_by ?? 'строки профиля нет'}`)
-      } else {
-        check(false, 'referred_by хранит существующего реферера', 'учётка не создалась')
-      }
+        // 2. Живое приглашение. Положительный случай обязателен: без него
+        //    прогон был бы зелёным и у функции, которая просто перестала
+        //    записывать реферера.
+        const { data: fresh, error: eFresh } = await service.auth.admin.createUser({
+          email: `edge-referral-fresh-${stamp}@rentit-test.example`,
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: 'E2E прогон (живое приглашение)', referred_by: ownerUser.user.id },
+        })
+        check(!eFresh, 'регистрация с существующим реферером проходит',
+          eFresh ? eFresh.message : '')
+        if (fresh?.user) {
+          tmpIds.push(fresh.user.id)
+          const { data: row } = await anon.from('users').select('referred_by').eq('id', fresh.user.id).single()
+          check(row?.referred_by === ownerUser.user.id, 'referred_by хранит существующего реферера',
+            `referred_by=${row?.referred_by ?? 'строки профиля нет'}`)
+        } else {
+          check(false, 'referred_by хранит существующего реферера', 'учётка не создалась')
+        }
       }
     } finally {
       // Уборка. Триггера на удаление auth.users в проекте нет (есть только
