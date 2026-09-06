@@ -101,6 +101,7 @@ export default function ItemDetail() {
   const [wantsDelivery, setWantsDelivery] = useState(false)
   const [requestLoading, setRequestLoading] = useState(false)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState(false)
   const [requestSent, setRequestSent] = useState(false)
 
   const [reviews, setReviews] = useState<any[]>([])
@@ -114,8 +115,10 @@ export default function ItemDetail() {
 
   const fetchItem = async () => {
     if (!itemId) return
+    setLoadError(false)
+    setLoading(true)
     try {
-      const [{ data: itemData }, calendarData, { data: reviewData }, { data: historyData }] = await Promise.all([
+      const [itemResult, calendarData, reviewResult, historyResult] = await Promise.all([
         supabase
           .from('items')
           .select('*, users!owner_id(id, full_name, avatar_url, phone_verified, rating_as_owner, is_pro)')
@@ -132,6 +135,18 @@ export default function ItemDetail() {
           .order('created_at', { ascending: false }),
         supabase.rpc('item_history', { p_item_id: itemId }),
       ])
+      if (itemResult.error) {
+        if (itemResult.error.code === 'PGRST116') {
+          setItem(null)
+          return
+        }
+        throw itemResult.error
+      }
+      if (reviewResult.error) throw reviewResult.error
+      if (historyResult.error) throw historyResult.error
+      const itemData = itemResult.data
+      const reviewData = reviewResult.data
+      const historyData = historyResult.data
       if (itemData) setItem({ ...itemData, photos: photosOf(itemData) })
       setCalendar(calendarData)
       setReviews(reviewData || [])
@@ -139,6 +154,7 @@ export default function ItemDetail() {
       if (user && itemData) checkCanReview(itemData.id, itemData.owner_id)
     } catch (err) {
       console.error(err)
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -271,6 +287,16 @@ export default function ItemDetail() {
   }
 
   if (loading) return <div className="page"><div className="loading">{t('common.loading')}</div></div>
+  if (loadError) {
+    return (
+      <div className="page" style={{ textAlign: 'center', paddingTop: 'var(--space-8)' }}>
+        <p style={{ color: 'var(--muted)', marginBottom: 'var(--space-4)' }}>{t('errors.generic')}</p>
+        <button onClick={() => void fetchItem()} className="btn btn-secondary" style={{ minHeight: '44px' }}>
+          {t('retry')}
+        </button>
+      </div>
+    )
+  }
   // Раньше здесь была голая надпись «Outil introuvable» без единой
   // кнопки: человек по ссылке на снятое объявление попадал в тупик и мог
   // только нажать «назад» — а если пришёл по прямой ссылке, то и назад
