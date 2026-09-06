@@ -1,4 +1,4 @@
-﻿-- Migration 32: allow deleting a referrer without deleting referred users.
+-- Migration 32: allow deleting a referrer without deleting referred users.
 -- The self-referencing foreign key previously blocked account deletion when
 -- another account still pointed at the deleted user as its referrer.
 -- SET NULL preserves the referred account and removes only the stale link.
