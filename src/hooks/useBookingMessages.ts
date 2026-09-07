@@ -27,8 +27,22 @@ const fetchBookingMessages = async (bookingId: string | undefined): Promise<Book
 
   if (error) throw error;
 
+  // Приведения `as unknown as` здесь больше нет: оно стояло до того, как типы
+  // стали выводиться из схемы (Sprint 2), а двойное приведение отключает
+  // проверку ЦЕЛИКОМ. Именно оно и скрыло бы настоящую опасность: отдай
+  // PostgREST вложенную запись массивом, `sender?.full_name` молча стал бы
+  // undefined и каждое сообщение подписалось бы «Utilisateur». Теперь тип
+  // выводится — `{ full_name: string }` — и подмена формы станет ошибкой tsc.
+  //
+  // `?.` остаётся не ради схемы, а ради RLS: политика на users может скрыть
+  // строку автора, и тогда вложенный объект придёт null при NOT NULL внешнем
+  // ключе `sender_id`. Про RLS сгенерированные типы не знают.
+  //
+  // `||`, а не `??`: full_name объявлен NOT NULL, но триггер регистрации
+  // пишет `coalesce(raw_user_meta_data->>'full_name', '')` — пустая строка
+  // означает «имя не назвали», и подписывать ею сообщение нельзя.
   return (data || []).map((row) => {
-    const sender = row.users as unknown as { full_name: string | null } | null;
+    const sender = row.users;
     return {
       id: row.id,
       booking_id: row.booking_id,
