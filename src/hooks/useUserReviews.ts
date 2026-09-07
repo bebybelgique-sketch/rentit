@@ -35,8 +35,15 @@ const fetchUserReviews = async (
 
   if (error) throw error;
 
+  // Двойного приведения здесь больше нет — почему, подробно в
+  // useBookingMessages.ts. Коротко: `as unknown as` отключает проверку
+  // целиком, а форма вложенной записи — ровно то, что проверять и надо.
+  //
+  // `?.` — против RLS (политика на users может скрыть автора), `||` для имени
+  // — против пустой строки, `?? null` для аватара — потому что avatar_url
+  // нулевой по схеме, и отсутствие снимка это не ошибка.
   return (data || []).map((row) => {
-    const author = row.users as unknown as { full_name: string | null; avatar_url: string | null } | null;
+    const author = row.users;
     return {
       id: row.id,
       booking_id: row.booking_id,
