@@ -7,6 +7,7 @@ import {
 import CategoryIcon from '../components/icons/CategoryIcon'
 import { coverPhoto } from '../lib/items'
 import { useBrowseItems } from '../hooks/useBrowseItems'
+import { useCatalogHasItems } from '../hooks/useCatalogHasItems'
 import type { BrowseRow } from '../types'
 
 // Leaflet берётся из зависимостей проекта, а не с unpkg.
@@ -275,6 +276,11 @@ export default function Home() {
     lng: userPos?.lng ?? null,
   })
 
+  // Второй, безфильтровый вопрос: есть ли в каталоге ХОТЬ ЧТО-НИБУДЬ. По
+  // ответу витрины это неразличимо, а от различия зависит и заголовок пустого
+  // экрана, и наличие кнопки «расширить» — см. useCatalogHasItems.ts.
+  const { catalogIsEmpty } = useCatalogHasItems()
+
   const toggleNearby = () => {
     if (!nearby && !userPos) {
       // Отказ браузера ОБЯЗАН быть сказан вслух.
@@ -523,12 +529,27 @@ export default function Home() {
           {/* Ступень --text-xl (28px) верна для десктопа, но на 390px этот
               заголовок ломается на три строки. Кегль тут обязан быть гибким:
               нижняя граница — --text-lg, верхняя — --text-xl. */}
+          {/* Два разных сообщения на один пустой список.
+              «Aucun outil dans cette zone» верно, пока в каталоге ЕСТЬ вещи, а
+              не совпали фильтры. При пустом каталоге это неправда: дело не в
+              зоне. Замер прода 17.09.2026 — вещей ноль, browse_items отдаёт []
+              при любых фильтрах, то есть неправду читал КАЖДЫЙ пришедший.
+              `catalogIsEmpty === undefined` (ответа ещё нет или запрос отказал)
+              намеренно ведёт себя как «каталог не пуст»: прежний текст верен
+              всегда, а сильное утверждение из неотвеченного запроса — нет. */}
           <h3 style={{ fontSize: 'clamp(var(--text-lg), 5vw, var(--text-xl))', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: 'var(--space-3)' }}>
-            {t('noResultsTitle')}
+            {catalogIsEmpty ? t('emptyCatalogTitle') : t('noResultsTitle')}
           </h3>
           <p style={{ color: 'var(--muted)', fontSize: 'var(--text-base)', marginBottom: 'var(--space-2)' }}>
-            {t('noResultsDesc')}
+            {catalogIsEmpty ? t('emptyCatalogDesc') : t('noResultsDesc')}
           </p>
+          {catalogIsEmpty && (
+            // Отсутствие кнопки названо вслух. Молчаливое отсутствие человек
+            // читает как недоработку; названное — как решение в его пользу.
+            <p style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>
+              {t('emptyCatalogWhyNoExpand')}
+            </p>
+          )}
           <p style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginBottom: 'var(--space-6)' }}>
             {t('earlyLister')}
           </p>
@@ -536,7 +557,10 @@ export default function Home() {
             <Link to="/list-item" className="btn btn-primary" style={{ minHeight: '44px' }}>
               {t('listFirstTool')}
             </Link>
-            {radius < 50 && (
+            {/* Кнопка расширения не удалена, а обусловлена: при непустом
+                каталоге она делает ровно то, что обещает. Убрать её насовсем
+                значило бы сломать верный случай ради неверного. */}
+            {!catalogIsEmpty && radius < 50 && (
               <button
                 onClick={() => { setRadius(50); if (!nearby) toggleNearby() }}
                 className="btn btn-secondary"
