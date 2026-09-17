@@ -4,7 +4,7 @@
 # Генерация типов базы: единственный источник правды о схеме на стороне
 # клиента. Запускать из корня репозитория:
 #
-#   npm run generate-types            (ref берётся из .env)
+#   npm run generate-types            (ref: окружение → .env → привязка CLI)
 #   SUPABASE_PROJECT_REF=<ref> npm run generate-types
 #
 # Нужен вход в Supabase CLI (`npx supabase login`) — ключа из .env для
@@ -26,7 +26,25 @@ OUT="$ROOT/src/types/database.types.ts"
 REF="${SUPABASE_PROJECT_REF:-}"
 # Запасной источник — .env, тот же файл, из которого читают прогоны.
 if [ -z "$REF" ] && [ -f "$ROOT/.env" ]; then
-  REF="$(grep -E '^SUPABASE_PROJECT_REF=' "$ROOT/.env" | head -1 | cut -d= -f2- | tr -d '[:space:]')"
+  # `|| true` обязателен. При `set -euo pipefail` grep без совпадения возвращает
+  # 1, и с pipefail этот код становится кодом всей подстановки — скрипт умирал
+  # ПРЯМО ЗДЕСЬ, не дойдя ни до подсказки «ref не задан», ни до проверок ниже.
+  # Умирал молча: вывода нет, код 1, и со стороны это неотличимо от «всё сошлось,
+  # менять нечего». Ровно так 17.09.2026 отсутствие ref было прочитано как
+  # отсутствие дрейфа.
+  REF="$(grep -E '^SUPABASE_PROJECT_REF=' "$ROOT/.env" | head -1 | cut -d= -f2- | tr -d '[:space:]' || true)"
+fi
+
+# Третий источник — привязка самого CLI. `supabase link` кладёт ref в
+# supabase/.temp/project-ref, и если проект привязан, спрашивать его у человека
+# незачем: он уже назван, причём тем же инструментом, который сейчас и позовут.
+#
+# ЗАЧЕМ ЭТО ДОБАВЛЕНО. В .env этого репозитория ключа SUPABASE_PROJECT_REF нет
+# (он был только в одной из рабочих копий), и `npm run generate-types` обрывался
+# на первой же проверке. Ручной шаг, без которого команда не работает, — дефект
+# команды, а не забывчивость того, кто её запускает.
+if [ -z "$REF" ] && [ -f "$ROOT/supabase/.temp/project-ref" ]; then
+  REF="$(tr -d '[:space:]' < "$ROOT/supabase/.temp/project-ref")"
 fi
 
 if [ -z "$REF" ]; then
@@ -42,22 +60,33 @@ trap 'rm -f "$TMP_OUT"' EXIT
 
 npx supabase gen types typescript --project-id "$REF" --schema public > "$TMP_OUT"
 
-python - "$TMP_OUT" "$OUT" <<'PY'
-import pathlib, sys
-src = pathlib.Path(sys.argv[1])
-dst = pathlib.Path(sys.argv[2])
-raw = src.read_bytes()
-if raw.startswith(b'\xff\xfe'):
-    text = raw.decode('utf-16le')
-else:
-    try:
-        text = raw.decode('utf-8-sig')
-    except UnicodeDecodeError:
-        text = raw.decode('utf-8', errors='strict')
-text = text.replace('\r\n', '\n').replace('\r', '\n')
-with open(dst, 'w', encoding='utf-8', newline='\n') as fh:
-    fh.write(text)
-PY
+# Перекодировка делается НА NODE, а не на python.
+#
+# Почему сменён интерпретатор: на машине, где этот скрипт и должны запускать,
+# настоящего python нет. И `python`, и `python3` там перехватывает заглушка
+# Microsoft Store — она печатает одно слово «Python» и выходит с кодом 49.
+# То есть скрипт падал на первом же преобразовании, ещё до единой проверки, и
+# падал МОЛЧА: сообщение заглушки не похоже на ошибку, а `npm run` показывал
+# пустой вывод. 17.09.2026 это и случилось — «файл не изменился» было прочитано
+# как «дрейфа нет», хотя файл просто не писали.
+#
+# node здесь не новая зависимость, а та единственная, без которой проект не
+# собирается вовсе. Поведение сохранено дословно: UTF-16LE с BOM, UTF-8 с BOM и
+# чистый UTF-8 на входе; на выходе UTF-8 без BOM и только LF.
+node - "$TMP_OUT" "$OUT" <<'JS'
+const fs = require('node:fs');
+const [src, dst] = process.argv.slice(2);
+const raw = fs.readFileSync(src);
+let text;
+if (raw[0] === 0xff && raw[1] === 0xfe) {
+  text = raw.toString('utf16le');
+} else if (raw[0] === 0xef && raw[1] === 0xbb && raw[2] === 0xbf) {
+  text = raw.subarray(3).toString('utf8');
+} else {
+  text = raw.toString('utf8');
+}
+fs.writeFileSync(dst, text.replace(/\r\n/g, '\n').replace(/\r/g, '\n'), 'utf8');
+JS
 
 # Пустой или обрезанный файл хуже отсутствующего: он собирается, но
 # описывает пустую схему, и `tsc` перестаёт ловить расхождения.
@@ -67,12 +96,13 @@ if ! grep -q "items:" "$OUT"; then
   exit 1
 fi
 
-python - "$OUT" <<'PY'
-import pathlib, sys
-p = pathlib.Path(sys.argv[1])
-raw = p.read_bytes()
-if raw.startswith(b'\xff\xfe'):
-    raise SystemExit('БОМ UTF-16LE обнаружена: аннулирую сгенерированный файл и прерываю прогон')
-PY
+node - "$OUT" <<'JS'
+const fs = require('node:fs');
+const raw = fs.readFileSync(process.argv[2]);
+if (raw[0] === 0xff && raw[1] === 0xfe) {
+  console.error('БОМ UTF-16LE обнаружена: аннулирую сгенерированный файл и прерываю прогон');
+  process.exit(1);
+}
+JS
 
 echo "Готово. Дальше: createClient<Database> в src/lib/supabase.ts и npx tsc --noEmit"
