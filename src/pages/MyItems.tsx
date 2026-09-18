@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import StateIcon from '../components/icons/StateIcon'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { statusLabelKey } from '../domain/catalog'
@@ -69,7 +70,10 @@ export default function MyItems() {
 
       {filtered.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '48px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📦</div>
+          {/* Был 📦 — тот же разнобой языков, что и на витрине. См. StateIcon.tsx. */}
+          <div style={{ color: 'var(--silver-edge)', marginBottom: '16px' }}>
+            <StateIcon name="box" size={44} />
+          </div>
           <p style={{ color: '#666', marginBottom: '16px' }}>{t('myItems.noItems')}</p>
           <Link to="/list-item" className="btn btn-primary">{t('myItems.listFirst')}</Link>
         </div>

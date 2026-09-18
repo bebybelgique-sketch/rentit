@@ -5,6 +5,7 @@ import {
   CATEGORIES, categoryLabelKey, conditionLabelKey, isCategoryValue,
 } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
+import StateIcon from '../components/icons/StateIcon'
 import { coverPhoto } from '../lib/items'
 import { useBrowseItems } from '../hooks/useBrowseItems'
 import { useCatalogHasItems } from '../hooks/useCatalogHasItems'
@@ -63,6 +64,10 @@ function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: numbe
         // замену переменных не попала. Цена не действие и не сигнал,
         // поэтому здесь чернила, белый текст и серебряная кромка, а не
         // красный с жёлтым.
+        //
+        // 19.09: кнопка «voir plus» во всплывашке ниже осталась лаймовой —
+        // правку применили к метке и не довели до соседних десяти строк.
+        // Теперь обе в одном языке.
         html: `<div style="background:#121417;color:#F0F1F3;font-family:'Source Sans 3',system-ui,sans-serif;font-size:12px;font-weight:600;padding:4px 9px;border-radius:6px;border:1px solid rgba(198,205,213,0.45);white-space:nowrap;box-shadow:0 2px 8px rgba(18,20,23,0.45);cursor:pointer">€${Number(item.price_per_day).toFixed(2)}</div>`,
         iconAnchor: [28, 14],
       })
@@ -75,7 +80,7 @@ function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: numbe
           ${photo}
           <div style="font-weight:700;font-size:14px;margin-bottom:4px">${esc(item.title)}</div>
           <div style="font-size:13px;color:#666;margin-bottom:10px">€${Number(item.price_per_day).toFixed(2)}${t('home.perDay')}${item.deposit > 0 ? ` · €${Number(item.deposit).toFixed(2)} caution` : ''}</div>
-          <a href="/item/${esc(item.id)}" style="display:block;background:#080808;color:#ADFF2F;padding:7px 12px;border-radius:3px;font-size:12px;font-weight:600;text-align:center;text-decoration:none">${t('home.seeMore')}</a>
+          <a href="/item/${esc(item.id)}" style="display:block;background:#121417;color:#F0F1F3;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;text-align:center;text-decoration:none;border:1px solid rgba(198,205,213,0.45)">${t('home.seeMore')}</a>
         </div>
       `)
     })
@@ -551,7 +556,12 @@ export default function Home() {
           border: '1px solid var(--border)', borderRadius: 'var(--radius)',
           padding: 'var(--space-8) var(--space-6)', textAlign: 'center', background: '#fff',
         }}>
-          <div style={{ fontSize: '52px', marginBottom: 'var(--space-4)' }}>🔨</div>
+          {/* Был 🔨 в 52 px. Полноцветный объёмный эмодзи посреди продукта,
+              где всё остальное рисуется одной обводкой, — и самое яркое пятно
+              экрана: ярче единственного действия под ним. См. StateIcon.tsx. */}
+          <div style={{ color: 'var(--silver-edge)', marginBottom: 'var(--space-4)' }}>
+            <StateIcon name="tool" size={48} />
+          </div>
           {/* Ступень --text-xl (28px) верна для десктопа, но на 390px этот
               заголовок ломается на три строки. Кегль тут обязан быть гибким:
               нижняя граница — --text-lg, верхняя — --text-xl. */}

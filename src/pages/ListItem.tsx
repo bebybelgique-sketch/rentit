@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useBeforeUnload, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CATEGORIES, CONDITIONS, categoryPriceHintKey } from '../domain/catalog'
+import StateIcon from '../components/icons/StateIcon'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { Database } from '../types/database.types'
@@ -384,7 +385,10 @@ export default function ListItem() {
 
   if (needsPhoto && !photoDeferred) return (
     <div className="page" style={{ maxWidth: '480px', margin: '60px auto', textAlign: 'center' }}>
-      <div style={{ fontSize: '56px', marginBottom: '20px' }}>📸</div>
+      {/* Был 📸 — см. StateIcon.tsx. */}
+      <div style={{ color: 'var(--silver-edge)', marginBottom: '20px' }}>
+        <StateIcon name="camera" size={48} />
+      </div>
       <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '12px', letterSpacing: '-0.02em' }}>
         {t('addPhotoFirst')}
       </h2>
