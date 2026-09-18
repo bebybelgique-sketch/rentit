@@ -195,6 +195,9 @@
   "myRentalsAsRenter": "En tant que locataire",
   "myRentalsTitle": "Mes Locations",
   "nav": {
+    "home": "Accueil",
+    "bookings": "Locations",
+    "bottomLabel": "Navigation principale",
     "listItem": "Déposer un outil",
     "myItems": "Mes outils",
     "myRentals": "Mes locations"
