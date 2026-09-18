@@ -1,6 +1,6 @@
 // src/pages/Profile.tsx
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next'; // Импортируем хук
 import { useAuth } from '../context/AuthContext';
@@ -191,6 +191,26 @@ const Profile: React.FC = () => {
             {updateProfileMutation.isPending ? t('profile.updating') : t('profile.updateButton')} {/* Новые строки в i18n */}
           </button>
         </form>
+
+        {/* Вход в «Mes outils».
+            Так в канве — на нижней панели пятого места нет, и раздел живёт
+            строкой здесь. В продукте этой строки не было вовсе: на телефоне
+            навбар прячет ссылку правилом `.navbar-link.hide-mobile`, и
+            единственным входом оставалась страница своей же вещи. То есть
+            найти свои вещи мог только тот, кто уже нашёл одну из них.
+            «Mes locations» рядом не дублируется: этот раздел несёт панель. */}
+        <Link
+          to="/my-items"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            minHeight: '50px', marginTop: 'var(--space-6)', padding: '0 2px',
+            borderTop: '1px solid var(--border)', fontSize: '15px',
+            textDecoration: 'none', color: 'var(--text)',
+          }}
+        >
+          {t('nav.myItems')}
+          <span aria-hidden="true" style={{ color: 'var(--text-faint)' }}>›</span>
+        </Link>
 
         <div style={{ marginTop: '40px', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
           <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>{t('profile.dangerZoneTitle')}</h2> {/* Новая строка в i18n */}

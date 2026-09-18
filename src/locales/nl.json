@@ -195,6 +195,9 @@
   "myRentalsAsRenter": "Als huurder",
   "myRentalsTitle": "Mijn verhuur",
   "nav": {
+    "home": "Start",
+    "bookings": "Verhuur",
+    "bottomLabel": "Hoofdnavigatie",
     "listItem": "Gereedschap plaatsen",
     "myItems": "Mijn gereedschap",
     "myRentals": "Mijn huurcontracten"

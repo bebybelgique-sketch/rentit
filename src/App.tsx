@@ -11,6 +11,7 @@ import { useDocumentLanguage } from './hooks/useDocumentLanguage'
 import { useAuth } from './context/AuthContext'
 import { supabase } from './lib/supabase'
 import CookieBanner from './components/CookieBanner'
+import BottomNav from './components/layout/BottomNav'
 import RouteBoundary, { clearChunkReloadFlag } from './components/common/RouteBoundary'
 
 // Создаем клиент для TanStack Query
@@ -250,6 +251,11 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <div className="flex flex-col min-h-screen">
         <Navbar />
+        {/* Панель ставится рядом с навбаром, а не вместо него: на широких
+            экранах её скрывает CSS, на узких навбар продолжает держать язык,
+            выход и «Parcourir». Замена одного другим отняла бы у телефона
+            то, чего панель не несёт. */}
+        <BottomNav />
         <CookieBanner />
         {/* fallback={null} означал: пока страница грузится — пусто. То
             есть «грузится» и «сломалось» выглядели одинаково, и человек

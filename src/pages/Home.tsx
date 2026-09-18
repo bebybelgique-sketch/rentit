@@ -348,34 +348,48 @@ export default function Home() {
             его виднее. Два органа для одного фильтра — это не запасной путь,
             а вопрос «а эти два одно и то же?» на каждом визите. Сброс не
             потерян: повторное нажатие по чипу снимает выбор. */}
-        <button
-          onClick={toggleNearby}
-          className={`btn ${nearby ? 'btn-accent' : 'btn-secondary'}`}
-          disabled={geoLoading}
-          style={{ whiteSpace: 'nowrap', minHeight: '44px' }}
-        >
-          {geoLoading ? '...' : t('nearby')}
-        </button>
-        {/* Цена, место и даты нужны меньшинству и реже, но занимали весь
-            первый экран телефона: семь полей подряд и ни одного инструмента.
-            Витрина обязана показывать инструменты, а не форму. */}
-        <button
-          onClick={() => setFiltersOpen(o => !o)}
-          className="btn btn-secondary"
-          style={{ whiteSpace: 'nowrap', minHeight: '44px' }}
-          aria-expanded={filtersOpen}
-        >
-          Filtres{extraFilterCount > 0 ? ` · ${extraFilterCount}` : ''} {filtersOpen ? '▴' : '▾'}
-        </button>
-        {nearby && (
-          <select
-            value={radius}
-            onChange={e => setRadius(parseInt(e.target.value))}
-            style={{ width: '90px', minWidth: '90px' }}
-            aria-label={t('searchRadius')}
-          >
-            {[2, 5, 10, 20, 50].map(r => <option key={r} value={r}>{r} km</option>)}
-          </select>
+        {/* Приборы над пустотой.
+            Близость, фильтры и радиус настраивают ОТБОР из того, что есть.
+            Когда в каталоге ноль (замер прода 17.09.2026), настраивать
+            нечего: ползунок радиуса над экраном, который сам говорит
+            «расширять некуда», спорит с собственным текстом двумя строками
+            ниже. Поле поиска остаётся — им человек называет искомое, и
+            набранное подставляется в форму спроса.
+            `catalogIsEmpty === undefined` (ответа нет или отказ) ведёт себя
+            как «каталог не пуст»: убирать органы управления по неотвеченному
+            запросу нельзя. */}
+        {!catalogIsEmpty && (
+          <>
+            <button
+              onClick={toggleNearby}
+              className={`btn ${nearby ? 'btn-accent' : 'btn-secondary'}`}
+              disabled={geoLoading}
+              style={{ whiteSpace: 'nowrap', minHeight: '44px' }}
+            >
+              {geoLoading ? '...' : t('nearby')}
+            </button>
+            {/* Цена, место и даты нужны меньшинству и реже, но занимали весь
+                первый экран телефона: семь полей подряд и ни одного инструмента.
+                Витрина обязана показывать инструменты, а не форму. */}
+            <button
+              onClick={() => setFiltersOpen(o => !o)}
+              className="btn btn-secondary"
+              style={{ whiteSpace: 'nowrap', minHeight: '44px' }}
+              aria-expanded={filtersOpen}
+            >
+              Filtres{extraFilterCount > 0 ? ` · ${extraFilterCount}` : ''} {filtersOpen ? '▴' : '▾'}
+            </button>
+            {nearby && (
+              <select
+                value={radius}
+                onChange={e => setRadius(parseInt(e.target.value))}
+                style={{ width: '90px', minWidth: '90px' }}
+                aria-label={t('searchRadius')}
+              >
+                {[2, 5, 10, 20, 50].map(r => <option key={r} value={r}>{r} km</option>)}
+              </select>
+            )}
+          </>
         )}
       </div>
 
@@ -389,7 +403,10 @@ export default function Home() {
         </p>
       )}
 
-      {filtersOpen && (
+      {/* И раскрытая панель тоже: кнопку выше при пустом каталоге не видно,
+          но панель могла остаться открытой с того момента, когда вещи ещё
+          были. Условие здесь закрывает именно этот край. */}
+      {!catalogIsEmpty && filtersOpen && (
         <div className="filters-panel">
           <label className="filters-field">
             <span>{t('home.maxPriceLabel')}</span>
@@ -456,6 +473,13 @@ export default function Home() {
           Подписи заодно уехали в словари: они были захардкожены
           по-французски, а храповик их не видит — текст стоял отдельной
           строкой между тегами, это его известная слепая зона. */}
+      {/* Переключатель вида и чипы категорий — те же приборы над пустотой,
+          просто канва до них не дошла. При нулевом каталоге «Carte» открывает
+          пустую карту, а тап по «Jardinage» приводит в тот же самый экран:
+          орган управления, который выглядит как выбор, а работает как тупик.
+          Отступ содержимого намеренно не менялся — правка должна читаться как
+          обёртка, а не как переписанный блок. */}
+      {!catalogIsEmpty && (<>
       <div className="seg" role="group" aria-label={t('home.viewLabel')}>
         <button
           type="button"
@@ -497,6 +521,7 @@ export default function Home() {
           </button>
         ))}
       </div>
+      </>)}
 
       {/* Map view */}
       {viewMode === 'map' && !isPending && (

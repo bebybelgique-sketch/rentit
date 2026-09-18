@@ -195,6 +195,9 @@
   "myRentalsAsRenter": "As Renter",
   "myRentalsTitle": "My Rentals",
   "nav": {
+    "home": "Home",
+    "bookings": "Rentals",
+    "bottomLabel": "Main navigation",
     "listItem": "List a tool",
     "myItems": "My tools",
     "myRentals": "My rentals"
