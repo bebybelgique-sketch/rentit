@@ -209,6 +209,16 @@
   "emptyCatalogTitle": "The catalogue is empty",
   "emptyCatalogDesc": "Not just here — everywhere. It is not your search or your radius: RentIt is just starting, nobody has listed a tool yet.",
   "emptyCatalogWhyNoExpand": "Widening the area would take you to a second empty screen — that is why the button is not there.",
+  "toolDemand": {
+    "question": "Which tool were you looking for?",
+    "why": "Name it, even if nobody has it yet. This is what tells us what to get listed first.",
+    "placeholder": "Drill, pressure washer…",
+    "submit": "Send",
+    "empty": "Name the tool first — that is the useful half of this form.",
+    "done": "Noted: {{tool}}",
+    "doneNote": "Your request counts as a vote on what should be listed first. We will not write to you: we did not take your address.",
+    "failed": "Your request did not go through. Please try again."
+  },
   "noResultsTitle": "No tools found here yet",
   "ownerLabel": "Owner",
   "password": "Password",

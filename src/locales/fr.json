@@ -209,6 +209,16 @@
   "emptyCatalogTitle": "Le catalogue est vide",
   "emptyCatalogDesc": "Pas seulement ici — partout. Ce n’est ni votre recherche ni votre rayon : RentIt démarre, personne n’a encore déposé d’outil.",
   "emptyCatalogWhyNoExpand": "Élargir la zone vous mènerait à un second écran vide — c’est pourquoi ce bouton n’est pas là.",
+  "toolDemand": {
+    "question": "Quel outil cherchiez-vous ?",
+    "why": "Dites-le, même si personne ne l’a encore. C’est ce qui nous apprend quoi faire déposer en premier.",
+    "placeholder": "Perceuse, nettoyeur haute pression…",
+    "submit": "Envoyer",
+    "empty": "Nommez l’outil d’abord — c’est la moitié utile du formulaire.",
+    "done": "Noté : {{tool}}",
+    "doneNote": "Votre demande compte comme un vote sur ce qu’il faut déposer en premier. Nous ne vous écrirons pas : nous n’avons pas pris votre adresse.",
+    "failed": "Votre demande n’est pas partie. Réessayez."
+  },
   "noResultsTitle": "Aucun outil dans cette zone",
   "ownerLabel": "Propriétaire",
   "password": "Mot de passe",

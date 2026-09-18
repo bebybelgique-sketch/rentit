@@ -209,6 +209,16 @@
   "emptyCatalogTitle": "De catalogus is leeg",
   "emptyCatalogDesc": "Niet alleen hier — overal. Het ligt niet aan uw zoekopdracht of uw straal: RentIt begint net, niemand heeft nog gereedschap geplaatst.",
   "emptyCatalogWhyNoExpand": "De zone vergroten zou u naar een tweede leeg scherm brengen — daarom staat die knop er niet.",
+  "toolDemand": {
+    "question": "Welk gereedschap zocht u?",
+    "why": "Noem het, ook al heeft niemand het nog. Dit vertelt ons wat er als eerste geplaatst moet worden.",
+    "placeholder": "Boormachine, hogedrukreiniger…",
+    "submit": "Versturen",
+    "empty": "Noem eerst het gereedschap — dat is de nuttige helft van dit formulier.",
+    "done": "Genoteerd: {{tool}}",
+    "doneNote": "Uw vraag telt als een stem over wat er als eerste geplaatst moet worden. Wij schrijven u niet: we hebben uw adres niet gevraagd.",
+    "failed": "Uw vraag is niet verzonden. Probeer het opnieuw."
+  },
   "noResultsTitle": "Geen gereedschap in deze regio",
   "ownerLabel": "Eigenaar",
   "password": "Wachtwoord",

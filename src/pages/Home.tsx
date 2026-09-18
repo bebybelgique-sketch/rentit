@@ -8,6 +8,7 @@ import CategoryIcon from '../components/icons/CategoryIcon'
 import { coverPhoto } from '../lib/items'
 import { useBrowseItems } from '../hooks/useBrowseItems'
 import { useCatalogHasItems } from '../hooks/useCatalogHasItems'
+import ToolDemandForm from '../components/common/ToolDemandForm'
 import type { BrowseRow } from '../types'
 
 // Leaflet берётся из зависимостей проекта, а не с unpkg.
@@ -570,6 +571,11 @@ export default function Home() {
               </button>
             )}
           </div>
+          {/* Спрашиваем только при пустом каталоге. Когда вещи есть, а фильтры
+              не совпали, вопрос «что вы искали?» уже отвечен поиском — и
+              форма превратилась бы в шум над списком, который просто не сошёлся
+              по цене или датам. */}
+          {catalogIsEmpty && <ToolDemandForm initialTool={search} />}
         </div>
       ) : viewMode === 'map' ? null : (
         <>
