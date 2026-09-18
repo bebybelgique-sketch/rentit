@@ -511,6 +511,30 @@ export type Database = {
           },
         ]
       }
+      tool_demands: {
+        Row: {
+          created_at: string
+          id: string
+          locale: string | null
+          searched_query: string | null
+          tool: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          locale?: string | null
+          searched_query?: string | null
+          tool: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          locale?: string | null
+          searched_query?: string | null
+          tool?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           avatar_url: string | null
@@ -685,6 +709,12 @@ export type Database = {
           day: string
           item_id: string
           reason: string
+        }[]
+      }
+      unservable_pending_requests: {
+        Args: { p_exclude_booking?: string; p_item_id: string }
+        Returns: {
+          id: string
         }[]
       }
     }

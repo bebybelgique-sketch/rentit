@@ -63,6 +63,26 @@ describe('сторож ловит промахи, ради которых нап
     expect(hits[0]).toContain('INSERT, UPDATE');
   });
 
+  // Промах 18.09: миграция 34 выдала tool_demands `grant insert` и считала,
+  // что этим ограничила клиента. Умолчания Supabase (`alter default
+  // privileges … grant all`) уже отдали ему всё; живая база ответила
+  // GET → 200, PATCH → 204, DELETE → 204. Сторож этого увидеть не может — он
+  // читает только миграции, — но обязан ловить хотя бы ЯВНО написанное.
+  it('SELECT на tool_demands клиенту — нарушение', () => {
+    const hits = findViolations([
+      { name: '34.sql', sql: 'grant insert on public.tool_demands to anon, authenticated;' },
+      { name: 'x.sql', sql: 'grant select on public.tool_demands to authenticated;' },
+    ]);
+    expect(hits).toHaveLength(1);
+    expect(hits[0]).toContain('SELECT');
+  });
+
+  it('revoke all + grant insert — то, чего от новой таблицы и ждут', () => {
+    expect(findViolations([
+      { name: '36.sql', sql: 'revoke all on public.tool_demands from anon, authenticated;\ngrant insert on public.tool_demands to anon, authenticated;' },
+    ])).toEqual([]);
+  });
+
   it('снятое новой миграцией больше не нарушение', () => {
     const hits = findViolations([
       { name: '27.sql', sql: 'GRANT INSERT, UPDATE ON public.bookings TO authenticated;' },
