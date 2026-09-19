@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { UI, skipModals, CATEGORY_LABEL } from './helpers/app'
+import { seedCatalogItem, unseedCatalogItem, type CreatedItem } from './helpers/fixtures'
 
 /**
  * Свёрнутые фильтры.
@@ -13,6 +14,23 @@ import { UI, skipModals, CATEGORY_LABEL } from './helpers/app'
  * что применённый фильтр о себе объявляет.
  */
 test.describe('фильтры витрины', () => {
+  // Витрина прячет чипы, «À proximité», «Filtres» и радиус, когда каталог
+  // пуст: фильтровать нечего, и орган управления был бы тупиком. Решение
+  // верное — но проверять фильтры на пустой витрине значит не проверять
+  // фильтры. Одна вещь на весь файл, и она убирается за собой.
+  test.skip(!process.env.TEST_OWNER_EMAIL || !process.env.TEST_OWNER_PASSWORD, 'Нет учётки владельца в окружении')
+
+  let seeded: CreatedItem | null = null
+
+  test.beforeAll(async ({ browser }) => {
+    seeded = await seedCatalogItem(browser, 'E2E фильтры')
+  })
+
+  test.afterAll(async ({ browser }) => {
+    await unseedCatalogItem(browser, seeded)
+    seeded = null
+  })
+
   test.beforeEach(async ({ page }) => {
     await skipModals(page)
   })

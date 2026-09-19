@@ -1,7 +1,25 @@
 import { test, expect } from '@playwright/test'
 import { UI, CATEGORY_LABEL, skipModals } from './helpers/app'
+import { seedCatalogItem, unseedCatalogItem, type CreatedItem } from './helpers/fixtures'
 
 test.describe('витрина', () => {
+  // Витрина прячет чипы, «À proximité», «Filtres» и радиус, когда каталог
+  // пуст: фильтровать нечего, и орган управления был бы тупиком. Решение
+  // верное — но проверять фильтры на пустой витрине значит не проверять
+  // фильтры. Одна вещь на весь файл, и она убирается за собой.
+  test.skip(!process.env.TEST_OWNER_EMAIL || !process.env.TEST_OWNER_PASSWORD, 'Нет учётки владельца в окружении')
+
+  let seeded: CreatedItem | null = null
+
+  test.beforeAll(async ({ browser }) => {
+    seeded = await seedCatalogItem(browser, 'E2E витрина')
+  })
+
+  test.afterAll(async ({ browser }) => {
+    await unseedCatalogItem(browser, seeded)
+    seeded = null
+  })
+
   test.beforeEach(async ({ page }) => {
     await skipModals(page)
     await page.goto('/browse', { waitUntil: 'load' })
@@ -43,17 +61,29 @@ test.describe('витрина', () => {
     ).toBeVisible({ timeout: 15000 })
   })
 
-  test('пустая витрина объясняет пустоту и даёт выход', async ({ page }) => {
-    const cards = page.locator('.item-card')
-    await expect(cards.first().or(page.getByRole('heading', { name: UI.browseEmptyHeading })))
+  // ИНВАРИАНТ ТОТ ЖЕ, ПОСЫЛКА ДРУГАЯ. Прежняя версия этой проверки ждала
+  // ПУСТОГО КАТАЛОГА и требовала на нём кнопку «Élargir à 50 km». Обе
+  // половины устарели, и обе — намеренно:
+  //
+  //   • каталог тут больше не пуст: файл заводит себе вещь, иначе чипы и
+  //     фильтры скрыты и проверять их нечем. Проверка, которая при наличии
+  //     вещей просто пропускалась (`test.skip`), не охраняла ничего;
+  //   • кнопки расширения на ПУСТОМ каталоге больше нет: она вела во второй
+  //     такой же пустой экран, и продукт теперь говорит об этом вслух.
+  //
+  // Инвариант остался прежним: пустота объясняет себя и не ведёт в тупик.
+  // Здесь он проверяется на том пустом экране, который у витрины с каталогом
+  // и бывает, — когда фильтр не нашёл ничего. На нём расширение зоны как раз
+  // осмысленно, поэтому кнопка обязана быть.
+  test('фильтр без находок объясняет пустоту и даёт выход', async ({ page }) => {
+    await page.getByPlaceholder(UI.browseSearchPlaceholder)
+      .fill('zzz-такого-инструмента-нет-zzz')
+
+    await expect(page.getByRole('heading', { name: UI.browseEmptyHeading }))
       .toBeVisible({ timeout: 15000 })
+    await expect(page.locator('.item-card')).toHaveCount(0)
 
-    test.skip(await cards.count() > 0, 'На витрине есть инструменты — проверять пустое состояние нечем')
-
-    // Пустота витрины — решение, а не поломка. Дефектом была бы пустота,
-    // которая ведёт в тупик: человеку должно быть ясно, что делать дальше.
-    await expect(page.getByRole('heading', { name: UI.browseEmptyHeading })).toBeVisible()
-    await expect(page.getByRole('link', { name: /Déposer votre premier outil/i })).toBeVisible()
+    // Выход с этого экрана есть, и он ведёт туда, где что-то найдётся.
     await expect(page.getByRole('button', { name: /Élargir à 50 km/i })).toBeVisible()
   })
 })

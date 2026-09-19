@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { login, dismissCookies, skipModals, UI } from './helpers/app'
-import { createItem, removeItem, uniqueTitle, type CreatedItem } from './helpers/fixtures'
+import { createItem, removeItem, uniqueTitle, seedCatalogItem, unseedCatalogItem, type CreatedItem } from './helpers/fixtures'
 
 const OWNER_EMAIL = process.env.TEST_OWNER_EMAIL ?? ''
 const OWNER_PASSWORD = process.env.TEST_OWNER_PASSWORD ?? ''
@@ -126,6 +126,22 @@ test.describe('поиск по близости', () => {
  */
 test.describe('без разрешения на геолокацию', () => {
   test.use({ permissions: [] })
+
+  // Кнопки «À proximité» на пустой витрине нет вовсе — искать по ней нечего.
+  // Проверка про ОТКАЗ геолокации к пустоте каталога отношения не имеет,
+  // поэтому каталогу дают одну вещь и убирают её за собой.
+  test.skip(!OWNER_EMAIL || !OWNER_PASSWORD, 'Нет учётки владельца в окружении')
+
+  let seeded: CreatedItem | null = null
+
+  test.beforeAll(async ({ browser }) => {
+    seeded = await seedCatalogItem(browser, 'E2E геозасев')
+  })
+
+  test.afterAll(async ({ browser }) => {
+    await unseedCatalogItem(browser, seeded)
+    seeded = null
+  })
 
   test('кнопка «À proximité» объясняет отказ, а не молчит', async ({ page, context }) => {
     // Снимаем и то, что могло остаться от контекста: браузер обязан

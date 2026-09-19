@@ -1,6 +1,6 @@
 import { test, expect, type Locator } from '@playwright/test'
 import { skipModals, dismissCookies, CATEGORY_LABEL, UI, login } from './helpers/app'
-import { createItem, removeItem, uniqueTitle, type CreatedItem } from './helpers/fixtures'
+import { createItem, removeItem, uniqueTitle, seedCatalogItem, unseedCatalogItem, type CreatedItem } from './helpers/fixtures'
 
 const OWNER_EMAIL = process.env.TEST_OWNER_EMAIL ?? ''
 const OWNER_PASSWORD = process.env.TEST_OWNER_PASSWORD ?? ''
@@ -15,6 +15,23 @@ const OWNER_PASSWORD = process.env.TEST_OWNER_PASSWORD ?? ''
  * чего не видно в одном файле.
  */
 test.describe('единый справочник', () => {
+  // Витрина прячет чипы категорий, когда каталог пуст: фильтровать нечего,
+  // и чип был бы тупиком. Решение верное — но проверять совпадение подписей
+  // между лендингом и витриной, когда на витрине чипов нет, значит не
+  // проверять ничего. Одна вещь на весь файл, убирается за собой.
+  test.skip(!OWNER_EMAIL || !OWNER_PASSWORD, 'Нет учётки владельца в окружении')
+
+  let seeded: CreatedItem | null = null
+
+  test.beforeAll(async ({ browser }) => {
+    seeded = await seedCatalogItem(browser, 'E2E справочник-засев')
+  })
+
+  test.afterAll(async ({ browser }) => {
+    await unseedCatalogItem(browser, seeded)
+    seeded = null
+  })
+
   test.beforeEach(async ({ page }) => {
     await skipModals(page)
   })
@@ -23,11 +40,17 @@ test.describe('единый справочник', () => {
     await page.goto('/', { waitUntil: 'load' })
     await page.waitForLoadState('networkidle').catch(() => {})
 
-    // На лендинге подпись без ведущего эмодзи, на витрине — с ним.
-    // Сравниваем словесную часть.
+    // Подпись сравнивается ЦЕЛИКОМ. Раньше здесь стояло
+    // `label.replace(/^\S+\s/, '')` — срезать ведущий эмодзи, потому что на
+    // лендинге подпись шла без него, а на витрине с ним. Эмодзи из продукта
+    // сняты, и та же строка стала срезать первое СЛОВО: «Outillage manuel»
+    // превращалось в «manuel», которого на экране нет.
+    //
+    // Ровно этот приём уже подвёл один раз — в CategoriesSection, в тот же
+    // день и по той же причине. Расхождение подписей, ради которого тест и
+    // написан, теперь проверяется без всяких срезов: они совпадают.
     for (const label of Object.values(CATEGORY_LABEL)) {
-      const word = label.replace(/^\S+\s/, '')
-      await expect(page.getByText(word, { exact: true }).first())
+      await expect(page.getByText(label, { exact: true }).first())
         .toBeVisible({ timeout: 15000 })
     }
   })

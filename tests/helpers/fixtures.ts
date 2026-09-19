@@ -207,3 +207,51 @@ export async function removeItem(page: Page, id: string) {
     )
   }
 }
+
+/**
+ * Одна вещь на весь файл — ради того, чтобы витрина была НЕ ПУСТА.
+ *
+ * ЗАЧЕМ. Витрина намеренно прячет чипы категорий, «À proximité», «Filtres» и
+ * радиус, когда каталог пуст: орган управления, который выглядит как выбор, а
+ * фильтровать ему нечего, — тупик. Решение верное, и продукт с ним живёт.
+ *
+ * Но проверки самих фильтров писались, когда эти органы стояли всегда. На
+ * пустой витрине они падают не потому, что фильтр сломан, а потому, что
+ * фильтровать нечего. Проверка фильтра БЕЗ каталога не проверяет фильтр —
+ * она сообщает, что каталога нет.
+ *
+ * Поэтому такие файлы заводят одну вещь на весь набор и убирают её за собой.
+ * Одну, а не по вещи на тест: содержимое им безразлично, важен сам факт
+ * непустого каталога, а каждое заведение — это полный проход по форме.
+ *
+ * Убирает `afterAll`. Если он не отработает (обрыв прогона), остаётся
+ * globalTeardown, а за ним — шаг уборки в CI.
+ */
+export async function seedCatalogItem(
+  browser: import('@playwright/test').Browser,
+  prefix: string,
+): Promise<CreatedItem> {
+  const page = await browser.newPage()
+  try {
+    const { login } = await import('./app')
+    await login(page, process.env.TEST_OWNER_EMAIL ?? '', process.env.TEST_OWNER_PASSWORD ?? '')
+    return await createItem(page, { title: uniqueTitle(prefix) })
+  } finally {
+    await page.close()
+  }
+}
+
+export async function unseedCatalogItem(
+  browser: import('@playwright/test').Browser,
+  item: CreatedItem | null,
+): Promise<void> {
+  if (!item) return
+  const page = await browser.newPage()
+  try {
+    const { login } = await import('./app')
+    await login(page, process.env.TEST_OWNER_EMAIL ?? '', process.env.TEST_OWNER_PASSWORD ?? '')
+    await removeItem(page, item.id)
+  } finally {
+    await page.close()
+  }
+}
