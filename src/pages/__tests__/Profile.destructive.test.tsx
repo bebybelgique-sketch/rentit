@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -35,6 +35,16 @@ vi.mock('../../hooks/mutations/useUpdateProfile', () => ({
 vi.mock('../../hooks/mutations/useDeleteAccount', () => ({
   useDeleteAccount: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
+// Отзывы по умолчанию отсутствуют: блок «Avis reçus» не должен появляться
+// у того, кому ещё ничего не написали.
+let reviewsAsOwner: unknown[] = [];
+let reviewsAsRenter: unknown[] = [];
+vi.mock('../../hooks/useUserReviews', () => ({
+  useUserReviews: (_id: string | undefined, role: 'owner' | 'renter') => ({
+    data: role === 'owner' ? reviewsAsOwner : reviewsAsRenter,
+  }),
+}));
+
 vi.mock('../../hooks/mutations/useUploadAvatar', () => ({
   useUploadAvatar: () => ({ upload: vi.fn(), uploading: false }),
 }));
@@ -87,5 +97,53 @@ describe('профиль: разрушительное действие отли
     renderPage();
     expect(screen.getByText('Zone de danger')).toBeInTheDocument();
     expect(screen.queryByText('Danger Zone')).not.toBeInTheDocument();
+  });
+});
+
+describe('профиль: отзывы о человеке наконец видны', () => {
+  const review = (id: string, author: string, rating: number, comment: string) => ({
+    id, booking_id: 'b-1', from_user_id: 'x', to_user_id: 'u-1',
+    review_type: 'owner', rating, comment,
+    created_at: '2026-09-10T10:00:00Z',
+    authorName: author, authorAvatarUrl: null,
+  });
+
+  beforeEach(() => { reviewsAsOwner = []; reviewsAsRenter = []; });
+
+  // ДЫРА, РАДИ КОТОРОЙ ЭТО НАПИСАНО. Отзыв о человеке писать было куда
+  // (ReviewForm внутри переписки по брони), а читать — негде: хук
+  // useUserReviews не звал никто, ReviewList не отрисовывался нигде. Оба
+  // написаны и покрыты тестами, их просто не соединили. Человека просили
+  // потратить усилие на текст, которого не увидит ни он, ни кто-либо ещё.
+  it('полученный отзыв показан вместе с автором и текстом', () => {
+    reviewsAsOwner = [review('r-1', 'Marc D.', 5, 'Perceuse impeccable, voisin ponctuel.')];
+    renderPage();
+    expect(screen.getByText('Avis reçus')).toBeInTheDocument();
+    expect(screen.getByText(/Perceuse impeccable/i)).toBeInTheDocument();
+    expect(screen.getByText(/Marc D\./)).toBeInTheDocument();
+  });
+
+  // «Отзывов пока нет» в собственном профиле — витрина собственной пустоты,
+  // та же, из-за которой в истории вещи не пишут «сдавалась 0 раз».
+  it('без отзывов блока нет вовсе', () => {
+    renderPage();
+    expect(screen.queryByText('Avis reçus')).not.toBeInTheDocument();
+  });
+
+  // Две репутации разные: «хорошо сдаёт» и «хорошо берёт». Разделение
+  // заложено в схеме (review_type), и сводить их в кучу значит его потерять.
+  it('роли подписаны врозь', () => {
+    reviewsAsOwner = [review('r-1', 'Marc D.', 5, 'Bien.')];
+    reviewsAsRenter = [{ ...review('r-2', 'Sophie L.', 4, 'Rendu propre.'), review_type: 'renter' }];
+    renderPage();
+    expect(screen.getByText('En tant que propriétaire')).toBeInTheDocument();
+    expect(screen.getByText('En tant que locataire')).toBeInTheDocument();
+  });
+
+  it('пустая роль своей подписи не показывает', () => {
+    reviewsAsOwner = [review('r-1', 'Marc D.', 5, 'Bien.')];
+    renderPage();
+    expect(screen.getByText('En tant que propriétaire')).toBeInTheDocument();
+    expect(screen.queryByText('En tant que locataire')).not.toBeInTheDocument();
   });
 });
