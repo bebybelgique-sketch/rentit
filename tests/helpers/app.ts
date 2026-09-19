@@ -73,7 +73,10 @@ export const UI = {
   listItemSubmit: "Publier l'annonce",
   listItemNeedsPhoto: 'Ajoutez une photo de profil',
 
-  profileAvatarLabel: "URL de l'avatar",
+  // `profileAvatarLabel: "URL de l'avatar"` снят 20.09: текстового поля с
+  // адресом аватара в продукте нет с августа — снимок загружают файлом
+  // (кнопка «Choisir une photo»). Константа пережила ту правку, никем не
+  // использовалась и указывала на орган, которого не существует.
   profileSubmit: 'Mettre à jour le profil',
   profileSaved: 'Profil mis à jour avec succès!',
   profileAvatarSaved: 'Photo de profil mise à jour',

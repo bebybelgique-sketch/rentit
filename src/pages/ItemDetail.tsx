@@ -334,7 +334,9 @@ export default function ItemDetail() {
             onClick={() => navigate(-1)}
             style={{ background: 'none', color: 'var(--text)', fontSize: '13px', fontWeight: '600', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}
           >
-            ← Retour
+            {/* Стрелка — украшение и переводу не подлежит; слово рядом
+                подлежало и переведено не было. */}
+            <span aria-hidden="true">← </span>{t('itemDetail.back')}
           </button>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <button
@@ -813,7 +815,7 @@ export default function ItemDetail() {
         {reviews.length > 0 && (
           <div className="card" style={{ marginBottom: '20px' }}>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '4px' }}>
-              Avis
+              {t('itemDetail.reviewsLabel')}
             </p>
             {avgRating && (
               <div className="rating" style={{ marginBottom: '16px' }}>

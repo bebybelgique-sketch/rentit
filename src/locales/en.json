@@ -172,6 +172,9 @@
     "hidden": "Hidden",
     "view": "View",
     "edit": "Edit",
+    "hide": "Hide",
+    "show": "Show",
+    "delete": "Delete",
     "requestsTitle": "Rental requests",
     "rentalInProgress": "Rental in progress",
     "pendingRequests": "Pending requests"
@@ -431,6 +434,8 @@
     "refundableAtReturn": "— refundable upon return"
   },
   "itemDetail": {
+    "back": "Back",
+    "reviewsLabel": "Reviews",
     "requestError": "Error sending request",
     "unavailable": "Unavailable",
     "perDay": "per day",
@@ -502,6 +507,7 @@
     "viewGrid": "Grid",
     "viewMap": "Map",
     "viewLabel": "View",
+    "resetFilters": "Reset",
     "availableTo": "to"
   },
   "photoGrid": {

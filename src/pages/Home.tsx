@@ -468,7 +468,7 @@ export default function Home() {
               className="btn btn-secondary btn-sm"
               style={{ alignSelf: 'end' }}
             >
-              Réinitialiser
+              {t('home.resetFilters')}
             </button>
           )}
         </div>

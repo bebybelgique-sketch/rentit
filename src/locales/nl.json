@@ -172,6 +172,9 @@
     "hidden": "Verborgen",
     "view": "Bekijken",
     "edit": "Bewerken",
+    "hide": "Verbergen",
+    "show": "Tonen",
+    "delete": "Verwijderen",
     "requestsTitle": "Verhuurverzoeken",
     "rentalInProgress": "Verhuur loopt",
     "pendingRequests": "Aanvragen in behandeling"
@@ -431,6 +434,8 @@
     "refundableAtReturn": "— terugbetaalbaar bij teruggave"
   },
   "itemDetail": {
+    "back": "Terug",
+    "reviewsLabel": "Beoordelingen",
     "requestError": "Fout bij verzenden van aanvraag",
     "unavailable": "Niet beschikbaar",
     "perDay": "per dag",
@@ -502,6 +507,7 @@
     "viewGrid": "Raster",
     "viewMap": "Kaart",
     "viewLabel": "Weergave",
+    "resetFilters": "Wissen",
     "availableTo": "tot"
   },
   "photoGrid": {

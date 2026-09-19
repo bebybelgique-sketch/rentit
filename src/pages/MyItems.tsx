@@ -133,14 +133,17 @@ export default function MyItems() {
                         onClick={() => toggleAvailable(item.id, item.available ?? false)}
                         className="btn btn-secondary btn-sm"
                       >
-                        {(item.available ?? false) ? 'Masquer' : 'Afficher'}
+                        {/* Соседние кнопки этого же ряда — «Voir» и «Modifier» —
+                            переведены с самого начала, а эти три слова так и
+                            остались французскими для всех языков. */}
+                        {(item.available ?? false) ? t('myItems.hide') : t('myItems.show')}
                       </button>
                       <button
                         onClick={() => askDeleteItem(item.id)}
                         className="btn btn-sm"
                         style={{ color: 'var(--danger)', border: '1.5px solid var(--danger)', background: 'transparent' }}
                       >
-                        Supprimer
+                        {t('myItems.delete')}
                       </button>
                     </div>
                   </div>

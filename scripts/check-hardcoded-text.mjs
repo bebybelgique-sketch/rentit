@@ -112,6 +112,34 @@ export const findHardcodedText = () => {
           while (j >= 0 && !lines[j].trim()) j--
           if (j >= 0 && lines[j].trim().endsWith('>')) hits.push(`${rel} :: ${trimmed}`)
         }
+
+        // Зона 1б: ОДНО СЛОВО между тегами. Третья слепая зона, найдена
+        // 20.09.2026 и тоже оказалась обитаемой.
+        //
+        // `isProse` выше требует 12 знаков и три слова — иначе список утонул
+        // бы в шуме. Но подпись кнопки почти всегда одно слово, и потому
+        // мимо гейта прошли: «Supprimer», «Masquer», «Afficher» в «Моих
+        // вещах», «Réinitialiser» на витрине, «Avis» и «Retour» на странице
+        // вещи — и английское «Retry» в ErrorState, на французском продукте.
+        // Соседние кнопки того же ряда были переведены с самого начала.
+        //
+        // Шум отсекается СТРУКТУРОЙ, а не длиной: текстом между тегами
+        // считается только строка, у которой предыдущая непустая
+        // заканчивается на `>`, а следующая непустая начинается с `<`. Тогда
+        // это содержимое элемента и ничто иное. Ключевые слова языка
+        // (`return (` и подобное) исключены отдельно: скобка — не текст.
+        if (trimmed && !/[<>{}=;`()]/.test(trimmed) && /[A-Za-zÀ-ÿ]{3}/.test(trimmed) && !isProse(trimmed)) {
+          if (!/^[\d\s.,:%€|—–-]+$/.test(trimmed)) {
+            let before = i - 1
+            while (before >= 0 && !lines[before].trim()) before--
+            let after = i + 1
+            while (after < lines.length && !lines[after].trim()) after++
+            const insideElement =
+              before >= 0 && lines[before].trim().endsWith('>') &&
+              after < lines.length && lines[after].trim().startsWith('<')
+            if (insideElement) hits.push(`${rel} :: ${trimmed}`)
+          }
+        }
       }
 
       // Зона 2 — и в .tsx, и в .ts: подтверждения и отказы живут в хуках,
