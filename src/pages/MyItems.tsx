@@ -60,7 +60,18 @@ export default function MyItems() {
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '800' }}>{t('myItems.title')}</h1>
-        <Link to="/list-item" className="btn btn-primary">{t('myItems.newListing')}</Link>
+        {/* При пустом списке этой кнопки нет.
+            Правило продукта из #39: красный — глагол. На пустом экране глагол
+            был один, а красных кнопок три, и все вели в /list-item: эта, та же
+            в пустом состоянии ниже и круглая на нижней панели. Когда красным
+            выделено всё, не выделено ничего.
+            Убрана именно ЭТА: пустое состояние предлагает то же действие, но с
+            объяснением («Aucun outil pour l'instant»), а здесь надпись голая.
+            Когда вещи есть, кнопка возвращается — тогда пустого состояния нет
+            и дубля не возникает. */}
+        {filtered.length > 0 && (
+          <Link to="/list-item" className="btn btn-primary">{t('myItems.newListing')}</Link>
+        )}
       </div>
 
       <div className="tabs">
