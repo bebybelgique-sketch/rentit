@@ -233,6 +233,7 @@
     "title": "Mijn Profiel",
     "fullName": "Volledige naam",
     "avatarLabel": "Profielfoto",
+    "avatarChoose": "Kies een foto",
     "avatarHint": "JPG, PNG of WEBP, maximaal 5 MB. Wordt meteen opgeslagen.",
     "avatarUploading": "Foto wordt verzonden…",
     "avatarSaved": "Profielfoto bijgewerkt",

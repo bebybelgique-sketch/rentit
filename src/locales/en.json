@@ -233,6 +233,7 @@
     "title": "My Profile",
     "fullName": "Full Name",
     "avatarLabel": "Profile photo",
+    "avatarChoose": "Choose a photo",
     "avatarHint": "JPG, PNG or WEBP, 5 MB maximum. Saved immediately.",
     "avatarUploading": "Uploading photo…",
     "avatarSaved": "Profile photo updated",
