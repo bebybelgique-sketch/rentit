@@ -4,6 +4,23 @@ import { MemoryRouter } from 'react-router-dom';
 
 let items: Array<Record<string, unknown>> = [];
 
+// Заглушка supabase обязательна, хотя страница сама к базе не ходит.
+// MyItems тянет BookingOwnerActions → edgeInvoke → lib/supabase, а тот
+// БРОСАЕТ прямо при загрузке модуля, если нет VITE_SUPABASE_URL. Локально
+// переменная есть в .env, в CI её нет — и тест, зелёный на машине, валит
+// прогон. Ровно это уже ловили однажды (06d9ded, «модуль доступности
+// грузится без .env»). Здесь тот же класс, и поймал его снова CI.
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+    },
+    from: vi.fn(),
+    functions: { invoke: vi.fn() },
+  },
+}));
+
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'u-1' } }) }));
 vi.mock('../../hooks/useOwnerItems', () => ({
   useOwnerItems: () => ({ data: items, isLoading: false, isError: false }),
