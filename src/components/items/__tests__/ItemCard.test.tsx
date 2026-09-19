@@ -61,7 +61,12 @@ describe('ItemCard', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('🔧')).toBeInTheDocument(); // Иконка-заполнитель
+    // Инвариант прежний: без снимка на месте картинки стоит ЗАПОЛНИТЕЛЬ, а не
+    // пустота и не битая картинка. Изменилась только его реализация — был 🔧
+    // текстом, стал CategoryIcon. Значок помечен aria-hidden (он декоративный,
+    // рядом есть название), поэтому ищется как svg, а не по роли или тексту.
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(document.querySelector('.item-card-img svg, svg')).toBeInTheDocument();
   });
 
   it('renders the provided image if photos are present', () => {
@@ -88,7 +93,9 @@ describe('ItemCard', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('🔧')).toBeInTheDocument();
+    // Тот же инвариант, что выше: мусор в photos приводит к заполнителю, а не
+    // к картинке с пустым src.
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(document.querySelector('svg')).toBeInTheDocument();
   });
 });

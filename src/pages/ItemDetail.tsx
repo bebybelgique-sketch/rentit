@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { categoryLabelKey, conditionLabelKey } from '../domain/catalog'
+import StateIcon from '../components/icons/StateIcon'
 import CategoryIcon from '../components/icons/CategoryIcon'
 import { computeRentalPrice } from '../domain/pricing'
 import {
@@ -481,7 +482,9 @@ export default function ItemDetail() {
           )}
 
           {item.address && (
-            <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>📍 {item.address}</div>
+            <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <StateIcon name="pin" size={14} />{item.address}
+            </div>
           )}
         </div>
 
@@ -529,7 +532,12 @@ export default function ItemDetail() {
 
             {requestSent ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                <div style={{ fontSize: '40px', marginBottom: '12px' }}>✅</div>
+                {/* Была ✅ в 40 px — зелёная цветная картинка на экране, где
+                    зелёный больше нигде не встречается. Успех говорит текст,
+                    значок только подтверждает. */}
+                <div style={{ color: 'var(--success)', marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+                  <StateIcon name="check" size={40} />
+                </div>
                 <h3 style={{ fontWeight: '800', marginBottom: '8px' }}>{t('itemDetail.requestSent')}</h3>
                 {/* Здесь стояло «Vous serez notifié par email» — обещание,
                     которого продукт не держит: ключ Resend не задан, письмо

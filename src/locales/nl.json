@@ -37,12 +37,12 @@
   "bookingConfirmed": "Reservering bevestigd! Doorsturen...",
   "browse": "Bladeren",
   "categories": {
-    "power_tools": "⚡ Elektrisch gereedschap",
-    "hand_tools": "🔧 Handgereedschap",
-    "garden": "🌿 Tuinieren",
-    "construction": "🏗️ Bouwen",
-    "cleaning": "🧹 Schoonmaken",
-    "measuring": "📐 Meten & Detecteren"
+    "power_tools": "Elektrisch gereedschap",
+    "hand_tools": "Handgereedschap",
+    "garden": "Tuinieren",
+    "construction": "Bouwen",
+    "cleaning": "Schoonmaken",
+    "measuring": "Meten & Detecteren"
   },
   "categoryHints": {
     "power_tools": "Boormachines, zagen, slijpers, freesmachines",
@@ -81,7 +81,7 @@
   "fullName": "Volledige naam",
   "heroSub": "Huurgereedschap in de buurt — goedkoper dan kopen, beschikbaar binnen enkele minuten",
   "heroTitle": "Gereedschap van je buurman,\nbinnen handbereik",
-  "invitedMsg": "🎉 Je bent uitgenodigd! Registreer om te beginnen.",
+  "invitedMsg": "Je bent uitgenodigd! Registreer om te beginnen.",
   "joinRentIt": "Sluit je aan bij RentIt",
   "listFirstTool": "Plaats je eerste gereedschap →",
   "listItem": {
@@ -203,7 +203,7 @@
     "myRentals": "Mijn huurcontracten"
   },
   "navProfile": "Profiel",
-  "nearby": "📍 In de buurt",
+  "nearby": "In de buurt",
   "newListing": "Nieuwe advertentie",
   "newOwner": "✦ Nieuw — wees de eerste!",
   "noAccount": "Nog geen account?",

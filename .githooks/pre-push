@@ -50,6 +50,7 @@ run_gate "занятость в одном месте" node scripts/check-availa
 run_gate "прямой доступ к базе"    node scripts/check-db-access.mjs
 run_gate "привилегии клиента"      node scripts/check-migration-grants.mjs
 run_gate "снятая палитра"      node scripts/check-retired-palette.mjs
+run_gate "эмодзи в интерфейсе"  node scripts/check-emoji-in-ui.mjs
 # Прямой бинарник, а не npx: тот же результат, но без разрешения пакета
 # на каждом запуске. Запасной путь — если хук зовут там, где зависимости
 # лежат иначе.

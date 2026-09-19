@@ -37,12 +37,12 @@
   "bookingConfirmed": "Réservation confirmée ! Redirection...",
   "browse": "Parcourir",
   "categories": {
-    "power_tools": "⚡ Électroportatif",
-    "hand_tools": "🔧 Outillage manuel",
-    "garden": "🌿 Jardinage",
-    "construction": "🏗️ Construction",
-    "cleaning": "🧹 Nettoyage",
-    "measuring": "📐 Mesure & Détection"
+    "power_tools": "Électroportatif",
+    "hand_tools": "Outillage manuel",
+    "garden": "Jardinage",
+    "construction": "Construction",
+    "cleaning": "Nettoyage",
+    "measuring": "Mesure & Détection"
   },
   "categoryHints": {
     "power_tools": "Perceuses, scies, meuleuses, défonceuses",
@@ -81,7 +81,7 @@
   "fullName": "Nom complet",
   "heroSub": "Louez des outils professionnels près de chez vous — moins cher qu'acheter, disponible en minutes",
   "heroTitle": "Les outils de votre voisin,\nà portée de main",
-  "invitedMsg": "🎉 Vous avez été invité(e) ! Inscrivez-vous pour commencer.",
+  "invitedMsg": "Vous avez été invité(e) ! Inscrivez-vous pour commencer.",
   "joinRentIt": "Rejoindre RentIt",
   "listFirstTool": "Déposer votre premier outil →",
   "listItem": {
@@ -203,7 +203,7 @@
     "myRentals": "Mes locations"
   },
   "navProfile": "Profil",
-  "nearby": "📍 À proximité",
+  "nearby": "À proximité",
   "newListing": "Nouvelle annonce",
   "newOwner": "✦ Nouveau — soyez le premier !",
   "noAccount": "Pas encore de compte ?",

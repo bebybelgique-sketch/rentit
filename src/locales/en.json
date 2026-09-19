@@ -37,12 +37,12 @@
   "bookingConfirmed": "Booking confirmed! Redirecting…",
   "browse": "Browse",
   "categories": {
-    "power_tools": "⚡ Power tools",
-    "hand_tools": "🔧 Hand tools",
-    "garden": "🌿 Gardening",
-    "construction": "🏗️ Construction",
-    "cleaning": "🧹 Cleaning",
-    "measuring": "📐 Measuring & Detection"
+    "power_tools": "Power tools",
+    "hand_tools": "Hand tools",
+    "garden": "Gardening",
+    "construction": "Construction",
+    "cleaning": "Cleaning",
+    "measuring": "Measuring & Detection"
   },
   "categoryHints": {
     "power_tools": "Drills, saws, grinders, routers",

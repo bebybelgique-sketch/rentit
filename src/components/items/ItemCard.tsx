@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Item } from '../../types';
 import { coverPhoto } from '../../lib/items';
+import CategoryIcon from '../icons/CategoryIcon';
 
 interface ItemCardProps {
   item: Item;
@@ -41,7 +42,15 @@ const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         </div>
       ) : (
         <div style={{ aspectRatio: '4/3', background: 'var(--bg-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: '40px' }}>🔧</span>
+          {/* Был 🔧 в 40 px. Живая карточка витрины (BrowseCard в Home.tsx)
+              рисует здесь CategoryIcon по категории вещи — этот компонент ту
+              правку не получил. Теперь оба в одном языке.
+              ⚠️ ItemCard не используется ни одной страницей: его держит
+              только собственный тест. Дубль живой BrowseCard. Не удаляю при
+              багфиксе — это отдельное решение. */}
+          <span style={{ color: 'var(--silver-edge)' }}>
+            <CategoryIcon category={item.category ?? ''} size={40} />
+          </span>
         </div>
       )}
       <div style={{ padding: '16px 20px' }}>

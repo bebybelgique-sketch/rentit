@@ -79,6 +79,11 @@ jobs:
       - name: Снятая палитра (храповик)
         run: node scripts/check-retired-palette.mjs
 
+      # Цветные эмодзи мимо CategoryIcon/StateIcon. Граница — свойство
+      # Unicode Emoji_Presentation: ⚡🔧📍 да, ✓✦→ нет.
+      - name: Эмодзи в интерфейсе (храповик)
+        run: node scripts/check-emoji-in-ui.mjs
+
       # Отдельно от vitest НАМЕРЕННО: vitest не зовёт tsc. Ровно на этом
       # уже обжигались — локальный прогон тестов был зелёным, а сборка на
       # Vercel возвращала 2 на implicit any в тестовом файле.

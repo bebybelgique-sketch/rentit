@@ -33,9 +33,14 @@ export default function CategoriesSection() {
             <Link key={c.value} to={`/browse?category=${c.value}`} className="lp-cat">
               <CategoryIcon category={c.value} />
               <span>
-                {/* Ведущий эмодзи из подписи снимается: он остаётся в
-                    словаре ради остальных экранов, которые ещё на нём. */}
-                <span className="lp-cat-n">{t(c.labelKey).replace(/^\S+\s/, '')}</span>
+                {/* Здесь стояло `.replace(/^\S+\s/, '')` — приём, снимавший
+                    ведущий эмодзи прямо на отрисовке, «пока остальные экраны
+                    ещё на нём». Ради него эмодзи в словарях и терпели.
+                    Приём был хрупким по построению: он срезает ПЕРВОЕ СЛОВО,
+                    а не эмодзи. Как только 19.09 эмодзи ушли из словарей,
+                    «Outillage manuel» стало «manuel» — а «Électroportatif»
+                    уцелело лишь потому, что в нём нет пробела. Поймал тест. */}
+                <span className="lp-cat-n">{t(c.labelKey)}</span>
                 <span className="lp-cat-h">{t(c.hintKey)}</span>
               </span>
             </Link>

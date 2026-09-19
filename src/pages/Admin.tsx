@@ -127,13 +127,16 @@ export default function Admin() {
       {tab === 'stats' && (
         <div className="grid grid-2">
           {[
-            { label: 'Users', value: stats.isLoading ? '…' : stats.data?.users ?? 0, emoji: '👥' },
-            { label: 'Listings', value: stats.isLoading ? '…' : stats.data?.items ?? 0, emoji: '📦' },
-            { label: 'Bookings', value: stats.isLoading ? '…' : stats.data?.bookings ?? 0, emoji: '📅' },
-            { label: 'Completed rentals', value: stats.isLoading ? '…' : stats.data?.completed ?? 0, emoji: '✅' },
+            { label: 'Users', value: stats.isLoading ? '…' : stats.data?.users ?? 0 },
+            { label: 'Listings', value: stats.isLoading ? '…' : stats.data?.items ?? 0 },
+            { label: 'Bookings', value: stats.isLoading ? '…' : stats.data?.bookings ?? 0 },
+            { label: 'Completed rentals', value: stats.isLoading ? '…' : stats.data?.completed ?? 0 },
           ].map(s => (
             <div key={s.label} className="card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '36px', marginBottom: '8px' }}>{s.emoji}</div>
+              {/* Здесь стояли 👥📦📅✅ в 36 px. Эмодзи над числом в 32 px
+                  ничего не сообщал: значение и подпись говорят всё, а цветная
+                  картинка была самым ярким элементом служебного экрана.
+                  Убран, а не заменён — плитке значок не нужен. */}
               <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--primary)' }}>{s.value}</div>
               <div style={{ color: '#999', fontSize: '14px', marginTop: '4px' }}>{s.label}</div>
             </div>
