@@ -188,6 +188,7 @@
     "noRequests": "No requests",
     "noRequestsHint": "Rental requests for your tools will appear here.",
     "listTool": "List a tool",
+    "sectionsLabel": "Your rentals and incoming requests",
     "asRenter": "As a renter",
     "requestsForMyTools": "Requests for my tools"
   },

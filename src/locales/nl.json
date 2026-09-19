@@ -188,6 +188,7 @@
     "noRequests": "Geen verzoeken",
     "noRequestsHint": "Verhuurverzoeken voor je gereedschap verschijnen hier.",
     "listTool": "Gereedschap plaatsen",
+    "sectionsLabel": "Je huuraanvragen en ontvangen aanvragen",
     "asRenter": "Als huurder",
     "requestsForMyTools": "Aanvragen voor mijn gereedschap"
   },
