@@ -172,6 +172,9 @@
     "hidden": "Masqué",
     "view": "Voir",
     "edit": "Modifier",
+    "hide": "Masquer",
+    "show": "Afficher",
+    "delete": "Supprimer",
     "requestsTitle": "Réservations",
     "rentalInProgress": "Location en cours",
     "pendingRequests": "Demandes en attente"
@@ -431,6 +434,8 @@
     "refundableAtReturn": "— remboursable au retour"
   },
   "itemDetail": {
+    "back": "Retour",
+    "reviewsLabel": "Avis",
     "requestError": "Erreur lors de l'envoi de la demande",
     "unavailable": "Indisponible",
     "perDay": "par jour",
@@ -502,6 +507,7 @@
     "viewGrid": "Grille",
     "viewMap": "Carte",
     "viewLabel": "Affichage",
+    "resetFilters": "Réinitialiser",
     "availableTo": "au"
   },
   "photoGrid": {
