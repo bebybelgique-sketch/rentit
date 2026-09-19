@@ -35,7 +35,7 @@
 // 1. Что применено на живой базе. Миграции здесь применяют руками (см.
 //    docs/sprint-1-dod.md), файл в репозитории говорит о НАМЕРЕНИИ.
 //
-// 2. УМОЛЧАНИЯ SUPABASE — и это куда опаснее первого. В схеме public стоит
+// 2. УМОЛЧАНИЯ SUPABASE — ЗАКРЫТО 19.09.2026, читать ниже. В схеме public стоит
 //    `alter default privileges … grant all on tables to anon, authenticated`.
 //    Значит базовое состояние НОВОЙ таблицы не «прав нет», а «права есть
 //    ВСЕ», и ни одной строки об этом в миграциях не появляется. Сторож
@@ -49,6 +49,31 @@
 //    ВЫВОД ДЛЯ АВТОРА МИГРАЦИИ: у новой таблицы первым оператором идёт
 //    `revoke all … from anon, authenticated`, и только потом нужный grant.
 //    Без этого «сузил права» — иллюзия.
+//
+//    КАК ЗАКРЫТО. Сторож сам ЗАСЕИВАЕТ каждую встреченную `create table … `
+//    в схеме public полным набором прав для anon и authenticated — тем
+//    самым состоянием, которое создаёт умолчание. Дальше проигрываются
+//    написанные grant и revoke. Итог совпал со ВСЕМИ живыми замерами
+//    18.09 (docs/table-privileges-2026-09-18.md): bookings/users/reviews
+//    отдают DELETE, users не отдаёт табличный SELECT, tool_demands держит
+//    только INSERT. То есть модель воспроизводит живую базу, а не намерение.
+//
+//    Гейт, у которого известна слепая зона, обязан либо её закрыть, либо
+//    считаться непройденным. Эта закрыта.
+//
+// 3. ХРАПОВИК ВМЕСТО ЗАПРЕТА — почему гейт зелёный, хотя дыры есть.
+//    Засев вскрыл то, что было всегда: семь таблиц отдают клиенту ВСЁ, а
+//    users и bookings держат привилегии, прямо запрещённые правилами ниже.
+//    Снять их одним махом нельзя: массовый revoke трогает весь клиентский
+//    путь сразу, и ошибка в одной строке ломает продукт целиком — перед
+//    каждой снимаемой привилегией нужно назвать место в коде, которое ею
+//    не пользуется. Поэтому сегодняшняя явь ЗАМОРОЖЕНА поимённо в
+//    scripts/migration-grants-allowlist.json, и сторож падает на любом
+//    отличии в ЛЮБУЮ сторону: появилась привилегия, которой вчера не было,
+//    — красный; привилегию сняли, а строка осталась — тоже красный, иначе
+//    список тихо разойдётся с явью и врать начнёт он.
+//    Долги при этом печатаются и считаются каждый запуск. Список сокращают
+//    миграциями; расти он не должен.
 //
 // Зелёный сторож означает «намерение в миграциях непротиворечиво», а не
 // «на проде затянуто». Второе проверяется запросом к живой базе — образцы
@@ -99,6 +124,26 @@ export const RULES = {
  * встречается; появится — сторож увидит МЕНЬШЕ грантов, а не больше, и это
  * поймает проверка «сторож вообще что-то видит».
  */
+/**
+ * Таблицы схемы public, создаваемые в этом файле.
+ *
+ * Нужны ради умолчания Supabase: новая таблица рождается с ПОЛНЫМ набором
+ * прав у anon и authenticated, и ни одной строки об этом в миграциях нет.
+ * Без засева сторож считает такую таблицу чистой — ровно так он и согласился
+ * с миграцией 34, пока живая база не ответила иначе.
+ */
+const CREATE_TABLE = /\bcreate\s+table\s+(?:if\s+not\s+exists\s+)?([a-z_0-9."]+)/gi
+
+export const createdTables = (sql) => {
+  const out = []
+  for (const m of stripComments(sql).matchAll(CREATE_TABLE)) {
+    const name = m[1].toLowerCase().replace(/"/g, '')
+    const table = name.includes('.') ? name : `public.${name}`
+    if (table.startsWith('public.')) out.push(table)
+  }
+  return out
+}
+
 export const stripComments = (sql) =>
   String(sql)
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
@@ -156,10 +201,38 @@ export const parseStatements = (sql) => {
   return out
 }
 
+/**
+ * Имя, которое `supabase db push` СОГЛАСЕН применить: `<timestamp>_name.sql`.
+ *
+ * Всё остальное CLI пропускает, говоря об этом вслух на каждом запуске:
+ *
+ *   Skipping migration add_events_table.sql...
+ *   (file name must match pattern "<timestamp>_name.sql")
+ *
+ * Сторож обязан пропускать ровно то же. Иначе он моделирует базу, которой
+ * не существует: 19.09.2026 он засеивал public.events из файла, который
+ * не применялся ни разу, и отчитывался о привилегиях выдуманной таблицы.
+ */
+const APPLIED_NAME = /^\d+_.+\.sql$/
+
 /** Файлы миграций в том порядке, в каком их применяет `supabase db push`. */
 export const migrationFiles = () =>
   readdirSync(MIGRATIONS)
-    .filter((f) => f.endsWith('.sql'))
+    .filter((f) => f.endsWith('.sql') && APPLIED_NAME.test(f))
+    .sort()
+
+/**
+ * Файлы .sql, которые лежат рядом, но применены НЕ БУДУТ.
+ *
+ * Возвращаются отдельно, чтобы сторож сказал о них вслух. Молчание здесь
+ * опаснее всего: файл выглядит миграцией, читается как миграция, и по нему
+ * судят о состоянии базы — а он не исполнялся никогда. Именно так вышло с
+ * public.events: таблица на проде ЕСТЬ (её завели руками), но из миграций
+ * не воспроизводится, и в чистой базе её не будет.
+ */
+export const skippedFiles = () =>
+  readdirSync(MIGRATIONS)
+    .filter((f) => f.endsWith('.sql') && !APPLIED_NAME.test(f))
     .sort()
 
 /**
@@ -179,6 +252,17 @@ export const replayGrants = (files = migrationFiles().map((f) => ({
   const unsupported = []
 
   for (const { name, sql } of files) {
+    // ЗАСЕВ идёт ПЕРЕД операторами этого же файла: `create table` и
+    // `revoke all` обычно стоят в одной миграции, и порядок здесь решает.
+    for (const table of createdTables(sql)) {
+      for (const role of CLIENT_ROLES) {
+        const key = `${role}|${table}`
+        const set = state.get(key) ?? new Set()
+        for (const p of ALL_PRIVS) set.add(p)
+        state.set(key, set)
+      }
+    }
+
     for (const st of parseStatements(sql)) {
       if (st.objectType === 'function' || st.objectType === 'schema' || st.objectType === 'sequence') continue
       if (st.objectType === 'all-in-schema') {
@@ -228,6 +312,57 @@ export const findViolations = (files) => {
 }
 
 /**
+ * Храповик: замороженная поимённо ЯВЬ, а не идеал.
+ *
+ * RULES выше говорит «этого не должно быть НИКОГДА» и покрывает три таблицы,
+ * по которым решение принято и записано. Остальные шесть до 19.09.2026 не
+ * смотрел никто: засев умолчаний показал, что клиент держит на них полный
+ * набор прав, и вырасти он мог бы молча — ни правила, ни теста.
+ *
+ * Поэтому здесь заморожена вся поверхность целиком, и сверка идёт в ОБЕ
+ * стороны. Только «не больше» недостаточно: список, из которого не убирают
+ * снятое, за полгода превращается в художественное произведение, и врать
+ * начинает он, а не миграции.
+ */
+export const loadAllowlist = () =>
+  JSON.parse(readFileSync(join(root, 'scripts', 'migration-grants-allowlist.json'), 'utf8')).tables
+
+/**
+ * Расхождения состояния со списком: `{ appeared, vanished }`.
+ *
+ * `appeared` — привилегия есть в миграциях, в списке её нет. Кто-то выдал
+ * право и не сказал об этом.
+ * `vanished` — привилегия в списке есть, в миграциях её больше нет. Право
+ * сняли — строку надо убрать, иначе список расходится с явью.
+ */
+export const auditRatchet = (files, allowlist = loadAllowlist()) => {
+  const { state } = replayGrants(files)
+  const appeared = []
+  const vanished = []
+
+  const held = (table, role) => [...(state.get(`${role}|${table}`) ?? [])]
+  const listed = (table, role) => (allowlist[table]?.[role] ?? [])
+
+  const tables = new Set([
+    ...Object.keys(allowlist),
+    ...[...state.keys()].map((k) => k.split('|')[1]),
+  ])
+
+  for (const table of [...tables].sort()) {
+    for (const role of CLIENT_ROLES) {
+      const now = held(table, role)
+      const was = listed(table, role)
+      const plus = now.filter((p) => !was.includes(p)).sort()
+      const minus = was.filter((p) => !now.includes(p)).sort()
+      if (plus.length) appeared.push(`${table} / ${role}: ${plus.join(', ')} — выдано, но в списке этого нет`)
+      if (minus.length) vanished.push(`${table} / ${role}: ${minus.join(', ')} — снято миграцией, убрать строку из списка`)
+    }
+  }
+
+  return { appeared, vanished }
+}
+
+/**
  * Сколько операторов сторож разобрал. Ноль или неправдоподобно мало —
  * значит разбор сломан, а зелёный результат ничего не значит.
  */
@@ -239,21 +374,43 @@ export const countStatements = () =>
 
 if (process.argv[1] && process.argv[1].endsWith('check-migration-grants.mjs')) {
   const violations = findViolations()
+  const { appeared, vanished } = auditRatchet()
   const { state } = replayGrants()
-  const watched = Object.keys(RULES)
-    .flatMap((t) => CLIENT_ROLES.map((r) => [t, r, state.get(`${r}|${t}`)]))
-    .filter(([, , privs]) => privs?.size)
-    .map(([t, r, privs]) => `  ${t} / ${r}: ${[...privs].sort().join(', ')}`)
+
+  const surface = [...state.keys()]
+    .sort()
+    .filter((k) => state.get(k)?.size)
+    .map((k) => {
+      const [role, table] = k.split('|')
+      return `  ${table} / ${role}: ${[...state.get(k)].sort().join(', ')}`
+    })
 
   console.log(`миграций: ${migrationFiles().length}, операторов GRANT/REVOKE: ${countStatements()}`)
-  console.log(watched.length ? `табличные права клиента на поднадзорных таблицах:\n${watched.join('\n')}` : 'табличных прав клиента на поднадзорных таблицах нет')
-  for (const v of violations) console.log(`ЗАПРЕЩЕНО  ${v}`)
-  if (violations.length) {
-    console.log('\nСнять новой миграцией (REVOKE), а не правкой уже применённой.')
-    console.log('Если решение осознанное — менять RULES в этом файле вместе с ADR.')
+
+  // О пропущенных файлах говорится ВСЛУХ и первым делом. Файл, который
+  // выглядит миграцией и не исполняется, опаснее отсутствующего: по нему
+  // судят о состоянии базы.
+  const skipped = skippedFiles()
+  if (skipped.length) {
+    console.log(`\nНЕ ПРИМЕНЯЮТСЯ (имя не по шаблону <timestamp>_name.sql, db push их пропускает):`)
+    for (const f of skipped) console.log(`  ${f}`)
+    console.log('  Состояние базы по ним судить НЕЛЬЗЯ.')
   }
-  console.log(violations.length === 0
-    ? 'клиентские роли запрещённых привилегий не держат'
-    : `${violations.length} нарушений`)
-  process.exit(violations.length ? 1 : 0)
+
+  console.log(`\nтабличные права клиента после всех миграций:\n${surface.join('\n') || '  нет ни одной'}`)
+
+  for (const v of violations) console.log(`\nЗАПРЕЩЕНО  ${v}`)
+  for (const a of appeared) console.log(`\nНОВОЕ ПРАВО  ${a}`)
+  for (const v of vanished) console.log(`\nСПИСОК УСТАРЕЛ  ${v}`)
+
+  const total = violations.length + appeared.length + vanished.length
+  if (total) {
+    console.log('\nПривилегию снимают НОВОЙ миграцией (REVOKE), а не правкой уже применённой.')
+    console.log('Если выдача осознанная — вписать строку в scripts/migration-grants-allowlist.json')
+    console.log('вместе с пояснением why; запрет из RULES меняют только вместе с ADR.')
+  }
+  console.log(total === 0
+    ? '\nповерхность совпадает со списком, запрещённых привилегий нет'
+    : `\n${total} расхождений`)
+  process.exit(total ? 1 : 0)
 }

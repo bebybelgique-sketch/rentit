@@ -6,6 +6,9 @@ import {
   migrationFiles,
   parseStatements,
   replayGrants,
+  skippedFiles,
+  auditRatchet,
+  loadAllowlist,
   stripComments,
 } from '../../scripts/check-migration-grants.mjs';
 
@@ -136,5 +139,118 @@ describe('разбор операторов', () => {
   it('закомментированный грант грантом не считается', () => {
     expect(parseStatements('-- GRANT SELECT ON public.users TO anon;\n')).toHaveLength(0);
     expect(stripComments('/* GRANT ALL ON public.users TO anon; */').trim()).toBe('');
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────
+// Ниже — то, чего сторож не видел до 19.09.2026. Обе слепые зоны были
+// обитаемы, и обе нашлись не им, а живой базой и выводом CLI.
+// ────────────────────────────────────────────────────────────────────────
+
+describe('умолчания Supabase: новая таблица рождается с ПОЛНЫМИ правами', () => {
+  // Слепая зона №1. В схеме public стоит
+  //   alter default privileges … grant all on tables to anon, authenticated
+  // Ни строки об этом в миграциях нет, поэтому таблицу, которой никто явно
+  // ничего не снимал, сторож считал чистой. Ровно так он согласился с
+  // миграцией 34, пока живая база не ответила GET 200, PATCH 204, DELETE 204.
+  it('create table засеивает полный набор прав обеим клиентским ролям', () => {
+    const { state } = replayGrants([
+      { name: '01.sql', sql: 'create table public.gadgets (id uuid primary key);' },
+    ]);
+    for (const role of CLIENT_ROLES) {
+      const privs = state.get(`${role}|public.gadgets`);
+      expect([...privs!].sort()).toEqual(
+        ['DELETE', 'INSERT', 'REFERENCES', 'SELECT', 'TRIGGER', 'TRUNCATE', 'UPDATE'],
+      );
+    }
+  });
+
+  it('один только grant права НЕ сужает — это и была иллюзия миграции 34', () => {
+    const { state } = replayGrants([
+      { name: '34.sql', sql: 'create table public.gadgets (id uuid);\ngrant insert on public.gadgets to anon, authenticated;' },
+    ]);
+    // SELECT никто не выдавал — и он всё равно есть, из умолчания.
+    expect(state.get('anon|public.gadgets')?.has('SELECT')).toBe(true);
+  });
+
+  it('revoke all перед grant — то, что действительно сужает', () => {
+    const { state } = replayGrants([
+      { name: '34.sql', sql: 'create table public.gadgets (id uuid);\nrevoke all on public.gadgets from anon, authenticated;\ngrant insert on public.gadgets to anon, authenticated;' },
+    ]);
+    expect([...state.get('anon|public.gadgets')!]).toEqual(['INSERT']);
+  });
+
+  // ГРАНИЦА МОДЕЛИ, записанная явно, чтобы на неё не наткнулись как на
+  // сюрприз. Засев идёт перед ВСЕМИ операторами файла, а не на своём месте
+  // в тексте: сторож не исполняет SQL, он считает итог. Поэтому revoke,
+  // написанный ВЫШЕ create table, модель учтёт, а живая база отвергнет
+  // («relation does not exist»). Расхождение безопасно ровно в одну
+  // сторону: модель покажет права УЖЕ, чем на самом деле, и такая миграция
+  // до прода не доедет — упадёт при применении.
+  it('засев предшествует операторам файла, чем бы ни был их порядок в тексте', () => {
+    const { state } = replayGrants([
+      { name: '01.sql', sql: 'revoke all on public.gadgets from anon, authenticated;\ncreate table public.gadgets (id uuid);' },
+    ]);
+    expect(state.get('anon|public.gadgets')).toBeUndefined();
+  });
+
+  it('таблицы вне схемы public не засеиваются: умолчание стоит на public', () => {
+    const { state } = replayGrants([
+      { name: '01.sql', sql: 'create table auth.sessions (id uuid);' },
+    ]);
+    expect(state.get('anon|auth.sessions')).toBeUndefined();
+  });
+});
+
+describe('файлы, которые db push пропускает', () => {
+  // Слепая зона №2. `supabase migration list` говорит вслух:
+  //   Skipping migration add_events_table.sql...
+  //   (file name must match pattern "<timestamp>_name.sql")
+  // Сторож же читал этот файл и отчитывался о привилегиях таблицы, которой
+  // в базе из миграций не существует.
+  it('в разбор попадают только имена вида <timestamp>_name.sql', () => {
+    expect(migrationFiles().every((f) => /^\d+_.+\.sql$/.test(f))).toBe(true);
+  });
+
+  it('пропущенные не исчезают молча — их возвращают отдельно', () => {
+    expect(skippedFiles()).toContain('add_events_table.sql');
+  });
+
+  it('пропущенный файл и в разбор не попал', () => {
+    expect(migrationFiles()).not.toContain('add_events_table.sql');
+  });
+});
+
+describe('храповик: поверхность заморожена поимённо', () => {
+  // RULES покрывает три таблицы. Остальные шесть до 19.09 не смотрел никто,
+  // и вырасти они могли бы молча.
+  it('сегодняшняя явь совпадает со списком', () => {
+    const { appeared, vanished } = auditRatchet();
+    expect({ appeared, vanished }).toEqual({ appeared: [], vanished: [] });
+  });
+
+  it('новая привилегия, которой нет в списке, — красный', () => {
+    const { appeared } = auditRatchet(
+      [{ name: '99.sql', sql: 'grant update on public.bookings to authenticated;' }],
+      { 'public.bookings': { why: 'проба: клиенту оставлено только чтение', anon: [], authenticated: ['SELECT'] } },
+    );
+    expect(appeared.join(' ')).toContain('UPDATE');
+  });
+
+  // Сверка в ОБЕ стороны. Список, из которого не убирают снятое, за полгода
+  // превращается в художественное произведение — и врать начинает он.
+  it('снятая привилегия, оставшаяся в списке, — тоже красный', () => {
+    const { vanished } = auditRatchet(
+      [{ name: '99.sql', sql: 'revoke select on public.bookings from authenticated;' }],
+      { 'public.bookings': { why: 'проба: клиенту оставлено только чтение', anon: [], authenticated: ['SELECT'] } },
+    );
+    expect(vanished.join(' ')).toContain('SELECT');
+  });
+
+  it('у каждой замороженной таблицы есть пояснение why', () => {
+    for (const [table, entry] of Object.entries(loadAllowlist())) {
+      expect(typeof entry.why, `${table} без пояснения`).toBe('string');
+      expect(entry.why.length, `${table}: пояснение пустое`).toBeGreaterThan(20);
+    }
   });
 });

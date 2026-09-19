@@ -1,0 +1,113 @@
+{
+  "__": "ХРАПОВИК ТАБЛИЧНЫХ ПРИВИЛЕГИЙ КЛИЕНТА. Здесь записана ЯВЬ, а не идеал. Сторож scripts/check-migration-grants.mjs падает на ЛЮБОМ отличии, в обе стороны: появилась привилегия, которой здесь нет, — красный; привилегия снята, а строка осталась — тоже красный, иначе список тихо разойдётся с явью и врать начнёт он. Список СОКРАЩАЮТ миграциями. Расти он не должен: каждая новая строка — это решение, которое кто-то принял, и объяснить его надо в поле why. Строки, помеченные «НЕ СВЕРЕНО», — долг: привилегия пришла из умолчания Supabase (alter default privileges … grant all), и никто не проверял, пользуется ли ею код.",
+  "tables": {
+    "public.booking_messages": {
+      "why": "SELECT и INSERT выданы миграцией 11 — переписка по брони. UPDATE и DELETE пришли из умолчания и НЕ СВЕРЕНЫ с политиками: править и удалять чужое сообщение продукт не предлагает нигде.",
+      "anon": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "authenticated": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ]
+    },
+    "public.booking_photos": {
+      "why": "SELECT, INSERT, DELETE выданы миграцией 11 — снимки передачи и возврата. UPDATE пришёл из умолчания и НЕ СВЕРЕН.",
+      "anon": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "authenticated": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ]
+    },
+    "public.bookings": {
+      "why": "SELECT нужен: страницы «Мои вещи» и «Мои локации» читают брони напрямую. Запись у клиента снята миграциями 09, 12, 33 и 37.",
+      "anon": [
+        "SELECT"
+      ],
+      "authenticated": [
+        "SELECT"
+      ]
+    },
+    "public.item_blackouts": {
+      "why": "Все четыре законны: владелец сам ставит и снимает перерывы (миграция 22).",
+      "anon": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "authenticated": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ]
+    },
+    "public.items": {
+      "why": "Все четыре законны: витрина владельца — это и есть его таблица (миграция 27).",
+      "anon": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "authenticated": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ]
+    },
+    "public.payments": {
+      "why": "SELECT ещё может понадобиться, остальное НЕ СВЕРЕНО. Платежей в продукте пока нет вовсе — таблица ждёт.",
+      "anon": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "authenticated": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ]
+    },
+    "public.reviews": {
+      "why": "SELECT и INSERT законны — отзыв пишет участник сделки. UPDATE и DELETE пришли из умолчания и НЕ СВЕРЕНЫ: переписать выставленный отзыв продукт не предлагает.",
+      "anon": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "authenticated": [
+        "DELETE",
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ]
+    },
+    "public.tool_demands": {
+      "why": "Только INSERT — список названного спроса клиент лишь пополняет (миграции 34, 36).",
+      "anon": [
+        "INSERT"
+      ],
+      "authenticated": [
+        "INSERT"
+      ]
+    }
+  }
+}
