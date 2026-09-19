@@ -10,6 +10,7 @@ import BookingOwnerActions from '../components/booking/BookingOwnerActions';
 import CancellationNotice from '../components/common/CancellationNotice';
 import UserRatingBadge from '../components/common/UserRatingBadge';
 import { useRentalsAsOwner } from '../hooks/useRentalsAsOwner';
+import { useCatalogHasItems } from '../hooks/useCatalogHasItems';
 import { useTransitionBooking } from '../hooks/mutations/useTransitionBooking';
 import { serverErrorKey } from '../domain/serverErrors';
 import type { Rental } from '../types';
@@ -80,6 +81,27 @@ const MyRentals: React.FC = () => {
     setSearchParams(params);
   };
 
+  // ПУСТО С ОБЕИХ СТОРОН — это ОДНО состояние, а не два.
+  //
+  // Вкладки чинили настоящую беду (две секции стопкой и переключатель,
+  // который не переключал), но на пустом экране они её создали заново:
+  // человек открывает вкладку — «Aucune location en cours», жмёт вторую —
+  // «Aucune demande». Две пустоты вместо одной, и ни одна не говорит,
+  // ПОЧЕМУ пусто и что с этим делать.
+  //
+  // В канве этого экрана вкладок нет вовсе: пока сделок нет ни в одну
+  // сторону, там одна честная строка и одно действие, которое разблокирует
+  // обе стороны сразу. Полоса вкладок появляется вместе с содержимым.
+  const bothEmpty =
+    !userRentalsLoading && !ownerRentalsLoading &&
+    !userRentalsError && !ownerRentalsError &&
+    renterCount === 0 && ownerCount === 0;
+
+  // Довод «арендовать нечего, каталог пуст» — УТВЕРЖДЕНИЕ О СОСТОЯНИИ, и
+  // зашивать его нельзя: сегодня верно, завтра врёт. Тот же класс, что
+  // зашитый ноль на лендинге. Каталог спрашивается тем же запросом.
+  const { catalogIsEmpty } = useCatalogHasItems();
+
   const transitionMutation = useTransitionBooking();
 
   const handleCancel = async (rentalId: string) => {
@@ -139,6 +161,25 @@ const MyRentals: React.FC = () => {
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '20px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px' }}>{t('myRentalsTitle')}</h1>
 
+        {/* Одна пустота вместо двух. Ни вкладок, ни двух пустых списков:
+            пока сделок нет ни в одну сторону, переключать нечего, и
+            переключатель тут только заставляет человека дважды убедиться,
+            что смотреть не на что.
+            Довод подбирается по ФАКТИЧЕСКОМУ состоянию каталога: «нечего
+            арендовать, потому что каталог пуст» — утверждение, и зашивать
+            его нельзя. Пока ответа о каталоге нет, берётся более слабая
+            формулировка: она верна в обоих случаях. */}
+        {bothEmpty ? (
+          <EmptyState
+            title={t('myRentals.bothEmptyTitle')}
+            description={catalogIsEmpty
+              ? t('myRentals.bothEmptyBodyNoCatalog')
+              : t('myRentals.bothEmptyBody')}
+            actionLabel={catalogIsEmpty ? t('myRentals.listTool') : t('myRentals.browseTools')}
+            actionTo={catalogIsEmpty ? '/list-item' : '/browse'}
+          />
+        ) : (
+        <>
         {/* Настоящие вкладки, а не две кнопки прокрутки.
             Раньше здесь стояли две одинаково серые пилюли, которые лишь
             прокручивали страницу: ни одна никогда не была подсвечена, а обе
@@ -317,6 +358,8 @@ const MyRentals: React.FC = () => {
             </div>
           )}
         </section>
+        </>
+        )}
       </div>
     </div>
   );

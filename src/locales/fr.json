@@ -188,6 +188,9 @@
     "noRequests": "Aucune demande",
     "noRequestsHint": "Les demandes de location pour vos outils apparaîtront ici.",
     "listTool": "Déposer une annonce",
+    "bothEmptyTitle": "Aucune location, dans aucun sens",
+    "bothEmptyBodyNoCatalog": "Rien à prêter tant que vous n'avez pas déposé d'outil, rien à emprunter tant que le catalogue est vide. Les deux se débloquent au même endroit.",
+    "bothEmptyBody": "Vous n'avez encore rien prêté ni emprunté. Les deux commencent ici.",
     "sectionsLabel": "Vos locations et les demandes reçues",
     "asRenter": "En tant que locataire",
     "requestsForMyTools": "Demandes pour mes outils"
