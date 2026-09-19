@@ -1,5 +1,5 @@
 // src/pages/Profile.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next'; // Импортируем хук
@@ -19,6 +19,7 @@ const Profile: React.FC = () => {
   const updateProfileMutation = useUpdateProfile();
   const deleteAccountMutation = useDeleteAccount();
   const { upload: uploadAvatar, uploading: avatarUploading } = useUploadAvatar();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const { data: storedProfile } = useProfile(user?.id);
 
@@ -167,14 +168,32 @@ const Profile: React.FC = () => {
                 />
               )}
               <div style={{ flex: 1 }}>
+                {/* Поле выбора файла скрыто, нажатие передаёт кнопка.
+                    Сырой <input type="file"> рисует браузер, и на французском
+                    экране он показывал «Choose File · No file chosen» —
+                    английскую надпись, которую не переведёт ни один словарь, в
+                    оформлении по умолчанию. Это был самый дешёвый на вид
+                    элемент продукта, и стоял он на первом шаге профиля.
+                    Приём не новый: ровно так устроен выбор снимков в форме
+                    выкладки (ListItem.tsx, «Choisir des photos»). */}
                 <input
                   id="avatar_file"
+                  ref={avatarInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   onChange={handleAvatarFile}
                   disabled={avatarUploading}
-                  style={{ width: '100%' }}
+                  style={{ display: 'none' }}
                 />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  style={{ minHeight: '44px' }}
+                >
+                  {t('profile.avatarChoose')}
+                </button>
                 <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '6px', lineHeight: 1.5 }}>
                   {avatarUploading ? t('profile.avatarUploading') : t('profile.avatarHint')}
                 </p>
@@ -219,7 +238,18 @@ const Profile: React.FC = () => {
             onClick={handleDeleteAccount}
             className="btn btn-secondary"
             disabled={deleteAccountMutation.isPending}
-            style={{ marginTop: '10px', backgroundColor: 'var(--danger)', color: 'white' }}
+            // Контур, а не заливка. Токены --action и --danger в этом продукте
+            // — ОДИН И ТОТ ЖЕ #C8102E, поэтому залитая красным «Supprimer mon
+            // compte» выглядела ровно как «Mettre à jour le profil» двумя
+            // блоками выше: необратимое удаление учётки неотличимо от
+            // сохранения имени.
+            // Контурный вид для удаления в продукте уже принят — так нарисована
+            // кнопка «Supprimer» в «Моих вещах» (MyItems.tsx). Здесь было
+            // второе, расходящееся написание того же действия.
+            // Разрушительное действие не должно быть самым заметным на экране:
+            // оно должно быть найдено тем, кто его ищет, и не попасться тому,
+            // кто его не искал.
+            style={{ marginTop: '10px', color: 'var(--danger)', border: '1.5px solid var(--danger)', background: 'transparent' }}
           >
             {deleteAccountMutation.isPending ? t('profile.deleting') : t('profile.deleteButton')} {/* Новые строки в i18n */}
           </button>
