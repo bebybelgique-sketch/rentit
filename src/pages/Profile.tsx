@@ -9,7 +9,21 @@ import { useProfile } from '../hooks/useProfile';
 import { useUpdateProfile } from '../hooks/mutations/useUpdateProfile';
 import { useDeleteAccount } from '../hooks/mutations/useDeleteAccount';
 import { useUploadAvatar } from '../hooks/mutations/useUploadAvatar';
+import { useUserReviews, type UserReview } from '../hooks/useUserReviews';
+import ReviewList, { type ReviewListItem } from '../components/common/ReviewList';
 import toast from 'react-hot-toast';
+
+// Отзыв из базы → строка списка. Отдельной функцией, а не двумя копиями
+// внутри разметки: поля называются по-разному (created_at / createdAt), и
+// разойтись две копии могут молча.
+const toListItem = (r: UserReview): ReviewListItem => ({
+  id: r.id,
+  authorName: r.authorName,
+  authorAvatarUrl: r.authorAvatarUrl,
+  rating: r.rating,
+  comment: r.comment,
+  createdAt: r.created_at,
+});
 
 const Profile: React.FC = () => {
   const { t } = useTranslation(); // Используем хук
@@ -22,6 +36,11 @@ const Profile: React.FC = () => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const { data: storedProfile } = useProfile(user?.id);
+
+  // Две репутации врозь: «хорошо сдаёт» и «хорошо берёт». Разделение уже
+  // заложено в схеме (review_type), хук только его читает.
+  const { data: asOwner = [] } = useUserReviews(user?.id, 'owner');
+  const { data: asRenter = [] } = useUserReviews(user?.id, 'renter');
 
   const [profileData, setProfileData] = useState({
     // Подстановки почты здесь БЫТЬ НЕ ДОЛЖНО. full_name — публичное поле:
@@ -230,6 +249,47 @@ const Profile: React.FC = () => {
           {t('nav.myItems')}
           <span aria-hidden="true" style={{ color: 'var(--text-faint)' }}>›</span>
         </Link>
+
+        {/* «Avis reçus» — блок из канвы, и он закрывает настоящую дыру.
+            Отзыв о человеке писать было КУДА (ReviewForm внутри переписки по
+            брони), а читать — НЕГДЕ: хук useUserReviews не звал никто, а
+            компонент ReviewList не отрисовывался нигде. Оба написаны и покрыты
+            тестами, их просто не соединили. Получалось, что человека просят
+            потратить усилие на текст, который не увидит ни он, ни кто-либо
+            ещё: наружу выходило только усреднённое число в UserRatingBadge.
+
+            Блок появляется, ТОЛЬКО когда отзывы есть. «Отзывов пока нет» в
+            собственном профиле — витрина собственной пустоты, ровно та, из-за
+            которой в истории вещи не пишут «сдавалась 0 раз».
+
+            Две роли показаны врозь и подписаны: «хорошо сдаёт» и «хорошо
+            берёт» — разные репутации, и сводить их в одну кучу значит
+            потерять то, ради чего их и разделили в схеме (review_type). */}
+        {(asOwner.length > 0 || asRenter.length > 0) && (
+          <div style={{ marginTop: 'var(--space-6)' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>
+              {t('profile.reviewsTitle')}
+            </h2>
+
+            {asOwner.length > 0 && (
+              <section style={{ marginBottom: asRenter.length > 0 ? '24px' : 0 }}>
+                <h3 style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '10px' }}>
+                  {t('profile.reviewsAsOwner')}
+                </h3>
+                <ReviewList reviews={asOwner.map(toListItem)} />
+              </section>
+            )}
+
+            {asRenter.length > 0 && (
+              <section>
+                <h3 style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '10px' }}>
+                  {t('profile.reviewsAsRenter')}
+                </h3>
+                <ReviewList reviews={asRenter.map(toListItem)} />
+              </section>
+            )}
+          </div>
+        )}
 
         <div style={{ marginTop: '40px', padding: '20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
           <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>{t('profile.dangerZoneTitle')}</h2> {/* Новая строка в i18n */}
