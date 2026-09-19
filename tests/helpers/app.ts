@@ -48,9 +48,20 @@ export const UI = {
 
   notFound: 'Page introuvable',
 
+  // ДВА РАЗНЫХ ПУСТЫХ ЭКРАНА, и путать их нельзя.
+  // «dans cette zone» — каталог есть, но фильтр не нашёл ничего.
+  // «Le catalogue est vide» — вещей нет нигде, и это не про зону.
+  // Продукт различает их с 18.09 (useCatalogHasItems), и это было
+  // починкой неправды: «не нашлось здесь» при пустой базе — ложь.
   browseEmptyHeading: 'Aucun outil dans cette zone',
+  browseEmptyCatalogHeading: 'Le catalogue est vide',
   browseSearchPlaceholder: 'Rechercher des outils...',
-  nearby: '📍 À proximité',
+  // Эмодзи здесь были до 19.09 — ровно такие, как в интерфейсе. В продукте
+  // цветных эмодзи больше нет (их снял отдельный храповик), а константы
+  // оснастки отстали, и девять сценариев искали кнопку с значком, которого
+  // на экране уже не было. Папку tests/ не покрывает ни один гейт, поэтому
+  // расхождение всплыло только в прогоне против прода.
+  nearby: 'À proximité',
 
   myItemsHeading: 'Mes outils',
   myItemsEmpty: "Aucun outil pour l'instant",
@@ -68,14 +79,20 @@ export const UI = {
   profileAvatarSaved: 'Photo de profil mise à jour',
 } as const
 
-/** Категории витрины: значение в базе → подпись на экране. */
+/**
+ * Категории витрины: значение в базе → подпись на экране.
+ *
+ * Без эмодзи с 19.09: в продукте их больше нет. Значки были не украшением —
+ * они расходились между экранами (`power_tools` был ⚡ на витрине и 🔌 на
+ * странице вещи) и по языкам, поэтому сняты целиком.
+ */
 export const CATEGORY_LABEL = {
-  power_tools: '⚡ Électroportatif',
-  hand_tools: '🔧 Outillage manuel',
-  garden: '🌿 Jardinage',
-  construction: '🏗️ Construction',
-  cleaning: '🧹 Nettoyage',
-  measuring: '📐 Mesure & Détection',
+  power_tools: 'Électroportatif',
+  hand_tools: 'Outillage manuel',
+  garden: 'Jardinage',
+  construction: 'Construction',
+  cleaning: 'Nettoyage',
+  measuring: 'Mesure & Détection',
 } as const
 
 /**
