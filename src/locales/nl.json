@@ -188,6 +188,9 @@
     "noRequests": "Geen verzoeken",
     "noRequestsHint": "Verhuurverzoeken voor je gereedschap verschijnen hier.",
     "listTool": "Gereedschap plaatsen",
+    "bothEmptyTitle": "Geen verhuur, in geen enkele richting",
+    "bothEmptyBodyNoCatalog": "Niets uit te lenen zolang je geen gereedschap hebt geplaatst, niets te lenen zolang de catalogus leeg is. Allebei beginnen op dezelfde plek.",
+    "bothEmptyBody": "Je hebt nog niets uitgeleend of geleend. Allebei beginnen hier.",
     "sectionsLabel": "Je huuraanvragen en ontvangen aanvragen",
     "asRenter": "Als huurder",
     "requestsForMyTools": "Aanvragen voor mijn gereedschap"

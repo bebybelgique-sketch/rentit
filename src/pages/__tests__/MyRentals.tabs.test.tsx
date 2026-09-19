@@ -29,6 +29,13 @@ vi.mock('../../hooks/useRentals', () => ({
 vi.mock('../../hooks/useRentalsAsOwner', () => ({
   useRentalsAsOwner: () => ({ data: asOwner, isLoading: false, error: null }),
 }));
+// Каталог по умолчанию НЕ пуст: тогда пустой экран «Mes locations» пуст
+// только из-за самих сделок, и проверки вкладок ниже не зависят от
+// состояния витрины.
+let catalogEmpty: boolean | undefined = false;
+vi.mock('../../hooks/useCatalogHasItems', () => ({
+  useCatalogHasItems: () => ({ catalogIsEmpty: catalogEmpty }),
+}));
 vi.mock('../../hooks/mutations/useTransitionBooking', () => ({
   useTransitionBooking: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
@@ -61,7 +68,17 @@ const tabOwner = () => screen.getByRole('tab', { name: /Demandes pour mes outils
 describe('«Mes locations»: вкладки должны быть вкладками', () => {
   beforeEach(() => {
     asRenter = [];
-    asOwner = [];
+    // Одна сделка на стороне владельца — чтобы вкладки вообще были.
+    //
+    // Посылка изменилась осознанно. Эти проверки писались, когда полоса
+    // вкладок стояла всегда, в том числе на пустом экране. Так и было
+    // сделано, и это оказалось неверно: пусто с обеих сторон — ОДНО
+    // состояние, переключать там нечего, и вкладки заставляли человека
+    // дважды убедиться, что смотреть не на что. Теперь полоса появляется
+    // вместе с содержимым, а пустой случай проверяется отдельным набором
+    // ниже. Сами инварианты вкладок не менялись ни один.
+    asOwner = [booking('seed-owner')];
+    catalogEmpty = false;
     // scrollIntoView в jsdom не реализован вовсе. Это дыра среды, а не
     // продукта: защищать вызов в MyRentals.tsx проверкой typeof значило бы
     // тащить в код обход чужого ограничения.
@@ -129,9 +146,71 @@ describe('«Mes locations»: вкладки должны быть вкладка
     expect(tabOwner().textContent).toContain('2');
   });
 
+  // Нуля на вкладке не пишут: «0» читается как значение, а не как пустота,
+  // и на полосе из двух кнопок выглядит счётом, который зачем-то показали.
+  // Проверяется на РАЗНЫХ сторонах сразу: у владельца одна сделка, у
+  // арендатора ни одной.
   it('нуля на вкладке не показывают — пустая вкладка молчит', () => {
     renderAt('/my-rentals');
-    expect(tabOwner().querySelector('.seg-count')).toBeNull();
+    expect(tabOwner().textContent).toContain('1');
     expect(tabRenter().querySelector('.seg-count')).toBeNull();
+  });
+});
+
+describe('«Mes locations»: пусто с обеих сторон — это ОДНО состояние', () => {
+  beforeEach(() => {
+    asRenter = [];
+    asOwner = [];
+    catalogEmpty = false;
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  // Вкладки чинили настоящую беду, но на пустом экране создали новую:
+  // человек открывал одну — «Aucune location en cours», жал вторую —
+  // «Aucune demande». Две пустоты вместо одной, и ни одна не говорила,
+  // ПОЧЕМУ пусто. В канве этого экрана вкладок нет вовсе.
+  it('вкладок нет, когда переключать нечего', () => {
+    renderAt('/my-rentals');
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
+  });
+
+  it('вместо двух пустых списков — одна строка и одно действие', () => {
+    renderAt('/my-rentals');
+    expect(screen.getByText(/Aucune location, dans aucun sens/i)).toBeInTheDocument();
+    expect(screen.getAllByRole('link')).toHaveLength(1);
+  });
+
+  // Довод про пустой каталог — УТВЕРЖДЕНИЕ О СОСТОЯНИИ. Зашивать его
+  // нельзя: сегодня верно, завтра врёт. Тот же класс, что зашитый ноль на
+  // лендинге.
+  it('пустой каталог: зовут выложить свой инструмент', () => {
+    catalogEmpty = true;
+    renderAt('/my-rentals');
+    expect(screen.getByText(/tant que le catalogue est vide/i)).toBeInTheDocument();
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/list-item');
+  });
+
+  it('каталог не пуст: про пустой каталог НЕ говорится, зовут на витрину', () => {
+    catalogEmpty = false;
+    renderAt('/my-rentals');
+    expect(screen.queryByText(/tant que le catalogue est vide/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/browse');
+  });
+
+  // Пока ответа о каталоге нет, берётся формулировка, верная в обоих
+  // случаях: утверждать пустоту витрины наугад нельзя.
+  it('ответа о каталоге нет — про каталог молчим', () => {
+    catalogEmpty = undefined;
+    renderAt('/my-rentals');
+    expect(screen.queryByText(/tant que le catalogue est vide/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Aucune location, dans aucun sens/i)).toBeInTheDocument();
+  });
+
+  // Появилась хоть одна сделка — полоса возвращается.
+  it('полоса вкладок возвращается вместе с содержимым', () => {
+    asOwner = [booking('b-1')];
+    renderAt('/my-rentals');
+    expect(screen.getAllByRole('tab')).toHaveLength(2);
+    expect(screen.queryByText(/Aucune location, dans aucun sens/i)).not.toBeInTheDocument();
   });
 });

@@ -188,6 +188,9 @@
     "noRequests": "No requests",
     "noRequestsHint": "Rental requests for your tools will appear here.",
     "listTool": "List a tool",
+    "bothEmptyTitle": "No rentals, in either direction",
+    "bothEmptyBodyNoCatalog": "Nothing to lend until you list a tool, nothing to borrow while the catalogue is empty. Both unlock in the same place.",
+    "bothEmptyBody": "You have not lent or borrowed anything yet. Both start here.",
     "sectionsLabel": "Your rentals and incoming requests",
     "asRenter": "As a renter",
     "requestsForMyTools": "Requests for my tools"
