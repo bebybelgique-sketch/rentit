@@ -25,6 +25,10 @@ const formatDate = (iso: string) => {
 
 // Отменить можно, пока вещь не уехала. После передачи отменять нечего:
 // инструмент физически в чужих руках, и закрывается это возвратом.
+// Две стороны одной сделки. Человек здесь всегда обе сразу, поэтому
+// страница обязана говорить, КОТОРУЮ показывает.
+type RentalRole = 'renter' | 'owner';
+
 const CANCELLABLE_BY_RENTER = ['pending_approval', 'confirmed'];
 
 const MyRentals: React.FC = () => {
@@ -35,8 +39,15 @@ const MyRentals: React.FC = () => {
   // Без этого ссылка из /my-items была декоративной: человек попадал на
   // страницу с двумя списками и искал свою сделку глазами — а на десятке
   // броней это уже поиск, а не переход.
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const focusId = searchParams.get('booking');
+
+  // Какая вкладка открыта — в АДРЕСЕ, а не в useState. Тогда ссылка на
+  // конкретную сторону сделки пересылается целиком, работает кнопка
+  // «назад», и перезагрузка не сбрасывает человека на чужой список.
+  const roleParam = searchParams.get('role');
+  const explicitRole: RentalRole | null =
+    roleParam === 'owner' ? 'owner' : roleParam === 'renter' ? 'renter' : null;
 
   // Получаем аренды, где пользователь - арендатор
   const { data: userRentals, isLoading: userRentalsLoading, error: userRentalsError } = useRentals(user?.id);
@@ -48,6 +59,27 @@ const MyRentals: React.FC = () => {
   // делает сама. Всё, что доступно ВЛАДЕЛЬЦУ (одобрить, отклонить,
   // передать, вернуть, отменить), собрано в BookingOwnerActions и живёт
   // одинаково здесь и в /my-items.
+  // Ссылка /my-rentals?booking=<id> обязана привести к ВИДИМОЙ брони.
+  // Часть таких ссылок указывает на сделку, где человек владелец, — и,
+  // открыв вкладку арендатора по умолчанию, страница показала бы «ничего
+  // нет» поверх существующей брони. Поэтому без явного ?role сторону
+  // выбирает та, в чьём списке бронь действительно лежит.
+  const ownerHasFocus = !!focusId && !!ownerRentals?.some(r => r.id === focusId);
+  const role: RentalRole = explicitRole ?? (ownerHasFocus ? 'owner' : 'renter');
+
+  // Счётчик на НЕактивной вкладке — единственное, что сообщает о заявке,
+  // пришедшей на твой инструмент, пока открыта другая сторона. Без него
+  // владелец видит «Aucune location en cours» и уходит, а заявка лежит
+  // через одно нажатие.
+  const renterCount = userRentals?.length ?? 0;
+  const ownerCount = ownerRentals?.length ?? 0;
+
+  const selectRole = (next: RentalRole) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('role', next);
+    setSearchParams(params);
+  };
+
   const transitionMutation = useTransitionBooking();
 
   const handleCancel = async (rentalId: string) => {
@@ -71,7 +103,9 @@ const MyRentals: React.FC = () => {
     const node = document.getElementById(`booking-${focusId}`);
     if (!node) return;
     node.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [focusId, userRentals?.length, ownerRentals?.length]);
+    // role в зависимостях обязателен: узла booking-<id> нет в разметке,
+    // пока не открыта та вкладка, в которой лежит бронь.
+  }, [focusId, role, userRentals?.length, ownerRentals?.length]);
 
   // Подсветка карточки: прокрутка сама по себе не отвечает на вопрос «а
   // которая из них моя», если на экране помещается несколько.
@@ -105,24 +139,55 @@ const MyRentals: React.FC = () => {
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '20px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px' }}>{t('myRentalsTitle')}</h1>
 
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '32px' }}>
+        {/* Настоящие вкладки, а не две кнопки прокрутки.
+            Раньше здесь стояли две одинаково серые пилюли, которые лишь
+            прокручивали страницу: ни одна никогда не была подсвечена, а обе
+            секции всё равно лежали стопкой одна под другой. Орган управления
+            выглядел как выбор и выбором не был — на телефоне это просто
+            длинная лента из двух списков.
+            Вид взят готовый: .seg с залитой ЧЕРНИЛАМИ активной кнопкой — тот
+            же переключатель, что на главной. Модификатор --full растягивает
+            его на всю ширину только на телефоне: подписи по-французски
+            длинные («En tant que locataire»), и в inline-flex они рвутся. */}
+        <div className="seg seg--full" role="tablist" aria-label={t('myRentals.sectionsLabel')}>
           <button
-            onClick={() => document.getElementById('as-renter')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ padding: '10px 20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }}
+            type="button"
+            role="tab"
+            id="tab-renter"
+            aria-selected={role === 'renter'}
+            aria-controls="as-renter"
+            className={`seg-btn${role === 'renter' ? ' is-on' : ''}`}
+            onClick={() => selectRole('renter')}
           >
             {t('myRentals.asRenter')}
+            {renterCount > 0 && <span className="seg-count">{renterCount}</span>}
           </button>
           <button
-            onClick={() => document.getElementById('as-owner')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ padding: '10px 20px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', cursor: 'pointer' }}
+            type="button"
+            role="tab"
+            id="tab-owner"
+            aria-selected={role === 'owner'}
+            aria-controls="as-owner"
+            className={`seg-btn${role === 'owner' ? ' is-on' : ''}`}
+            onClick={() => selectRole('owner')}
           >
             {t('myRentals.requestsForMyTools')}
+            {ownerCount > 0 && <span className="seg-count">{ownerCount}</span>}
           </button>
         </div>
 
         {/* Аренды как арендатор */}
-        <section id="as-renter" style={{ marginBottom: '40px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>{t('myRentals.renterTitle')}</h2>
+        {/* Заголовка h2 здесь больше нет: вкладка над ним говорила «En tant
+            que locataire», а он следом — «Mes locations (Locataire)». Одно и
+            то же дважды подряд. Имя секции несёт сама вкладка, на неё и
+            ссылается aria-labelledby. */}
+        <section
+          id="as-renter"
+          role="tabpanel"
+          aria-labelledby="tab-renter"
+          hidden={role !== 'renter'}
+          style={{ marginBottom: '40px' }}
+        >
           {userRentalsLoading && <p>{t('common.loading')}</p>}
           {userRentalsError && <p>Erreur: {userRentalsError.message}</p>}
           {userRentals && userRentals.length === 0 && (
@@ -185,8 +250,13 @@ const MyRentals: React.FC = () => {
         </section>
 
         {/* Аренды как владелец */}
-        <section id="as-owner" style={{ marginBottom: '40px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>{t('myRentals.ownerTitle')}</h2>
+        <section
+          id="as-owner"
+          role="tabpanel"
+          aria-labelledby="tab-owner"
+          hidden={role !== 'owner'}
+          style={{ marginBottom: '40px' }}
+        >
           {ownerRentalsLoading && <p>{t('common.loading')}</p>}
           {ownerRentalsError && <p>Erreur: {ownerRentalsError.message}</p>}
           {ownerRentals && ownerRentals.length === 0 && (
