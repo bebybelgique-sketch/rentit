@@ -162,9 +162,15 @@ function BrowseCard({ item }: { item: BrowseRow }) {
               + €{item.deposit.toFixed(2)} caution
             </div>
           )}
-          <div className="item-card-meta">
-            {item.address && `📍 ${item.address}`}
-          </div>
+          {/* Была 📍 внутри шаблонной строки — эмодзи там неизбежен, потому
+              что строка не умеет держать разметку. Значок вынесен рядом: тот
+              же язык, что у всех остальных иконок продукта. */}
+          {item.address && (
+            <div className="item-card-meta" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <StateIcon name="pin" size={13} />
+              {item.address}
+            </div>
+          )}
           {/* Расстояние уже посчитано для фильтра по радиусу, но до
               сих пор не доходило до экрана. Близость — главное
               обещание витрины («Les outils de votre voisin»), и
