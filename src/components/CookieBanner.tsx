@@ -1,10 +1,49 @@
 import { useState, useEffect } from 'react'
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 type Consent = { necessary: true; functional: boolean; analytics: boolean }
 
 const STORAGE_KEY = 'rentit_cookie_consent'
+
+// Согласие и отказ рисуются ОДНИМ объектом стиля, а не двумя похожими.
+//
+// ЗАЧЕМ ИМЕННО ТАК. Раньше это были две разные кнопки, и «Refuser les
+// optionnels» проигрывала «Accepter tous les cookies» по КАЖДОЙ оси сразу:
+// заливка против прозрачного, #F5F4F0 против #555 на белом, рамки не было
+// против самой бледной #ddd, 14px против 13px, отступ 14 против 11, жирность
+// 700 против неустановленной, вся ширина против половины второго ряда.
+// Отказ оказывался слабее даже «Gérer les préférences» — то есть самым
+// незаметным органом на экране.
+//
+// Это не вкусовщина. Неравная заметность согласия и отказа — то самое
+// оформление, за которое CNIL в январе 2022 оштрафовала Google и Facebook
+// на 150 и 60 млн евро, и которое EDPB разбирает в руководстве 03/2022 о
+// вводящем в заблуждение оформлении. А в шапке этого же баннера написано
+// «CONFORME RGPD»: интерфейс подрывал ровно то, что утверждал текст над ним.
+//
+// Один объект вместо двух — чтобы равенство держалось СТРОЙКОЙ, а не
+// вниманием: сделать одну кнопку заметнее другой теперь нельзя, не разломав
+// общий стиль. Текст согласия, набор категорий и сама логика хранения не
+// тронуты — изменена только заметность.
+const CONSENT_BUTTON: CSSProperties = {
+  flex: 1,
+  background: '#080808', color: '#F5F4F0',
+  border: 'none', borderRadius: '3px',
+  padding: '14px 10px', fontSize: '14px', fontWeight: 700,
+  cursor: 'pointer', letterSpacing: '-0.01em', lineHeight: 1.25,
+}
+
+// «Настройки» — не выбор по существу, а обход: третья кнопка и должна
+// читаться третьей. Прежде она была заметнее отказа.
+const MANAGE_BUTTON: CSSProperties = {
+  width: '100%',
+  background: 'transparent', color: '#080808',
+  border: '1.5px solid #b8b6b0', borderRadius: '3px',
+  padding: '11px', fontSize: '13px', fontWeight: 600,
+  cursor: 'pointer', letterSpacing: '-0.01em',
+}
 
 export default function CookieBanner() {
   const { t } = useTranslation()
@@ -125,34 +164,20 @@ export default function CookieBanner() {
                   ))}
                 </div>
 
-                {/* Buttons */}
+                {/* Кнопки первого слоя. Согласие и отказ — в одном ряду и одним
+                    стилем; «настройки» уходят ниже отдельной строкой. */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button onClick={acceptAll} style={{
-                    background: '#080808', color: '#F5F4F0',
-                    border: 'none', borderRadius: '3px',
-                    padding: '14px', fontSize: '14px', fontWeight: '700',
-                    cursor: 'pointer', width: '100%', letterSpacing: '-0.01em',
-                  }}>
-                    {t('cookies.buttons.acceptAll')}
-                  </button>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={rejectAll} style={{
-                      flex: 1, background: 'transparent', color: '#555',
-                      border: '1.5px solid #ddd', borderRadius: '3px',
-                      padding: '11px', fontSize: '13px', cursor: 'pointer',
-                      letterSpacing: '-0.01em',
-                    }}>
+                    <button onClick={acceptAll} style={CONSENT_BUTTON}>
+                      {t('cookies.buttons.acceptAll')}
+                    </button>
+                    <button onClick={rejectAll} style={CONSENT_BUTTON}>
                       {t('cookies.buttons.declineOptional')}
                     </button>
-                    <button onClick={() => setExpanded(true)} style={{
-                      flex: 1, background: 'transparent', color: '#080808',
-                      border: '1.5px solid #b8b6b0', borderRadius: '3px',
-                      padding: '11px', fontSize: '13px', fontWeight: '600',
-                      cursor: 'pointer', letterSpacing: '-0.01em',
-                    }}>
-                      {t('cookies.buttons.managePreferences')}
-                    </button>
                   </div>
+                  <button onClick={() => setExpanded(true)} style={MANAGE_BUTTON}>
+                    {t('cookies.buttons.managePreferences')}
+                  </button>
                 </div>
               </>
             ) : (
