@@ -119,7 +119,7 @@ export default function MyItems() {
                         </span>
                         {pendingRequests.length > 0 && (
                           <span className="tag tag-yellow">
-                            {pendingRequests.length} demande{pendingRequests.length > 1 ? 's' : ''}
+                            {t('myItems.requestsCount', { count: pendingRequests.length })}
                           </span>
                         )}
                         {activeBooking && <span className="tag tag-yellow">{t('myItems.rentalInProgress')}</span>}
@@ -164,7 +164,7 @@ export default function MyItems() {
                                 {booking.renter?.full_name ?? 'Utilisateur'}
                               </div>
                               <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>
-                                {(booking.start_date ?? '')} → {(booking.end_date ?? '')} · {(booking.total_days ?? 0)} jour{(booking.total_days ?? 0) !== 1 ? 's' : ''} · €{Number(booking.total_price ?? 0).toFixed(2)}
+                                {(booking.start_date ?? '')} → {(booking.end_date ?? '')} · {t('common.days', { count: booking.total_days ?? 0 })} · €{Number(booking.total_price ?? 0).toFixed(2)}
                               </div>
                               {booking.request_message && (
                                 <div style={{ fontSize: '13px', color: '#555', marginTop: '6px', fontStyle: 'italic' }}>
@@ -192,7 +192,7 @@ export default function MyItems() {
                               {booking.renter?.full_name ?? 'Utilisateur'}
                             </div>
                             <div style={{ fontSize: '13px', color: '#666' }}>
-                              {(booking.start_date ?? '')} → {(booking.end_date ?? '')} · {(booking.total_days ?? 0)} jour{(booking.total_days ?? 0) !== 1 ? 's' : ''} · €{Number(booking.total_price ?? 0).toFixed(2)}
+                              {(booking.start_date ?? '')} → {(booking.end_date ?? '')} · {t('common.days', { count: booking.total_days ?? 0 })} · €{Number(booking.total_price ?? 0).toFixed(2)}
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>

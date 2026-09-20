@@ -54,6 +54,26 @@ const ATTR = /\b(placeholder|title|aria-label)="([^"]*[A-Za-zÀ-ÿ]{3,}[^"]*)"/g
 // проскочит. Скупая регулярка пропустила бы «Aucun avis pour le moment»,
 // где нет ни одного диакритического знака.
 const LITERAL = /(['"`])((?:\\.|(?!\1)[^\\\r\n])*)\1/g
+// Зона 1в: текст, зажатый между JSX-выражениями — `{count} jour{…}`.
+// Фигурная скобка в строке выключала и TEXT, и разбор строки-текста, а
+// форма эта самая частая: подпись рядом с числом.
+const SANDWICHED = /\}([^<>{}]*[A-Za-zÀ-ÿ]{2,}[^<>{}]*)[{<]/g
+
+/**
+ * Строка кончается ЗАКРЫВАЮЩЕЙ СКОБКОЙ ТЕГА, а не стрелкой функции.
+ *
+ * `=>` тоже кончается на `>`, и многострочная стрелка выглядела для зоны 1
+ * открытым тегом: тело функции на следующей строке принималось за текст
+ * внутри элемента. Нашлось 20.09 на собственной правке календаря —
+ * `(new Date(...).getDay() + 6) % 7` был объявлен «текстом мимо словарей».
+ *
+ * Ложная сработка опаснее пропуска ровно тем же, чем мерцающий тест:
+ * список, в котором есть заведомый мусор, перестают читать целиком.
+ */
+const endsWithTag = (line) => {
+  const t = line.trim()
+  return t.endsWith('>') && !t.endsWith('=>')
+}
 
 const wordCount = (t) => t.split(/\s+/).filter((w) => /[A-Za-zÀ-ÿ]{2}/.test(w)).length
 
@@ -72,6 +92,18 @@ const isProse = (txt) => {
 // и именах классов, а список из девяноста строк шума просто перестают
 // читать, и настоящая строка спрячется прямо в нём.
 const FR_NL = /\b(le|la|les|des|une|vous|votre|vos|est|sont|pas|doit|être|avec|pour|dans|sur|par|déjà|aucun|autre|lors|ligne|van|het|een|niet|uw|moet|geen|wordt|voor|met)\b/i
+
+/**
+ * Слова, которые приклеиваются к ЧИСЛУ. Отдельный список, а не расширение
+ * FR_NL, и это не педантизм: FR_NL кормит зону 2 с её замороженным списком
+ * из десяти строк, и любое слово, добавленное туда, перетряхивает заморозку
+ * целиком. Зона 1в спрашивает другое — «это подпись при числе?», — и список
+ * у неё свой.
+ *
+ * Служебные слова французского сюда не годятся: рядом с числом стоят
+ * существительные («3 jours», «2 demandes»), а не «le» и «vous».
+ */
+const FR_NL_COUNTED = /\b(jour|jours|semaine|semaines|mois|an|ans|heure|heures|minute|minutes|forfait|forfaits|demande|demandes|avis|nuit|nuits|exemplaire|exemplaires|place|places|photo|photos|dag|dagen|week|weken|maand|maanden|jaar|uur|aanvraag|aanvragen|beoordeling|beoordelingen)\b/i
 
 const isUserFacingLiteral = (txt) => {
   const t = txt.trim()
@@ -110,7 +142,7 @@ export const findHardcodedText = () => {
         if (trimmed && !/[<>{}=;`]/.test(trimmed) && isProse(trimmed)) {
           let j = i - 1
           while (j >= 0 && !lines[j].trim()) j--
-          if (j >= 0 && lines[j].trim().endsWith('>')) hits.push(`${rel} :: ${trimmed}`)
+          if (j >= 0 && endsWithTag(lines[j])) hits.push(`${rel} :: ${trimmed}`)
         }
 
         // Зона 1б: ОДНО СЛОВО между тегами. Третья слепая зона, найдена
@@ -135,10 +167,38 @@ export const findHardcodedText = () => {
             let after = i + 1
             while (after < lines.length && !lines[after].trim()) after++
             const insideElement =
-              before >= 0 && lines[before].trim().endsWith('>') &&
+              before >= 0 && endsWithTag(lines[before]) &&
               after < lines.length && lines[after].trim().startsWith('<')
             if (insideElement) hits.push(`${rel} :: ${trimmed}`)
           }
+        }
+
+        // Зона 1в: текст, ЗАЖАТЫЙ МЕЖДУ ВЫРАЖЕНИЯМИ. Четвёртая слепая зона,
+        // найдена 20.09.2026 — и самая населённая из всех.
+        //
+        // Зоны выше смотрят на строку целиком: `>текст<` или строка-текст.
+        // А самая частая форма оказалась другой:
+        //
+        //   {totalDays} jour{totalDays > 1 ? 's' : ''}
+        //   {pendingRequests.length} demande{…}
+        //   €{price} / semaine
+        //
+        // Фигурная скобка в строке выключала обе зоны разом, и одиннадцать
+        // мест на ДВУХ ГЛАВНЫХ экранах продукта — странице вещи и «Моих
+        // вещах» — говорили по-французски с англичанином и голландцем.
+        // Вдобавок там же жило ручное множественное число: `> 1 ? 's' : ''`
+        // — переписанная от руки грамматика, о вреде которой предупреждает
+        // шапка check-i18n-keys.
+        //
+        // Признак структурный: текст стоит между `}` и следующим `{` или
+        // `<`. Чтобы не ловить код, требуется слово французского или
+        // нидерландского из того же списка, что и в зоне 2.
+        for (const m of trimmed.matchAll(SANDWICHED)) {
+          const txt = m[1].trim()
+          if (txt.length < 2) continue
+          if (/^[\d\s.,:%€|—–-]+$/.test(txt)) continue
+          if (!FR_NL_COUNTED.test(txt)) continue
+          hits.push(`${rel} :: ${txt}`)
         }
       }
 

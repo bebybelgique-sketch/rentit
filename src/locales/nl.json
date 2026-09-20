@@ -162,6 +162,8 @@
   "manageIt": "beheren",
   "maxPrice": "Max €/dag",
   "myItems": {
+    "requestsCount_one": "{{count}} aanvraag",
+    "requestsCount_other": "{{count}} aanvragen",
     "deleteConfirm": "Deze advertentie verwijderen? Dit kan niet ongedaan worden gemaakt.",
     "title": "Mijn gereedschap",
     "newListing": "+ Nieuwe advertentie",
@@ -429,11 +431,21 @@
     "terms": "Voorwaarden"
   },
   "common": {
+    "days_one": "{{count}} dag",
+    "days_other": "{{count}} dagen",
+    "weeks_one": "{{count}} week",
+    "weeks_other": "{{count}} weken",
+    "packs3_one": "{{count}} 3-daagspakket",
+    "packs3_other": "{{count}} 3-daagspakketten",
     "loading": "Laden...",
     "optional": "— optioneel",
     "refundableAtReturn": "— terugbetaalbaar bij teruggave"
   },
   "itemDetail": {
+    "perThreeDays": "/ 3 dagen",
+    "perWeek": "/ week",
+    "rangeFrom": "Van",
+    "rangeTo": "Tot",
     "back": "Terug",
     "reviewsLabel": "Beoordelingen",
     "requestError": "Fout bij verzenden van aanvraag",
@@ -520,6 +532,8 @@
     "noReason": "Geen reden opgegeven"
   },
   "userRating": {
+    "reviewCount_one": "{{count}} beoordeling",
+    "reviewCount_other": "{{count}} beoordelingen",
     "asOwner": "als eigenaar",
     "asRenter": "als huurder",
     "noRating": "Nog geen beoordeling"
