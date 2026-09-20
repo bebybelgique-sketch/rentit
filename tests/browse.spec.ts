@@ -55,9 +55,11 @@ test.describe('витрина', () => {
     await chip.click()
 
     // Что бы ни нашлось, страница обязана остаться живой и отвечать:
-    // либо карточки, либо внятная пустота.
+    // либо карточки, либо внятная пустота. Пустота здесь именно
+    // «не совпали фильтры»: «À proximité» выключена, зона не применяется,
+    // и винить её витрина больше не станет.
     await expect(
-      page.locator('.item-card').first().or(page.getByRole('heading', { name: UI.browseEmptyHeading })),
+      page.locator('.item-card').first().or(page.getByRole('heading', { name: UI.browseNoMatchHeading })),
     ).toBeVisible({ timeout: 15000 })
   })
 
@@ -79,11 +81,17 @@ test.describe('витрина', () => {
     await page.getByPlaceholder(UI.browseSearchPlaceholder)
       .fill('zzz-такого-инструмента-нет-zzz')
 
-    await expect(page.getByRole('heading', { name: UI.browseEmptyHeading }))
+    // Причина названа ТА: искали по тексту, «À proximité» выключена, зона
+    // не применяется — значит дело в фильтрах, а не в зоне.
+    await expect(page.getByRole('heading', { name: UI.browseNoMatchHeading }))
       .toBeVisible({ timeout: 15000 })
     await expect(page.locator('.item-card')).toHaveCount(0)
 
-    // Выход с этого экрана есть, и он ведёт туда, где что-то найдётся.
-    await expect(page.getByRole('button', { name: /Élargir à 50 km/i })).toBeVisible()
+    // И выход соответствует причине: снять фильтры, а не расширять радиус,
+    // который здесь ничего не сужал. Кнопка «Élargir à 50 km» на этом экране
+    // не просто бесполезна — она ВКЛЮЧАЛА близость, то есть добавляла
+    // ограничение и выбрасывала вещи без координат.
+    await expect(page.getByRole('button', { name: /Effacer les filtres/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Élargir à 50 km/i })).toHaveCount(0)
   })
 })

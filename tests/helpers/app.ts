@@ -48,12 +48,19 @@ export const UI = {
 
   notFound: 'Page introuvable',
 
-  // ДВА РАЗНЫХ ПУСТЫХ ЭКРАНА, и путать их нельзя.
-  // «dans cette zone» — каталог есть, но фильтр не нашёл ничего.
-  // «Le catalogue est vide» — вещей нет нигде, и это не про зону.
-  // Продукт различает их с 18.09 (useCatalogHasItems), и это было
-  // починкой неправды: «не нашлось здесь» при пустой базе — ложь.
+  // ТРИ РАЗНЫХ ПУСТЫХ ЭКРАНА, и путать их нельзя. Каждый называет СВОЮ
+  // причину, и каждое различение было починкой неправды:
+  //
+  //   «Le catalogue est vide»      — вещей нет нигде. С 18.09.
+  //   «Aucun outil dans cette zone» — зона И ПРАВДА применена, то есть
+  //                                   «À proximité» включена и точка
+  //                                   известна. С 20.09: до этого зону
+  //                                   винили всегда, хотя без близости
+  //                                   запрос глобальный и зоны в нём нет.
+  //   «Aucun outil ne correspond»   — каталог есть, зона ни при чём, не
+  //                                   совпали фильтры.
   browseEmptyHeading: 'Aucun outil dans cette zone',
+  browseNoMatchHeading: 'Aucun outil ne correspond',
   browseEmptyCatalogHeading: 'Le catalogue est vide',
   browseSearchPlaceholder: 'Rechercher des outils...',
   // Эмодзи здесь были до 19.09 — ровно такие, как в интерфейсе. В продукте
