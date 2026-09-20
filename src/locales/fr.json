@@ -231,6 +231,9 @@
     "doneNote": "Votre demande compte comme un vote sur ce qu’il faut déposer en premier. Nous ne vous écrirons pas : nous n’avons pas pris votre adresse.",
     "failed": "Votre demande n’est pas partie. Réessayez."
   },
+  "noMatchTitle": "Aucun outil ne correspond",
+  "noMatchDesc": "Ce n'est pas la zone : la recherche porte sur toute la Belgique tant que « À proximité » est désactivé. Ce sont les filtres qui ne laissent rien passer.",
+  "clearAllFilters": "Effacer les filtres",
   "noResultsTitle": "Aucun outil dans cette zone",
   "ownerLabel": "Propriétaire",
   "password": "Mot de passe",

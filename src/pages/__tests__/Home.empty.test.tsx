@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // Leaflet тянет DOM-карту и свой CSS на уровне модуля. Карта в этих
@@ -79,10 +79,34 @@ describe('витрина при пустом результате', () => {
   describe('каталог не пуст, но фильтры не совпали', () => {
     beforeEach(() => { catalogIsEmpty = false; });
 
-    it('прежний текст остаётся — он верен именно здесь', () => {
+    // ПОСЫЛКА ИЗМЕНИЛАСЬ, И ВОТ ПОЧЕМУ. Проверка утверждала, что при
+    // непустом каталоге «Aucun outil dans cette zone» верно «именно здесь».
+    // Замер 20.09 показал обратное: `useBrowseItems` шлёт в базу
+    // `p_radius_km` ТОЛЬКО при `nearby && hasPoint`. При выключенной
+    // «À proximité» запрос глобальный — зоны в нём нет вовсе, и винить её
+    // не за что. Человек искал «perceuse», не находил и читал неверную
+    // причину.
+    //
+    // Инвариант прежний: пустой экран называет НАСТОЯЩУЮ причину. Здесь,
+    // с выключенной близостью, настоящая причина — фильтры.
+    it('без включённой близости зону не винят: причина — фильтры', () => {
       renderHome();
-      expect(screen.getByText('Aucun outil dans cette zone')).toBeInTheDocument();
+      expect(screen.getByText('Aucun outil ne correspond')).toBeInTheDocument();
+      expect(screen.queryByText('Aucun outil dans cette zone')).not.toBeInTheDocument();
       expect(screen.queryByText('Le catalogue est vide')).not.toBeInTheDocument();
+    });
+
+    // Кнопка обещала расширить, а СУЖАЛА: при выключенной близости нажатие
+    // включало её и ставило радиус 50 — добавляло ограничение, которого не
+    // было, и выбрасывало все вещи без координат.
+    it('кнопки «расширить» нет, пока расширять нечего', () => {
+      renderHome();
+      expect(screen.queryByRole('button', { name: /Élargir à 50 km/i })).not.toBeInTheDocument();
+    });
+
+    it('вместо неё — снять фильтры, и это настоящий выход', () => {
+      renderHome();
+      expect(screen.getByRole('button', { name: /Effacer les filtres/i })).toBeInTheDocument();
     });
 
     it('приборы на месте: отбор настраивать есть из чего', () => {
@@ -104,8 +128,50 @@ describe('витрина при пустом результате', () => {
     it('ведёт себя как «каталог не пуст»', () => {
       catalogIsEmpty = undefined;
       renderHome();
-      expect(screen.getByText('Aucun outil dans cette zone')).toBeInTheDocument();
+      // Не «каталог пуст» — вот что здесь проверяется. Какой именно текст
+      // непустого случая покажут, решает уже вторая развилка (применена ли
+      // зона), и по умолчанию «À proximité» выключена.
+      expect(screen.getByText('Aucun outil ne correspond')).toBeInTheDocument();
+      expect(screen.queryByText('Le catalogue est vide')).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Filtres/ })).toBeInTheDocument();
     });
+  });
+});
+
+/**
+ * Случай, ради которого текст про зону вообще остался.
+ *
+ * Когда «À proximité» включена и точка известна, `useBrowseItems` и правда
+ * шлёт в базу `p_radius_km` — зона применяется, винить её законно, а поднять
+ * радиус с 10 до 50 это настоящее расширение. Разделение имело бы смысл
+ * только наполовину, если бы верный случай при этом потерялся.
+ */
+describe('витрина: зона применена по-настоящему', () => {
+  const WAVRE = { coords: { latitude: 50.7167, longitude: 4.6167 } };
+
+  beforeEach(() => {
+    catalogIsEmpty = false;
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (ok: (p: unknown) => void) => ok(WAVRE) },
+    });
+  });
+
+  const turnOnNearby = async () => {
+    renderHome();
+    fireEvent.click(screen.getByRole('button', { name: /À proximité/ }));
+    await screen.findByText('Aucun outil dans cette zone');
+  };
+
+  it('теперь зону винят — и это правда', async () => {
+    await turnOnNearby();
+    expect(screen.getByText('Aucun outil dans cette zone')).toBeInTheDocument();
+    expect(screen.queryByText('Aucun outil ne correspond')).not.toBeInTheDocument();
+  });
+
+  it('и кнопка расширения возвращается — расширять есть что', async () => {
+    await turnOnNearby();
+    expect(screen.getByRole('button', { name: /Élargir à 50 km/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Effacer les filtres/i })).not.toBeInTheDocument();
   });
 });
