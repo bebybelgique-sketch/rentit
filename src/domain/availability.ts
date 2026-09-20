@@ -56,3 +56,29 @@ export async function loadItemCalendar(itemId: string): Promise<ItemCalendar> {
   ) => PromiseLike<{ data: unknown; error: unknown }>
   return fetchWithRpc((fn, args) => rpc(fn, args), itemId, from, to)
 }
+
+/**
+ * Сколько пустых клеток стоит перед первым числом месяца.
+ *
+ * Неделя начинается с ПОНЕДЕЛЬНИКА. `Date.getDay()` считает от воскресенья
+ * — американское соглашение, — и календарь на странице вещи съезжал на день
+ * относительно того, как неделю читают в Бельгии и вообще в Европе.
+ * Сдвиг `(d + 6) % 7` переводит воскресенье-первое в понедельник-первое.
+ */
+export const monthStartOffset = (year: number, month: number): number =>
+  (new Date(year, month, 1).getDay() + 6) % 7
+
+/**
+ * Подписи дней недели, от понедельника, на языке читателя.
+ *
+ * Берутся у платформы, а не из словарей: держать три копии названий дней и
+ * сводить их вручную — работа, которую Intl уже сделал, и лишний способ
+ * разойтись. До 20.09 здесь стоял массив ['Di','Lu',…] — французские
+ * подписи для англичанина и голландца, да ещё и с воскресенья.
+ *
+ * 5 января 2026 — понедельник; дальше просто по дням.
+ */
+export const weekdayLabels = (locale: string): string[] =>
+  Array.from({ length: 7 }, (_, i) =>
+    new Date(2026, 0, 5 + i).toLocaleDateString(locale, { weekday: 'short' }),
+  )

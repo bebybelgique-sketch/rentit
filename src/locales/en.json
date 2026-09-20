@@ -162,6 +162,8 @@
   "manageIt": "manage it",
   "maxPrice": "Max €/day",
   "myItems": {
+    "requestsCount_one": "{{count}} request",
+    "requestsCount_other": "{{count}} requests",
     "deleteConfirm": "Delete this listing? This action cannot be undone.",
     "title": "My tools",
     "newListing": "+ New listing",
@@ -429,11 +431,21 @@
     "terms": "Terms"
   },
   "common": {
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "weeks_one": "{{count}} week",
+    "weeks_other": "{{count}} weeks",
+    "packs3_one": "{{count}} 3-day package",
+    "packs3_other": "{{count}} 3-day packages",
     "loading": "Loading...",
     "optional": "— optional",
     "refundableAtReturn": "— refundable upon return"
   },
   "itemDetail": {
+    "perThreeDays": "/ 3 days",
+    "perWeek": "/ week",
+    "rangeFrom": "From",
+    "rangeTo": "To",
     "back": "Back",
     "reviewsLabel": "Reviews",
     "requestError": "Error sending request",
@@ -520,6 +532,8 @@
     "noReason": "No reason given"
   },
   "userRating": {
+    "reviewCount_one": "{{count}} review",
+    "reviewCount_other": "{{count}} reviews",
     "asOwner": "as owner",
     "asRenter": "as renter",
     "noRating": "No rating yet"

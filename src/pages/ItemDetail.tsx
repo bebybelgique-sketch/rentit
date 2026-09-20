@@ -9,6 +9,7 @@ import CategoryIcon from '../components/icons/CategoryIcon'
 import { computeRentalPrice } from '../domain/pricing'
 import {
   loadItemCalendar, toISODate, daysBetween, firstUnavailableDay, isTooSoon, isSelectable,
+  monthStartOffset, weekdayLabels,
 } from '../domain/availability'
 import type { ItemCalendar } from '../domain/availability'
 import { itemHistoryOf, photosOf, type ItemHistory } from '../lib/items'
@@ -195,7 +196,6 @@ export default function ItemDetail() {
   }
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
-  const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay()
 
   const todayISO = toISODate(new Date())
 
@@ -318,8 +318,13 @@ export default function ItemDetail() {
   const photos = item.photos || []
   const { year, month } = calMonth
   const daysCount = daysInMonth(year, month)
-  const firstDay = firstDayOfMonth(year, month)
-  const monthLabel = new Date(year, month).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  // Смещение и подписи дней живут в домене, рядом с остальным расчётом
+  // занятости: календарь тут только рисует. Месяц и дни берутся из ЯЗЫКА
+  // ЧИТАТЕЛЯ, а не из жёсткого 'fr-FR' и не из словаря — названия дней это
+  // работа Intl, а три копии в locales расходятся сами собой.
+  const firstDay = monthStartOffset(year, month)
+  const monthLabel = new Date(year, month).toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' })
+  const dayLabels = weekdayLabels(i18n.language)
   const avgRating = reviews.length > 0
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
     : null
@@ -455,8 +460,8 @@ export default function ItemDetail() {
                   «— € / semaine» читается как «неделю нельзя». */}
               {hasTiers && (
                 <div style={{ marginTop: 'var(--space-2)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', color: 'var(--muted)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  {item.price_3days != null && <div>€{Number(item.price_3days).toFixed(2)} / 3 jours</div>}
-                  {item.price_week != null && <div>€{Number(item.price_week).toFixed(2)} / semaine</div>}
+                  {item.price_3days != null && <div>€{Number(item.price_3days).toFixed(2)} {t('itemDetail.perThreeDays')}</div>}
+                  {item.price_week != null && <div>€{Number(item.price_week).toFixed(2)} {t('itemDetail.perWeek')}</div>}
                 </div>
               )}
               {item.deposit > 0 && (
@@ -616,7 +621,7 @@ export default function ItemDetail() {
                     </div>
 
                     <div className="cal" style={{ marginBottom: '16px' }}>
-                      {['Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa'].map(d => (
+                      {dayLabels.map(d => (
                         <div key={d} className="cal-header">{d}</div>
                       ))}
                       {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
@@ -669,9 +674,15 @@ export default function ItemDetail() {
 
                     {startDate && (
                       <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>
-                        <div><span style={{ color: 'var(--muted)' }}>Du </span>{startDate}</div>
-                        {endDate && <div><span style={{ color: 'var(--muted)' }}>Au </span>{endDate}</div>}
-                        {totalDays > 0 && <div style={{ fontWeight: '700' }}>{totalDays} jour{totalDays > 1 ? 's' : ''}</div>}
+                        <div><span style={{ color: 'var(--muted)' }}>{t('itemDetail.rangeFrom')} </span>{startDate}</div>
+                        {endDate && <div><span style={{ color: 'var(--muted)' }}>{t('itemDetail.rangeTo')} </span>{endDate}</div>}
+                        {/* Множественное число считает библиотека. Вручную
+                            («> 1 ? 's' : ''») его повторять нельзя: правил
+                            счёта во французском и нидерландском не две штуки,
+                            и такой тернарник — это переписанная от руки
+                            грамматика, которая сломается на первом же языке
+                            с другим порядком. */}
+                        {totalDays > 0 && <div style={{ fontWeight: '700' }}>{t('common.days', { count: totalDays })}</div>}
                       </div>
                     )}
 
@@ -682,19 +693,19 @@ export default function ItemDetail() {
                             сходится, и он перестаёт верить числу. */}
                         {rental.weeks > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: 'var(--muted)' }}>€{Number(item.price_week).toFixed(2)} × {rental.weeks} semaine{rental.weeks > 1 ? 's' : ''}</span>
+                            <span style={{ color: 'var(--muted)' }}>€{Number(item.price_week).toFixed(2)} × {t('common.weeks', { count: rental.weeks })}</span>
                             <span>€{(Number(item.price_week) * rental.weeks).toFixed(2)}</span>
                           </div>
                         )}
                         {rental.packs3 > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: 'var(--muted)' }}>€{Number(item.price_3days).toFixed(2)} × {rental.packs3} forfait{rental.packs3 > 1 ? 's' : ''} 3 jours</span>
+                            <span style={{ color: 'var(--muted)' }}>€{Number(item.price_3days).toFixed(2)} × {t('common.packs3', { count: rental.packs3 })}</span>
                             <span>€{(Number(item.price_3days) * rental.packs3).toFixed(2)}</span>
                           </div>
                         )}
                         {rental.days > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: 'var(--muted)' }}>€{item.price_per_day.toFixed(2)} × {rental.days} jour{rental.days > 1 ? 's' : ''}</span>
+                            <span style={{ color: 'var(--muted)' }}>€{item.price_per_day.toFixed(2)} × {t('common.days', { count: rental.days })}</span>
                             <span>€{(item.price_per_day * rental.days).toFixed(2)}</span>
                           </div>
                         )}

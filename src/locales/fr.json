@@ -162,6 +162,8 @@
   "manageIt": "la gérer",
   "maxPrice": "Max €/jour",
   "myItems": {
+    "requestsCount_one": "{{count}} demande",
+    "requestsCount_other": "{{count}} demandes",
     "deleteConfirm": "Supprimer cette annonce ? Cette action est irréversible.",
     "title": "Mes outils",
     "newListing": "+ Nouvelle annonce",
@@ -429,11 +431,21 @@
     "terms": "CGU"
   },
   "common": {
+    "days_one": "{{count}} jour",
+    "days_other": "{{count}} jours",
+    "weeks_one": "{{count}} semaine",
+    "weeks_other": "{{count}} semaines",
+    "packs3_one": "{{count}} forfait 3 jours",
+    "packs3_other": "{{count}} forfaits 3 jours",
     "loading": "Chargement...",
     "optional": "— optionnel",
     "refundableAtReturn": "— remboursable au retour"
   },
   "itemDetail": {
+    "perThreeDays": "/ 3 jours",
+    "perWeek": "/ semaine",
+    "rangeFrom": "Du",
+    "rangeTo": "Au",
     "back": "Retour",
     "reviewsLabel": "Avis",
     "requestError": "Erreur lors de l'envoi de la demande",
@@ -520,6 +532,8 @@
     "noReason": "Aucune raison indiquée"
   },
   "userRating": {
+    "reviewCount_one": "{{count}} avis",
+    "reviewCount_other": "{{count}} avis",
     "asOwner": "en tant que propriétaire",
     "asRenter": "en tant que locataire",
     "noRating": "Pas encore d'avis"
