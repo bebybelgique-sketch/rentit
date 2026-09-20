@@ -593,6 +593,17 @@
     "photoReplaceLabel": "Photo (leave empty to keep the current one)",
     "uploading": "Uploading…"
   },
+  "changePassword": {
+    "title": "Password",
+    "hint": "Your current password is required: without it, anyone reaching your open browser could lock you out.",
+    "currentLabel": "Current password",
+    "repeatLabel": "Repeat the new password",
+    "submit": "Change password",
+    "done": "Password changed",
+    "mismatch": "The two new passwords do not match.",
+    "sameAsOld": "The new password is the same as the old one.",
+    "wrongCurrent": "Current password is incorrect."
+  },
   "passwordRecovery": {
     "requestTitle": "Forgotten password",
     "sentText": "Check your inbox: you will find a link to choose a new password.",
