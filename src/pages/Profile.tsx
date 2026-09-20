@@ -11,6 +11,7 @@ import { useDeleteAccount } from '../hooks/mutations/useDeleteAccount';
 import { useUploadAvatar } from '../hooks/mutations/useUploadAvatar';
 import { useUserReviews, type UserReview } from '../hooks/useUserReviews';
 import ReviewList, { type ReviewListItem } from '../components/common/ReviewList';
+import ChangePassword from '../components/common/ChangePassword';
 import toast from 'react-hot-toast';
 
 // Отзыв из базы → строка списка. Отдельной функцией, а не двумя копиями
@@ -249,6 +250,17 @@ const Profile: React.FC = () => {
           {t('nav.myItems')}
           <span aria-hidden="true" style={{ color: 'var(--text-faint)' }}>›</span>
         </Link>
+
+        {/* СМЕНА ПАРОЛЯ. До 20.09 вошедший человек не мог сменить пароль
+            НИКАК: `updateUser({ password })` в продукте был, но жил на
+            странице ResetPassword, куда попадают только по ссылке из письма
+            восстановления — а писем продукт не шлёт, ключа Resend нет.
+            Путь не был неудобным, его не существовало.
+
+            Место — здесь, а не в отдельном разделе «настройки»: профиль и
+            ЕСТЬ экран своих данных, и заводить рядом второе такое же место
+            значит спрашивать на каждом визите, где что лежит. */}
+        <ChangePassword email={user.email ?? ''} />
 
         {/* «Avis reçus» — блок из канвы, и он закрывает настоящую дыру.
             Отзыв о человеке писать было КУДА (ReviewForm внутри переписки по

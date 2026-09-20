@@ -593,6 +593,17 @@
     "photoReplaceLabel": "Photo (laisser vide pour conserver l'actuelle)",
     "uploading": "Envoi en cours…"
   },
+  "changePassword": {
+    "title": "Mot de passe",
+    "hint": "Votre mot de passe actuel est demandé : sans lui, quiconque atteint votre navigateur ouvert pourrait vous enfermer dehors.",
+    "currentLabel": "Mot de passe actuel",
+    "repeatLabel": "Répétez le nouveau mot de passe",
+    "submit": "Changer le mot de passe",
+    "done": "Mot de passe changé",
+    "mismatch": "Les deux nouveaux mots de passe ne correspondent pas.",
+    "sameAsOld": "Le nouveau mot de passe est identique à l’ancien.",
+    "wrongCurrent": "Mot de passe actuel incorrect."
+  },
   "passwordRecovery": {
     "requestTitle": "Mot de passe oublié",
     "sentText": "Consultez votre boîte mail : vous y trouverez un lien pour choisir un nouveau mot de passe.",

@@ -593,6 +593,17 @@
     "photoReplaceLabel": "Foto (leeg laten om de huidige te behouden)",
     "uploading": "Uploaden…"
   },
+  "changePassword": {
+    "title": "Wachtwoord",
+    "hint": "Je huidige wachtwoord is nodig: zonder dat zou iedereen die bij je open browser komt je kunnen buitensluiten.",
+    "currentLabel": "Huidig wachtwoord",
+    "repeatLabel": "Herhaal het nieuwe wachtwoord",
+    "submit": "Wachtwoord wijzigen",
+    "done": "Wachtwoord gewijzigd",
+    "mismatch": "De twee nieuwe wachtwoorden komen niet overeen.",
+    "sameAsOld": "Het nieuwe wachtwoord is hetzelfde als het oude.",
+    "wrongCurrent": "Huidig wachtwoord is onjuist."
+  },
   "passwordRecovery": {
     "requestTitle": "Wachtwoord vergeten",
     "sentText": "Bekijk uw mailbox: daarin vindt u een link om een nieuw wachtwoord te kiezen.",
