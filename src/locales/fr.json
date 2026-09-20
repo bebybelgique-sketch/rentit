@@ -162,6 +162,13 @@
   "manageIt": "la gérer",
   "maxPrice": "Max €/jour",
   "myItems": {
+    "toDoNow": "À faire maintenant",
+    "untitled": "Annonce sans titre",
+    "answerHours_one": "Il reste {{count}} h pour répondre",
+    "answerHours_other": "Il reste {{count}} h pour répondre",
+    "answerMinutes_one": "Il reste {{count}} min pour répondre",
+    "answerMinutes_other": "Il reste {{count}} min pour répondre",
+    "answerOverdue": "Délai dépassé — la demande va être annulée",
     "requestsCount_one": "{{count}} demande",
     "requestsCount_other": "{{count}} demandes",
     "deleteConfirm": "Supprimer cette annonce ? Cette action est irréversible.",

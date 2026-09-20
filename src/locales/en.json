@@ -162,6 +162,13 @@
   "manageIt": "manage it",
   "maxPrice": "Max €/day",
   "myItems": {
+    "toDoNow": "To do now",
+    "untitled": "Untitled listing",
+    "answerHours_one": "{{count}} h left to answer",
+    "answerHours_other": "{{count}} h left to answer",
+    "answerMinutes_one": "{{count}} min left to answer",
+    "answerMinutes_other": "{{count}} min left to answer",
+    "answerOverdue": "Deadline passed — the request will be cancelled",
     "requestsCount_one": "{{count}} request",
     "requestsCount_other": "{{count}} requests",
     "deleteConfirm": "Delete this listing? This action cannot be undone.",
