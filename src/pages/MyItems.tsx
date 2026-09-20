@@ -7,6 +7,7 @@ import { statusLabelKey } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
 import BookingOwnerActions from '../components/booking/BookingOwnerActions'
 import { photosOf } from '../lib/items'
+import { answerDeadline, isUrgent } from '../domain/requestDeadline'
 import { useOwnerItems } from '../hooks/useOwnerItems'
 import { useSetItemAvailability } from '../hooks/mutations/useSetItemAvailability'
 import { useDeleteItem } from '../hooks/mutations/useDeleteItem'
@@ -46,6 +47,24 @@ export default function MyItems() {
 
   const filtered = tab === 'active' ? items.filter(i => i.available) : items
 
+  // ДЕЛА — ПЛОСКИМ СПИСКОМ ПО ВСЕМ ВЕЩАМ, и берутся из `items`, а не из
+  // `filtered`: вкладка «Actifs» прячет скрытые вещи, но заявка на скрытую
+  // вещь никуда не девается и ответить на неё всё равно надо. Спрятать дело
+  // вместе с вещью значило бы потерять его молча.
+  //
+  // Порядок — по сроку: первой та, что скорее сгорит. Сортировка по
+  // created_at по возрастанию и есть порядок срочности, потому что окно у
+  // всех одинаковое.
+  const now = new Date()
+  const toDo = items
+    .flatMap(item => item.bookings
+      .filter(b => b.status === 'pending_approval')
+      .map(booking => {
+        const deadline = answerDeadline(booking.created_at ?? null, now)
+        return { booking, item, deadline, urgent: isUrgent(deadline) }
+      }))
+    .sort((a, b) => (a.booking.created_at ?? '').localeCompare(b.booking.created_at ?? ''))
+
   if (loading) return <div className="page"><div className="loading">{t('common.loading')}</div></div>
 
   return (
@@ -73,6 +92,75 @@ export default function MyItems() {
           <Link to="/list-item" className="btn btn-primary">{t('myItems.newListing')}</Link>
         )}
       </div>
+
+      {/* «À faire maintenant» — ПЕРВЫМ, и плоским списком по всем вещам.
+          Так в канве, и довод не про вкус: заявки лежали внутри карточек
+          своих вещей, и владелец с пятью вещами и одной заявкой искал её
+          глазами по пяти карточкам. Дашборд отвечает на вопрос «что от меня
+          сейчас требуется», а не «какие у меня вещи».
+          Дубля не возникает: из карточек этот блок убран целиком, в них
+          остались только подтверждённые брони. Счётчик-ярлык на карточке
+          оставлен — он сводка, а не второе место действия. */}
+      {toDo.length > 0 && (
+        <section style={{ marginBottom: 'var(--space-6)' }}>
+          <h2 style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '12px' }}>
+            {t('myItems.toDoNow')}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {toDo.map(({ booking, item, deadline, urgent }) => (
+              <div
+                key={booking.id}
+                style={{
+                  background: '#fffbeb',
+                  border: `1px solid ${urgent ? 'var(--danger)' : '#fde68a'}`,
+                  borderRadius: '8px',
+                  padding: '14px',
+                }}
+              >
+                {/* Какая вещь — первой строкой. В плоском списке это
+                    единственное, что отличает одну заявку от другой. */}
+                <div style={{ fontWeight: '700', fontSize: '15px', marginBottom: '2px' }}>
+                  {item.title ?? t('myItems.untitled')}
+                </div>
+                <div style={{ fontSize: '13px', color: '#666' }}>
+                  {booking.renter?.full_name ?? t('rental.unknownUser')}
+                  {' · '}
+                  {(booking.start_date ?? '')} → {(booking.end_date ?? '')}
+                  {' · '}
+                  {t('common.days', { count: booking.total_days ?? 0 })}
+                  {' · €'}{Number(booking.total_price ?? 0).toFixed(2)}
+                </div>
+
+                {booking.request_message && (
+                  <div style={{ fontSize: '13px', color: '#555', marginTop: '6px', fontStyle: 'italic' }}>
+                    «{booking.request_message}»
+                  </div>
+                )}
+
+                {/* СРОК. До 20.09 владелец не видел его нигде, хотя продукт
+                    его исполняет: планировщик отменяет заявку через сутки
+                    после создания, а арендатору это обещано на странице
+                    вещи вслух. Обещание было односторонним. */}
+                <div style={{
+                  fontSize: '12px',
+                  fontFamily: 'var(--font-mono)',
+                  marginTop: '8px',
+                  color: urgent ? 'var(--danger)' : 'var(--muted)',
+                  fontWeight: urgent ? 700 : 400,
+                }}>
+                  {deadline.state === 'overdue' ? t('myItems.answerOverdue')
+                    : deadline.state === 'minutes' ? t('myItems.answerMinutes', { count: deadline.minutes })
+                    : t('myItems.answerHours', { count: deadline.hours })}
+                </div>
+
+                <div style={{ marginTop: '10px' }}>
+                  <BookingOwnerActions bookingId={booking.id} status={booking.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="tabs">
         <button className={`tab ${tab === 'active' ? 'active' : ''}`} onClick={() => setTab('active')}>{t('myItems.activeTab')}</button>
@@ -107,7 +195,12 @@ export default function MyItems() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '8px' }}>
                       <div>
-                        <h3 style={{ marginBottom: '4px' }}>{item.title ?? 'Untitled item'}</h3>
+                        {/* Было 'Untitled item' — по-английски, на французском
+                            продукте. Гейт вшитого текста английский не ловит
+                            НАМЕРЕННО (иначе список утонет в именах классов и
+                            значениях CSS), так что этот класс закрывается
+                            глазами. */}
+                        <h3 style={{ marginBottom: '4px' }}>{item.title ?? t('myItems.untitled')}</h3>
                         <div style={{ color: '#999', fontSize: '13px' }}>
                           €{item.price_per_day ?? 0}/jour
                           {(item.deposit ?? 0) > 0 && ` · €${item.deposit ?? 0} caution`}
@@ -149,36 +242,12 @@ export default function MyItems() {
                   </div>
                 </div>
 
-                {/* Pending approval requests */}
-                {pendingRequests.length > 0 && (
-                  <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
-                    <h4 style={{ fontSize: '13px', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px', fontWeight: '700' }}>
-                      {t('myItems.pendingRequests')}
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {pendingRequests.map(booking => (
-                        <div key={booking.id} style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '12px 14px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-                            <div>
-                              <div style={{ fontWeight: '700', fontSize: '14px' }}>
-                                {booking.renter?.full_name ?? 'Utilisateur'}
-                              </div>
-                              <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>
-                                {(booking.start_date ?? '')} → {(booking.end_date ?? '')} · {t('common.days', { count: booking.total_days ?? 0 })} · €{Number(booking.total_price ?? 0).toFixed(2)}
-                              </div>
-                              {booking.request_message && (
-                                <div style={{ fontSize: '13px', color: '#555', marginTop: '6px', fontStyle: 'italic' }}>
-                                  "{booking.request_message}"
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <BookingOwnerActions bookingId={booking.id} status={booking.status} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Заявок, ждущих ответа, здесь больше НЕТ: они собраны
+                    наверху, в «À faire maintenant», плоским списком по всем
+                    вещам. Держать их и там, и тут значило бы два места для
+                    одного действия — ровно то, что чинили на «Mes locations»
+                    (две пустоты вместо одной). Ярлык со счётчиком на карточке
+                    остался: он сводка, а не второе место действия. */}
 
                 {/* Confirmed / active bookings */}
                 {item.bookings.filter(b => ['confirmed', 'active', 'pending_payment'].includes(b.status ?? '')).length > 0 && (

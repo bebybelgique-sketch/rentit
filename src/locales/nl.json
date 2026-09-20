@@ -162,6 +162,13 @@
   "manageIt": "beheren",
   "maxPrice": "Max €/dag",
   "myItems": {
+    "toDoNow": "Nu te doen",
+    "untitled": "Advertentie zonder titel",
+    "answerHours_one": "Nog {{count}} u om te antwoorden",
+    "answerHours_other": "Nog {{count}} u om te antwoorden",
+    "answerMinutes_one": "Nog {{count}} min om te antwoorden",
+    "answerMinutes_other": "Nog {{count}} min om te antwoorden",
+    "answerOverdue": "Termijn verstreken — de aanvraag wordt geannuleerd",
     "requestsCount_one": "{{count}} aanvraag",
     "requestsCount_other": "{{count}} aanvragen",
     "deleteConfirm": "Deze advertentie verwijderen? Dit kan niet ongedaan worden gemaakt.",
