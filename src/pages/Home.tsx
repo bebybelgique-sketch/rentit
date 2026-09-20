@@ -293,6 +293,16 @@ export default function Home() {
   // экрана, и наличие кнопки «расширить» — см. useCatalogHasItems.ts.
   const { catalogIsEmpty } = useCatalogHasItems()
 
+  // ЗОНА ФИЛЬТРУЕТ ТОЛЬКО ЗДЕСЬ. `useBrowseItems` шлёт в базу `p_radius_km`
+  // исключительно при `nearby && hasPoint` — без этого запрос глобальный, и
+  // никакой зоны в нём нет. А пустой экран винил зону ВСЕГДА: человек искал
+  // «perceuse», не находил, и читал «Aucun outil dans cette zone» — неверную
+  // причину, потому что зона к его отказу отношения не имела.
+  //
+  // Тот же класс уже чинили для пустого каталога (там «не нашлось здесь» тоже
+  // было неправдой). Тогда закрыли один случай из двух.
+  const zoneApplied = nearby && userPos != null
+
   const toggleNearby = () => {
     if (!nearby && !userPos) {
       // Отказ браузера ОБЯЗАН быть сказан вслух.
@@ -580,10 +590,14 @@ export default function Home() {
               намеренно ведёт себя как «каталог не пуст»: прежний текст верен
               всегда, а сильное утверждение из неотвеченного запроса — нет. */}
           <h3 style={{ fontSize: 'clamp(var(--text-lg), 5vw, var(--text-xl))', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: 'var(--space-3)' }}>
-            {catalogIsEmpty ? t('emptyCatalogTitle') : t('noResultsTitle')}
+            {catalogIsEmpty ? t('emptyCatalogTitle')
+              : zoneApplied ? t('noResultsTitle')
+              : t('noMatchTitle')}
           </h3>
           <p style={{ color: 'var(--muted)', fontSize: 'var(--text-base)', marginBottom: 'var(--space-2)' }}>
-            {catalogIsEmpty ? t('emptyCatalogDesc') : t('noResultsDesc')}
+            {catalogIsEmpty ? t('emptyCatalogDesc')
+              : zoneApplied ? t('noResultsDesc')
+              : t('noMatchDesc')}
           </p>
           {catalogIsEmpty && (
             // Отсутствие кнопки названо вслух. Молчаливое отсутствие человек
@@ -599,16 +613,38 @@ export default function Home() {
             <Link to="/list-item" className="btn btn-primary" style={{ minHeight: '44px' }}>
               {t('listFirstTool')}
             </Link>
-            {/* Кнопка расширения не удалена, а обусловлена: при непустом
-                каталоге она делает ровно то, что обещает. Убрать её насовсем
-                значило бы сломать верный случай ради неверного. */}
-            {!catalogIsEmpty && radius < 50 && (
+            {/* Кнопка расширения показывается, только когда зона И ПРАВДА
+                применена. Иначе она не расширяла, а СУЖАЛА: при выключенной
+                «À proximité» запрос глобальный, а нажатие включало её и
+                ставило радиус 50 — то есть добавляло ограничение, которого не
+                было, и выбрасывало все вещи без координат. Подпись обещала
+                расширить, поиск сужался.
+                Раз зона включена, поднять радиус с 10 до 50 — честное
+                расширение, и кнопка остаётся. */}
+            {!catalogIsEmpty && zoneApplied && radius < 50 && (
               <button
-                onClick={() => { setRadius(50); if (!nearby) toggleNearby() }}
+                onClick={() => setRadius(50)}
                 className="btn btn-secondary"
                 style={{ minHeight: '44px' }}
               >
                 {t('expandSearch')}
+              </button>
+            )}
+
+            {/* Когда зона ни при чём, выход другой: снять фильтры, а не
+                трогать радиус. Кнопка чистит ВСЁ, включая поиск и категорию, —
+                «Réinitialiser» в панели снимает только четыре второстепенных
+                и на этом экране человеку не помогла бы. */}
+            {!catalogIsEmpty && !zoneApplied && (
+              <button
+                onClick={() => {
+                  setSearch(''); setCategory(''); setMaxPrice('')
+                  setPlace(''); setStartDate(''); setEndDate('')
+                }}
+                className="btn btn-secondary"
+                style={{ minHeight: '44px' }}
+              >
+                {t('clearAllFilters')}
               </button>
             )}
           </div>

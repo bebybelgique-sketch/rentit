@@ -231,6 +231,9 @@
     "doneNote": "Your request counts as a vote on what should be listed first. We will not write to you: we did not take your address.",
     "failed": "Your request did not go through. Please try again."
   },
+  "noMatchTitle": "Nothing matches",
+  "noMatchDesc": "It is not the area: the search covers the whole country while “Nearby” is off. It is the filters that let nothing through.",
+  "clearAllFilters": "Clear filters",
   "noResultsTitle": "No tools found here yet",
   "ownerLabel": "Owner",
   "password": "Password",

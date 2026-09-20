@@ -231,6 +231,9 @@
     "doneNote": "Uw vraag telt als een stem over wat er als eerste geplaatst moet worden. Wij schrijven u niet: we hebben uw adres niet gevraagd.",
     "failed": "Uw vraag is niet verzonden. Probeer het opnieuw."
   },
+  "noMatchTitle": "Niets komt overeen",
+  "noMatchDesc": "Het ligt niet aan de zone: zolang “In de buurt” uit staat, zoekt de vitrine in het hele land. De filters laten niets door.",
+  "clearAllFilters": "Filters wissen",
   "noResultsTitle": "Geen gereedschap in deze regio",
   "ownerLabel": "Eigenaar",
   "password": "Wachtwoord",
