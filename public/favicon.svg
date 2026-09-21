@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="RentIt">
+  <!-- Вкладка браузера — 16 пикселей. Буква с засечкой там превращается в
+       кляксу, поэтому знак держится на трёх вещах: чёрный квадрат, белая
+       «R» без деталей и жёлтая метка в углу — та же, что на иконке
+       приложения. Палитра продукта: чернила #121417, сигнал #FFC400 и
+       только на чёрном (см. шапку src/index.css). -->
+  <rect width="64" height="64" rx="12" fill="#121417"/>
+  <text x="30" y="47" text-anchor="middle" font-family="Outfit, Arial Black, Helvetica, sans-serif"
+        font-weight="800" font-size="42" fill="#F0F1F3" letter-spacing="-2">R</text>
+  <rect x="45" y="13" width="9" height="9" rx="1.5" fill="#FFC400"/>
+</svg>
