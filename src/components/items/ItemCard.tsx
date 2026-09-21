@@ -28,6 +28,8 @@ const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
         <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}>
           <img
             src={cover}
+            loading="lazy"
+            decoding="async"
             alt={item.title ?? 'Item'}
             style={{
               width: '100%',

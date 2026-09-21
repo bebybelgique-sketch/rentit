@@ -39,6 +39,8 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews, emptyLabel }) => {
           {r.authorAvatarUrl ? (
             <img
               src={r.authorAvatarUrl}
+              loading="lazy"
+              decoding="async"
               alt=""
               style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
             />

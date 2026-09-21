@@ -53,6 +53,8 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({
                 <div key={p.id} style={{ position: 'relative' }}>
                   <img
                     src={p.url}
+                    loading="lazy"
+                    decoding="async"
                     alt={PHASE_ALT[phase]}
                     style={{ width: '84px', height: '84px', objectFit: 'cover', borderRadius: '8px', display: 'block' }}
                   />
