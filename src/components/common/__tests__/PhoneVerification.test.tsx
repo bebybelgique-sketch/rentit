@@ -4,9 +4,21 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 // `vi.hoisted`: фабрики `vi.mock` поднимаются выше обычных объявлений.
 const mocks = vi.hoisted(() => ({ invokeEdge: vi.fn() }));
 
+// Заглушка supabase обязательна, хотя компонент к базе не ходит.
+//
+// `importActual` ниже грузит НАСТОЯЩИЙ edgeInvoke, а тот первой строкой
+// тянет lib/supabase, который БРОСАЕТ прямо при загрузке модуля, если нет
+// VITE_SUPABASE_URL. Локально переменная в .env, в CI её нет — и тест,
+// зелёный на машине, валит прогон. Этот класс ловил CI уже трижды
+// (06d9ded, #75, и здесь). Проверять новый тест надо прогоном с убранным
+// .env, а не только на своей машине.
+vi.mock('../../../lib/supabase', () => ({
+  supabase: { auth: {}, from: vi.fn(), functions: { invoke: vi.fn() } },
+}));
+
 vi.mock('../../../lib/edgeInvoke', async () => {
-  // EdgeError берётся НАСТОЯЩИЙ: проверка «код отказа доехал до текста»
-  // и есть предмет этих тестов, подменять её нечем.
+  // EdgeError берётся НАСТОЯЩИЙ: предмет этих проверок — что код отказа
+  // доехал до текста, и подменять сам класс нечем.
   const actual = await vi.importActual<typeof import('../../../lib/edgeInvoke')>('../../../lib/edgeInvoke');
   return { ...actual, invokeEdge: mocks.invokeEdge };
 });
