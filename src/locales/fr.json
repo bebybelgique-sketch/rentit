@@ -1,4 +1,11 @@
 {
+  "crash": {
+    "title": "Quelque chose s’est cassé",
+    "text": "L’application s’est arrêtée. Vous pouvez repartir de l’accueil ; si cela se reproduit, copiez les détails et envoyez-les-nous.",
+    "retry": "Revenir à l’accueil",
+    "copy": "Copier les détails",
+    "copied": "Copié"
+  },
   "offline": {
     "notice": "Hors ligne — les modifications ne seront pas enregistrées"
   },
