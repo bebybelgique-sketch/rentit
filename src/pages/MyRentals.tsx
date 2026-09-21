@@ -17,6 +17,7 @@ import type { Rental } from '../types';
 // Импортируем toast
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const dateFmt = new Intl.DateTimeFormat('fr-BE', { day: '2-digit', month: 'short', year: 'numeric' });
 const formatDate = (iso: string) => {
@@ -35,6 +36,7 @@ const CANCELLABLE_BY_RENTER = ['pending_approval', 'confirmed'];
 const MyRentals: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  usePageTitle(t('myRentalsTitle'))
 
   // Ссылка вида /my-rentals?booking=<id> ведёт К КОНКРЕТНОЙ брони.
   // Без этого ссылка из /my-items была декоративной: человек попадал на

@@ -15,6 +15,7 @@ import ChangeEmail from '../components/common/ChangeEmail';
 import PhoneVerification from '../components/common/PhoneVerification';
 import ChangePassword from '../components/common/ChangePassword';
 import toast from 'react-hot-toast';
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // Отзыв из базы → строка списка. Отдельной функцией, а не двумя копиями
 // внутри разметки: поля называются по-разному (created_at / createdAt), и
@@ -29,7 +30,8 @@ const toListItem = (r: UserReview): ReviewListItem => ({
 });
 
 const Profile: React.FC = () => {
-  const { t } = useTranslation(); // Используем хук
+  const { t } = useTranslation();
+  usePageTitle(t('profile.title')) // Используем хук
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

@@ -1,4 +1,16 @@
 {
+  "pageTitle": {
+    "login": "Inloggen",
+    "register": "Account aanmaken",
+    "browse": "Gereedschap vinden",
+    "listItem": "Gereedschap aanbieden",
+    "rentalShops": "Voor professionele verhuurders",
+    "forgotPassword": "Wachtwoord vergeten",
+    "resetPassword": "Nieuw wachtwoord",
+    "admin": "Beheer",
+    "privacy": "Privacybeleid",
+    "terms": "Algemene voorwaarden"
+  },
   "addItemTitle": "Voeg nieuw item toe",
   "addPhotoBtn": "Voeg mijn foto toe →",
   "addPhotoDesc": "Een foto helpt je buur om je te herkennen bij de overdracht.",

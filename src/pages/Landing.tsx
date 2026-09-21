@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import HeroSection from '../components/landing/HeroSection'
 import CategoriesSection from '../components/landing/CategoriesSection'
+import { useDefaultPageTitle } from '../hooks/usePageTitle'
 
 /**
  * Лендинг.
@@ -36,6 +37,10 @@ import CategoriesSection from '../components/landing/CategoriesSection'
  */
 export default function Landing() {
   const { t } = useTranslation()
+  // Вход оставляет заголовок из index.html — тот, что написан для
+  // поисковика и для превью. Завести здесь вторую копию той же
+  // маркетинговой строки значило бы развести их при первой же правке.
+  useDefaultPageTitle()
 
   const steps = [
     { n: '01', title: t('landing.step1Title'), body: t('landing.step1Body') },

@@ -12,6 +12,7 @@ import { ITEM_PHOTOS_BUCKET, itemPhotoPath } from '../lib/itemPhotos';
 import { photosOf } from '../lib/items';
 import ItemBlackouts from '../components/ItemBlackouts';
 import type { Database } from '../types/database.types';
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // Те же границы, что проверками в базе (миграция 20260817000022).
 const MAX_QUANTITY = 999;
@@ -20,6 +21,7 @@ const MAX_BUFFER_DAYS = 30;
 
 const EditItem: React.FC = () => {
   const { t } = useTranslation();
+  usePageTitle(t('editItem.title'))
   const { id: itemId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();

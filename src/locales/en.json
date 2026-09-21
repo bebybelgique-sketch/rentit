@@ -1,4 +1,16 @@
 {
+  "pageTitle": {
+    "login": "Log in",
+    "register": "Create account",
+    "browse": "Find a tool",
+    "listItem": "List a tool",
+    "rentalShops": "For rental shops",
+    "forgotPassword": "Forgot password",
+    "resetPassword": "New password",
+    "admin": "Administration",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
   "addItemTitle": "Add New Item",
   "addPhotoBtn": "Go to profile",
   "addPhotoDesc": "A photo helps your neighbour recognise you when you hand the tool over.",

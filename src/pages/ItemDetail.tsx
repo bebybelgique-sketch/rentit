@@ -13,6 +13,7 @@ import {
 } from '../domain/availability'
 import type { ItemCalendar } from '../domain/availability'
 import { itemHistoryOf, photosOf, type ItemHistory } from '../lib/items'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
 // power_tools был 🔌, а на витрине ⚡ — одна и та же категория с двумя
@@ -90,6 +91,15 @@ export default function ItemDetail() {
   // состояться, а надпись «Lien copié» показывалась всё равно.
   const [shared, setShared] = useState<'copied' | 'failed' | null>(null)
 
+
+  // Заголовок вкладки — НАЗВАНИЕ ВЕЩИ. Это единственный экран, чей адрес
+  // пересылают друг другу, и он же единственный, где общий заголовок
+  // продукта бесполезен: в списке вкладок и в истории браузера «RentIt»
+  // семь раз подряд не отличается ничем.
+  //
+  // Пока вещь не загрузилась — null, и заголовок не трогается вовсе:
+  // мигание «RentIt → Chargement → Perceuse» хуже, чем подождать.
+  usePageTitle(item?.title ?? null)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [calMonth, setCalMonth] = useState(() => {

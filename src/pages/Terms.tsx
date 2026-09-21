@@ -3,6 +3,8 @@ import { useDocumentLanguage } from '../hooks/useDocumentLanguage'
 import {
   PLATFORM_NAME, OPERATOR_NAME, OPERATOR_ADDRESS, OPERATOR_STATUS, CONTACT_EMAIL,
 } from '../domain/operator'
+import { useTranslation } from 'react-i18next'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // Дата правится ВМЕСТЕ с текстом документа. 11.08 оба документа были
 // переписаны по существу (убраны страховка, Stripe, раздел платежей,
@@ -30,6 +32,8 @@ const GOVERNING_LAW = 'Belgian law'
 
 export default function TermsOfService() {
   const lang = useDocumentLanguage()
+  const { t } = useTranslation()
+  usePageTitle(t('pageTitle.terms'))
 
   return (
     <div className="page">

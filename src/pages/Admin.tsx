@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useAdminAction } from '../hooks/mutations/useAdminAction'
 import { useAdminStats } from '../hooks/useAdminStats'
 import { serverErrorKey } from '../domain/serverErrors'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // Действия над ЧУЖИМИ строками идут через edge-функцию admin-action.
 //
@@ -24,6 +25,7 @@ import { serverErrorKey } from '../domain/serverErrors'
 export default function Admin() {
   const { user } = useAuth()
   const { t } = useTranslation()
+  usePageTitle(t('pageTitle.admin'))
   const adminAction = useAdminAction()
   const navigate = useNavigate()
   const [tab, setTab] = useState<'stats' | 'items' | 'users'>('stats')

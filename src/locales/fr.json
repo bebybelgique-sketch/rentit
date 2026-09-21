@@ -1,4 +1,16 @@
 {
+  "pageTitle": {
+    "login": "Connexion",
+    "register": "Créer un compte",
+    "browse": "Trouver un outil",
+    "listItem": "Proposer un outil",
+    "rentalShops": "Pour les loueurs professionnels",
+    "forgotPassword": "Mot de passe oublié",
+    "resetPassword": "Nouveau mot de passe",
+    "admin": "Administration",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions générales d'utilisation"
+  },
   "addItemTitle": "Ajouter un nouvel outil",
   "addPhotoBtn": "Ajouter ma photo →",
   "addPhotoDesc": "Une photo aide votre voisin à vous reconnaître au moment de la remise.",
