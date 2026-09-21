@@ -593,6 +593,33 @@
     "photoReplaceLabel": "Photo (laisser vide pour conserver l'actuelle)",
     "uploading": "Envoi en cours…"
   },
+  "phoneVerify": {
+    "title": "Téléphone",
+    "why": "Il sert à vous joindre une fois une réservation confirmée, et à afficher « téléphone vérifié » sur vos annonces. Il n’est jamais public.",
+    "addLabel": "Votre numéro",
+    "changeLabel": "Nouveau numéro",
+    "formatHint": "Format international, avec l’indicatif du pays : +32470123456.",
+    "sendCode": "Recevoir un code",
+    "sending": "Envoi…",
+    "codeSent": "Code envoyé",
+    "codeLabel": "Code reçu par SMS",
+    "codeHint": "Six chiffres, valables dix minutes.",
+    "confirm": "Confirmer",
+    "checking": "Vérification…",
+    "changeNumber": "Changer de numéro",
+    "verified": "Téléphone vérifié",
+    "stateVerified": "vérifié",
+    "stateUnverified": "non vérifié"
+  },
+  "changeEmail": {
+    "title": "Adresse e-mail",
+    "hint": "C’est votre identifiant de connexion. Actuellement : {{email}}",
+    "newLabel": "Nouvelle adresse",
+    "submit": "Changer l’adresse",
+    "sameAsCurrent": "C’est déjà votre adresse actuelle.",
+    "doneNow": "Adresse e-mail changée",
+    "confirmSent": "Un lien de confirmation part vers {{email}}. L’adresse changera quand vous l’aurez ouvert."
+  },
   "changePassword": {
     "title": "Mot de passe",
     "hint": "Votre mot de passe actuel est demandé : sans lui, quiconque atteint votre navigateur ouvert pourrait vous enfermer dehors.",
@@ -638,6 +665,14 @@
     "confirmRevoke": "Retirer les droits admin de {{name}} ?"
   },
   "serverErrors": {
+    "phone_invalid": "Numéro invalide. Format international attendu, par exemple +32470123456.",
+    "sms_not_configured": "La vérification par SMS n’est pas encore active. Ce n’est pas vous : le canal n’est pas ouvert.",
+    "sms_send_failed": "Le SMS n’a pas pu partir. Réessayez dans un instant.",
+    "code_recently_sent": "Un code vient d’être envoyé. Attendez une minute avant d’en demander un autre.",
+    "no_code_requested": "Aucun code en cours. Demandez-en un nouveau.",
+    "code_expired": "Ce code a expiré. Demandez-en un nouveau.",
+    "code_incorrect": "Code incorrect.",
+    "too_many_attempts": "Trop d’essais. Demandez un nouveau code.",
     "network": "Pas de connexion. Vérifiez votre réseau et réessayez.",
     "service_unavailable": "Le service est momentanément injoignable. Réessayez dans un instant.",
     "unauthorized": "Session expirée. Reconnectez-vous.",
