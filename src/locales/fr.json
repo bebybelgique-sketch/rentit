@@ -1,4 +1,7 @@
 {
+  "a11y": {
+    "skipToContent": "Aller au contenu"
+  },
   "tasks": {
     "badgeLabel_one": "{{count}} chose à faire",
     "badgeLabel_other": "{{count}} choses à faire"
