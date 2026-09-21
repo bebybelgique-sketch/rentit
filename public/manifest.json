@@ -1,18 +1,23 @@
 {
-  "name": "RentIt",
+  "id": "/",
+  "name": "RentIt — Location d'outils entre voisins",
   "short_name": "RentIt",
-  "description": "Rent anything from your neighbors",
+  "description": "Louez des outils à vos voisins en Brabant Wallon. Sans commission, règlement en espèces entre vous.",
+  "lang": "fr-BE",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#F2F0EB",
-  "theme_color": "#080808",
+  "background_color": "#F1F3F5",
+  "theme_color": "#121417",
+  "categories": ["shopping", "lifestyle", "utilities"],
   "icons": [
-    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Find items", "url": "/", "description": "Browse items to rent" },
-    { "name": "List item", "url": "/list-item", "description": "List your item for rent" }
+    { "name": "Trouver un outil", "short_name": "Trouver", "url": "/browse", "description": "Parcourir les outils disponibles près de chez vous" },
+    { "name": "Proposer un outil", "short_name": "Proposer", "url": "/list-item", "description": "Mettre un de vos outils en location" }
   ]
 }
