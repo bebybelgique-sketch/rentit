@@ -11,6 +11,8 @@ import { useDeleteAccount } from '../hooks/mutations/useDeleteAccount';
 import { useUploadAvatar } from '../hooks/mutations/useUploadAvatar';
 import { useUserReviews, type UserReview } from '../hooks/useUserReviews';
 import ReviewList, { type ReviewListItem } from '../components/common/ReviewList';
+import ChangeEmail from '../components/common/ChangeEmail';
+import PhoneVerification from '../components/common/PhoneVerification';
 import ChangePassword from '../components/common/ChangePassword';
 import toast from 'react-hot-toast';
 
@@ -260,6 +262,12 @@ const Profile: React.FC = () => {
             Место — здесь, а не в отдельном разделе «настройки»: профиль и
             ЕСТЬ экран своих данных, и заводить рядом второе такое же место
             значит спрашивать на каждом визите, где что лежит. */}
+        {/* КОНТАКТЫ И БЕЗОПАСНОСТЬ — три раздела подряд, и порядок не
+            случаен: почта это ЛОГИН, телефон — доверие второй стороны,
+            пароль — ключ. Все три жили нигде: адрес нельзя было сменить,
+            номер нельзя было ввести, пароль — тоже (см. #94). */}
+        <ChangeEmail currentEmail={user.email ?? ''} />
+        <PhoneVerification />
         <ChangePassword email={user.email ?? ''} />
 
         {/* «Avis reçus» — блок из канвы, и он закрывает настоящую дыру.

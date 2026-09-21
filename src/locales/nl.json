@@ -593,6 +593,33 @@
     "photoReplaceLabel": "Foto (leeg laten om de huidige te behouden)",
     "uploading": "Uploaden…"
   },
+  "phoneVerify": {
+    "title": "Telefoon",
+    "why": "Wordt gebruikt om je te bereiken zodra een reservering bevestigd is, en om “telefoon geverifieerd” op je advertenties te tonen. Nooit openbaar.",
+    "addLabel": "Je nummer",
+    "changeLabel": "Nieuw nummer",
+    "formatHint": "Internationaal formaat, met landcode: +32470123456.",
+    "sendCode": "Code ontvangen",
+    "sending": "Versturen…",
+    "codeSent": "Code verstuurd",
+    "codeLabel": "Code ontvangen via sms",
+    "codeHint": "Zes cijfers, tien minuten geldig.",
+    "confirm": "Bevestigen",
+    "checking": "Controleren…",
+    "changeNumber": "Nummer wijzigen",
+    "verified": "Telefoon geverifieerd",
+    "stateVerified": "geverifieerd",
+    "stateUnverified": "niet geverifieerd"
+  },
+  "changeEmail": {
+    "title": "E-mailadres",
+    "hint": "Dit is je login. Nu: {{email}}",
+    "newLabel": "Nieuw adres",
+    "submit": "Adres wijzigen",
+    "sameAsCurrent": "Dat is al je huidige adres.",
+    "doneNow": "E-mailadres gewijzigd",
+    "confirmSent": "Er gaat een bevestigingslink naar {{email}}. Het adres verandert zodra je die opent."
+  },
   "changePassword": {
     "title": "Wachtwoord",
     "hint": "Je huidige wachtwoord is nodig: zonder dat zou iedereen die bij je open browser komt je kunnen buitensluiten.",
@@ -638,6 +665,14 @@
     "confirmRevoke": "Adminrechten van {{name}} intrekken?"
   },
   "serverErrors": {
+    "phone_invalid": "Ongeldig nummer. Internationaal formaat verwacht, bijvoorbeeld +32470123456.",
+    "sms_not_configured": "Verificatie via sms is nog niet actief. Het ligt niet aan jou: het kanaal is niet open.",
+    "sms_send_failed": "De sms kon niet worden verzonden. Probeer het zo meteen opnieuw.",
+    "code_recently_sent": "Er is net een code verstuurd. Wacht een minuut voor je een nieuwe vraagt.",
+    "no_code_requested": "Geen code in behandeling. Vraag een nieuwe aan.",
+    "code_expired": "Deze code is verlopen. Vraag een nieuwe aan.",
+    "code_incorrect": "Onjuiste code.",
+    "too_many_attempts": "Te veel pogingen. Vraag een nieuwe code aan.",
     "network": "Geen verbinding. Controleer uw netwerk en probeer opnieuw.",
     "service_unavailable": "De dienst is even onbereikbaar. Probeer het zo opnieuw.",
     "unauthorized": "Uw sessie is verlopen. Meld u opnieuw aan.",

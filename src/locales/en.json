@@ -593,6 +593,33 @@
     "photoReplaceLabel": "Photo (leave empty to keep the current one)",
     "uploading": "Uploading…"
   },
+  "phoneVerify": {
+    "title": "Phone",
+    "why": "It is used to reach you once a booking is confirmed, and to show “phone verified” on your listings. It is never public.",
+    "addLabel": "Your number",
+    "changeLabel": "New number",
+    "formatHint": "International format, with the country code: +32470123456.",
+    "sendCode": "Get a code",
+    "sending": "Sending…",
+    "codeSent": "Code sent",
+    "codeLabel": "Code received by SMS",
+    "codeHint": "Six digits, valid for ten minutes.",
+    "confirm": "Confirm",
+    "checking": "Checking…",
+    "changeNumber": "Change number",
+    "verified": "Phone verified",
+    "stateVerified": "verified",
+    "stateUnverified": "not verified"
+  },
+  "changeEmail": {
+    "title": "Email address",
+    "hint": "This is your login. Currently: {{email}}",
+    "newLabel": "New address",
+    "submit": "Change address",
+    "sameAsCurrent": "That is already your current address.",
+    "doneNow": "Email address changed",
+    "confirmSent": "A confirmation link is going to {{email}}. The address changes once you open it."
+  },
   "changePassword": {
     "title": "Password",
     "hint": "Your current password is required: without it, anyone reaching your open browser could lock you out.",
@@ -638,6 +665,14 @@
     "confirmRevoke": "Remove admin rights from {{name}}?"
   },
   "serverErrors": {
+    "phone_invalid": "Invalid number. International format expected, for example +32470123456.",
+    "sms_not_configured": "SMS verification is not active yet. This is not you: the channel is not open.",
+    "sms_send_failed": "The SMS could not be sent. Try again in a moment.",
+    "code_recently_sent": "A code was just sent. Wait a minute before asking for another.",
+    "no_code_requested": "No code pending. Request a new one.",
+    "code_expired": "This code has expired. Request a new one.",
+    "code_incorrect": "Incorrect code.",
+    "too_many_attempts": "Too many attempts. Request a new code.",
     "network": "No connection. Check your network and try again.",
     "service_unavailable": "The service is momentarily unreachable. Try again in a moment.",
     "unauthorized": "Your session has expired. Please sign in again.",

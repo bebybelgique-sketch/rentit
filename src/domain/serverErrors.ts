@@ -51,6 +51,21 @@ export const SERVER_ERROR_KEYS = {
   // Админка: admin-action
   cannot_demote_self: 'serverErrors.cannot_demote_self',
   target_not_found: 'serverErrors.target_not_found',
+
+  // Телефон: verify-phone.
+  //
+  // `sms_not_configured` — отдельный код, а не общий отказ, и это важно:
+  // канал SMS может быть ещё не заведён, и тогда человек должен прочесть
+  // «подтверждение по SMS пока недоступно», а не «что-то пошло не так».
+  // Первое — состояние продукта, второе — обвинение в его адрес.
+  phone_invalid: 'serverErrors.phone_invalid',
+  sms_not_configured: 'serverErrors.sms_not_configured',
+  sms_send_failed: 'serverErrors.sms_send_failed',
+  code_recently_sent: 'serverErrors.code_recently_sent',
+  no_code_requested: 'serverErrors.no_code_requested',
+  code_expired: 'serverErrors.code_expired',
+  code_incorrect: 'serverErrors.code_incorrect',
+  too_many_attempts: 'serverErrors.too_many_attempts',
 } as const satisfies Record<string, string>;
 
 export type ServerErrorCode = keyof typeof SERVER_ERROR_KEYS;
