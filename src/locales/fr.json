@@ -1,4 +1,7 @@
 {
+  "offline": {
+    "notice": "Hors ligne — les modifications ne seront pas enregistrées"
+  },
   "a11y": {
     "skipToContent": "Aller au contenu"
   },

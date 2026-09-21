@@ -1,4 +1,7 @@
 {
+  "offline": {
+    "notice": "Offline — wijzigingen worden niet opgeslagen"
+  },
   "a11y": {
     "skipToContent": "Naar de inhoud"
   },
