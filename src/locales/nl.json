@@ -1,4 +1,7 @@
 {
+  "a11y": {
+    "skipToContent": "Naar de inhoud"
+  },
   "tasks": {
     "badgeLabel_one": "{{count}} taak te doen",
     "badgeLabel_other": "{{count}} taken te doen"

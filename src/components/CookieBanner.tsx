@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -6,6 +6,17 @@ import { useTranslation } from 'react-i18next'
 type Consent = { necessary: true; functional: boolean; analytics: boolean }
 
 const STORAGE_KEY = 'rentit_cookie_consent'
+
+/**
+ * Что в окне можно взять фокусом.
+ *
+ * Вынесено в константу не только ради порядка: строкой внутри вызова
+ * её принял за текст интерфейса страж вшитых подписей
+ * (check-hardcoded-text). Заглушать его списком было бы неверно —
+ * список для настоящих исключений, а лишняя запись в нём делает
+ * сторожа шумным, и однажды шум перестанут читать.
+ */
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 // Согласие и отказ рисуются ОДНИМ объектом стиля, а не двумя похожими.
 //
@@ -66,6 +77,92 @@ export default function CookieBanner() {
     setVisible(false)
   }
 
+  /**
+   * Окно ведёт себя как диалог, а не как кусок страницы.
+   *
+   * ЧТО БЫЛО ЗАМЕРЕНО. Фокус при открытии оставался на body, обход Tab
+   * шёл по навигации ЗА окном (шесть остановок), Escape не закрывал.
+   * Для программы чтения окно ничем не отличалось от текста страницы.
+   *
+   * ПОЧЕМУ ЭТО ВАЖНЕЕ ОБЫЧНОГО. Это первый экран каждого посетителя и
+   * юридический гейт: согласие, до которого нельзя добраться, согласием
+   * не является.
+   */
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!visible) return
+
+    const node = dialogRef.current
+    if (!node) return
+
+    // Откуда пришли — туда и вернём фокус при закрытии. Иначе человек
+    // после выбора оказывается в начале страницы и идёт по навигации
+    // заново.
+    const returnTo = document.activeElement as HTMLElement | null
+
+    /**
+     * Что в окне можно взять фокусом.
+     *
+     * ФИЛЬТРА ПО ВИДИМОСТИ ЗДЕСЬ НЕТ, И ЭТО НАРОЧНО. Первая версия
+     * отсеивала по `offsetParent !== null` — приём разумный на вид и
+     * коварный по сути: `offsetParent` требует РАСКЛАДКИ, а там, где
+     * её нет, он равен null у всего подряд. Ловушка фокуса тогда
+     * молча превращается в пустышку — отфильтровано всё, кольцу не из
+     * чего строиться. Поймал это набор: он считает разметку без
+     * раскладки, и фокус никуда не встал.
+     *
+     * Фильтр и не нужен: окно не прячет содержимое стилями, а
+     * ПОДМЕНЯЕТ разметку (`!expanded ? … : …`). Невидимых пунктов в
+     * нём нет по построению.
+     */
+    const focusable = () => [...node.querySelectorAll<HTMLElement>(FOCUSABLE)]
+
+    // Фокус — на первый пункт ВНУТРИ окна, а не на само окно. По
+    // разметке это ссылка на политику конфиденциальности, и порядок
+    // выходит верный: человек слышит заголовок, потом объяснение,
+    // потом выбор. Замер подтверждает: «Politique de confidentialité»,
+    // inside: true.
+    focusable()[0]?.focus()
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Escape = «отказаться от необязательных». Не «принять всё»:
+        // молчание согласием не является. И не «ничего не делать»:
+        // окно, из которого нельзя выйти клавиатурой, — ловушка.
+        // Выбор тот же, что у кнопки на экране рядом, и он записывается
+        // явно, а не подразумевается.
+        e.preventDefault()
+        rejectAll()
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      // Кольцо: Tab с последнего ведёт на первый, Shift+Tab наоборот.
+      // Без этого обход уходит на страницу под окном.
+      const items = focusable()
+      if (items.length === 0) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      const active = document.activeElement
+
+      if (e.shiftKey && (active === first || !node.contains(active))) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && (active === last || !node.contains(active))) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown, true)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true)
+      returnTo?.focus?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, expanded])
+
   const acceptAll = () => save({ necessary: true, functional: true, analytics: true })
   const rejectAll = () => save({ necessary: true, functional: false, analytics: false })
   const saveCustom = () => save({ necessary: true, functional, analytics })
@@ -81,7 +178,16 @@ export default function CookieBanner() {
         padding: '0 16px 16px',
         pointerEvents: 'none',
       }}>
-        <div style={{
+        {/* Диалог. role + aria-modal сообщают программе чтения, что
+            открылось окно и остальная страница на время недоступна;
+            aria-labelledby даёт ему имя — без него оно объявляется как
+            «диалог» и ничего больше. */}
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cookie-dialog-title"
+          style={{
           background: '#fff',
           borderRadius: '4px 4px 0 0',
           width: '100%', maxWidth: '520px',
@@ -103,7 +209,7 @@ export default function CookieBanner() {
                     <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#999', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '6px' }}>
                       {t('cookies.header')}
                     </div>
-                    <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#080808', letterSpacing: '-0.03em', lineHeight: 1.2, margin: 0 }}>
+                    <h2 id="cookie-dialog-title" style={{ fontSize: '22px', fontWeight: '800', color: '#080808', letterSpacing: '-0.03em', lineHeight: 1.2, margin: 0 }}>
                       {t('cookies.title')}
                     </h2>
                   </div>

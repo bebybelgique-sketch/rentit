@@ -13,6 +13,7 @@ import { supabase } from './lib/supabase'
 import CookieBanner from './components/CookieBanner'
 import BottomNav from './components/layout/BottomNav'
 import RouteBoundary, { clearChunkReloadFlag } from './components/common/RouteBoundary'
+import RouteAnnouncer from './components/common/RouteAnnouncer'
 import { usePageTitle } from './hooks/usePageTitle'
 import { useOwnerTasks } from './hooks/useOwnerTasks'
 import TaskBadge from './components/common/TaskBadge'
@@ -309,6 +310,9 @@ function AppChrome() {
 
   return (
       <div className="flex flex-col min-h-screen">
+        {/* ПЕРВЫМ элементом страницы, до навигации. Иначе она не
+            перескакивает ничего: до неё ещё надо дойти. */}
+        <a className="skip-link" href="#main-content">{t('a11y.skipToContent')}</a>
         <Navbar taskCount={taskCount} />
         {/* Панель ставится рядом с навбаром, а не вместо него: на широких
             экранах её скрывает CSS, на узких навбар продолжает держать язык,
@@ -321,6 +325,14 @@ function AppChrome() {
             не мог отличить медленную сеть от мёртвой вкладки.
             RouteBoundary ловит непогрузившийся чанк (после деплоя старые
             имена файлов исчезают) и перезагружает страницу один раз. */}
+        {/* ОРИЕНТИР СОДЕРЖИМОГО. Его не было ни на одной странице:
+            человек на программе чтения слушал навигацию заново на
+            каждом экране, потому что перескочить её было нечем.
+
+            tabIndex={-1} делает область фокусируемой ПРОГРАММНО, не
+            добавляя лишней остановки при обходе клавиатурой: сюда
+            переводит фокус RouteAnnouncer после смены адреса. */}
+        <main id="main-content" tabIndex={-1} className="flex flex-col flex-1">
         <RouteBoundary message={t('routeError')} retry={t('routeRetry')}>
         <Suspense fallback={<div className="loading">{t('common.loading')}</div>}>
           <Routes>
@@ -352,6 +364,7 @@ function AppChrome() {
           </Routes>
         </Suspense>
         </RouteBoundary>
+        </main>
         {pathname !== '/' && (
           <footer style={{ textAlign: 'center', padding: 'var(--space-5) var(--space-4)', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
             {/* Была ссылка на /business, коммит 1409b3a снёс страницу и
@@ -362,6 +375,9 @@ function AppChrome() {
             </Link>
           </footer>
         )}
+        {/* Произносит название нового экрана и уводит туда фокус:
+            в SPA браузер не делает ни того, ни другого. */}
+        <RouteAnnouncer />
         <Toaster position="bottom-right" />
       </div>
   )
