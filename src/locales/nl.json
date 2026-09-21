@@ -1,4 +1,8 @@
 {
+  "tasks": {
+    "badgeLabel_one": "{{count}} taak te doen",
+    "badgeLabel_other": "{{count}} taken te doen"
+  },
   "pageTitle": {
     "login": "Inloggen",
     "register": "Account aanmaken",
@@ -174,6 +178,12 @@
   "manageIt": "beheren",
   "maxPrice": "Max €/dag",
   "myItems": {
+    "handoverToday": "Vandaag af te geven",
+    "handoverLate_one": "Afgifte {{count}} dag te laat",
+    "handoverLate_other": "Afgifte {{count}} dagen te laat",
+    "returnToday": "Teruggave vandaag verwacht",
+    "returnLate_one": "Teruggave {{count}} dag te laat",
+    "returnLate_other": "Teruggave {{count}} dagen te laat",
     "toDoNow": "Nu te doen",
     "untitled": "Advertentie zonder titel",
     "answerHours_one": "Nog {{count}} u om te antwoorden",

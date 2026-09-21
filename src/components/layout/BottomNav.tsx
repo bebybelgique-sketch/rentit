@@ -2,6 +2,7 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import TaskBadge from '../common/TaskBadge';
 
 /**
  * Нижняя панель для узких экранов: четыре раздела и действие посередине.
@@ -35,7 +36,23 @@ import { useAuth } from '../../context/AuthContext';
  * Размеры, цвета и толщины обводок взяты из канвы дословно — они, в свою
  * очередь, собраны из токенов index.css.
  */
-export default function BottomNav() {
+interface BottomNavProps {
+  /**
+   * Сколько дел ждёт владельца.
+   *
+   * ПРИХОДИТ СВЕРХУ, А НЕ БЕРЁТСЯ ХУКОМ ЗДЕСЬ. Первая версия звала
+   * useOwnerTasks прямо в панели — и панель, деталь навигации,
+   * обзавелась сетевой зависимостью: её набор сразу упал на импорте
+   * клиента Supabase, которому нужен .env.
+   *
+   * Довод не только про тест. Число обязано быть ОДНИМ и тем же в
+   * навбаре и на панели; когда его считают в двух местах, однажды
+   * посчитают по-разному. App зовёт хук один раз и раздаёт результат.
+   */
+  taskCount?: number;
+}
+
+export default function BottomNav({ taskCount = 0 }: BottomNavProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -57,9 +74,12 @@ export default function BottomNav() {
           Настоящий owner-first дашборд — отдельная работа; когда он появится,
           меняется один href. */}
       <NavLink to="/my-items" className={tab}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-          <path d="M4 11l8-7 8 7" /><path d="M6 10v9h12v-9" />
-        </svg>
+        <span className="bottom-nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <path d="M4 11l8-7 8 7" /><path d="M6 10v9h12v-9" />
+          </svg>
+          <TaskBadge count={taskCount} placement="tab" />
+        </span>
         <span>{t('nav.home')}</span>
       </NavLink>
 

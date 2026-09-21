@@ -531,6 +531,10 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   font-weight: 500;
   color: rgba(242,240,235,0.5);
   transition: color 0.2s;
+  /* Значок дел стоит СРАЗУ ЗА словом и обязан ехать вместе с ним.
+     Без этого при нехватке ширины кружок переносится на строку ниже и
+     повисает под ссылкой сам по себе — видно только с числом в нём. */
+  white-space: nowrap;
 }
 .navbar-link:hover { color: var(--text-on-dark); text-decoration: none; background: transparent; }
 
@@ -1010,6 +1014,11 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 
   .bottom-nav-tab.is-on { color: var(--text-on-dark); }
 
+  /* Значок дел на нижней панели ставится поверх ИКОНКИ, а не рядом с
+     подписью. Рядом с подписью он прибавлял бы табу ширину, а четыре
+     таба делят ряд поровну — один подросший сдвигает остальные. */
+  .bottom-nav-icon { position: relative; display: inline-flex; }
+
   /* Действие. Единственное красное пятно на панели — правило #39:
      красный глагол, а не украшение. */
   .bottom-nav-fab {
@@ -1033,4 +1042,51 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
      последняя кнопка каждого экрана уезжают под неё — и именно последняя
      кнопка чаще всего и есть действие. */
   body { padding-bottom: 84px; }
+}
+
+/* ── Значок дел ──────────────────────────────────────────────────────
+   Красный #C8102E здесь — не украшение, а ровно та роль, ради которой
+   он в палитре и оставлен: ДЕЙСТВИЕ, то, что жмут (шапка index.css).
+   Жёлтый-сигнал сюда не годится — он живёт только на тёмном, а значок
+   висит и на светлой странице, где даёт контраст 1.44:1.
+
+   Белым по красному выходит 5.9:1 при норме 4.5:1 — это замер, а не
+   вкус. Кружок не круглый, а со скруглением 9px: идеальный круг на
+   двузначном числе превращается в овал, и цифры в нём жмутся к краям.
+   ─────────────────────────────────────────────────────────────────── */
+.task-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--action);
+  color: #FFFFFF;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  /* Цифра в кружке оптически сидит ниже центра из-за метрик шрифта. */
+  padding-top: 1px;
+}
+
+/* В навбаре — следом за словом, с воздухом. */
+.task-badge-nav { margin-left: 6px; vertical-align: middle; }
+
+/* На панели — в правом верхнем углу иконки, с обводкой цветом панели:
+   без неё красное пятно сливается с тёмной иконкой под ним. */
+.task-badge-tab {
+  position: absolute;
+  /* Угол, а не поверх глифа. При -6/-10 двузначный значок ложился на
+     правую часть иконки и срезал её: на снимке дом превращался в
+     половину дома. Места хватает — таб шире иконки на 28px с каждой
+     стороны. */
+  top: -7px;
+  right: -13px;
+  border: 2px solid var(--primary);
+  height: 19px;
+  min-width: 19px;
 }

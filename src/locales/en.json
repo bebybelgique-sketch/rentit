@@ -1,4 +1,8 @@
 {
+  "tasks": {
+    "badgeLabel_one": "{{count}} thing to do",
+    "badgeLabel_other": "{{count}} things to do"
+  },
   "pageTitle": {
     "login": "Log in",
     "register": "Create account",
@@ -174,6 +178,12 @@
   "manageIt": "manage it",
   "maxPrice": "Max €/day",
   "myItems": {
+    "handoverToday": "To hand over today",
+    "handoverLate_one": "Handover {{count}} day late",
+    "handoverLate_other": "Handover {{count}} days late",
+    "returnToday": "Return due today",
+    "returnLate_one": "Return {{count}} day late",
+    "returnLate_other": "Return {{count}} days late",
     "toDoNow": "To do now",
     "untitled": "Untitled listing",
     "answerHours_one": "{{count}} h left to answer",
