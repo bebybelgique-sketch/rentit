@@ -5,6 +5,12 @@ import { AuthProvider } from './context/AuthContext'
 import App from './App'
 import './index.css'
 import { registerServiceWorker } from './lib/registerServiceWorker'
+import { installErrorCapture } from './lib/errorLog'
+
+// Ловим то, что мимо React: отклонённые обещания и глобальные ошибки.
+// Ставится ДО отрисовки — иначе падение на первом же рендере пройдёт
+// мимо журнала.
+installErrorCapture()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

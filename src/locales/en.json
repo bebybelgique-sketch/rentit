@@ -1,4 +1,11 @@
 {
+  "crash": {
+    "title": "Something broke",
+    "text": "The app stopped. You can start over from the home page; if it happens again, copy the details and send them to us.",
+    "retry": "Back to home",
+    "copy": "Copy details",
+    "copied": "Copied"
+  },
   "offline": {
     "notice": "Offline — changes will not be saved"
   },

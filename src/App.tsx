@@ -15,6 +15,7 @@ import BottomNav from './components/layout/BottomNav'
 import RouteBoundary, { clearChunkReloadFlag } from './components/common/RouteBoundary'
 import RouteAnnouncer from './components/common/RouteAnnouncer'
 import OfflineNotice from './components/common/OfflineNotice'
+import AppBoundary from './components/common/AppBoundary'
 import { usePageTitle } from './hooks/usePageTitle'
 import { useOwnerTasks } from './hooks/useOwnerTasks'
 import TaskBadge from './components/common/TaskBadge'
@@ -309,7 +310,25 @@ function AppChrome() {
   // чтобы просто поехать дальше.
   useEffect(() => { clearChunkReloadFlag() }, [])
 
+  // ПОСЛЕДНЯЯ ПРЕГРАДА между поломкой и белым экраном.
+  //
+  // RouteBoundary ниже обёрнут вокруг <Routes> и ловит падения СТРАНИЦ.
+  // А навигация, нижняя панель, окно согласия и полоса «нет сети» стоят
+  // снаружи него: падение в любом из них React обрабатывает единственным
+  // доступным ему способом — снимает всё дерево. Человек получает пустую
+  // страницу и ни одного слова о том, что случилось.
+  //
+  // Подписи передаются пропсами, а не берутся внутри перехватчика: если
+  // приложение упало на инициализации словарей, экран поломки упадёт
+  // следом, и человек снова окажется перед пустотой.
   return (
+      <AppBoundary
+        title={t('crash.title')}
+        text={t('crash.text')}
+        retry={t('crash.retry')}
+        copy={t('crash.copy')}
+        copied={t('crash.copied')}
+      >
       <div className="flex flex-col min-h-screen">
         {/* ПЕРВЫМ элементом страницы, до навигации. Иначе она не
             перескакивает ничего: до неё ещё надо дойти. */}
@@ -385,6 +404,7 @@ function AppChrome() {
         <RouteAnnouncer />
         <Toaster position="bottom-right" />
       </div>
+      </AppBoundary>
   )
 }
 

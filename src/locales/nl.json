@@ -1,4 +1,11 @@
 {
+  "crash": {
+    "title": "Er is iets stukgegaan",
+    "text": "De applicatie is gestopt. U kunt opnieuw beginnen vanaf de startpagina; gebeurt het weer, kopieer dan de details en stuur ze ons.",
+    "retry": "Terug naar start",
+    "copy": "Details kopiëren",
+    "copied": "Gekopieerd"
+  },
   "offline": {
     "notice": "Offline — wijzigingen worden niet opgeslagen"
   },
