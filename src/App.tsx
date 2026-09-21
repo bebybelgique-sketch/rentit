@@ -14,6 +14,7 @@ import CookieBanner from './components/CookieBanner'
 import BottomNav from './components/layout/BottomNav'
 import RouteBoundary, { clearChunkReloadFlag } from './components/common/RouteBoundary'
 import RouteAnnouncer from './components/common/RouteAnnouncer'
+import OfflineNotice from './components/common/OfflineNotice'
 import { usePageTitle } from './hooks/usePageTitle'
 import { useOwnerTasks } from './hooks/useOwnerTasks'
 import TaskBadge from './components/common/TaskBadge'
@@ -313,6 +314,10 @@ function AppChrome() {
         {/* ПЕРВЫМ элементом страницы, до навигации. Иначе она не
             перескакивает ничего: до неё ещё надо дойти. */}
         <a className="skip-link" href="#main-content">{t('a11y.skipToContent')}</a>
+        {/* Полоса «нет сети» — ПОД навигацией и над содержимым.
+            С воркером приложение без сети открывается, и этим создаёт
+            новую ложь: экран выглядит рабочим, а заявка не уйдёт. */}
+        <OfflineNotice />
         <Navbar taskCount={taskCount} />
         {/* Панель ставится рядом с навбаром, а не вместо него: на широких
             экранах её скрывает CSS, на узких навбар продолжает держать язык,

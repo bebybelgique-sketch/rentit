@@ -2,6 +2,7 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { SITE_URL } from './supabase/functions/_shared/operator'
 import { robotsTxt, sitemapXml } from './src/domain/routeIndexing'
+import { readFileSync } from 'node:fs'
 import { injectSiteUrl as applySiteUrl, stripHtmlComments as removeComments } from './src/domain/shellHtml'
 
 /**
@@ -89,8 +90,75 @@ const emitCrawlerFiles = (): Plugin => ({
   },
 })
 
+/**
+ * Service worker собирается ИЗ ШАБЛОНА, потому что должен знать имена
+ * файлов сборки — а они содержат хеш содержимого и меняются с каждым
+ * выкатом.
+ *
+ * ПОЧЕМУ НЕ ПОЛОЖИТЬ ГОТОВЫЙ В public/. Ровно так он там и лежал: файл
+ * из марта, кэшировавший «/» и «/index.html» и не знавший ни об одном
+ * скрипте приложения. Офлайн по нему загрузилась бы пустая оболочка.
+ * Список, который пишут руками, устаревает в день первой же сборки.
+ *
+ * ЧТО ПОПАДАЕТ В ПРЕДЗАГРУЗКУ. Оболочка, код входа, стили и шрифты —
+ * то, без чего приложение не покажет НИЧЕГО. Ленивые куски страниц
+ * сюда не идут намеренно: скачивать весь продукт при первом заходе с
+ * мобильного интернета ради возможного офлайна — плохой размен. Они
+ * оседают в кэше по мере того, как человек их открывает.
+ */
+const buildServiceWorker = (): Plugin => ({
+  name: 'rentit-service-worker',
+  apply: 'build',
+  generateBundle(_options, bundle) {
+    const files = Object.keys(bundle)
+
+    // Точка входа и её стили: без них не покажется ничего.
+    const entry = files.filter((f) => {
+      const chunk = bundle[f]
+      return chunk.type === 'chunk' && chunk.isEntry
+    })
+    const css = files.filter((f) => f.endsWith('.css'))
+
+    const precache = [
+      '/',
+      '/index.html',
+      '/manifest.json',
+      ...entry.map((f) => `/${f}`),
+      ...css.map((f) => `/${f}`),
+      '/fonts/outfit.woff2',
+      '/fonts/source-sans-3.woff2',
+      '/favicon.svg',
+      '/icons/icon-192.png',
+    ]
+
+    // Версия кэша = содержимое предзагрузки. Имена файлов содержат
+    // хеш, поэтому новая сборка даёт новую версию, а неизменная —
+    // прежнюю, и кэш не сбрасывается впустую.
+    const version = createHash(precache.join('|'))
+
+    const template = readFileSync('src/sw.template.js', 'utf8')
+    const source = template
+      // Глобально, а не первое вхождение: первая версия заменила
+      // плейсхолдер В КОММЕНТАРИИ шаблона, где он был упомянут как
+      // пример, и до кода правка не дошла.
+      .replace(/__VERSION__/g, version)
+      .replace(/__PRECACHE__/g, JSON.stringify(precache, null, 2))
+
+    this.emitFile({ type: 'asset', fileName: 'sw.js', source })
+  },
+})
+
+/** Короткий отпечаток строки. Своего алгоритма не изобретаем. */
+const createHash = (input: string): string => {
+  let h = 0
+  for (let i = 0; i < input.length; i++) {
+    h = (h * 31 + input.charCodeAt(i)) | 0
+  }
+  return Math.abs(h).toString(36)
+}
+
 export default defineConfig({
-  plugins: [react(), injectSiteUrl(), stripHtmlComments(), emitCrawlerFiles()],
+  plugins: [react(), injectSiteUrl(), stripHtmlComments(), emitCrawlerFiles(), buildServiceWorker()],
   server: {
     host: '0.0.0.0',
     allowedHosts: true,

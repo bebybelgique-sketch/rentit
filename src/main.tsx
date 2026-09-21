@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import App from './App'
 import './index.css'
+import { registerServiceWorker } from './lib/registerServiceWorker'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -14,3 +15,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </React.StrictMode>
 )
+
+// Офлайн и установка на телефон. Регистрируется ПОСЛЕ отрисовки и
+// только в собранном коде — почему именно так, в шапке файла.
+registerServiceWorker()

@@ -1,4 +1,7 @@
 {
+  "offline": {
+    "notice": "Offline — changes will not be saved"
+  },
   "a11y": {
     "skipToContent": "Skip to content"
   },
