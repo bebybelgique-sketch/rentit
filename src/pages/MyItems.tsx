@@ -7,7 +7,7 @@ import { statusLabelKey } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
 import BookingOwnerActions from '../components/booking/BookingOwnerActions'
 import { photosOf } from '../lib/items'
-import { answerDeadline, isUrgent } from '../domain/requestDeadline'
+import { useOwnerTasks } from '../hooks/useOwnerTasks'
 import { useOwnerItems } from '../hooks/useOwnerItems'
 import { useSetItemAvailability } from '../hooks/mutations/useSetItemAvailability'
 import { useDeleteItem } from '../hooks/mutations/useDeleteItem'
@@ -49,23 +49,17 @@ export default function MyItems() {
 
   const filtered = tab === 'active' ? items.filter(i => i.available) : items
 
-  // ДЕЛА — ПЛОСКИМ СПИСКОМ ПО ВСЕМ ВЕЩАМ, и берутся из `items`, а не из
-  // `filtered`: вкладка «Actifs» прячет скрытые вещи, но заявка на скрытую
-  // вещь никуда не девается и ответить на неё всё равно надо. Спрятать дело
-  // вместе с вещью значило бы потерять его молча.
+  // ДЕЛА СЧИТАЕТ ДОМЕН, А НЕ СТРАНИЦА (src/domain/ownerTasks.ts).
   //
-  // Порядок — по сроку: первой та, что скорее сгорит. Сортировка по
-  // created_at по возрастанию и есть порядок срочности, потому что окно у
-  // всех одинаковое.
-  const now = new Date()
-  const toDo = items
-    .flatMap(item => item.bookings
-      .filter(b => b.status === 'pending_approval')
-      .map(booking => {
-        const deadline = answerDeadline(booking.created_at ?? null, now)
-        return { booking, item, deadline, urgent: isUrgent(deadline) }
-      }))
-    .sort((a, b) => (a.booking.created_at ?? '').localeCompare(b.booking.created_at ?? ''))
+  // Здесь этот подсчёт жил своей копией и знал РОВНО ОДИН вид дела —
+  // неотвеченную заявку. Передача вещи и приём возврата лежали в
+  // /my-rentals под вкладкой, без единого признака срочности, хотя
+  // просроченный возврат держит вещь занятой и упирает в занятые даты
+  // следующую заявку на неё.
+  //
+  // Тот же хук считает число в значке навигации. Два определения слова
+  // «дело» — это «3» в кружке над списком из двух строк.
+  const { tasks: toDo } = useOwnerTasks()
 
   if (loading) return <div className="page"><div className="loading">{t('common.loading')}</div></div>
 
@@ -109,12 +103,12 @@ export default function MyItems() {
             {t('myItems.toDoNow')}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {toDo.map(({ booking, item, deadline, urgent }) => (
+            {toDo.map(({ task, booking, item }) => (
               <div
                 key={booking.id}
                 style={{
                   background: '#fffbeb',
-                  border: `1px solid ${urgent ? 'var(--danger)' : '#fde68a'}`,
+                  border: `1px solid ${task.urgent ? 'var(--danger)' : '#fde68a'}`,
                   borderRadius: '8px',
                   padding: '14px',
                 }}
@@ -139,20 +133,36 @@ export default function MyItems() {
                   </div>
                 )}
 
-                {/* СРОК. До 20.09 владелец не видел его нигде, хотя продукт
-                    его исполняет: планировщик отменяет заявку через сутки
-                    после создания, а арендатору это обещано на странице
-                    вещи вслух. Обещание было односторонним. */}
+                {/* СРОК — СВОЙ У КАЖДОГО ВИДА ДЕЛА.
+
+                    У заявки он настоящий: планировщик отменяет её через
+                    сутки после создания, и арендатору это обещано на
+                    странице вещи вслух. До 20.09 обещание было
+                    односторонним — владелец срока не видел нигде.
+
+                    У передачи и возврата срока нет, есть ПРОСРОЧКА.
+                    Писать «осталось N» там, где ничего не сгорает, было
+                    бы выдумкой: никто эту бронь не отменит. */}
                 <div style={{
                   fontSize: '12px',
                   fontFamily: 'var(--font-mono)',
                   marginTop: '8px',
-                  color: urgent ? 'var(--danger)' : 'var(--muted)',
-                  fontWeight: urgent ? 700 : 400,
+                  color: task.urgent ? 'var(--danger)' : 'var(--muted)',
+                  fontWeight: task.urgent ? 700 : 400,
                 }}>
-                  {deadline.state === 'overdue' ? t('myItems.answerOverdue')
-                    : deadline.state === 'minutes' ? t('myItems.answerMinutes', { count: deadline.minutes })
-                    : t('myItems.answerHours', { count: deadline.hours })}
+                  {task.kind === 'answer' && task.deadline && (
+                    task.deadline.state === 'overdue' ? t('myItems.answerOverdue')
+                      : task.deadline.state === 'minutes' ? t('myItems.answerMinutes', { count: task.deadline.minutes })
+                      : t('myItems.answerHours', { count: task.deadline.hours })
+                  )}
+                  {task.kind === 'handover' && (
+                    task.overdueDays === 0 ? t('myItems.handoverToday')
+                      : t('myItems.handoverLate', { count: task.overdueDays })
+                  )}
+                  {task.kind === 'complete' && (
+                    task.overdueDays === 0 ? t('myItems.returnToday')
+                      : t('myItems.returnLate', { count: task.overdueDays })
+                  )}
                 </div>
 
                 <div style={{ marginTop: '10px' }}>

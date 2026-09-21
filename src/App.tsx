@@ -14,6 +14,8 @@ import CookieBanner from './components/CookieBanner'
 import BottomNav from './components/layout/BottomNav'
 import RouteBoundary, { clearChunkReloadFlag } from './components/common/RouteBoundary'
 import { usePageTitle } from './hooks/usePageTitle'
+import { useOwnerTasks } from './hooks/useOwnerTasks'
+import TaskBadge from './components/common/TaskBadge'
 
 // Создаем клиент для TanStack Query
 const queryClient = new QueryClient({
@@ -82,7 +84,12 @@ function NotFound() {
     </div>
   )
 }
-function Navbar() {
+interface NavbarProps {
+  /** Сколько дел ждёт владельца. Считается один раз в App — см. ниже. */
+  taskCount: number;
+}
+
+function Navbar({ taskCount }: NavbarProps) {
   const { t, i18n } = useTranslation() // Используем хук i18next
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -155,7 +162,13 @@ function Navbar() {
                   «key 'myItems (fr)' returned an object instead of string.» —
                   ровно это и висело в проде у каждого вошедшего. */}
               <Link to="/list-item" className="navbar-link" onClick={close}>{t('nav.listItem')}</Link>
-              <Link to="/my-items" className="navbar-link hide-mobile" onClick={close}>{t('nav.myItems')}</Link>
+              {/* Значок дел — здесь, а не у «Mes locations»: дела лежат в
+                  /my-items, и обещать их там, где их не сделать, нельзя.
+                  Счёт тот же, что на нижней панели: один хук, один ключ
+                  кэша, одно число. */}
+              <Link to="/my-items" className="navbar-link hide-mobile" onClick={close}>
+                {t('nav.myItems')}<TaskBadge count={taskCount} />
+              </Link>
               <Link to="/my-rentals" className="navbar-link hide-mobile" onClick={close}>{t('nav.myRentals')}</Link>
               <Link to="/profile" className="navbar-link" onClick={close}>{t('navProfile')}</Link>
               <button
@@ -263,7 +276,28 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-export default function App() {
+/**
+ * Тело приложения. Живёт ПОД QueryClientProvider — и это не стиль.
+ *
+ * Счёт дел (useOwnerTasks) ходит в react-query. Пока он стоял в теле
+ * `App`, который сам же возвращает провайдер, клиент оказывался
+ * ПОТОМКОМ вызывающего хука: useQuery бросал при первом рендере, и
+ * приложение не монтировалось ни на одном адресе — белая страница.
+ *
+ * Разделение на два компонента убирает саму возможность так ошибиться:
+ * всё, что внутри AppChrome, гарантированно под провайдером.
+ */
+function AppChrome() {
+  // ДЕЛА СЧИТАЮТСЯ ОДИН РАЗ, ЗДЕСЬ.
+  //
+  // Число видно в двух местах — у «Mes outils» в навбаре и на первом
+  // табе нижней панели, — и оно обязано быть ОДНИМ И ТЕМ ЖЕ. Два вызова
+  // хука делят кэш react-query и лишнего запроса не дают, но разойтись
+  // всё равно могут: достаточно, чтобы в одном месте посчитали по другому
+  // правилу. Один вызов исключает это структурно.
+  //
+  // Что именно считается делом — src/domain/ownerTasks.ts.
+  const { count: taskCount } = useOwnerTasks()
   const { t } = useTranslation()
   const { pathname } = useLocation()
 
@@ -274,14 +308,13 @@ export default function App() {
   useEffect(() => { clearChunkReloadFlag() }, [])
 
   return (
-    <QueryClientProvider client={queryClient}>
       <div className="flex flex-col min-h-screen">
-        <Navbar />
+        <Navbar taskCount={taskCount} />
         {/* Панель ставится рядом с навбаром, а не вместо него: на широких
             экранах её скрывает CSS, на узких навбар продолжает держать язык,
             выход и «Parcourir». Замена одного другим отняла бы у телефона
             то, чего панель не несёт. */}
-        <BottomNav />
+        <BottomNav taskCount={taskCount} />
         <CookieBanner />
         {/* fallback={null} означал: пока страница грузится — пусто. То
             есть «грузится» и «сломалось» выглядели одинаково, и человек
@@ -331,6 +364,16 @@ export default function App() {
         )}
         <Toaster position="bottom-right" />
       </div>
+  )
+}
+
+/**
+ * Корень. Только провайдеры — ничего, что зовёт хуки данных.
+ */
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppChrome />
     </QueryClientProvider>
   )
 }

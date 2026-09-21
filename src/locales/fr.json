@@ -1,4 +1,8 @@
 {
+  "tasks": {
+    "badgeLabel_one": "{{count}} chose à faire",
+    "badgeLabel_other": "{{count}} choses à faire"
+  },
   "pageTitle": {
     "login": "Connexion",
     "register": "Créer un compte",
@@ -174,6 +178,12 @@
   "manageIt": "la gérer",
   "maxPrice": "Max €/jour",
   "myItems": {
+    "handoverToday": "À remettre aujourd'hui",
+    "handoverLate_one": "Remise en retard de {{count}} jour",
+    "handoverLate_other": "Remise en retard de {{count}} jours",
+    "returnToday": "Retour prévu aujourd'hui",
+    "returnLate_one": "Retour en retard de {{count}} jour",
+    "returnLate_other": "Retour en retard de {{count}} jours",
     "toDoNow": "À faire maintenant",
     "untitled": "Annonce sans titre",
     "answerHours_one": "Il reste {{count}} h pour répondre",
