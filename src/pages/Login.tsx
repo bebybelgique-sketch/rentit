@@ -2,9 +2,11 @@ import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from 'react-i18next'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function Login() {
   const { t } = useTranslation()
+  usePageTitle(t('pageTitle.login'))
   const navigate = useNavigate()
   const location = useLocation()
 

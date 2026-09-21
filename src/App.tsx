@@ -13,6 +13,7 @@ import { supabase } from './lib/supabase'
 import CookieBanner from './components/CookieBanner'
 import BottomNav from './components/layout/BottomNav'
 import RouteBoundary, { clearChunkReloadFlag } from './components/common/RouteBoundary'
+import { usePageTitle } from './hooks/usePageTitle'
 
 // Создаем клиент для TanStack Query
 const queryClient = new QueryClient({
@@ -56,6 +57,31 @@ const Privacy          = lazy(() => import('./pages/Privacy'))
 const Terms            = lazy(() => import('./pages/Terms'))
 const RentalShops      = lazy(() => import('./pages/RentalShops'))
 
+/**
+ * Страница «не найдено».
+ *
+ * Стала отдельным компонентом ради одной строки — заголовка вкладки.
+ * Хук нельзя позвать из выражения внутри `element={…}`: правила хуков
+ * требуют тела компонента, а не куска разметки.
+ *
+ * ⚠️ Кода 404 продукт при этом НЕ отдаёт: SPA на любой адрес отвечает
+ * 200 и присылает index.html. Для человека экран верный, для
+ * поисковика адрес выглядит существующим. Закрыто это не здесь, а
+ * запретом на обход в robots.txt (src/domain/routeIndexing.ts).
+ */
+function NotFound() {
+  const { t } = useTranslation()
+  usePageTitle(t('notFound.title'))
+
+  return (
+    <div className="page" style={{ textAlign: 'center', paddingTop: '120px' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', color: 'var(--muted)', marginBottom: '16px' }}>404</div>
+      <h1 style={{ fontSize: '48px', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '16px' }}>{t('notFound.title')}</h1>
+      <p style={{ color: 'var(--muted)', marginBottom: '32px' }}>{t('notFound.text')}</p>
+      <Link to="/browse" className="btn btn-primary">{t('notFound.cta')}</Link>
+    </div>
+  )
+}
 function Navbar() {
   const { t, i18n } = useTranslation() // Используем хук i18next
   const { user } = useAuth()
@@ -289,14 +315,7 @@ export default function App() {
 
                 /rental-shops выше — не их замена: там нет тарифов, потому
                 что тарифов нет в продукте. */}
-            <Route path="*" element={
-              <div className="page" style={{ textAlign: 'center', paddingTop: '120px' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', color: 'var(--muted)', marginBottom: '16px' }}>404</div>
-                <h1 style={{ fontSize: '48px', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '16px' }}>{t('notFound.title')}</h1>
-                <p style={{ color: 'var(--muted)', marginBottom: '32px' }}>{t('notFound.text')}</p>
-                <Link to="/browse" className="btn btn-primary">{t('notFound.cta')}</Link>
-              </div>
-            } />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
         </RouteBoundary>

@@ -6,6 +6,7 @@ import StateIcon from '../components/icons/StateIcon'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { Database } from '../types/database.types'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // Категории и состояния — из src/domain/catalog.ts. Здесь была четвёртая
 // копия списка категорий и третья копия состояний.
@@ -29,6 +30,7 @@ const MAX_BUFFER_DAYS = 30
 
 export default function ListItem() {
   const { t } = useTranslation()
+  usePageTitle(t('pageTitle.listItem'))
   const { user } = useAuth()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)

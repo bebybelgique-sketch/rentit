@@ -225,3 +225,49 @@ describe('манифест описывает установку по-насто
     }
   })
 })
+
+describe('объявленные языковые версии существуют на самом деле', () => {
+  /**
+   * `hreflang` — ОБЕЩАНИЕ, а не украшение.
+   *
+   * index.html объявляет три языковые версии по адресам `?lang=fr|nl|en`.
+   * До 21.09 параметр не читал никто: язык брался только из localStorage,
+   * и по всем трём адресам отдавалась французская страница. Поисковик шёл
+   * за нидерландской версией и получал французскую.
+   *
+   * Сторож связывает две стороны обещания: если в шапке объявлен язык,
+   * продукт обязан уметь его показать по этому адресу.
+   */
+  const declared = [...indexHtml.matchAll(/hreflang="([^"]+)"\s+href="%SITE_URL%\/\?lang=([^"]+)"/g)]
+    .map(([, hreflang, param]) => ({ hreflang, param }))
+
+  const i18nSource = read('src/i18n-next.ts')
+
+  it('объявления вообще есть', () => {
+    expect(declared.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('параметр совпадает с объявленным языком', () => {
+    const mismatched = declared.filter((d) => d.hreflang !== d.param)
+    expect(mismatched, `hreflang и ?lang= расходятся: ${JSON.stringify(mismatched)}`).toEqual([])
+  })
+
+  it('продукт читает язык из адреса', () => {
+    // Без этого каждое объявление выше — ложь для поисковика.
+    expect(i18nSource).toMatch(/URLSearchParams\([^)]*\)\.get\('lang'\)/)
+  })
+
+  it('каждый объявленный язык продукт поддерживает', () => {
+    const supported = i18nSource.match(/export const LANGUAGES = \[([^\]]+)\]/)?.[1] ?? ''
+    for (const { hreflang } of declared) {
+      if (hreflang === 'x-default') continue
+      expect(supported, `объявлен ${hreflang}, а в LANGUAGES его нет`).toContain(`'${hreflang}'`)
+    }
+  })
+
+  it('атрибут lang у документа следует за выбором', () => {
+    // `<html lang="fr">` не менялся никогда: программа чтения с экрана
+    // произносила нидерландский текст французскими звуками.
+    expect(i18nSource).toContain('documentElement.lang')
+  })
+})

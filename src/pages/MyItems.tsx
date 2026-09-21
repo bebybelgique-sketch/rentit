@@ -11,6 +11,7 @@ import { answerDeadline, isUrgent } from '../domain/requestDeadline'
 import { useOwnerItems } from '../hooks/useOwnerItems'
 import { useSetItemAvailability } from '../hooks/mutations/useSetItemAvailability'
 import { useDeleteItem } from '../hooks/mutations/useDeleteItem'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // Прямых обращений к базе и ручных setQueryData на этой странице больше нет.
 //
@@ -28,6 +29,7 @@ import { useDeleteItem } from '../hooks/mutations/useDeleteItem'
 // следующее действие, поэтому отдельного setActionError('') больше нет.
 export default function MyItems() {
   const { t } = useTranslation()
+  usePageTitle(t('myItems.title'))
   const { user } = useAuth()
   const { data: items = [], isLoading: loading, isError } = useOwnerItems(user?.id)
   const setAvailability = useSetItemAvailability()

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 /**
  * Страница для прокатных контор.
@@ -18,6 +19,7 @@ import { useTranslation } from 'react-i18next'
  */
 export default function RentalShops() {
   const { t } = useTranslation()
+  usePageTitle(t('pageTitle.rentalShops'))
   return (
     <div className="page">
       <div style={{ maxWidth: '720px', margin: '0 auto' }}>

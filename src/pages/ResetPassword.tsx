@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // Вторая половина пути восстановления пароля, тоже была целиком
 // по-английски. См. комментарий в ForgotPassword.tsx.
 export default function ResetPassword() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  usePageTitle(t('pageTitle.resetPassword'))
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

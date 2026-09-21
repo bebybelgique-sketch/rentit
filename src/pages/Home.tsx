@@ -25,6 +25,7 @@ import type { BrowseRow } from '../types'
 // страницах он не грузится совсем.
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: number; lng: number } | null }) {
   const { t } = useTranslation()
@@ -220,6 +221,7 @@ function SkeletonCard() {
 
 export default function Home() {
   const { t } = useTranslation()
+  usePageTitle(t('pageTitle.browse'))
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
   // Лендинг клал в адрес ?where=..., а витрина его не читала — поле на

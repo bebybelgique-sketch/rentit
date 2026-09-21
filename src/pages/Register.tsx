@@ -2,9 +2,11 @@ import React, { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from 'react-i18next'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function Register() {
   const { t } = useTranslation()
+  usePageTitle(t('pageTitle.register'))
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const refCode = searchParams.get('ref') || ''

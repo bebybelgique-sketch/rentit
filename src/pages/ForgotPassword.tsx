@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // Страница была целиком по-английски на французском продукте: «Reset
 // password», «Back to login», «Email address». Перенос 121 строки в
@@ -10,6 +11,7 @@ import { supabase } from '../lib/supabase'
 // Хуже места не придумать: сюда человек попадает, уже потеряв доступ.
 export default function ForgotPassword() {
   const { t } = useTranslation()
+  usePageTitle(t('pageTitle.forgotPassword'))
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
