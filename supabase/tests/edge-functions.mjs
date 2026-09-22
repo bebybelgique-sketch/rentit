@@ -465,6 +465,141 @@ try {
       eMail ? eMail.code : `запрос ПРОШЁЛ, строк ${(mail ?? []).length} — УТЕЧКА`)
   }
 
+  // ── Push: подписка и уведомление о сообщении ────────────────────────
+  //
+  // Таблицы push_subscriptions и push_sent закрыты для клиента целиком
+  // (миграция 40): адрес подписки — ключ, по которому человеку можно слать
+  // сообщения, и видеть его не должен никто, кроме сервера. Вся работа с
+  // ними — через push-subscription и notify-message. Проверяется и то и
+  // другое: что прямого пути нет и что функции отвечают теми кодами,
+  // которые клиент умеет перевести.
+  console.log('\npush')
+
+  for (const table of ['push_subscriptions', 'push_sent']) {
+    for (const [client, who] of [[anon, 'аноним'], [renter, 'залогиненный']]) {
+      const { data, error } = await client.from(table).select('*').limit(1)
+      check(error?.code === '42501', `${who} не читает ${table}`,
+        error ? error.code : `запрос ПРОШЁЛ, строк ${(data ?? []).length}`)
+    }
+  }
+  const { error: eSneakSub } = await renter.from('push_subscriptions').insert({
+    endpoint: 'https://fcm.googleapis.com/fcm/send/e2e-sneak', user_id: targetUserId, p256dh: 'x', auth: 'y',
+  })
+  check(eSneakSub?.code === '42501', 'подписку нельзя записать мимо функции', eSneakSub ? eSneakSub.code : 'вставка ПРОШЛА')
+
+  const callFn = async (fn, body, as) => {
+    const headers = { apikey: env.VITE_SUPABASE_ANON_KEY, 'Content-Type': 'application/json' }
+    if (as) headers.Authorization = `Bearer ${(await as.auth.getSession()).data.session.access_token}`
+    const r = await fetch(`${env.VITE_SUPABASE_URL}/functions/v1/${fn}`, {
+      method: 'POST', headers, body: JSON.stringify(body),
+    })
+    let json = {}
+    try { json = await r.json() } catch { /* тело может быть пустым */ }
+    return { status: r.status, json }
+  }
+  const b64url = (bytes) => Buffer.from(bytes).toString('base64url')
+  const fromB64url = (s) => new Uint8Array(Buffer.from(s, 'base64url'))
+
+  for (const fn of ['push-subscription', 'notify-message']) {
+    const r = await callFn(fn, {})
+    check(r.status === 401, `${fn}: без авторизации → 401`, `HTTP ${r.status}`)
+  }
+
+  // Ключ канала. 503 push_not_configured — законное состояние продукта
+  // (секреты VAPID не заведены), но на проде после выката его быть не
+  // должно: клиент тогда молча не предлагает уведомлений вовсе.
+  const cfg = await callFn('push-subscription', { action: 'config' }, renter)
+  const vapidKey = typeof cfg.json.publicKey === 'string' ? fromB64url(cfg.json.publicKey) : null
+  check(cfg.status === 200 && vapidKey?.length === 65 && vapidKey[0] === 0x04,
+    'config отдаёт публичный ключ VAPID (точка P-256, 65 байт)', `HTTP ${cfg.status} ${JSON.stringify(cfg.json)}`)
+
+  // Подписка настоящего формата: ключи — как у браузера, адрес — у службы
+  // Google, но несуществующий. Отправлять на него сервер ничего не будет:
+  // подписка снимается в этом же разделе.
+  const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits'])
+  const p256dh = b64url(new Uint8Array(await crypto.subtle.exportKey('raw', pair.publicKey)))
+  const auth = b64url(crypto.getRandomValues(new Uint8Array(16)))
+  const endpoint = `https://fcm.googleapis.com/fcm/send/e2e-contract-${crypto.randomUUID()}`
+
+  const foreign = await callFn('push-subscription', { action: 'subscribe', endpoint: 'https://example.com/push', p256dh, auth }, renter)
+  check(foreign.status === 400 && foreign.json.error === 'push_endpoint_unsupported',
+    'адрес не службы уведомлений → 400 push_endpoint_unsupported (SSRF)', `HTTP ${foreign.status} ${JSON.stringify(foreign.json)}`)
+
+  const badKey = await callFn('push-subscription', { action: 'subscribe', endpoint, p256dh: auth, auth }, renter)
+  check(badKey.status === 400 && badKey.json.error === 'bad_request',
+    'ключ устройства не той длины → 400 bad_request', `HTTP ${badKey.status} ${JSON.stringify(badKey.json)}`)
+
+  const unknownAction = await callFn('push-subscription', { action: 'purge', endpoint }, renter)
+  check(unknownAction.status === 400 && unknownAction.json.error === 'bad_request',
+    'неизвестное действие → 400 bad_request', `HTTP ${unknownAction.status} ${JSON.stringify(unknownAction.json)}`)
+
+  const subscribed = await callFn('push-subscription', { action: 'subscribe', endpoint, p256dh, auth, lang: 'nl' }, renter)
+  check(subscribed.status === 200 && subscribed.json.ok === true, 'подписка записывается', `HTTP ${subscribed.status} ${JSON.stringify(subscribed.json)}`)
+
+  try {
+    const mine = await callFn('push-subscription', { action: 'status', endpoint }, renter)
+    check(mine.json.subscribed === true, 'status видит свою подписку', JSON.stringify(mine.json))
+
+    const theirs = await callFn('push-subscription', { action: 'status', endpoint }, owner)
+    check(theirs.json.subscribed === false, 'status чужой подписки не выдаёт', JSON.stringify(theirs.json))
+
+    const badLang = await callFn('push-subscription', { action: 'lang', endpoint, lang: 'de' }, renter)
+    check(badLang.status === 400 && badLang.json.error === 'bad_request',
+      'язык вне fr/nl/en → 400 bad_request', `HTTP ${badLang.status} ${JSON.stringify(badLang.json)}`)
+
+    // Снять чужую подписку нельзя: ответ тот же «ok» (итог для вызвавшего —
+    // «у меня подписки нет»), но подписка владельца остаётся.
+    await callFn('push-subscription', { action: 'unsubscribe', endpoint }, owner)
+    const still = await callFn('push-subscription', { action: 'status', endpoint }, renter)
+    check(still.json.subscribed === true, 'чужой unsubscribe подписку не снимает', JSON.stringify(still.json))
+  } finally {
+    const off = await callFn('push-subscription', { action: 'unsubscribe', endpoint }, renter)
+    const gone = await callFn('push-subscription', { action: 'status', endpoint }, renter)
+    check(off.status === 200 && gone.json.subscribed === false, 'уборка: подписка прогона снята', JSON.stringify(gone.json))
+  }
+
+  // notify-message. Одно сообщение — одно уведомление, и только по воле
+  // отправителя. У получателя (владельца) подписок нет: здесь проверяется
+  // контракт функции, а не доставка — доставку держат юнит-тесты
+  // _shared/__tests__/push.test.ts и замер в браузере.
+  const garbageId = await callFn('notify-message', { message_id: 'не-uuid' }, renter)
+  check(garbageId.status === 400 && garbageId.json.error === 'bad_request',
+    'notify-message: не uuid → 400 bad_request', `HTTP ${garbageId.status} ${JSON.stringify(garbageId.json)}`)
+
+  const ghostMsg = await callFn('notify-message', { message_id: crypto.randomUUID() }, renter)
+  check(ghostMsg.status === 404 && ghostMsg.json.error === 'not_found',
+    'notify-message: нет такого сообщения → 404 not_found', `HTTP ${ghostMsg.status} ${JSON.stringify(ghostMsg.json)}`)
+
+  const chat = await ask({ item_id: itemId, start_date: day(12), end_date: day(13) })
+  if (chat.bookingId) {
+    const { data: msg, error: msgErr } = await renter.from('booking_messages')
+      .insert({ booking_id: chat.bookingId, sender_id: targetUserId, body: 'E2E прогон: где встречаемся?' })
+      .select('id').single()
+    if (msg) {
+      const byOther = await callFn('notify-message', { message_id: msg.id }, owner)
+      check(byOther.status === 403 && byOther.json.error === 'forbidden',
+        'уведомить о ЧУЖОМ сообщении нельзя даже участнику → 403', `HTTP ${byOther.status} ${JSON.stringify(byOther.json)}`)
+
+      const first = await callFn('notify-message', { message_id: msg.id }, renter)
+      check(first.status === 200 && first.json.ok === true && !first.json.skipped,
+        'о своём свежем сообщении уведомляет', `HTTP ${first.status} ${JSON.stringify(first.json)}`)
+      check(!('sent' in first.json) && !('failed' in first.json),
+        'отправителю не выдаётся, сколько устройств у собеседника', JSON.stringify(first.json))
+
+      const again = await callFn('notify-message', { message_id: msg.id }, renter)
+      check(again.status === 200 && again.json.skipped === 'duplicate',
+        'второй вызов о том же сообщении — duplicate', `HTTP ${again.status} ${JSON.stringify(again.json)}`)
+    } else {
+      check(false, 'сообщение прогона записалось', msgErr ? `${msgErr.code} ${msgErr.message}` : 'нет строки')
+    }
+    // Бронь и сообщение уходят каскадом вместе с вещью в уборке прогона:
+    // удалять брони клиентом нельзя с миграции 37. Отметка message:<id> в
+    // push_sent остаётся и уходит сама через сутки (notify-message
+    // подчищает старые).
+  } else {
+    check(false, 'бронь для переписки создалась', chat.err)
+  }
+
   // ── Триггер регистрации: referred_by ────────────────────────────────
   //
   // handle_new_user() (миграции 01 → 30 → 31) пишет public.users.referred_by

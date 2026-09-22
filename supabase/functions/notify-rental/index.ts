@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { SITE_URL } from '../_shared/operator.ts'
+import { pushForBookingEvent, supabaseDeps } from '../_shared/push.ts'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -96,6 +97,22 @@ serve(async (req) => {
     const item = booking.items as any
     const renter = booking.users as any
     const owner = item?.users as any
+
+    // PUSH — ПЕРВЫМ, ДО ПИСЕМ. Не ради очерёдности: sendEmail бросает,
+    // когда не задан RESEND_API_KEY, и первое же письмо обрывает всю
+    // функцию в catch. Поставленный после писем, push не выполнился бы ни
+    // разу. Здесь он от почты не зависит: не бросает сам и не ждёт её.
+    await pushForBookingEvent(supabaseDeps(supabase), event, {
+      id: booking.id,
+      renter_id: booking.renter_id,
+      start_date: booking.start_date,
+      end_date: booking.end_date,
+      total_price: booking.total_price,
+      itemTitle: item?.title ?? null,
+      ownerId: item?.owner_id ?? null,
+      ownerName: owner?.full_name ?? null,
+      renterName: renter?.full_name ?? null,
+    })
 
     const { data: ownerAuth } = await supabase.auth.admin.getUserById(item?.owner_id || '')
     const { data: renterAuth } = await supabase.auth.admin.getUserById(booking.renter_id)
