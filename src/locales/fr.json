@@ -1,4 +1,19 @@
 {
+  "authErrors": {
+    "email_invalid": "Cette adresse e-mail n'est pas valide.",
+    "user_already_exists": "Cette adresse est déjà utilisée. Connectez-vous ou demandez un nouveau mot de passe.",
+    "phone_exists": "Ce numéro est déjà associé à un compte.",
+    "signup_disabled": "Les inscriptions sont momentanément fermées.",
+    "weak_password": "Mot de passe trop court ou trop simple.",
+    "invalid_credentials": "Adresse ou mot de passe incorrect.",
+    "user_banned": "Ce compte est suspendu. Écrivez-nous.",
+    "same_password": "Le nouveau mot de passe est identique à l'ancien.",
+    "reauthentication_needed": "Reconnectez-vous pour continuer.",
+    "otp_expired": "Ce lien a expiré. Demandez-en un nouveau.",
+    "session_expired": "Votre session a expiré. Reconnectez-vous.",
+    "rate_limited": "Trop de tentatives. Réessayez dans quelques minutes.",
+    "validation_failed": "Vérifiez ce que vous avez saisi."
+  },
   "renterNext": {
     "title": "Ce qui vous attend",
     "awaitingAnswer": "En attente de réponse",

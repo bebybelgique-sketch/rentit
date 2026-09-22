@@ -101,13 +101,38 @@ describe('смена пароля вошедшим', () => {
   // Отказ сервера показывается ДОСЛОВНО: причину «пароль слишком простой»
   // человек может исправить, только зная её. «Что-то пошло не так» —
   // это тупик.
-  it('отказ сервера показывает его причину, а не свою', async () => {
-    updateUser.mockResolvedValue({ error: { message: 'Password is too weak' } });
+  /**
+   * ИНВАРИАНТ ТОТ ЖЕ, ЧТО БЫЛ: отказ обязан НАЗВАТЬ ПРИЧИНУ, а не
+   * утонуть в общем «что-то пошло не так». Изменилось одно — причина
+   * теперь на языке человека.
+   *
+   * Прежде тест требовал английскую фразу Supabase дословно, и она
+   * дословно же показывалась на французской странице. Причина была
+   * названа — на чужом языке, то есть для половины людей не названа
+   * вовсе.
+   */
+  it('отказ сервера называет причину — на языке человека', async () => {
+    updateUser.mockResolvedValue({ error: { code: 'weak_password', message: 'Password is too weak' } });
     renderForm();
     fill('старый-пароль', 'новый-пароль-1', 'новый-пароль-1');
     submit();
 
-    await screen.findByText('Password is too weak');
+    await screen.findByText('Mot de passe trop court ou trop simple.');
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  /**
+   * А вот НЕЗНАКОМЫЙ отказ английским не показывается. Служебная фраза
+   * чужой системы человеку не поможет, а доверия к продукту стоит;
+   * сама фраза остаётся в объекте ошибки и в консоли.
+   */
+  it('незнакомый отказ не выносит английский на экран', async () => {
+    updateUser.mockResolvedValue({ error: { code: 'some_new_code', message: 'Unexpected internal failure' } });
+    renderForm();
+    fill('старый-пароль', 'новый-пароль-1', 'новый-пароль-1');
+    submit();
+
+    await waitFor(() => expect(screen.queryByText('Unexpected internal failure')).toBeNull());
     expect(toastSuccess).not.toHaveBeenCalled();
   });
 

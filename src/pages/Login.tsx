@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from 'react-i18next'
+import { authErrorKey } from '../domain/authErrors'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function Login() {
@@ -24,19 +25,18 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const friendlyAuthError = (message: string) => {
-    const normalized = message.toLowerCase()
-    if (normalized.includes('not confirmed') || normalized.includes('confirm your email') || normalized.includes('email') && normalized.includes('verification')) {
-      return t('auth.login.emailNotConfirmed')
-    }
-    return message
-  }
-
+  // Свой разбор отказов отсюда убран. Он узнавал случаи ПО ТЕКСТУ и
+  // знал ровно один из них — «почта не подтверждена», — а всё
+  // остальное возвращал английской фразой Supabase на французскую
+  // страницу. Разбор по тексту вдобавок ломается от любой правки
+  // формулировки на чужой стороне, причём молча.
+  //
+  // Теперь общий переводчик по КОДУ ошибки: src/domain/authErrors.ts.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true); setError('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(friendlyAuthError(error.message)); setLoading(false) }
+    if (error) { setError(t(authErrorKey(error))); setLoading(false) }
     // replace, а не push: страница входа не должна оставаться в истории
     // позади вошедшего человека — «назад» возвращало бы его на форму,
     // которую он уже прошёл.
