@@ -1,4 +1,16 @@
 {
+  "renterNext": {
+    "title": "Wat u te wachten staat",
+    "awaitingAnswer": "Wacht op antwoord",
+    "accepted": "Aanvaard — op te halen op {{date}}",
+    "pickupToday": "Vandaag op te halen",
+    "pickupLate_one": "Ophalen {{count}} dag te laat",
+    "pickupLate_other": "Ophalen {{count}} dagen te laat",
+    "inProgress": "Loopt — terug te brengen op {{date}}",
+    "returnToday": "Vandaag terug te brengen",
+    "returnLate_one": "Teruggave {{count}} dag te laat",
+    "returnLate_other": "Teruggave {{count}} dagen te laat"
+  },
   "crash": {
     "title": "Er is iets stukgegaan",
     "text": "De applicatie is gestopt. U kunt opnieuw beginnen vanaf de startpagina; gebeurt het weer, kopieer dan de details en stuur ze ons.",

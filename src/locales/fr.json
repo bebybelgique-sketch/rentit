@@ -1,4 +1,16 @@
 {
+  "renterNext": {
+    "title": "Ce qui vous attend",
+    "awaitingAnswer": "En attente de réponse",
+    "accepted": "Acceptée — à récupérer le {{date}}",
+    "pickupToday": "À récupérer aujourd'hui",
+    "pickupLate_one": "Récupération en retard de {{count}} jour",
+    "pickupLate_other": "Récupération en retard de {{count}} jours",
+    "inProgress": "En cours — à rendre le {{date}}",
+    "returnToday": "À rendre aujourd'hui",
+    "returnLate_one": "Retour en retard de {{count}} jour",
+    "returnLate_other": "Retour en retard de {{count}} jours"
+  },
   "crash": {
     "title": "Quelque chose s’est cassé",
     "text": "L’application s’est arrêtée. Vous pouvez repartir de l’accueil ; si cela se reproduit, copiez les détails et envoyez-les-nous.",

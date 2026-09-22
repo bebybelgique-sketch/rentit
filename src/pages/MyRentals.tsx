@@ -18,6 +18,8 @@ import type { Rental } from '../types';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { usePageTitle } from '../hooks/usePageTitle'
+import { renterUpdates, liveRenterCount } from '../domain/renterUpdates'
+import { ownerTasks } from '../domain/ownerTasks'
 
 const dateFmt = new Intl.DateTimeFormat('fr-BE', { day: '2-digit', month: 'short', year: 'numeric' });
 const formatDate = (iso: string) => {
@@ -74,8 +76,42 @@ const MyRentals: React.FC = () => {
   // пришедшей на твой инструмент, пока открыта другая сторона. Без него
   // владелец видит «Aucune location en cours» и уходит, а заявка лежит
   // через одно нажатие.
-  const renterCount = userRentals?.length ?? 0;
-  const ownerCount = ownerRentals?.length ?? 0;
+  // СЧЁТЧИКИ ПОКАЗЫВАЮТ ЖИВОЕ, а не «сколько строк за всё время».
+  //
+  // Раньше здесь стояло `userRentals.length`: число всех броней,
+  // включая отменённые и завершённые. Закрыв десять сделок, человек
+  // видел «10» и не понимал, чего от него хотят. Счётчик, который не
+  // уменьшается никогда, не значит ничего — к нему привыкают, как к
+  // красному кружку, который горит всегда.
+  //
+  // Момент округляется до минуты: иначе новый `new Date()` на каждом
+  // рендере пересчитывал бы список без причины.
+  const minute = Math.floor(Date.now() / 60_000);
+  const now = React.useMemo(() => new Date(minute * 60_000), [minute]);
+
+  const nextUp = React.useMemo(
+    () => renterUpdates(userRentals ?? [], now),
+    [userRentals, now],
+  );
+  const renterCount = liveRenterCount(userRentals ?? [], now);
+
+  // У владельца на вкладке — число ДЕЛ, а не строк: то же правило,
+  // что у значка в навигации (src/domain/ownerTasks.ts).
+  //
+  // Считается ФУНКЦИЕЙ по данным, которые у страницы уже есть, а не
+  // хуком useOwnerTasks. Хук ходит в react-query за своим запросом, и
+  // первая версия так и делала — пока не выяснилось, что она ломает
+  // набор страницы: тесты подменяют хуки данных поимённо, и новый
+  // запрос остался без клиента. Заглушить его моком значило бы
+  // оторвать счётчик от данных теста и проверять собственную заглушку.
+  //
+  // Расхождения с кружком это не создаёт: правило одно, разные у них
+  // только источники одних и тех же строк, и мутации гасят оба ключа
+  // разом (invalidateBookingCaches).
+  const ownerCount = React.useMemo(
+    () => ownerTasks(ownerRentals ?? [], now).length,
+    [ownerRentals, now],
+  );
 
   const selectRole = (next: RentalRole) => {
     const params = new URLSearchParams(searchParams);
@@ -94,10 +130,20 @@ const MyRentals: React.FC = () => {
   // В канве этого экрана вкладок нет вовсе: пока сделок нет ни в одну
   // сторону, там одна честная строка и одно действие, которое разблокирует
   // обе стороны сразу. Полоса вкладок появляется вместе с содержимым.
+  // ВНИМАНИЕ: «пусто» и «нечего делать» — РАЗНЫЕ ВОПРОСЫ, и здесь
+  // считаются СТРОКИ, а не живое.
+  //
+  // Когда счётчики вкладок перевели на живое, это условие поехало
+  // следом за ними, и человек с тремя завершёнными арендами увидел бы
+  // «сделок нет вовсе, идите на витрину», а его история пропала бы с
+  // экрана. Поймал это набор: вкладок в разметке просто не оказалось.
+  //
+  // Пустой экран — про то, ЕСТЬ ЛИ ХОТЬ ЧТО-НИБУДЬ. Счётчик — про то,
+  // требуется ли внимание. Совпадают они только в самом начале.
   const bothEmpty =
     !userRentalsLoading && !ownerRentalsLoading &&
     !userRentalsError && !ownerRentalsError &&
-    renterCount === 0 && ownerCount === 0;
+    (userRentals?.length ?? 0) === 0 && (ownerRentals?.length ?? 0) === 0;
 
   // Довод «арендовать нечего, каталог пуст» — УТВЕРЖДЕНИЕ О СОСТОЯНИИ, и
   // зашивать его нельзя: сегодня верно, завтра врёт. Тот же класс, что
@@ -231,6 +277,61 @@ const MyRentals: React.FC = () => {
           hidden={role !== 'renter'}
           style={{ marginBottom: '40px' }}
         >
+          {/* «ЧТО ДАЛЬШЕ» — ПЕРВЫМ. Так же, как «À faire maintenant» у
+              владельца, и по той же причине: экран обязан отвечать на
+              вопрос «что от меня сейчас», а не «какие у меня были
+              брони». Список ниже никуда не делся — он история. */}
+          {nextUp.length > 0 && (
+            <div style={{ marginBottom: 'var(--space-5)' }}>
+              <h2 style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '12px' }}>
+                {t('renterNext.title')}
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {nextUp.map((u) => {
+                  const rental = userRentals?.find((r) => r.id === u.bookingId);
+                  if (!rental) return null;
+                  return (
+                    <a
+                      key={u.bookingId}
+                      href={`#booking-${u.bookingId}`}
+                      style={{
+                        display: 'block', padding: '12px 14px', borderRadius: '8px',
+                        textDecoration: 'none', color: 'inherit',
+                        background: '#fffbeb',
+                        border: `1px solid ${u.urgent ? 'var(--danger)' : '#fde68a'}`,
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, fontSize: '15px' }}>
+                        {rental.item?.title ?? t('rental.labelItem')}
+                      </div>
+                      <div style={{
+                        fontSize: '12px', fontFamily: 'var(--font-mono)', marginTop: '4px',
+                        color: u.urgent ? 'var(--danger)' : 'var(--muted)',
+                        fontWeight: u.urgent ? 700 : 400,
+                      }}>
+                        {u.kind === 'awaiting_answer' && u.deadline && (
+                          u.deadline.state === 'overdue' ? t('myItems.answerOverdue')
+                            : u.deadline.state === 'minutes' ? t('myItems.answerMinutes', { count: u.deadline.minutes })
+                            : t('myItems.answerHours', { count: u.deadline.hours })
+                        )}
+                        {u.kind === 'accepted' && t('renterNext.accepted', { date: formatDate(rental.start_date ?? '') })}
+                        {u.kind === 'pickup_due' && (
+                          u.overdueDays === 0 ? t('renterNext.pickupToday')
+                            : t('renterNext.pickupLate', { count: u.overdueDays })
+                        )}
+                        {u.kind === 'in_progress' && t('renterNext.inProgress', { date: formatDate(rental.end_date ?? '') })}
+                        {u.kind === 'return_due' && (
+                          u.overdueDays === 0 ? t('renterNext.returnToday')
+                            : t('renterNext.returnLate', { count: u.overdueDays })
+                        )}
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {userRentalsLoading && <p>{t('common.loading')}</p>}
           {userRentalsError && <p>Erreur: {userRentalsError.message}</p>}
           {userRentals && userRentals.length === 0 && (

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 let asRenter: Array<Record<string, unknown>> = [];
@@ -212,5 +212,96 @@ describe('«Mes locations»: пусто с обеих сторон — это О
     renderAt('/my-rentals');
     expect(screen.getAllByRole('tab')).toHaveLength(2);
     expect(screen.queryByText(/Aucune location, dans aucun sens/i)).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * Счётчик на вкладке показывает ЖИВОЕ, а не «сколько строк за всё время».
+ *
+ * До 22.09 там стояло `userRentals.length` — все брони, включая
+ * отменённые и завершённые. Закрыв десять сделок, человек видел «10» и
+ * не понимал, чего от него хотят. Счётчик, который не уменьшается
+ * никогда, не значит ничего: к нему привыкают, как к красному кружку,
+ * который горит всегда.
+ *
+ * Прежние проверки этого не поймали бы: в их данных у всех броней стоит
+ * `pending_approval`, то есть всё живое. Правило видно только там, где
+ * есть история.
+ */
+describe('«Mes locations»: счётчик считает живое, а не историю', () => {
+  beforeEach(() => {
+    asRenter = [];
+    asOwner = [];
+    catalogEmpty = false;
+  });
+
+  it('завершённые и отменённые в счёт не идут', () => {
+    asRenter = [
+      booking('b-1', { status: 'completed' }),
+      booking('b-2', { status: 'cancelled' }),
+      booking('b-3', { status: 'rejected' }),
+    ];
+    renderAt('/my-rentals');
+    // Три строки в списке — и ни одной в счётчике: у них нет будущего.
+    expect(tabRenter().querySelector('.seg-count')).toBeNull();
+  });
+
+  it('живая бронь считается', () => {
+    asRenter = [
+      booking('b-1', { status: 'completed' }),
+      booking('b-2', { status: 'pending_approval' }),
+    ];
+    renderAt('/my-rentals');
+    expect(tabRenter().querySelector('.seg-count')?.textContent).toBe('1');
+  });
+
+  /**
+   * У владельца на вкладке — число ДЕЛ, тем же правилом, что у значка в
+   * навигации. Завершённая аренда делом не является: отзыв никого не
+   * держит и не сгорает.
+   */
+  it('у владельца считаются дела, а не строки', () => {
+    asOwner = [
+      booking('o-1', { status: 'completed' }),
+      booking('o-2', { status: 'pending_approval' }),
+    ];
+    renderAt('/my-rentals?role=owner');
+    expect(tabOwner().querySelector('.seg-count')?.textContent).toBe('1');
+  });
+});
+
+/**
+ * «Ce qui vous attend» — первым, как «À faire maintenant» у владельца.
+ *
+ * До этого арендатор видел плоский список, где отменённая полгода назад
+ * бронь выглядела ровно так же, как та, по которой сегодня надо ехать за
+ * дрелью. Срока ответа на заявку он не видел НИГДЕ — хотя на странице
+ * вещи ему обещано «владелец ответит за 24 часа».
+ */
+describe('«Mes locations»: что дальше — первым экраном', () => {
+  beforeEach(() => {
+    asRenter = [];
+    asOwner = [];
+    catalogEmpty = false;
+  });
+
+  it('живая бронь попадает в блок, история — нет', () => {
+    asRenter = [
+      booking('b-old', { status: 'completed', item: { title: 'Ponceuse', owner: { id: 'o-1', full_name: 'P', rating_as_owner: null } } }),
+      booking('b-new', { status: 'pending_approval' }),
+    ];
+    renderAt('/my-rentals');
+
+    const heading = screen.getByRole('heading', { name: /Ce qui vous attend/i });
+    const block = heading.parentElement!;
+    expect(within(block).getByText('Perceuse')).toBeInTheDocument();
+    expect(within(block).queryByText('Ponceuse')).toBeNull();
+  });
+
+  it('когда живого нет, блока нет вовсе', () => {
+    asRenter = [booking('b-1', { status: 'completed' })];
+    renderAt('/my-rentals');
+    // Заголовок над пустотой — это обещание, которого не выполняют.
+    expect(screen.queryByRole('heading', { name: /Ce qui vous attend/i })).toBeNull();
   });
 });

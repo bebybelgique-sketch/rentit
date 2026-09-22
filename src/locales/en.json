@@ -1,4 +1,16 @@
 {
+  "renterNext": {
+    "title": "What's next for you",
+    "awaitingAnswer": "Waiting for an answer",
+    "accepted": "Accepted — pick up on {{date}}",
+    "pickupToday": "Pick up today",
+    "pickupLate_one": "Pickup {{count}} day late",
+    "pickupLate_other": "Pickup {{count}} days late",
+    "inProgress": "Ongoing — return on {{date}}",
+    "returnToday": "Return today",
+    "returnLate_one": "Return {{count}} day late",
+    "returnLate_other": "Return {{count}} days late"
+  },
   "crash": {
     "title": "Something broke",
     "text": "The app stopped. You can start over from the home page; if it happens again, copy the details and send them to us.",
