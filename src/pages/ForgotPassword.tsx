@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { authErrorKey } from '../domain/authErrors'
 import { supabase } from '../lib/supabase'
 import { usePageTitle } from '../hooks/usePageTitle'
 
@@ -24,7 +25,7 @@ export default function ForgotPassword() {
       redirectTo: `${window.location.origin}/reset-password`,
     })
     setLoading(false)
-    if (error) setError(error.message)
+    if (error) setError(t(authErrorKey(error)))
     else setSent(true)
   }
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from 'react-i18next'
+import { authErrorKey } from '../domain/authErrors'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function Register() {
@@ -47,7 +48,7 @@ export default function Register() {
       },
     })
 
-    if (error) { setError(error.message); setLoading(false); return }
+    if (error) { setError(t(authErrorKey(error))); setLoading(false); return }
 
     setSuccess(t('register.checkInbox'))
     navigate('/login', { replace: true })

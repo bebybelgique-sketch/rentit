@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { authErrorKey } from '../domain/authErrors'
 import { supabase } from '../lib/supabase'
 import { usePageTitle } from '../hooks/usePageTitle'
 
@@ -27,7 +28,7 @@ export default function ResetPassword() {
     if (password.length < 8) return setError(t('passwordRecovery.tooShort'))
     setLoading(true); setError('')
     const { error } = await supabase.auth.updateUser({ password })
-    if (error) { setError(error.message); setLoading(false) }
+    if (error) { setError(t(authErrorKey(error))); setLoading(false) }
     else navigate('/profile')
   }
 

@@ -1,4 +1,19 @@
 {
+  "authErrors": {
+    "email_invalid": "Dit e-mailadres is niet geldig.",
+    "user_already_exists": "Dit adres is al in gebruik. Log in of vraag een nieuw wachtwoord aan.",
+    "phone_exists": "Dit nummer hoort al bij een account.",
+    "signup_disabled": "Registraties zijn tijdelijk gesloten.",
+    "weak_password": "Wachtwoord te kort of te eenvoudig.",
+    "invalid_credentials": "Adres of wachtwoord onjuist.",
+    "user_banned": "Dit account is geschorst. Neem contact met ons op.",
+    "same_password": "Het nieuwe wachtwoord is hetzelfde als het oude.",
+    "reauthentication_needed": "Log opnieuw in om verder te gaan.",
+    "otp_expired": "Deze link is verlopen. Vraag een nieuwe aan.",
+    "session_expired": "Uw sessie is verlopen. Log opnieuw in.",
+    "rate_limited": "Te veel pogingen. Probeer over enkele minuten opnieuw.",
+    "validation_failed": "Controleer wat u hebt ingevuld."
+  },
   "renterNext": {
     "title": "Wat u te wachten staat",
     "awaitingAnswer": "Wacht op antwoord",

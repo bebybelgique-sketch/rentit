@@ -1,6 +1,7 @@
 // src/components/common/ChangePassword.tsx
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { authErrorKey } from '../../domain/authErrors'
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 
@@ -61,7 +62,7 @@ const ChangePassword: React.FC<{ email: string }> = ({ email }) => {
       if (updateError) {
         // Показываем причину от сервера, а не своё «что-то пошло не так»:
         // отказ по сложности пароля человек может исправить, только зная его.
-        setError(updateError.message);
+        setError(t(authErrorKey(updateError)));
         return;
       }
 

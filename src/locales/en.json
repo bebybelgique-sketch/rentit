@@ -1,4 +1,19 @@
 {
+  "authErrors": {
+    "email_invalid": "This email address is not valid.",
+    "user_already_exists": "This address is already in use. Log in or ask for a new password.",
+    "phone_exists": "This number already belongs to an account.",
+    "signup_disabled": "Sign-ups are closed for the moment.",
+    "weak_password": "Password too short or too simple.",
+    "invalid_credentials": "Address or password is incorrect.",
+    "user_banned": "This account is suspended. Write to us.",
+    "same_password": "The new password is the same as the old one.",
+    "reauthentication_needed": "Log in again to continue.",
+    "otp_expired": "This link has expired. Ask for a new one.",
+    "session_expired": "Your session has expired. Log in again.",
+    "rate_limited": "Too many attempts. Try again in a few minutes.",
+    "validation_failed": "Check what you entered."
+  },
   "renterNext": {
     "title": "What's next for you",
     "awaitingAnswer": "Waiting for an answer",

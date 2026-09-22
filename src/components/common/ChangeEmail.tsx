@@ -1,6 +1,7 @@
 // src/components/common/ChangeEmail.tsx
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { authErrorKey } from '../../domain/authErrors'
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 
@@ -56,7 +57,7 @@ const ChangeEmail: React.FC<{ currentEmail: string }> = ({ currentEmail }) => {
 
       const { data, error: updateError } = await supabase.auth.updateUser({ email: next });
       if (updateError) {
-        setError(updateError.message);
+        setError(t(authErrorKey(updateError)));
         return;
       }
 

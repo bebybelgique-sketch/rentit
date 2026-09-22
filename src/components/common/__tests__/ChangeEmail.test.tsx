@@ -91,13 +91,13 @@ describe('смена почтового адреса', () => {
     expect(toastSuccess).not.toHaveBeenCalled();
   });
 
-  it('отказ сервера показывает его причину, а не свою', async () => {
-    updateUser.mockResolvedValue({ data: { user: null }, error: { message: 'Email address is invalid' } });
+  it('отказ сервера называет причину — на языке человека', async () => {
+    updateUser.mockResolvedValue({ data: { user: null }, error: { code: 'email_address_invalid', message: 'Email address is invalid' } });
     renderForm();
     fill('novy@example.be', 'старый-пароль');
     submit();
 
-    await screen.findByText('Email address is invalid');
+    await screen.findByText("Cette adresse e-mail n'est pas valide.");
     expect(toastSuccess).not.toHaveBeenCalled();
   });
 
