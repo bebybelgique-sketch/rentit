@@ -446,6 +446,59 @@ export type Database = {
           },
         ]
       }
+      push_sent: {
+        Row: {
+          event_key: string
+          sent_at: string
+        }
+        Insert: {
+          event_key: string
+          sent_at?: string
+        }
+        Update: {
+          event_key?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          lang: string
+          p256dh: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          lang?: string
+          p256dh: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          lang?: string
+          p256dh?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           booking_id: string
@@ -549,6 +602,7 @@ export type Database = {
           lng: number | null
           phone: string | null
           phone_otp: string | null
+          phone_otp_attempts: number
           phone_otp_expires_at: string | null
           phone_verified: boolean
           pro_expires_at: string | null
@@ -573,6 +627,7 @@ export type Database = {
           lng?: number | null
           phone?: string | null
           phone_otp?: string | null
+          phone_otp_attempts?: number
           phone_otp_expires_at?: string | null
           phone_verified?: boolean
           pro_expires_at?: string | null
@@ -597,6 +652,7 @@ export type Database = {
           lng?: number | null
           phone?: string | null
           phone_otp?: string | null
+          phone_otp_attempts?: number
           phone_otp_expires_at?: string | null
           phone_verified?: boolean
           pro_expires_at?: string | null
