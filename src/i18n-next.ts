@@ -12,9 +12,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import en from './locales/en.json';
 import fr from './locales/fr.json';
-import nl from './locales/nl.json';
 
 export const LANGUAGES = ['fr', 'en', 'nl'] as const;
 export type Language = (typeof LANGUAGES)[number];
@@ -79,10 +77,12 @@ function initialLanguage(): Language {
 i18n
   .use(initReactI18next)
   .init({
+    // ТОЛЬКО ФРАНЦУЗСКИЙ. Остальные приезжают по требованию — см.
+    // loadLanguage ниже. Три словаря в главном куске стоили 23 КБ
+    // сжатыми (13 % куска) каждому человеку, включая те два языка,
+    // которых он не читает.
     resources: {
       fr: { translation: fr },
-      en: { translation: en },
-      nl: { translation: nl },
     },
     lng: initialLanguage(),
     // Основной язык продукта французский: если ключ потеряется, честнее
@@ -114,6 +114,50 @@ function applyDocumentLanguage(lang: string): void {
     /* документа может не быть — юнит-прогон */
   }
 }
+
+/**
+ * Подвезти словарь языка, если его ещё нет.
+ *
+ * ПОЧЕМУ ЗАГРУЖАЕМ ДО ПЕРЕКЛЮЧЕНИЯ, А НЕ ПОСЛЕ. `changeLanguage`
+ * применяется мгновенно, и пока словарь едет, i18next отдаёт запасной
+ * — французский. Нидерландец, нажавший «NL», увидел бы вспышку
+ * французского текста и решил, что переключатель не работает.
+ *
+ * Отказ загрузки НЕ роняет приложение: человек остаётся на прежнем
+ * языке. Это хуже, чем хотелось, и несравнимо лучше пустого экрана.
+ */
+export async function loadLanguage(lang: Language): Promise<void> {
+  if (lang === 'fr' || i18n.hasResourceBundle(lang, 'translation')) return;
+  try {
+    const dictionary = lang === 'nl'
+      ? (await import('./locales/nl.json')).default
+      : (await import('./locales/en.json')).default;
+    i18n.addResourceBundle(lang, 'translation', dictionary, true, true);
+  } catch (error) {
+    console.error('[i18n] словарь не загрузился:', lang, error);
+  }
+}
+
+/**
+ * Переключить язык ПРАВИЛЬНО: сначала словарь, потом переключение.
+ *
+ * Экранам полагается звать именно это, а не `i18n.changeLanguage`
+ * напрямую — иначе вернётся вспышка французского.
+ */
+export async function setLanguage(lang: Language): Promise<void> {
+  await loadLanguage(lang);
+  await i18n.changeLanguage(lang);
+}
+
+/**
+ * Готовность к первой отрисовке.
+ *
+ * Если человек пришёл на нидерландском (из хранилища или по ссылке
+ * `?lang=nl`), рисовать ДО загрузки его словаря нельзя: первый экран
+ * вышел бы французским. Для французов промис уже разрешён, и задержки
+ * нет вовсе — а их большинство.
+ */
+export const i18nReady: Promise<void> = loadLanguage(i18n.language as Language);
 
 applyDocumentLanguage(i18n.language);
 

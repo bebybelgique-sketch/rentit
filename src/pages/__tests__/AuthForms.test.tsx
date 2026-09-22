@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
 import { AuthError } from '@supabase/supabase-js'
-import i18n, { type Language } from '../../i18n-next'
+import i18n, { setLanguage, type Language } from '../../i18n-next'
 import Register from '../Register'
 import Login from '../Login'
 import { supabase } from '../../lib/supabase'
@@ -63,7 +63,12 @@ const signedUpUser = {
 }
 
 const renderIn = async (language: Language, page: React.ReactElement) => {
-  await i18n.changeLanguage(language)
+  // setLanguage, а не changeLanguage: словари nl и en больше не лежат
+  // в главном куске, их подвозят по требованию. Прямое переключение
+  // применяется мгновенно и до приезда словаря отдаёт запасной —
+  // французский. Тест на этом и упал, и был прав: так же сломался бы
+  // любой код продукта, зовущий changeLanguage мимо setLanguage.
+  await setLanguage(language)
   return render(
     <I18nextProvider i18n={i18n}>
       <MemoryRouter>{page}</MemoryRouter>

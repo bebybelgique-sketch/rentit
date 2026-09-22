@@ -4,7 +4,7 @@ import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-r
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import toast, { Toaster } from 'react-hot-toast' // Импортируем Toaster
 // --- НОВЫЕ ИМПОРТЫ ДЛЯ I18N ---
-import i18n, { LANGUAGES } from './i18n-next' // импорт и инициализация i18next разом
+import i18n, { LANGUAGES, setLanguage, type Language } from './i18n-next' // импорт и инициализация i18next разом
 import { useTranslation } from 'react-i18next'
 import { useDocumentLanguage } from './hooks/useDocumentLanguage'
 // --------------------------
@@ -93,7 +93,9 @@ interface NavbarProps {
 }
 
 function Navbar({ taskCount }: NavbarProps) {
-  const { t, i18n } = useTranslation() // Используем хук i18next
+  // Только t: язык переключается через setLanguage, который сперва
+  // подвозит словарь, — экземпляр i18n для этого больше не нужен.
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -121,7 +123,9 @@ function Navbar({ taskCount }: NavbarProps) {
   const [langOpen, setLangOpen] = useState(false)
 
   const chooseLanguage = (lang: string) => {
-    i18n.changeLanguage(lang)
+    // setLanguage, а не changeLanguage: словарь надо подвезти ДО
+    // переключения, иначе человек увидит вспышку французского.
+    void setLanguage(lang as Language)
     setLangOpen(false)
     close()
   }
