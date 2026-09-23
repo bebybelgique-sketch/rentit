@@ -15,12 +15,15 @@
 
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { activityKeys } from '../lib/queryKeys'
 import i18n from '../i18n-next'
 import { pushLangOf, readOfferMemory, readPermission, syncDeviceLanguage } from '../lib/push'
 import { getPushSnapshot, probePush, resetPushState, subscribeSilently } from '../lib/pushState'
 
 export function usePushSync(userId: string | null): void {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   // 1. Вход и выход.
   useEffect(() => {
@@ -59,6 +62,11 @@ export function usePushSync(userId: string | null): void {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return
     const onMessage = (event: MessageEvent) => {
       const data = event.data as { type?: unknown; url?: unknown } | null
+      // 4. Пришёл push — лента и колокольчик обновляются сразу.
+      if (data?.type === 'rentit:activity') {
+        void queryClient.invalidateQueries({ queryKey: activityKeys.all })
+        return
+      }
       if (data?.type !== 'rentit:navigate' || typeof data.url !== 'string') return
       // Только свой путь — так же, как проверяет воркер.
       if (!data.url.startsWith('/') || data.url.startsWith('//')) return
@@ -66,5 +74,5 @@ export function usePushSync(userId: string | null): void {
     }
     navigator.serviceWorker.addEventListener('message', onMessage)
     return () => navigator.serviceWorker.removeEventListener('message', onMessage)
-  }, [navigate])
+  }, [navigate, queryClient])
 }

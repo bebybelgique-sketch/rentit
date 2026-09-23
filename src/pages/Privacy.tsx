@@ -133,6 +133,7 @@ function PrivacyEN() {
           <li><strong>Photos:</strong> deleted within 30 days of listing removal</li>
           <li><strong>Session cookies:</strong> expire when you log out or after 7 days of inactivity</li>
           <li><strong>Error reports:</strong> deleted automatically after 30 days</li>
+          <li><strong>Activity feed</strong> (the list of events about your bookings shown in the app): deleted automatically after 90 days, or with your account</li>
           <li><strong>Notification subscriptions:</strong> deleted when you turn notifications off, log out on that device or delete your account, and automatically when the push service reports the subscription expired</li>
         </ul>
       </Section>
@@ -279,6 +280,7 @@ function PrivacyFR() {
           <li><strong>Photos :</strong> supprimées dans les 30 jours suivant le retrait de l'annonce</li>
           <li><strong>Cookies de session :</strong> expirent à la déconnexion ou après 7 jours d'inactivité</li>
           <li><strong>Rapports d'erreur :</strong> supprimés automatiquement après 30 jours</li>
+          <li><strong>Fil d'activité</strong> (la liste des événements sur vos réservations affichée dans l'app) : supprimé automatiquement après 90 jours, ou avec votre compte</li>
           <li><strong>Abonnements aux notifications :</strong> supprimés quand vous désactivez les notifications, vous déconnectez de l'appareil ou supprimez votre compte, et automatiquement quand le service de notification signale l'abonnement expiré</li>
         </ul>
       </Section>
@@ -425,6 +427,7 @@ function PrivacyNL() {
           <li><strong>Foto's:</strong> verwijderd binnen 30 dagen na verwijdering van de advertentie</li>
           <li><strong>Sessiecookies:</strong> verlopen bij uitloggen of na 7 dagen inactiviteit</li>
           <li><strong>Foutrapporten:</strong> automatisch verwijderd na 30 dagen</li>
+          <li><strong>Activiteitenoverzicht</strong> (de lijst met gebeurtenissen over uw reserveringen in de app): automatisch verwijderd na 90 dagen, of samen met uw account</li>
           <li><strong>Abonnementen op meldingen:</strong> verwijderd wanneer u meldingen uitzet, op dat toestel uitlogt of uw account verwijdert, en automatisch wanneer de meldingendienst het abonnement als verlopen meldt</li>
         </ul>
       </Section>

@@ -32,9 +32,14 @@ export type PushKind =
   | 'expired_renter'
   | 'expired_owner'
   | 'new_message'
+  // Отмена второй стороной. ТОЛЬКО В ЛЕНТЕ (миграция 42), без push: пакет
+  // Design отмену в push не включил, и это решение не пересматривается.
+  // А в ленте «что случилось, пока меня не было» отмена — первое, что
+  // человек должен увидеть. Тексты — мои, не из пакета.
+  | 'cancelled'
 
 export const PUSH_KINDS: readonly PushKind[] = [
-  'new_request', 'accepted', 'declined', 'expired_renter', 'expired_owner', 'new_message',
+  'new_request', 'accepted', 'declined', 'expired_renter', 'expired_owner', 'new_message', 'cancelled',
 ]
 
 interface Copy {
@@ -88,6 +93,10 @@ const COPY: Record<PushLang, Record<PushKind, Copy>> = {
       title: '{name} · nouveau message',
       body: '{preview}',
     },
+    cancelled: {
+      title: '{name} a annulé',
+      body: "{item}, {dates}. La réservation n'aura pas lieu.",
+    },
   },
   nl: {
     new_request: {
@@ -114,6 +123,10 @@ const COPY: Record<PushLang, Record<PushKind, Copy>> = {
       title: '{name} · nieuw bericht',
       body: '{preview}',
     },
+    cancelled: {
+      title: '{name} heeft geannuleerd',
+      body: '{item}, {dates}. De reservering gaat niet door.',
+    },
   },
   en: {
     new_request: {
@@ -139,6 +152,10 @@ const COPY: Record<PushLang, Record<PushKind, Copy>> = {
     new_message: {
       title: '{name} · new message',
       body: '{preview}',
+    },
+    cancelled: {
+      title: '{name} cancelled',
+      body: "{item}, {dates}. The booking won't go ahead.",
     },
   },
 }
@@ -270,7 +287,7 @@ export function preview(body: string | null | undefined): string {
 export interface PushFacts {
   readonly itemTitle?: string | null
   readonly ownerName?: string | null
-  /** Для заявки и истечения — арендатор; для сообщения — отправитель. */
+  /** Для заявки и истечения — арендатор; для сообщения — отправитель; для отмены — отменивший. */
   readonly otherName?: string | null
   readonly startDate?: string | null
   readonly endDate?: string | null
@@ -332,6 +349,9 @@ export const DELIVERY: Record<PushKind, { ttl: number; urgency: 'normal' | 'high
   expired_renter: { ttl: 24 * 3600, urgency: 'normal' },
   expired_owner: { ttl: 24 * 3600, urgency: 'normal' },
   new_message: { ttl: 24 * 3600, urgency: 'high' },
+  // Push для отмены не уходит (только лента) — запись здесь ради полноты
+  // таблицы: без неё тип не сошёлся бы.
+  cancelled: { ttl: 24 * 3600, urgency: 'normal' },
 }
 
 /**

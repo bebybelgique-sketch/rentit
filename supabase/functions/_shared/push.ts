@@ -17,6 +17,13 @@
 //
 // База и ключи приходят снаружи. Так связку можно проверить в vitest без
 // Supabase и без сети, а функция не может «случайно» взять чужие ключи.
+//
+// ── ЛЕНТА ПЕРВОЙ, PUSH ВТОРЫМ (с 23.09) ─────────────────────────────
+//
+// Каждое событие сначала записывается в ленту человека (таблица
+// notifications, миграция 42), потом — push. Лента не зависит ни от
+// ключей VAPID, ни от подписок: у отказавшихся от уведомлений и на iPhone
+// без экрана «Домой» она — единственный след события. Вход — notifyUser.
 
 import { sendWebPush, type PushOutcome, type PushTarget, type VapidKeys } from './webPush.ts'
 import {
@@ -36,11 +43,30 @@ export interface PushDeps {
   readonly removeSubscription: (endpoint: string) => Promise<void>
   /** Для проверки. В проде — настоящая отправка. */
   readonly send?: (target: PushTarget, payload: unknown, vapid: VapidKeys, opts: Parameters<typeof sendWebPush>[3]) => Promise<PushOutcome>
+  /**
+   * Запись в ленту. Повтор того же события — не ошибка: ограничение
+   * notifications_once отвечает 23505, и запись просто не удваивается.
+   */
+  readonly recordActivity?: (entry: ActivityEntry) => Promise<void>
   readonly log?: (line: string) => void
 }
 
+/** Строка ленты. Текста нет — он собирается при показе (миграция 42). */
+export interface ActivityEntry {
+  readonly userId: string
+  readonly kind: PushKind
+  readonly bookingId: string
+  readonly messageId: string | null
+}
+
+/**
+ * События, которые идут ТОЛЬКО в ленту. Отмену пакет Design в push не
+ * включил — это его решение; а в ленте она нужна (см. pushCopy.ts).
+ */
+export const FEED_ONLY: ReadonlySet<PushKind> = new Set<PushKind>(['cancelled'])
+
 export interface PushReport {
-  readonly skipped?: 'not_configured' | 'no_subscriptions' | 'error'
+  readonly skipped?: 'not_configured' | 'no_subscriptions' | 'error' | 'feed_only'
   readonly sent: number
   readonly gone: number
   readonly failed: number
@@ -87,7 +113,57 @@ export function supabaseDeps(supabase: any, vapid = vapidFromEnv()): PushDeps {
     removeSubscription: async (endpoint) => {
       await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint)
     },
+    recordActivity: async (entry) => {
+      const { error } = await supabase.from('notifications').insert({
+        user_id: entry.userId,
+        kind: entry.kind,
+        booking_id: entry.bookingId,
+        message_id: entry.messageId,
+      })
+      // 23505 — это событие уже записано (повтор вызова). Итог тот же.
+      if (error && error.code !== '23505') throw new Error(`notifications: ${error.message}`)
+      // Срок хранения — 90 дней. Подчищаем у того, кому пишем: запрос по
+      // индексу (user_id, created_at), и ручного шага «почистить» нет.
+      await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', entry.userId)
+        .lt('created_at', new Date(Date.now() - ACTIVITY_TTL_MS).toISOString())
+    },
   }
+}
+
+/** Сколько живёт запись ленты. */
+export const ACTIVITY_TTL_MS = 90 * 24 * 3600 * 1000
+
+/**
+ * Событие — человеку: запись в ленту, потом push. Не бросает.
+ *
+ * Лента пишется ВСЕГДА — и без ключей VAPID, и без подписок: в этом её
+ * смысл. Неудача ленты не отменяет push, и наоборот: это два канала, а не
+ * одна транзакция.
+ */
+export async function notifyUser(
+  deps: PushDeps,
+  userId: string | null | undefined,
+  kind: PushKind,
+  facts: PushFacts,
+  bookingId: string,
+  messageId: string | null = null,
+): Promise<PushReport> {
+  const log = deps.log ?? ((line: string) => console.log(line))
+  if (!userId) return { skipped: 'no_subscriptions', sent: 0, gone: 0, failed: 0 }
+
+  if (deps.recordActivity) {
+    try {
+      await deps.recordActivity({ userId, kind, bookingId, messageId })
+    } catch (e) {
+      log(`[activity] ${kind}: запись не удалась — ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
+  if (FEED_ONLY.has(kind)) return { skipped: 'feed_only', sent: 0, gone: 0, failed: 0 }
+  return pushToUser(deps, userId, kind, facts, bookingId)
 }
 
 /** Отправить одно уведомление на все устройства человека. Не бросает. */
@@ -170,6 +246,8 @@ export interface BookingForPush {
   readonly ownerId: string | null
   readonly ownerName: string | null
   readonly renterName: string | null
+  /** Кто отменил — для события cancelled. */
+  readonly cancelledBy?: string | null
 }
 
 /**
@@ -180,8 +258,13 @@ export interface BookingForPush {
  *   отклонена         → арендатор
  *   истекла (24 ч)    → арендатор И владелец
  *
- * Остальные события броней уведомлений не дают: так решено в пакете, и
- * «Рекламы нет никогда» распространяется и на «ваша аренда началась».
+ * И одно событие сверх пакета — ТОЛЬКО В ЛЕНТУ, без push:
+ *
+ *   отменена          → вторая сторона (не тот, кто отменил)
+ *
+ * Остальные события броней не дают ни push, ни записи: выдачу и возврат
+ * человек видит своими глазами, а «Рекламы нет никогда» распространяется
+ * и на «ваша аренда началась».
  */
 export async function pushForBookingEvent(deps: PushDeps, event: string, b: BookingForPush): Promise<void> {
   const facts: PushFacts = {
@@ -196,20 +279,40 @@ export async function pushForBookingEvent(deps: PushDeps, event: string, b: Book
   try {
     switch (event) {
       case 'pending_approval':
-        await pushToUser(deps, b.ownerId, 'new_request', facts, b.id)
+        await notifyUser(deps, b.ownerId, 'new_request', facts, b.id)
         return
       case 'approved':
-        await pushToUser(deps, b.renter_id, 'accepted', facts, b.id)
+        await notifyUser(deps, b.renter_id, 'accepted', facts, b.id)
         return
       case 'rejected':
-        await pushToUser(deps, b.renter_id, 'declined', facts, b.id)
+        await notifyUser(deps, b.renter_id, 'declined', facts, b.id)
         return
       case 'expired':
         await Promise.all([
-          pushToUser(deps, b.renter_id, 'expired_renter', facts, b.id),
-          pushToUser(deps, b.ownerId, 'expired_owner', facts, b.id),
+          notifyUser(deps, b.renter_id, 'expired_renter', facts, b.id),
+          notifyUser(deps, b.ownerId, 'expired_owner', facts, b.id),
         ])
         return
+      case 'cancelled': {
+        // В тексте «{name} a annulé» имя — ОТМЕНИВШЕГО, а пишется запись
+        // второй стороне. Кто отменил, неизвестно (так не бывает: отмену
+        // проводит transition-booking и ставит cancelled_by) — узнают обе.
+        const byRenter = b.cancelledBy === b.renter_id
+        const byOwner = !!b.ownerId && b.cancelledBy === b.ownerId
+        const cancelFacts: PushFacts = { ...facts, otherName: byOwner ? b.ownerName : b.renterName }
+        if (byRenter) await notifyUser(deps, b.ownerId, 'cancelled', cancelFacts, b.id)
+        else if (byOwner) await notifyUser(deps, b.renter_id, 'cancelled', cancelFacts, b.id)
+        else {
+          // Имени нет — запасное «un voisin»: иначе арендатор прочёл бы
+          // своё же имя в «… a annulé».
+          const anonymous: PushFacts = { ...facts, otherName: null }
+          await Promise.all([
+            notifyUser(deps, b.renter_id, 'cancelled', anonymous, b.id),
+            notifyUser(deps, b.ownerId, 'cancelled', anonymous, b.id),
+          ])
+        }
+        return
+      }
       default:
         return
     }

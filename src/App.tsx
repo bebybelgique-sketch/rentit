@@ -19,6 +19,7 @@ import AppBoundary from './components/common/AppBoundary'
 import { usePageTitle } from './hooks/usePageTitle'
 import { useOwnerTasks } from './hooks/useOwnerTasks'
 import TaskBadge from './components/common/TaskBadge'
+import ActivityBell from './components/common/ActivityBell'
 import { usePushSync } from './hooks/usePushSync'
 import { releaseThisDevice } from './lib/push'
 
@@ -63,6 +64,7 @@ const Landing          = lazy(() => import('./pages/Landing'))
 const Privacy          = lazy(() => import('./pages/Privacy'))
 const Terms            = lazy(() => import('./pages/Terms'))
 const RentalShops      = lazy(() => import('./pages/RentalShops'))
+const Activity         = lazy(() => import('./pages/Activity'))
 
 /**
  * Страница «не найдено».
@@ -161,6 +163,10 @@ function Navbar({ taskCount }: NavbarProps) {
             сигнальным цветом и существовало давно — но span в разметке
             не было, и правило не применялось ни разу. */}
         <Link to="/" className="navbar-logo" onClick={close}>Rent<span>It</span></Link>
+        {/* Колокольчик — ВНЕ сворачиваемого меню: на телефоне меню спрятано
+            за бургером, и число непрочитанного, спрятанное туда же, не
+            увидел бы никто. Порядок на широком экране задаёт CSS. */}
+        <ActivityBell onNavigate={close} />
         <button className="navbar-burger" onClick={() => setMenuOpen((o: boolean) => !o)} aria-label="Menu">
           <span /><span /><span />
         </button>
@@ -379,6 +385,7 @@ function AppChrome() {
             <Route path="/edit-item/:id" element={<RequireAuth><EditItem /></RequireAuth>} />
             <Route path="/my-items" element={<RequireAuth><MyItems /></RequireAuth>} />
             <Route path="/my-rentals" element={<RequireAuth><MyRentals /></RequireAuth>} />
+            <Route path="/activity" element={<RequireAuth><Activity /></RequireAuth>} />
             <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

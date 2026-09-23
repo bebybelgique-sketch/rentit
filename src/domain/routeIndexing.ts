@@ -92,6 +92,7 @@ export const ROUTE_INDEXING: Readonly<Record<string, RouteRule>> = {
   '/edit-item/:id': { indexing: 'private', why: 'Правка чужого добра' },
   '/my-items': { indexing: 'private', why: 'Личный список' },
   '/my-rentals': { indexing: 'private', why: 'Личные брони' },
+  '/activity': { indexing: 'private', why: 'Личная лента событий' },
   '/profile': { indexing: 'private', why: 'Кабинет' },
   '/admin': { indexing: 'private', why: 'Админка' },
 

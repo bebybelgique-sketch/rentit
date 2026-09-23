@@ -632,6 +632,47 @@ try {
     check(false, 'бронь для переписки создалась', chat.err)
   }
 
+  // ── Лента событий (миграция 42) ─────────────────────────────────────
+  //
+  // Одно событие — одна запись, и пишет её сервер: заявку — notify-rental
+  // (его ждёт request-rental, поэтому строка есть к моменту ответа),
+  // сообщение — триггер базы в той же транзакции. Клиент читает только
+  // своё и меняет только read_at.
+  console.log('\nлента событий')
+  const feedAsk = await ask({ item_id: itemId, start_date: day(15), end_date: day(16) })
+  if (feedAsk.bookingId) {
+    const ownerId = ownerUser.user.id
+    const { data: reqRows } = await owner.from('notifications').select('id, kind, read_at').eq('booking_id', feedAsk.bookingId)
+    check((reqRows ?? []).some((r) => r.kind === 'new_request' && r.read_at === null),
+      'заявка → запись «new_request» у владельца', JSON.stringify(reqRows))
+
+    const { data: feedMsg, error: feedMsgErr } = await renter.from('booking_messages')
+      .insert({ booking_id: feedAsk.bookingId, sender_id: targetUserId, body: 'E2E лента: à quelle heure ?' })
+      .select('id').single()
+    check(!!feedMsg && !feedMsgErr, 'сообщение пишется (триггер ленты его не ломает)', feedMsgErr ? `${feedMsgErr.code} ${feedMsgErr.message}` : '')
+    if (feedMsg) {
+      const { data: msgRows } = await owner.from('notifications').select('id, kind').eq('message_id', feedMsg.id)
+      check(msgRows?.length === 1 && msgRows[0].kind === 'new_message', 'сообщение → запись у получателя, одна', JSON.stringify(msgRows))
+      const { data: senderRows } = await renter.from('notifications').select('id').eq('message_id', feedMsg.id)
+      check((senderRows ?? []).length === 0, 'отправитель чужую запись не видит', `строк ${(senderRows ?? []).length}`)
+
+      if (msgRows?.[0]) {
+        const { error: kindErr } = await owner.from('notifications').update({ kind: 'declined' }).eq('id', msgRows[0].id)
+        check(kindErr?.code === '42501', 'клиенту не поменять ничего, кроме read_at', kindErr ? kindErr.code : 'обновление ПРОШЛО')
+        const { data: readRows } = await owner.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', msgRows[0].id).select('read_at')
+        check(readRows?.length === 1 && !!readRows[0].read_at, 'своё отмечается прочитанным', JSON.stringify(readRows))
+      }
+    }
+
+    const { error: forgeErr } = await owner.from('notifications').insert({ user_id: ownerId, kind: 'accepted', booking_id: feedAsk.bookingId })
+    check(forgeErr?.code === '42501', 'клиент не пишет в ленту (подделка записи)', forgeErr ? forgeErr.code : 'вставка ПРОШЛА')
+    const { error: anonFeedErr } = await anon.from('notifications').select('id').limit(1)
+    check(anonFeedErr?.code === '42501', 'аноним ленту не читает', anonFeedErr ? anonFeedErr.code : 'чтение ПРОШЛО')
+    // Бронь, сообщение и записи ленты уходят каскадом вместе с вещью.
+  } else {
+    check(false, 'бронь для проверки ленты создалась', feedAsk.err)
+  }
+
   // ── report-error: приём отчётов о поломках ──────────────────────────
   //
   // Приём открыт для анонима (поломки до входа важны не меньше), значит

@@ -1251,3 +1251,64 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 .push-row-status { font-size: 13px; line-height: 1.5; color: var(--muted); }
 .push-row-status--on { color: var(--success); }
 .push-row .btn { flex: none; min-height: 44px; }
+
+/* ── Лента событий: колокольчик и «Activité» ───────────────────────
+   Колокольчик на телефоне стоит справа, у бургера (margin-left: auto);
+   на широком экране — после ссылок, у выбора языка (order). */
+.activity-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  border-radius: 50%;
+  color: var(--text-on-dark);
+  text-decoration: none;
+}
+.activity-bell:hover { background: rgba(242, 240, 235, 0.08); text-decoration: none; }
+.activity-bell:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+.activity-bell .task-badge-tab { top: 2px; right: -2px; }
+@media (min-width: 769px) {
+  .activity-bell { order: 3; margin-left: 4px; }
+  .navbar-links { order: 2; margin-left: auto; }
+}
+
+.activity-day {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+.activity-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: inherit;
+  text-decoration: none;
+}
+.activity-item:hover { border-color: var(--silver-edge); text-decoration: none; }
+.activity-dot { flex: none; width: 8px; height: 8px; margin-top: 7px; border-radius: 50%; background: transparent; }
+.activity-item.is-new { background: #fff; border-color: var(--primary); }
+.activity-item.is-new .activity-dot { background: var(--action); }
+.activity-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.activity-title { font-size: 14.5px; font-weight: 600; overflow-wrap: anywhere; }
+.activity-item.is-new .activity-title { font-weight: 800; }
+.activity-body { font-size: 13.5px; color: var(--muted); line-height: 1.45; overflow-wrap: anywhere; }
+.activity-time { flex: none; font-size: 12px; color: var(--text-faint); margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+/* Метка «Nouveau» у брони в «Mes locations». */
+.booking-new {
+  margin-left: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}

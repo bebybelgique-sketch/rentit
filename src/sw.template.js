@@ -133,6 +133,11 @@ self.addEventListener('push', (event) => {
     data = {}
   }
   const tag = typeof data.tag === 'string' && data.tag ? data.tag : undefined
+  // Открытым вкладкам — «лента изменилась»: колокольчик обновится сразу, а
+  // не через минуту (src/hooks/usePushSync.ts).
+  self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    .then((windows) => windows.forEach((w) => w.postMessage({ type: 'rentit:activity' })))
+    .catch(() => {})
   event.waitUntil(
     self.registration.showNotification(typeof data.title === 'string' && data.title ? data.title : 'RentIt', {
       body: typeof data.body === 'string' ? data.body : '',
