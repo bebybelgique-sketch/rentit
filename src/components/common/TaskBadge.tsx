@@ -34,9 +34,14 @@ interface TaskBadgeProps {
   count: number
   /** `nav` — в строке навигации, `tab` — поверх значка нижней панели. */
   placement?: 'nav' | 'tab'
+  /**
+   * Подпись для программы чтения. По умолчанию — «N choses à faire»; у
+   * колокольчика ленты свои слова: там не дела, а непрочитанное.
+   */
+  label?: string
 }
 
-export default function TaskBadge({ count, placement = 'nav' }: TaskBadgeProps) {
+export default function TaskBadge({ count, placement = 'nav', label }: TaskBadgeProps) {
   const { t } = useTranslation()
 
   if (count <= 0) return null
@@ -48,7 +53,7 @@ export default function TaskBadge({ count, placement = 'nav' }: TaskBadgeProps) 
       className={`task-badge task-badge-${placement}`}
       // Число само по себе — просто цифра рядом со словом. Вслух его
       // читают как часть подписи, и без пояснения выходит «Mes outils 3».
-      aria-label={t('tasks.badgeLabel', { count })}
+      aria-label={label ?? t('tasks.badgeLabel', { count })}
       role="status"
     >
       {shown}

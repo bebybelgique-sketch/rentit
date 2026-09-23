@@ -132,6 +132,13 @@ export const RULES = {
     forbid: ALL_PRIVS,
     why: 'отчёты о поломках пишет только report-error, читает только admin-action — оба service_role (миграция 41)',
   },
+  // Миграция 42: ленту пишут только функции (service_role). Клиенту —
+  // чтение своего и КОЛОНОЧНЫЙ UPDATE (read_at): отметить прочитанным.
+  // Табличный UPDATE открыл бы kind и booking_id — то есть подделку ленты.
+  'public.notifications': {
+    forbid: WRITE_PRIVS,
+    why: 'ленту событий пишут только notify-rental и notify-message под service_role (миграция 42); клиенту — SELECT и колоночный UPDATE (read_at)',
+  },
 }
 
 /**

@@ -7,6 +7,6 @@
 // разошлись бы молча, и человек увидел бы одну и ту же заявку записанной
 // двумя способами.
 
-export { dateRange, shortName, money, isPushLang } from '../../supabase/functions/_shared/pushCopy'
-export type { PushLang } from '../../supabase/functions/_shared/pushCopy'
+export { dateRange, shortName, money, isPushLang, renderPush } from '../../supabase/functions/_shared/pushCopy'
+export type { PushLang, PushKind, PushFacts } from '../../supabase/functions/_shared/pushCopy'
 export { b64urlDecode } from '../../supabase/functions/_shared/webPush'

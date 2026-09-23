@@ -53,7 +53,8 @@
     "resetPassword": "New password",
     "admin": "Administration",
     "privacy": "Privacy Policy",
-    "terms": "Terms of Service"
+    "terms": "Terms of Service",
+    "activity": "Activity"
   },
   "addItemTitle": "Add New Item",
   "addPhotoBtn": "Go to profile",
@@ -279,7 +280,8 @@
     "bottomLabel": "Main navigation",
     "listItem": "List a tool",
     "myItems": "My tools",
-    "myRentals": "My rentals"
+    "myRentals": "My rentals",
+    "activity": "Activity"
   },
   "navProfile": "Profile",
   "nearby": "Near me",
@@ -822,5 +824,19 @@
       "blocked": "Blocked by the browser. Turn them back on in its settings: icon left of the address → Notifications.",
       "install": "Available once RentIt is on your Home Screen."
     }
+  },
+  "activity": {
+    "title": "Activity",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "earlier": "Earlier",
+    "emptyTitle": "Nothing new yet",
+    "emptyBody": "Requests, replies and messages about your rentals will show up here — even with notifications turned off.",
+    "emptyAction": "See my rentals",
+    "loadFailed": "Activity couldn't be loaded. Reload the page.",
+    "unreadLabel_one": "{{count}} unread",
+    "unreadLabel_other": "{{count}} unread",
+    "newBadge": "New",
+    "markRead": "Mark as read"
   }
 }

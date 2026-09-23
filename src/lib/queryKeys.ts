@@ -92,6 +92,17 @@ export const reviewKeys = {
 } as const;
 
 /** Админ-панель. */
+/**
+ * Лента событий (миграция 42). Один префикс на всё: отметка «прочитано»
+ * и приход push гасят разом и ленту, и счётчик колокольчика, и метки у
+ * броней — разойтись им не из-за чего.
+ */
+export const activityKeys = {
+  all: ['activity'],
+  feed: (userId: string | undefined) => ['activity', 'feed', userId],
+  unread: (userId: string | undefined) => ['activity', 'unread', userId],
+} as const;
+
 export const adminKeys = {
   stats: ['admin', 'stats'],
   errors: ['admin', 'errors'],

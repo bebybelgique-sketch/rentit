@@ -40,6 +40,12 @@ vi.mock('../../hooks/mutations/useTransitionBooking', () => ({
   useTransitionBooking: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock('../../components/booking/BookingThread', () => ({ default: () => null }));
+// Лента событий (миграция 42): у этого набора своя забота — вкладки.
+// Непрочитанного здесь нет; метки «Nouveau» проверяет свой тест.
+vi.mock('../../hooks/useActivity', () => ({
+  useUnreadActivity: () => ({ data: { count: 0, bookingIds: new Set<string>() } }),
+  useMarkActivityRead: () => ({ mutate: vi.fn() }),
+}));
 vi.mock('../../components/booking/BookingOwnerActions', () => ({ default: () => null }));
 
 import MyRentals from '../MyRentals';

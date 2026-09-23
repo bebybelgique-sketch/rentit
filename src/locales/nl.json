@@ -53,7 +53,8 @@
     "resetPassword": "Nieuw wachtwoord",
     "admin": "Beheer",
     "privacy": "Privacybeleid",
-    "terms": "Algemene voorwaarden"
+    "terms": "Algemene voorwaarden",
+    "activity": "Activiteit"
   },
   "addItemTitle": "Voeg nieuw item toe",
   "addPhotoBtn": "Voeg mijn foto toe →",
@@ -279,7 +280,8 @@
     "bottomLabel": "Hoofdnavigatie",
     "listItem": "Gereedschap plaatsen",
     "myItems": "Mijn gereedschap",
-    "myRentals": "Mijn huurcontracten"
+    "myRentals": "Mijn huurcontracten",
+    "activity": "Activiteit"
   },
   "navProfile": "Profiel",
   "nearby": "In de buurt",
@@ -822,5 +824,19 @@
       "blocked": "Geblokkeerd door de browser. Weer aan te zetten in de instellingen: icoon links van het adres → Meldingen.",
       "install": "Beschikbaar nadat je RentIt op je beginscherm hebt gezet."
     }
+  },
+  "activity": {
+    "title": "Activiteit",
+    "today": "Vandaag",
+    "yesterday": "Gisteren",
+    "earlier": "Eerder",
+    "emptyTitle": "Nog niets nieuws",
+    "emptyBody": "Aanvragen, antwoorden en berichten over je huurcontracten verschijnen hier — ook als meldingen uit staan.",
+    "emptyAction": "Mijn huurcontracten bekijken",
+    "loadFailed": "De activiteit kon niet worden geladen. Laad de pagina opnieuw.",
+    "unreadLabel_one": "{{count}} ongelezen",
+    "unreadLabel_other": "{{count}} ongelezen",
+    "newBadge": "Nieuw",
+    "markRead": "Markeren als gelezen"
   }
 }

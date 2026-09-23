@@ -11,6 +11,7 @@ import CancellationNotice from '../components/common/CancellationNotice';
 import UserRatingBadge from '../components/common/UserRatingBadge';
 import { useRentalsAsOwner } from '../hooks/useRentalsAsOwner';
 import PushBlockedBanner from '../components/push/PushBlockedBanner';
+import { useMarkActivityRead, useUnreadActivity } from '../hooks/useActivity';
 import { useCatalogHasItems } from '../hooks/useCatalogHasItems';
 import { useTransitionBooking } from '../hooks/mutations/useTransitionBooking';
 import { serverErrorKey } from '../domain/serverErrors';
@@ -72,6 +73,36 @@ const MyRentals: React.FC = () => {
   // нет» поверх существующей брони. Поэтому без явного ?role сторону
   // выбирает та, в чьём списке бронь действительно лежит.
   const ownerHasFocus = !!focusId && !!ownerRentals?.some(r => r.id === focusId);
+
+  // НЕПРОЧИТАННОЕ У БРОНИ (лента событий, миграция 42).
+  //
+  // До 23.09 у сообщений не было «непрочитано» нигде: сообщение от
+  // собеседника оставалось невидимым, пока человек не откроет именно эту
+  // бронь. Теперь у такой брони — метка «Nouveau».
+  //
+  // Пришёл по ссылке на бронь (из ленты или из push) — значит смотрит на
+  // неё: её непрочитанное гаснет само. Метка у остальных гаснет по нажатию.
+  const unread = useUnreadActivity(user?.id);
+  const markRead = useMarkActivityRead(user?.id);
+  const unreadBookings = unread.data?.bookingIds;
+  const focusUnread = !!focusId && !!unreadBookings?.has(focusId);
+  React.useEffect(() => {
+    if (focusId && focusUnread) markRead.mutate({ bookingId: focusId });
+    // markRead — стабильный объект мутации.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusId, focusUnread]);
+
+  const newMark = (bookingId: string) =>
+    unreadBookings?.has(bookingId) ? (
+      <button
+        type="button"
+        className="tag tag-red booking-new"
+        title={t('activity.markRead')}
+        onClick={() => markRead.mutate({ bookingId })}
+      >
+        {t('activity.newBadge')}
+      </button>
+    ) : null;
   const role: RentalRole = explicitRole ?? (ownerHasFocus ? 'owner' : 'renter');
 
   // Счётчик на НЕактивной вкладке — единственное, что сообщает о заявке,
@@ -366,7 +397,7 @@ const MyRentals: React.FC = () => {
                       <UserRatingBadge rating={owner?.rating_as_owner ?? null} role="owner" />
                     </p>
                     <p><strong>{t('rental.labelDates')}:</strong> {t('rental.datesRange', { start: formatDate(rental.start_date ?? ''), end: formatDate(rental.end_date ?? '') })}</p>
-                    <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status ?? 'pending_approval'} /></p>
+                    <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status ?? 'pending_approval'} />{newMark(rental.id)}</p>
                     {/* Доставка показывается из СНИМКА в брони, а не из вещи:
                         владелец мог с тех пор поменять цену, но договорённость
                         была на этой. */}
@@ -436,7 +467,7 @@ const MyRentals: React.FC = () => {
                   </p>
                   <p><strong>{t('rental.labelItem')}:</strong> {rental.item?.title || 'N/A'}</p>
                   <p><strong>{t('rental.labelDates')}:</strong> {t('rental.datesRange', { start: formatDate(rental.start_date ?? ''), end: formatDate(rental.end_date ?? '') })}</p>
-                  <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status ?? 'pending_approval'} /></p>
+                  <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status ?? 'pending_approval'} />{newMark(rental.id)}</p>
                   {/* Поля message в bookings нет: столбец называется
                       request_message, и страница показывала пустоту. */}
                   {rental.delivery_requested && rental.delivery_fee != null && (

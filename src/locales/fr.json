@@ -53,7 +53,8 @@
     "resetPassword": "Nouveau mot de passe",
     "admin": "Administration",
     "privacy": "Politique de confidentialité",
-    "terms": "Conditions générales d'utilisation"
+    "terms": "Conditions générales d'utilisation",
+    "activity": "Activité"
   },
   "addItemTitle": "Ajouter un nouvel outil",
   "addPhotoBtn": "Ajouter ma photo →",
@@ -279,7 +280,8 @@
     "bottomLabel": "Navigation principale",
     "listItem": "Déposer un outil",
     "myItems": "Mes outils",
-    "myRentals": "Mes locations"
+    "myRentals": "Mes locations",
+    "activity": "Activité"
   },
   "navProfile": "Profil",
   "nearby": "À proximité",
@@ -822,5 +824,19 @@
       "blocked": "Bloquées par le navigateur. À réactiver dans ses réglages : icône à gauche de l'adresse → Notifications.",
       "install": "Disponibles après ajout de RentIt à l'écran d'accueil."
     }
+  },
+  "activity": {
+    "title": "Activité",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "earlier": "Plus tôt",
+    "emptyTitle": "Rien de nouveau pour l’instant",
+    "emptyBody": "Les demandes, les réponses et les messages sur vos locations apparaîtront ici — même si les notifications sont désactivées.",
+    "emptyAction": "Voir mes locations",
+    "loadFailed": "L'activité n'a pas pu être chargée. Rechargez la page.",
+    "unreadLabel_one": "{{count}} non lue",
+    "unreadLabel_other": "{{count}} non lues",
+    "newBadge": "Nouveau",
+    "markRead": "Marquer comme lu"
   }
 }

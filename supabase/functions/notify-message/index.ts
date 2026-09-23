@@ -94,6 +94,9 @@ serve(async (req) => {
 
   const { data: sender } = await supabase.from('users').select('full_name').eq('id', msg.sender_id).maybeSingle()
 
+  // Только push. Строку в ленту о сообщении пишет сама база — триггером
+  // на booking_messages, в той же транзакции, что и сообщение (миграция
+  // 42): она не должна зависеть от того, дойдёт ли этот вызов из браузера.
   await pushToUser(
     supabaseDeps(supabase),
     recipient,
