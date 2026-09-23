@@ -17,6 +17,7 @@ import ChangePassword from '../components/common/ChangePassword';
 import PushSettingsRow from '../components/push/PushSettingsRow';
 import toast from 'react-hot-toast';
 import { usePageTitle } from '../hooks/usePageTitle'
+import { errorText } from '../lib/errorText';
 
 // Отзыв из базы → строка списка. Отдельной функцией, а не двумя копиями
 // внутри разметки: поля называются по-разному (created_at / createdAt), и
@@ -97,7 +98,7 @@ const Profile: React.FC = () => {
 
     const result = await uploadAvatar(file, user.id);
     if (!result.ok) {
-      toast.error(result.message);
+      toast.error(result.text);
       return;
     }
 
@@ -111,7 +112,7 @@ const Profile: React.FC = () => {
     } catch (err: any) {
       // Файл уже в бакете, а ссылка не записалась: показать «готово» здесь
       // значило бы соврать — при перезагрузке аватар исчезнет.
-      toast.error(err?.message || t('profile.avatarSaveFailed'));
+      toast.error(errorText(t, err, 'profile.avatarSaveFailed'));
     }
   };
 
@@ -134,7 +135,7 @@ const Profile: React.FC = () => {
       toast.success(t('profile.updateSuccess')); // Новая строка в i18n
     } catch (error: any) {
       console.error(t('profile.updateError'), error);
-      toast.error(error.message || t('profile.updateError')); // Новая строка в i18n
+      toast.error(errorText(t, error, 'profile.updateError'));
     }
   };
 
@@ -151,7 +152,7 @@ const Profile: React.FC = () => {
       navigate('/', { replace: true });
     } catch (error: any) {
       console.error(t('profile.deleteError'), error);
-      toast.error(error.message || t('profile.deleteError')); // Новая строка в i18n
+      toast.error(errorText(t, error, 'profile.deleteError'));
     }
   };
 

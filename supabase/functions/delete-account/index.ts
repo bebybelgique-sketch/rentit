@@ -31,7 +31,9 @@ serve(async (req) => {
     .limit(1)
 
   if (activeBookings && activeBookings.length > 0) {
-    return json({ error: 'Vous avez des réservations actives. Veuillez les terminer ou les annuler avant de supprimer votre compte.' }, 409)
+    // Коды, а не фразы: до 23.09 здесь стоял французский текст, и
+    // голландец с активной бронью читал отказ по-французски.
+    return json({ error: 'active_bookings_as_renter' }, 409)
   }
 
   // Also check bookings where user is owner
@@ -43,7 +45,7 @@ serve(async (req) => {
     .limit(1)
 
   if (ownerBookings && ownerBookings.length > 0) {
-    return json({ error: 'Vous avez des réservations actives en tant que propriétaire. Veuillez les terminer avant de supprimer votre compte.' }, 409)
+    return json({ error: 'active_bookings_as_owner' }, 409)
   }
 
   // Anonymise bookings (keep financial records for 7 years per Belgian law)
@@ -96,7 +98,12 @@ serve(async (req) => {
 
   // Delete the auth user (cascades to public.users via FK or trigger)
   const { error: deleteErr } = await supabase.auth.admin.deleteUser(userId)
-  if (deleteErr) return json({ error: deleteErr.message }, 500)
+  if (deleteErr) {
+    // Текст Supabase — в лог, человеку — код: фраза чужой системы ему
+    // ничего не скажет.
+    console.error('[delete-account] удаление учётки:', deleteErr.message)
+    return json({ error: 'internal_error' }, 500)
+  }
 
   return json({ success: true })
 })

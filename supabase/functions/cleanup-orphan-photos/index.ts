@@ -64,7 +64,7 @@ serve(async (req) => {
   const expected = Deno.env.get('CLEANUP_TOKEN')
   const presented = req.headers.get('X-Cleanup-Token')
   if (!expected || !presented || presented !== expected) {
-    return json({ error: 'Forbidden' }, 403)
+    return json({ error: 'forbidden' }, 403)
   }
 
   try {
@@ -99,7 +99,9 @@ serve(async (req) => {
     const { data: photoRows, error: photoErr } = await supabase
       .from('booking_photos')
       .select('storage_path')
-    if (photoErr) return json({ error: photoErr.message }, 500)
+    // Код — в error, причина — в detail: ответ читает журнал cron, и
+    // причина ему нужна, но договор «error — это код» един для всех функций.
+    if (photoErr) return json({ error: 'internal_error', detail: photoErr.message }, 500)
 
     // Пути `<booking_id>/<phase>/<файл>`: от пустого корня два уровня папок.
     const bookings = await sweep(
@@ -118,7 +120,7 @@ serve(async (req) => {
     const { data: itemRows, error: itemErr } = await supabase
       .from('items')
       .select('photos')
-    if (itemErr) return json({ error: itemErr.message }, 500)
+    if (itemErr) return json({ error: 'internal_error', detail: itemErr.message }, 500)
 
     // Пути `items/<uid>/<файл>`: первый сегмент фиксирован, значит от корня
     // `items` остаётся ОДИН уровень папок, а не два.
@@ -142,7 +144,7 @@ serve(async (req) => {
     const { data: userRows, error: userErr } = await supabase
       .from('users')
       .select('avatar_url')
-    if (userErr) return json({ error: userErr.message }, 500)
+    if (userErr) return json({ error: 'internal_error', detail: userErr.message }, 500)
 
     // Пути `<uid>.<расширение>` лежат в корне бакета: папок между корнем и
     // файлами нет вовсе.
@@ -165,6 +167,6 @@ serve(async (req) => {
       removed: bookings.removed + items.removed + avatars.removed,
     })
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : 'Unexpected error' }, 500)
+    return json({ error: 'internal_error', detail: err instanceof Error ? err.message : String(err) }, 500)
   }
 })

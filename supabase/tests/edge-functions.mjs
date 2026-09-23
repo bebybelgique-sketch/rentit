@@ -97,9 +97,19 @@ try {
   if (itemErr) throw new Error(`не удалось создать предмет: ${itemErr.code} ${itemErr.message}`)
   itemId = item.id
 
+  // Код отказа читается из ТЕЛА ответа. supabase-js при не-2xx кладёт
+  // тело в error.context, а в data — ничего; прежняя версия помощника
+  // брала error.message и получала «Edge Function returned a non-2xx
+  // status code» на любой отказ — то есть прогон проверял только, что
+  // брони нет, и не видел, ЧТО функция отвечает. Так 23.09 и нашлось,
+  // что она отвечала английскими фразами.
   const ask = async (body, as = renter) => {
     const { data, error } = await as.functions.invoke('request-rental', { body })
-    return { bookingId: data?.booking_id ?? null, err: data?.error ?? (error ? error.message : null) }
+    let err = data?.error ?? null
+    if (!err && error?.context?.json) {
+      try { err = (await error.context.clone().json()).error ?? null } catch { err = null }
+    }
+    return { bookingId: data?.booking_id ?? null, err: err ?? (error ? error.message : null) }
   }
 
   // ── request-rental ──────────────────────────────────────────────────
@@ -113,22 +123,22 @@ try {
   if (today.bookingId) await owner.from('bookings').delete().eq('id', today.bookingId)
 
   const past = await ask({ item_id: itemId, start_date: day(-1), end_date: day(1) })
-  check(!past.bookingId, 'вчерашняя дата отклоняется')
+  check(!past.bookingId && past.err === 'too_soon', 'вчерашняя дата отклоняется кодом too_soon', past.err)
 
   const reversed = await ask({ item_id: itemId, start_date: day(5), end_date: day(2) })
-  check(!reversed.bookingId, 'end < start отклоняется')
+  check(!reversed.bookingId && reversed.err === 'bad_request', 'end < start → bad_request', reversed.err)
 
   const garbage = await ask({ item_id: itemId, start_date: 'не-дата', end_date: day(2) })
-  check(!garbage.bookingId, 'нечитаемая дата отклоняется')
+  check(!garbage.bookingId && garbage.err === 'bad_request', 'нечитаемая дата → bad_request', garbage.err)
 
   const missingFields = await ask({ item_id: itemId })
-  check(!missingFields.bookingId, 'без дат отклоняется')
+  check(!missingFields.bookingId && missingFields.err === 'bad_request', 'без дат → bad_request', missingFields.err)
 
   const own = await ask({ item_id: itemId, start_date: day(2), end_date: day(3) }, owner)
-  check(!own.bookingId, 'свой предмет забронировать нельзя')
+  check(!own.bookingId && own.err === 'own_item', 'свой предмет → own_item', own.err)
 
   const ghost = await ask({ item_id: '00000000-0000-0000-0000-000000000000', start_date: day(2), end_date: day(3) })
-  check(!ghost.bookingId, 'несуществующий предмет отклоняется')
+  check(!ghost.bookingId && ghost.err === 'item_not_found', 'несуществующий предмет → item_not_found', ghost.err)
 
   // Цена считается сервером и обязана совпадать с генерируемой колонкой
   // базы: total_days = end_date - start_date + 1. Расхождение между ними
@@ -148,7 +158,7 @@ try {
   // заявка с доставкой обязана быть отклонена: иначе бронь унесёт
   // обещание, которого владелец не давал.
   const noService = await ask({ item_id: itemId, start_date: day(6), end_date: day(7), delivery_requested: true })
-  check(!noService.bookingId, 'доставка у вещи без объявленной услуги отклоняется', noService.err)
+  check(!noService.bookingId && noService.err === 'delivery_unavailable', 'доставка без объявленной услуги → delivery_unavailable', noService.err)
 
   await owner.from('items').update({ delivery_fee: 15, delivery_radius_km: 10 }).eq('id', itemId)
 
@@ -188,6 +198,20 @@ try {
     body: JSON.stringify({ item_id: itemId, start_date: day(2), end_date: day(3) }),
   })
   check(unauth.status === 401, 'без авторизации отвечает 401', `HTTP ${unauth.status}`)
+
+  // Отказ входа — кодом, общим для всех функций (_shared/auth.ts). До
+  // 23.09 там была фраза «Unauthorized: Missing Authorization header», и
+  // request-rental отдавал её как есть. Запрос без заголовка доходит до
+  // самой функции (так же проверяется admin-action ниже).
+  const unauthBody = await unauth.json().catch(() => ({}))
+  check(unauthBody.error === 'unauthorized', 'отказ входа — кодом unauthorized, а не фразой', JSON.stringify(unauthBody))
+
+  // Повторная заявка на те же даты — duplicate_request. Удалять брони
+  // клиентом нельзя с миграции 37, поэтому первая уходит с вещью в уборке.
+  const firstAsk = await ask({ item_id: itemId, start_date: day(24), end_date: day(25) })
+  const secondAsk = await ask({ item_id: itemId, start_date: day(24), end_date: day(25) })
+  check(!!firstAsk.bookingId && !secondAsk.bookingId && secondAsk.err === 'duplicate_request',
+    'повторная заявка на те же даты → duplicate_request', `${firstAsk.err ?? ''} ${secondAsk.err ?? ''}`)
 
   // ── Снятые функции платной модели ───────────────────────────────────
   // Сторож против случайного возврата: 12.08 пять функций Stripe были

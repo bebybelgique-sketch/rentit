@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { itemKeys, profileKeys, reviewKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import i18n from '../../i18n-next';
+import { UserFacingError } from '../../lib/errorText';
 import type { UserReviewRole } from '../useUserReviews';
 
 // Сообщения берём у настроенного экземпляра i18n напрямую: сама функция —
@@ -34,7 +35,7 @@ const createUserReview = async ({
   comment,
 }: CreateUserReviewParams): Promise<void> => {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    throw new Error(i18n.t('review.badRating'));
+    throw new UserFacingError(i18n.t('review.badRating'));
   }
 
   const { error } = await supabase.from('reviews').insert([{
@@ -50,7 +51,7 @@ const createUserReview = async ({
   // 23505 — уникальный ключ (booking_id, from_user_id, review_type).
   // Для человека это не «ошибка базы», а «вы уже оценили эту сделку».
   if (error) {
-    if (error.code === '23505') throw new Error(i18n.t('review.alreadyLeft'));
+    if (error.code === '23505') throw new UserFacingError(i18n.t('review.alreadyLeft'));
     throw error;
   }
 };

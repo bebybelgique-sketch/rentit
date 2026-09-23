@@ -13,6 +13,7 @@ import { photosOf } from '../lib/items';
 import ItemBlackouts from '../components/ItemBlackouts';
 import type { Database } from '../types/database.types';
 import { usePageTitle } from '../hooks/usePageTitle'
+import { errorText, UserFacingError } from '../lib/errorText'
 
 // Те же границы, что проверками в базе (миграция 20260817000022).
 const MAX_QUANTITY = 999;
@@ -117,7 +118,7 @@ const EditItem: React.FC = () => {
   }
 
   if (itemLoading) return <div className="page"><div className="loading">{t('editItem.loading')}</div></div>;
-  if (itemError) return <div className="page"><div className="loading">Erreur: {itemError.message}</div></div>;
+  if (itemError) return <div className="page"><div className="loading">{errorText(t, itemError, 'errors.generic')}</div></div>;
   // Не просто надпись: со страницы должен быть выход. Страница вещи в том же
   // случае предлагает «Parcourir» и «Accueil», а здесь человек упирался в
   // одну строку и навбар — иди догадайся, куда именно.
@@ -185,7 +186,7 @@ const EditItem: React.FC = () => {
       const tier = (raw: string, label: string): number | null => {
         if (raw.trim() === '') return null;
         const v = parseFloat(raw);
-        if (!(v > 0)) throw new Error(`${label} ${t('listItem.priceMustBePositive').toLowerCase()}`);
+        if (!(v > 0)) throw new UserFacingError(`${label} ${t('listItem.priceMustBePositive').toLowerCase()}`);
         return v;
       };
 
@@ -195,9 +196,9 @@ const EditItem: React.FC = () => {
       // никто не знает. Пустое поле здесь НЕ приводим молча к «услуги нет»:
       // владелец видел галку включённой и ждёт, что она сохранится.
       if (delivers && !(parseFloat(delivery_fee) > 0))
-        throw new Error(t('listItem.deliveryFeeRequired'));
+        throw new UserFacingError(t('listItem.deliveryFeeRequired'));
       if (delivers && delivery_radius_km.trim() !== '' && !(parseInt(delivery_radius_km, 10) > 0))
-        throw new Error(t('listItem.deliveryRadiusMustBePositive'));
+        throw new UserFacingError(t('listItem.deliveryRadiusMustBePositive'));
 
       const updates: ItemUpdate = {
         ...rest,
@@ -249,7 +250,10 @@ const EditItem: React.FC = () => {
       navigate(`/item/${itemId}`);
     } catch (error) {
       console.error(t('editItem.updateError'), error);
-      alert(t('editItem.updateErrorGeneric'));
+      // До 23.09 здесь было только общее «ошибка при обновлении»: подсказка
+      // «укажите цену доставки», брошенная тремя строками выше, выбрасывалась,
+      // и человек не узнавал, что именно исправить.
+      alert(errorText(t, error, 'editItem.updateErrorGeneric'));
     }
   };
 
@@ -258,8 +262,8 @@ const EditItem: React.FC = () => {
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px' }}>{t('editItem.title')}</h1>
 
-        {updateItemMutation.isError && <div className="error-msg">Erreur: {(updateItemMutation.error as Error).message}</div>}
-        {uploadError && <div className="error-msg">Erreur d'upload: {uploadError}</div>}
+        {updateItemMutation.isError && <div className="error-msg">{errorText(t, updateItemMutation.error, 'editItem.updateErrorGeneric')}</div>}
+        {uploadError && <div className="error-msg">{uploadError}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">

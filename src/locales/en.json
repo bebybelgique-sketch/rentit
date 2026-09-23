@@ -267,7 +267,8 @@
     "bothEmptyBody": "You have not lent or borrowed anything yet. Both start here.",
     "sectionsLabel": "Your rentals and incoming requests",
     "asRenter": "As a renter",
-    "requestsForMyTools": "Requests for my tools"
+    "requestsForMyTools": "Requests for my tools",
+    "loadFailed": "Your rentals couldn't be loaded. Reload the page."
   },
   "myRentalsAsOwner": "Requests for my Items",
   "myRentalsAsRenter": "As Renter",
@@ -335,7 +336,8 @@
     "deleteSuccess": "Your account has been deleted.",
     "deleteError": "Error deleting account.",
     "avatarBadFormat": "Format not accepted. Choose an image in {{formats}}.",
-    "avatarTooLarge": "Image too large ({{size}} MB). Maximum {{max}} MB."
+    "avatarTooLarge": "Image too large ({{size}} MB). Maximum {{max}} MB.",
+    "avatarUploadFailed": "The photo couldn't be uploaded. Try again."
   },
   "publishing": "Publishing…",
   "publishListing": "Publish listing",
@@ -582,7 +584,8 @@
     "addressLabel": "Address",
     "updateButton": "Update",
     "updating": "Updating...",
-    "backToMyItems": "Back to my tools"
+    "backToMyItems": "Back to my tools",
+    "photoUploadFailed": "The photo couldn't be uploaded. Try again."
   },
   "home": {
     "altText": "Photo of {{title}}",
@@ -723,7 +726,9 @@
     "add": "Add period",
     "remove": "Remove",
     "datesRequired": "Enter both dates.",
-    "endBeforeStart": "The end date cannot be before the start date."
+    "endBeforeStart": "The end date cannot be before the start date.",
+    "loadFailed": "Unavailability periods couldn't be loaded.",
+    "saveFailed": "The period couldn't be saved. Try again."
   },
   "nearbyUnavailable": "Location unavailable: the browser did not allow it. Allow it, or type a town in the filters.",
   "admin": {
@@ -758,7 +763,14 @@
     "push_not_configured": "Notifications aren't available yet. It's not you: the channel isn't open.",
     "push_endpoint_unsupported": "This browser doesn't support RentIt notifications.",
     "push_unsupported": "This browser doesn't support RentIt notifications.",
-    "not_found": "Not found. The page may have changed in the meantime."
+    "not_found": "Not found. The page may have changed in the meantime.",
+    "own_item": "You can't rent your own tool.",
+    "item_unavailable": "The owner has taken this tool off rental for now.",
+    "too_soon": "The owner needs more notice: pick a later date.",
+    "duplicate_request": "You already have a pending request for these dates.",
+    "delivery_unavailable": "This tool isn't offered with delivery.",
+    "active_bookings_as_renter": "You have bookings in progress. Finish or cancel them before deleting your account.",
+    "active_bookings_as_owner": "There are bookings in progress on your tools. Finish them before deleting your account."
   },
   "push": {
     "offer": {

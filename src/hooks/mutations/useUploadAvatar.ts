@@ -23,7 +23,10 @@ const MAX_BYTES = 5 * 1024 * 1024;
 
 export type UploadAvatarResult =
   | { ok: true; url: string }
-  | { ok: false; reason: 'type' | 'size' | 'upload'; message: string };
+  // text — уже переведённый текст для человека. Не message: так называется
+  // текст ЧУЖИХ ошибок, и сторож (src/__tests__/rawErrorText.test.ts) не
+  // пускает его на экран.
+  | { ok: false; reason: 'type' | 'size' | 'upload'; text: string };
 
 export function useUploadAvatar() {
   const [uploading, setUploading] = useState(false);
@@ -34,7 +37,7 @@ export function useUploadAvatar() {
       return {
         ok: false,
         reason: 'type',
-        message: i18n.t('profile.avatarBadFormat', { formats: AVATAR_EXTENSIONS.join(', ') }),
+        text: i18n.t('profile.avatarBadFormat', { formats: AVATAR_EXTENSIONS.join(', ') }),
       };
     }
     if (file.size > MAX_BYTES) {
@@ -44,7 +47,7 @@ export function useUploadAvatar() {
         // «5 Mo» больше не написано словом: предел живёт в MAX_BYTES, и
         // текст берёт его оттуда. Иначе поменяешь константу — а продукт
         // продолжит обещать прежнее число.
-        message: i18n.t('profile.avatarTooLarge', {
+        text: i18n.t('profile.avatarTooLarge', {
           size: (file.size / 1024 / 1024).toFixed(1),
           max: MAX_BYTES / 1024 / 1024,
         }),
@@ -76,7 +79,12 @@ export function useUploadAvatar() {
       const { error: upErr } = await supabase.storage
         .from(AVATARS_BUCKET)
         .upload(name, file, { contentType: file.type || undefined });
-      if (upErr) return { ok: false, reason: 'upload', message: upErr.message };
+      // Текст Storage — в консоль, человеку — свой: фраза чужой системы ему
+      // ничего не скажет.
+      if (upErr) {
+        console.error('[avatar] загрузка:', upErr.message);
+        return { ok: false, reason: 'upload', text: i18n.t('profile.avatarUploadFailed') };
+      }
 
       const { data } = supabase.storage.from(AVATARS_BUCKET).getPublicUrl(name);
 

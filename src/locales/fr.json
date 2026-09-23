@@ -267,7 +267,8 @@
     "bothEmptyBody": "Vous n'avez encore rien prêté ni emprunté. Les deux commencent ici.",
     "sectionsLabel": "Vos locations et les demandes reçues",
     "asRenter": "En tant que locataire",
-    "requestsForMyTools": "Demandes pour mes outils"
+    "requestsForMyTools": "Demandes pour mes outils",
+    "loadFailed": "Vos locations n'ont pas pu être chargées. Rechargez la page."
   },
   "myRentalsAsOwner": "Demandes pour mes outils",
   "myRentalsAsRenter": "En tant que locataire",
@@ -335,7 +336,8 @@
     "deleteSuccess": "Votre compte a été supprimé.",
     "deleteError": "Erreur lors de la suppression du compte.",
     "avatarBadFormat": "Format non accepté. Choisissez une image {{formats}}.",
-    "avatarTooLarge": "Image trop lourde ({{size}} Mo). Maximum {{max}} Mo."
+    "avatarTooLarge": "Image trop lourde ({{size}} Mo). Maximum {{max}} Mo.",
+    "avatarUploadFailed": "La photo n'a pas pu être envoyée. Réessayez."
   },
   "publishing": "Publication...",
   "publishListing": "Publier l'annonce",
@@ -582,7 +584,8 @@
     "addressLabel": "Adresse",
     "updateButton": "Mettre à jour",
     "updating": "Mise à jour en cours...",
-    "backToMyItems": "Retour à mes outils"
+    "backToMyItems": "Retour à mes outils",
+    "photoUploadFailed": "La photo n'a pas pu être envoyée. Réessayez."
   },
   "home": {
     "altText": "Photo de {{title}}",
@@ -723,7 +726,9 @@
     "add": "Ajouter la période",
     "remove": "Retirer",
     "datesRequired": "Indiquez les deux dates.",
-    "endBeforeStart": "La date de fin ne peut pas précéder la date de début."
+    "endBeforeStart": "La date de fin ne peut pas précéder la date de début.",
+    "loadFailed": "Les périodes d'indisponibilité n'ont pas pu être chargées.",
+    "saveFailed": "La période n'a pas pu être enregistrée. Réessayez."
   },
   "nearbyUnavailable": "Localisation indisponible : le navigateur ne l'a pas autorisée. Autorisez-la, ou indiquez une commune dans les filtres.",
   "admin": {
@@ -758,7 +763,14 @@
     "push_not_configured": "Les notifications ne sont pas encore disponibles. Ce n'est pas vous : le canal n'est pas ouvert.",
     "push_endpoint_unsupported": "Ce navigateur ne permet pas les notifications de RentIt.",
     "push_unsupported": "Ce navigateur ne permet pas les notifications de RentIt.",
-    "not_found": "Introuvable. La page a peut-être changé entre-temps."
+    "not_found": "Introuvable. La page a peut-être changé entre-temps.",
+    "own_item": "Vous ne pouvez pas louer votre propre outil.",
+    "item_unavailable": "Le propriétaire a retiré cet outil de la location pour l'instant.",
+    "too_soon": "Le propriétaire demande d'être prévenu plus tôt : choisissez une date plus tardive.",
+    "duplicate_request": "Vous avez déjà une demande en attente pour ces dates.",
+    "delivery_unavailable": "Cet outil n'est pas proposé en livraison.",
+    "active_bookings_as_renter": "Vous avez des réservations en cours. Terminez-les ou annulez-les avant de supprimer votre compte.",
+    "active_bookings_as_owner": "Des réservations sont en cours sur vos outils. Terminez-les avant de supprimer votre compte."
   },
   "push": {
     "offer": {

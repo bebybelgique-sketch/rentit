@@ -6,37 +6,55 @@ import { computeRentalPrice } from '../_shared/pricing.ts'
 import { notifyRental } from '../_shared/notify.ts'
 import { checkRangeAvailable } from '../_shared/availability.ts'
 import type { RpcCaller } from '../_shared/availability.ts'
+import { json } from '../_shared/json.ts'
 
 const supabase = createSupabaseServiceClient()
 
-// Оставлено для строк ниже, ещё не переведённых на json(): те же заголовки,
-// что отдаёт _shared/cors.ts.
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
-}
+// ── ОТКАЗЫ — КОДАМИ ─────────────────────────────────────────────────
+//
+// До 23.09 эта функция одна из всех отвечала английскими фразами
+// («Cannot rent your own item», «You already have a pending request…»).
+// Клиент их всё равно не видел: supabase-js прячет тело ответа, и человек
+// читал «Edge Function returned a non-2xx status code» — на французской
+// странице, на экране, где он только что нажал «отправить заявку».
+//
+// Теперь код, а текст подбирает клиент на языке человека
+// (src/domain/serverErrors.ts):
+//
+//   bad_request           400  нет полей, нечитаемые даты, конец раньше начала
+//   item_not_found        404
+//   own_item              400  своя вещь
+//   item_unavailable      409  владелец снял вещь с аренды
+//   too_soon              409  раньше срока предупреждения (+ earliest_start)
+//   dates_unavailable     409  даты заняты (+ day)
+//   duplicate_request     409  своя заявка на эти даты уже ждёт ответа
+//   delivery_unavailable  400  доставки у вещи нет
+//   internal_error        500  всё, в чём человек не виноват
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return handleOPTIONS()
+  if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
 
   try {
     const user = await getUserFromAuthHeader(req)
     if (user instanceof Response) return user
 
-    const body = await req.json() as { item_id?: string; start_date?: string; end_date?: string; message?: string; delivery_requested?: boolean }
-    const { item_id, start_date, end_date, message, delivery_requested } = body
+    // Нечитаемое тело — ошибка запроса, а не сервера: прежде оно падало в
+    // общий catch и отвечало 500.
+    const body = await req.json().catch(() => null) as { item_id?: string; start_date?: string; end_date?: string; message?: string; delivery_requested?: boolean } | null
+    const { item_id, start_date, end_date, message, delivery_requested } = body ?? {}
     if (!item_id || !start_date || !end_date) {
-      return new Response(JSON.stringify({ error: 'Missing fields' }), { status: 400, headers: CORS })
+      return json({ error: 'bad_request' }, 400)
     }
 
     // Validate dates: parsable, end >= start, start not in past
     const start = new Date(start_date)
     const end = new Date(end_date)
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return new Response(JSON.stringify({ error: 'Invalid dates' }), { status: 400, headers: CORS })
+      return json({ error: 'bad_request' }, 400)
     }
     if (end.getTime() < start.getTime()) {
-      return new Response(JSON.stringify({ error: 'End date must be after or equal to start date' }), { status: 400, headers: CORS })
+      return json({ error: 'bad_request' }, 400)
     }
     // Проверки «дата не в прошлом» здесь больше нет — не потому, что она
     // не нужна, а потому, что она стала частным случаем другой.
@@ -58,14 +76,14 @@ serve(async (req) => {
       // приедет вовсе, и снимок цены доставки записался бы из пустоты.
       .from('items').select('id,owner_id,price_per_day,price_3days,price_week,deposit,available,delivery_fee').eq('id', item_id).single()
     if (itemErr || !item) {
-      return new Response(JSON.stringify({ error: 'Item not found' }), { status: 404, headers: CORS })
+      return json({ error: 'item_not_found' }, 404)
     }
 
     if (item.owner_id === user.id) {
-      return new Response(JSON.stringify({ error: 'Cannot rent your own item' }), { status: 400, headers: CORS })
+      return json({ error: 'own_item' }, 400)
     }
     if (!item.available) {
-      return new Response(JSON.stringify({ error: 'Item is not available' }), { status: 400, headers: CORS })
+      return json({ error: 'item_unavailable' }, 409)
     }
 
     // Свободны ли даты. Раньше здесь стоял свой запрос с
@@ -76,16 +94,10 @@ serve(async (req) => {
     const rpc: RpcCaller = (fn, args) => supabase.rpc(fn, args)
     const problem = await checkRangeAvailable(rpc, item_id, start_date, end_date)
     if (problem?.code === 'too_soon') {
-      return new Response(
-        JSON.stringify({ error: 'Item requires advance notice', earliest_start: problem.earliestStart }),
-        { status: 409, headers: CORS },
-      )
+      return json({ error: 'too_soon', earliest_start: problem.earliestStart }, 409)
     }
     if (problem) {
-      return new Response(
-        JSON.stringify({ error: 'Item is not available for selected dates', day: problem.day }),
-        { status: 409, headers: CORS },
-      )
+      return json({ error: 'dates_unavailable', day: problem.day }, 409)
     }
 
     // Повторная заявка того же человека на пересекающиеся даты. Правило
@@ -99,7 +111,7 @@ serve(async (req) => {
     })
 
     if (duplicate) {
-      return new Response(JSON.stringify({ error: 'You already have a pending request for these dates' }), { status: 409, headers: CORS })
+      return json({ error: 'duplicate_request' }, 409)
     }
 
     // Calculate amounts for the booking record
@@ -109,7 +121,9 @@ serve(async (req) => {
     // Безопасное приведение цен: Number() + проверка
     const pricePerDay = Number(item.price_per_day)
     if (isNaN(pricePerDay) || pricePerDay <= 0) {
-      return new Response(JSON.stringify({ error: 'Invalid item price' }), { status: 400, headers: CORS })
+      // Цена вещи испорчена — человек тут ни при чём.
+      console.error('[request-rental] у вещи нет цены:', item_id)
+      return json({ error: 'internal_error' }, 500)
     }
     // Тарифы на срок. Формула одна на клиента и сервер — файл
     // `_shared/pricing.ts`, из него же читает страница вещи. Считать здесь
@@ -128,7 +142,7 @@ serve(async (req) => {
     const deliveryRequested = delivery_requested === true
     const itemDeliveryFee = item.delivery_fee == null ? null : Number(item.delivery_fee)
     if (deliveryRequested && !(itemDeliveryFee != null && itemDeliveryFee > 0)) {
-      return new Response(JSON.stringify({ error: 'Delivery is not offered for this item' }), { status: 400, headers: CORS })
+      return json({ error: 'delivery_unavailable' }, 400)
     }
     // Снимок: последующая правка цены владельцем не меняет условий этой
     // брони. В total_price доставка НЕ входит — там цена аренды.
@@ -155,20 +169,15 @@ serve(async (req) => {
 
     if (bookingErr) {
       console.error(bookingErr)
-      return new Response(JSON.stringify({ error: 'Could not create booking' }), { status: 400, headers: CORS })
+      return json({ error: 'internal_error' }, 500)
     }
 
     // Notify owner
     await notifyRental(booking.id, 'pending_approval')
 
-    return new Response(JSON.stringify({ booking_id: booking.id }), {
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    })
+    return json({ booking_id: booking.id })
   } catch (err: any) {
     console.error(err)
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    })
+    return json({ error: 'internal_error' }, 500)
   }
 })

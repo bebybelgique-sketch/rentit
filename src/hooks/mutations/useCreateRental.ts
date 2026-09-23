@@ -1,7 +1,7 @@
 // src/hooks/mutations/useCreateRental.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invalidateBookingCaches } from '../../lib/queryKeys';
-import { supabase } from '../../lib/supabase';
+import { invokeEdge } from '../../lib/edgeInvoke';
 
 // Заявку на аренду НЕЛЬЗЯ создать из браузера: политика вставки в bookings
 // удалена миграцией 20260328000009_bookings_insert_lockdown. Брони создаёт
@@ -19,16 +19,10 @@ interface CreateRentalParams {
 }
 
 const createRental = async (params: CreateRentalParams): Promise<{ booking_id: string }> => {
-  const { data, error } = await supabase.functions.invoke<{ booking_id?: string; error?: string }>(
-    'request-rental',
-    { body: params }
-  );
-
-  // Функция отвечает 4xx с телом { error }: supabase-js кладёт это в error,
-  // но текст причины лежит в теле, поэтому разбираем оба источника.
-  if (error) throw new Error(data?.error || error.message);
-  if (data?.error) throw new Error(data.error);
-  if (!data?.booking_id) throw new Error('request-rental не вернул booking_id');
+  // Отказ — EdgeError с кодом функции (dates_unavailable, duplicate_request…);
+  // текст подбирает экран через src/lib/errorText.ts.
+  const data = await invokeEdge<{ booking_id?: string }>('request-rental', { ...params });
+  if (!data.booking_id) throw new Error('request-rental не вернул booking_id');
 
   return { booking_id: data.booking_id };
 };

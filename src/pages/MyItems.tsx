@@ -12,6 +12,7 @@ import { useOwnerItems } from '../hooks/useOwnerItems'
 import { useSetItemAvailability } from '../hooks/mutations/useSetItemAvailability'
 import { useDeleteItem } from '../hooks/mutations/useDeleteItem'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { errorText } from '../lib/errorText'
 
 // Прямых обращений к базе и ручных setQueryData на этой странице больше нет.
 //
@@ -36,7 +37,8 @@ export default function MyItems() {
   const removeItem = useDeleteItem()
   const [tab, setTab] = useState<'active' | 'all'>('active')
   const loadError = isError ? t('loadFailed') : ''
-  const actionError = setAvailability.error?.message ?? removeItem.error?.message ?? ''
+  const failed = setAvailability.error ?? removeItem.error
+  const actionError = failed ? errorText(t, failed, 'errors.generic') : ''
 
   const toggleAvailable = (id: string, current: boolean) => {
     setAvailability.mutate({ id, available: !current })

@@ -17,6 +17,7 @@ import { useSendMessage } from '../../hooks/mutations/useSendMessage';
 import { useBookingPhotos, type BookingPhotoPhase } from '../../hooks/useBookingPhotos';
 import { useUploadBookingPhoto } from '../../hooks/mutations/useUploadBookingPhoto';
 import { useCreateUserReview } from '../../hooks/mutations/useCreateUserReview';
+import { errorText } from '../../lib/errorText';
 
 interface BookingThreadProps {
   bookingId: string;
@@ -78,7 +79,7 @@ const BookingThread: React.FC<BookingThreadProps> = ({
     try {
       await sendMessage.mutateAsync({ bookingId, senderId: currentUserId, body });
     } catch (err: any) {
-      setLocalError(err.message || t('booking.messageSendFailed'));
+      setLocalError(errorText(t, err, 'booking.messageSendFailed'));
     }
   };
 
@@ -91,7 +92,7 @@ const BookingThread: React.FC<BookingThreadProps> = ({
         bookingId, uploadedBy: currentUserId, phase: photoPhase, file,
       });
     } catch (err: any) {
-      setLocalError(err.message || t('booking.photoUploadFailed'));
+      setLocalError(errorText(t, err, 'booking.photoUploadFailed'));
     } finally {
       // Иначе тот же файл повторно не выбирается: браузер не считает это
       // изменением значения поля.
@@ -184,7 +185,7 @@ const BookingThread: React.FC<BookingThreadProps> = ({
               title={t('booking.reviewTitle', { name: counterpartyName })}
               submitLabel={t('booking.reviewSubmit')}
               submitting={createReview.isPending}
-              error={createReview.isError ? createReview.error.message : null}
+              error={createReview.isError ? errorText(t, createReview.error, 'booking.reviewFailed') : null}
               onSubmit={handleReview}
             />
           )}

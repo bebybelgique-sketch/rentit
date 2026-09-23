@@ -18,6 +18,8 @@ import PushOfferCard from '../components/push/PushOfferCard'
 import BookingStatusBadge from '../components/common/BookingStatusBadge'
 import { dateRange, money, shortName } from '../domain/push'
 import { pushLangOf } from '../lib/push'
+import { invokeEdge } from '../lib/edgeInvoke'
+import { errorText } from '../lib/errorText'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
 // power_tools был 🔌, а на витрине ⚡ — одна и та же категория с двумя
@@ -84,7 +86,7 @@ export default function ItemDetail() {
   const { t, i18n } = useTranslation()
   const { id: itemId } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user, accessToken } = useAuth()
+  const { user } = useAuth()
 
   const [item, setItem] = useState<Item | null>(null)
   const [loading, setLoading] = useState(true)
@@ -273,17 +275,21 @@ export default function ItemDetail() {
     if (!user || !item || !startDate || !endDate) return
     try {
       setRequestLoading(true); setError('')
-      const res = await supabase.functions.invoke('request-rental', {
-        // Цену доставки НЕ передаём — только сам выбор. Сумму сервер берёт
-        // из вещи и кладёт в бронь снимком: доверять числу из браузера
-        // здесь так же нельзя, как и в total_price.
-        body: { item_id: item.id, start_date: startDate, end_date: endDate, message: requestMessage.trim() || null, delivery_requested: wantsDelivery },
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      // Цену доставки НЕ передаём — только сам выбор. Сумму сервер берёт
+      // из вещи и кладёт в бронь снимком: доверять числу из браузера
+      // здесь так же нельзя, как и в total_price.
+      //
+      // Через invokeEdge, а не supabase.functions.invoke: при отказе тот
+      // прячет тело ответа, и до 23.09 человек читал здесь «Edge Function
+      // returned a non-2xx status code» вместо «эти даты уже заняты».
+      await invokeEdge('request-rental', {
+        item_id: item.id, start_date: startDate, end_date: endDate,
+        message: requestMessage.trim() || null, delivery_requested: wantsDelivery,
       })
-      if (res.error) throw res.error
       setRequestSent(true)
-    } catch (err: any) {
-      setError(err.message || t('itemDetail.requestError'))
+    } catch (err) {
+      console.error('[request-rental]', err)
+      setError(errorText(t, err, 'itemDetail.requestError'))
     } finally {
       setRequestLoading(false)
     }
