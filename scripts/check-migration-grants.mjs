@@ -128,6 +128,10 @@ export const RULES = {
     forbid: ALL_PRIVS,
     why: 'отметки об отправленных уведомлениях ставит только service_role (миграция 40)',
   },
+  'public.client_errors': {
+    forbid: ALL_PRIVS,
+    why: 'отчёты о поломках пишет только report-error, читает только admin-action — оба service_role (миграция 41)',
+  },
 }
 
 /**

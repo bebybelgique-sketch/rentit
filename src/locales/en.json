@@ -733,7 +733,18 @@
   "nearbyUnavailable": "Location unavailable: the browser did not allow it. Allow it, or type a town in the filters.",
   "admin": {
     "confirmGrant": "Give admin rights to {{name}}? This person will have access to all data.",
-    "confirmRevoke": "Remove admin rights from {{name}}?"
+    "confirmRevoke": "Remove admin rights from {{name}}?",
+    "errors": {
+      "tab": "Errors",
+      "empty": "No errors reported in the last 30 days.",
+      "count_one": "{{count}} time",
+      "count_other": "{{count}} times",
+      "lastSeen": "last: {{date}}",
+      "firstSeen": "first: {{date}}",
+      "release": "build {{release}}",
+      "stack": "Stack trace",
+      "loadFailed": "Errors couldn't be loaded."
+    }
   },
   "serverErrors": {
     "phone_invalid": "Invalid number. International format expected, for example +32470123456.",

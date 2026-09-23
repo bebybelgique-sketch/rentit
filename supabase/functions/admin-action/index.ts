@@ -70,6 +70,7 @@ serve(async (req) => {
     // показывает ему только его собственные строки, а выглядят они на
     // вкладке Stats как общие по площадке.
     if (action.type === 'get_stats') return await stats()
+    if (action.type === 'get_errors') return await errors()
 
     const target = targetOf(action)
     // Недостижимо: цель есть у каждого изменяющего действия, а
@@ -132,6 +133,24 @@ async function stats() {
     console.error('[admin-action] stats failed', { error })
     return json({ error: 'internal_error' }, 500)
   }
+}
+
+/**
+ * Поломки в браузерах людей — свежие сверху. Одна строка = один отпечаток
+ * за день (миграция 41), поэтому сотни падений одной поломки здесь —
+ * одна строка со счётчиком, и список читается глазами.
+ */
+async function errors() {
+  const { data, error } = await supabase
+    .from('client_errors')
+    .select('fingerprint, day, kind, message, stack, path, release, user_agent, lang, count, first_seen, last_seen')
+    .order('last_seen', { ascending: false })
+    .limit(100)
+  if (error) {
+    console.error('[admin-action] errors failed', { error })
+    return json({ error: 'internal_error' }, 500)
+  }
+  return json({ ok: true, errors: data ?? [] })
 }
 
 /**

@@ -94,6 +94,7 @@ export const reviewKeys = {
 /** Админ-панель. */
 export const adminKeys = {
   stats: ['admin', 'stats'],
+  errors: ['admin', 'errors'],
 } as const;
 
 /**

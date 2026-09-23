@@ -48,8 +48,15 @@ const SINKS: RegExp[] = [
   /new UserFacingError\(\s*['"]/,
 ]
 
-/** Модули, которые ЧИТАЮТ текст ошибок для разбора и журнала, а не для экрана. */
-const READERS = ['errorText.ts', 'errorLog.ts', 'authErrors.ts']
+/**
+ * Модули, которые ЧИТАЮТ текст ошибок для разбора и журнала, а не для
+ * экрана человека.
+ *
+ * AdminErrors.tsx — вкладка «Erreurs» в /admin: её предмет и есть текст
+ * поломки, показанный тому, кто её чинит. Это не экран пользователя, и
+ * запасной «что-то пошло не так» там лишил бы вкладку смысла.
+ */
+const READERS = ['errorText.ts', 'errorLog.ts', 'authErrors.ts', 'AdminErrors.tsx']
 
 export function findSinks(source: string): string[] {
   return source

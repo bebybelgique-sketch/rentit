@@ -245,7 +245,17 @@ const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]{2,}/g
 const PHONE = /(?:\+|00)?\d(?:[\s.\-/()]{0,3}\d){8,}/g
 
 export function maskSensitive(text: string): string {
-  return text.replace(EMAIL, MASK).replace(PHONE, MASK)
+  return maskPhones(text.replace(EMAIL, MASK))
+}
+
+/**
+ * Только телефоны — то же правило «9 цифр и больше». Отдельно, потому что
+ * отчётам о поломках (clientErrors.ts) нужна другая маска почты: в следе
+ * стека Firefox строка «Kt@https://…/app.js» для широкой маски выглядит
+ * адресом. Правило для номеров при этом обязано быть ОДНИМ на продукт.
+ */
+export function maskPhones(text: string): string {
+  return text.replace(PHONE, MASK)
 }
 
 /** Превью сообщения: сначала маска, потом обрезка — номер не режется пополам. */

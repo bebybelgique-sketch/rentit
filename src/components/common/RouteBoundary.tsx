@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react'
+import { logError } from '../../lib/errorLog'
 
 /**
  * Перехватчик ошибок маршрута — и лечение самой частой из них.
@@ -48,9 +49,19 @@ export default class RouteBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: unknown) {
-    console.error('RouteBoundary:', error)
+    const firstChunkFailure = looksLikeChunkFailure(error) && !sessionStorage.getItem(RELOADED)
 
-    if (looksLikeChunkFailure(error) && !sessionStorage.getItem(RELOADED)) {
+    // В журнал и на сервер — всё, КРОМЕ первого непогрузившегося чанка: он
+    // ожидаем после каждого выката и лечится перезагрузкой ниже. Если и
+    // после неё не грузится — это уже настоящая поломка, и она уходит.
+    //
+    // До 23.09 здесь стоял только console.error: падения СТРАНИЦ — а их
+    // большинство — не попадали ни в журнал «скопировать подробности», ни
+    // куда-либо ещё.
+    if (firstChunkFailure) console.error('RouteBoundary:', error)
+    else logError('render', error)
+
+    if (firstChunkFailure) {
       // Отмечаем ДО перезагрузки: если новая версия тоже упадёт, второй
       // раз не перезагружаемся, а показываем текст. Бесконечная
       // перезагрузка хуже честной ошибки — из неё человек не выйдет.

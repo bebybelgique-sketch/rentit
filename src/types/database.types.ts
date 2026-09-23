@@ -233,6 +233,51 @@ export type Database = {
           },
         ]
       }
+      client_errors: {
+        Row: {
+          count: number
+          day: string
+          fingerprint: string
+          first_seen: string
+          kind: string
+          lang: string | null
+          last_seen: string
+          message: string
+          path: string
+          release: string | null
+          stack: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          count?: number
+          day?: string
+          fingerprint: string
+          first_seen?: string
+          kind: string
+          lang?: string | null
+          last_seen?: string
+          message: string
+          path: string
+          release?: string | null
+          stack?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          count?: number
+          day?: string
+          fingerprint?: string
+          first_seen?: string
+          kind?: string
+          lang?: string | null
+          last_seen?: string
+          message?: string
+          path?: string
+          release?: string | null
+          stack?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
@@ -744,6 +789,19 @@ export type Database = {
       recompute_user_rating_for: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      record_client_error: {
+        Args: {
+          p_fingerprint: string
+          p_kind: string
+          p_lang: string
+          p_message: string
+          p_path: string
+          p_release: string
+          p_stack: string
+          p_user_agent: string
+        }
+        Returns: string
       }
       renter_has_pending_request: {
         Args: {

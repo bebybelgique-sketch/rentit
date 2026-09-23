@@ -7,6 +7,7 @@ import { useAdminAction } from '../hooks/mutations/useAdminAction'
 import { useAdminStats } from '../hooks/useAdminStats'
 import { serverErrorKey } from '../domain/serverErrors'
 import { usePageTitle } from '../hooks/usePageTitle'
+import AdminErrors from '../components/admin/AdminErrors'
 
 // Действия над ЧУЖИМИ строками идут через edge-функцию admin-action.
 //
@@ -28,7 +29,7 @@ export default function Admin() {
   usePageTitle(t('pageTitle.admin'))
   const adminAction = useAdminAction()
   const navigate = useNavigate()
-  const [tab, setTab] = useState<'stats' | 'items' | 'users'>('stats')
+  const [tab, setTab] = useState<'stats' | 'items' | 'users' | 'errors'>('stats')
   const [authorized, setAuthorized] = useState<boolean | null>(null)
 
   const [items, setItems] = useState<any[]>([])
@@ -113,7 +114,13 @@ export default function Admin() {
         <button className={`tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')}>Stats</button>
         <button className={`tab ${tab === 'items' ? 'active' : ''}`} onClick={() => setTab('items')}>Items</button>
         <button className={`tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>Users</button>
+        <button className={`tab ${tab === 'errors' ? 'active' : ''}`} onClick={() => setTab('errors')}>{t('admin.errors.tab')}</button>
       </div>
+
+      {/* Поломки в браузерах людей (report-error → client_errors). Запрос
+          уходит, только когда вкладка открыта: таблица может быть
+          длинной, а смотрят её не каждый заход. */}
+      {tab === 'errors' && <AdminErrors enabled={authorized === true} />}
 
       {/* Плитки «Revenue (platform fee)» здесь больше нет: платформа не
           берёт комиссию и не держит денег, а плитка обещала доход от
