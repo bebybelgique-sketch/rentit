@@ -196,4 +196,29 @@ test.describe('цикл аренды', () => {
     await openMyRentals(page, 'owner')
     await expect(page.getByText(reason).first()).toBeVisible({ timeout: 15000 })
   })
+
+  // Отказ заявки — словами и там, куда человек смотрит.
+  //
+  // До 23.09 здесь было два дефекта подряд. Человек читал «Edge Function
+  // returned a non-2xx status code»: функция отвечала английской фразой, а
+  // экран показывал служебный текст supabase-js. А когда текст починили,
+  // замер показал второй: отказ выводился в НАЧАЛЕ карточки, на ~700 px выше
+  // кнопки, — человек жал «отправить», и на экране не менялось ничего.
+  test('повторная заявка: отказ по-французски, у кнопки', async ({ page }) => {
+    await login(page, OWNER_EMAIL, OWNER_PASSWORD)
+    item = await createItem(page, { title: uniqueTitle('E2E отказ') })
+
+    await login(page, RENTER_EMAIL, RENTER_PASSWORD)
+    await requestBooking(page, item, 'Première demande.')
+
+    // Те же даты второй раз — сервер отвечает duplicate_request.
+    await page.goto(item.href, { waitUntil: 'load' })
+    await selectBookingRange(page)
+    await page.getByRole('button', { name: SEND_REQUEST_BUTTON }).click()
+
+    const refusal = page.getByRole('alert').filter({ hasText: /demande en attente pour ces dates/i })
+    await expect(refusal).toBeVisible({ timeout: 20000 })
+    await expect(refusal).toBeInViewport()
+    await expect(page.getByText(/non-2xx|Edge Function/i)).toHaveCount(0)
+  })
 })
