@@ -733,7 +733,18 @@
   "nearbyUnavailable": "Locatie niet beschikbaar: de browser gaf geen toestemming. Sta het toe, of typ een gemeente in de filters.",
   "admin": {
     "confirmGrant": "Adminrechten geven aan {{name}}? Deze persoon krijgt toegang tot alle gegevens.",
-    "confirmRevoke": "Adminrechten van {{name}} intrekken?"
+    "confirmRevoke": "Adminrechten van {{name}} intrekken?",
+    "errors": {
+      "tab": "Fouten",
+      "empty": "Geen fouten gemeld in de laatste 30 dagen.",
+      "count_one": "{{count}} keer",
+      "count_other": "{{count}} keer",
+      "lastSeen": "laatste: {{date}}",
+      "firstSeen": "eerste: {{date}}",
+      "release": "versie {{release}}",
+      "stack": "Trace",
+      "loadFailed": "De fouten konden niet worden geladen."
+    }
   },
   "serverErrors": {
     "phone_invalid": "Ongeldig nummer. Internationaal formaat verwacht, bijvoorbeeld +32470123456.",

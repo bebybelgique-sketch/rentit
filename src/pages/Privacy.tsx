@@ -82,6 +82,7 @@ function PrivacyEN() {
             <Tr data={['Ratings and reviews', 'Build trust in the community', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Referral code', 'Track who invited whom', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Session cookie (Supabase auth)', 'Keep you logged in — functional cookies only, no tracking', 'Art. 6(1)(b) — necessary for service']} />
+            <Tr data={['Error reports: error text (phone numbers and email addresses masked), page path without parameters, app version, browser, language — no name, no account, no IP address', 'Find and fix bugs that happen on your device', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Push notification subscription (optional): the address of your browser\'s push service for this device, its encryption keys, the app language', 'Notify this device about your bookings (new request, reply, expiry, new message); stored only if you turn notifications on', 'Art. 6(1)(a) — your consent']} />
           </tbody>
         </table>
@@ -131,6 +132,7 @@ function PrivacyEN() {
           <li><strong>Booking records:</strong> 7 years (Belgian accounting and tax law requirements)</li>
           <li><strong>Photos:</strong> deleted within 30 days of listing removal</li>
           <li><strong>Session cookies:</strong> expire when you log out or after 7 days of inactivity</li>
+          <li><strong>Error reports:</strong> deleted automatically after 30 days</li>
           <li><strong>Notification subscriptions:</strong> deleted when you turn notifications off, log out on that device or delete your account, and automatically when the push service reports the subscription expired</li>
         </ul>
       </Section>
@@ -226,6 +228,7 @@ function PrivacyFR() {
             <Tr data={['Notes et avis', 'Renforcer la confiance dans la communauté', 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Code de parrainage', 'Suivi de qui a invité qui', 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Cookie de session (Supabase auth)', 'Maintenir votre connexion — cookie fonctionnel uniquement, sans traçage', 'Art. 6(1)(b) — nécessaire au service']} />
+            <Tr data={['Rapports d\'erreur : texte de l\'erreur (numéros de téléphone et adresses e-mail masqués), chemin de la page sans paramètres, version de l\'app, navigateur, langue — ni nom, ni compte, ni adresse IP', 'Trouver et corriger les bugs survenus sur votre appareil', 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Abonnement aux notifications (facultatif) : l\'adresse du service de notification de votre navigateur pour cet appareil, ses clés de chiffrement, la langue de l\'app', 'Prévenir cet appareil au sujet de vos réservations (nouvelle demande, réponse, expiration, nouveau message) ; enregistré seulement si vous activez les notifications', 'Art. 6(1)(a) — votre consentement']} />
           </tbody>
         </table>
@@ -275,6 +278,7 @@ function PrivacyFR() {
           <li><strong>Réservations :</strong> 7 ans (obligations comptables et fiscales belges)</li>
           <li><strong>Photos :</strong> supprimées dans les 30 jours suivant le retrait de l'annonce</li>
           <li><strong>Cookies de session :</strong> expirent à la déconnexion ou après 7 jours d'inactivité</li>
+          <li><strong>Rapports d'erreur :</strong> supprimés automatiquement après 30 jours</li>
           <li><strong>Abonnements aux notifications :</strong> supprimés quand vous désactivez les notifications, vous déconnectez de l'appareil ou supprimez votre compte, et automatiquement quand le service de notification signale l'abonnement expiré</li>
         </ul>
       </Section>
@@ -370,6 +374,7 @@ function PrivacyNL() {
             <Tr data={['Beoordelingen', 'Vertrouwen opbouwen in de community', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Referralcode', 'Bijhouden wie wie heeft uitgenodigd', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Sessiecookie (Supabase auth)', 'U ingelogd houden — functionele cookie, geen tracking', 'Art. 6(1)(b) — noodzakelijk voor de dienst']} />
+            <Tr data={['Foutrapporten: fouttekst (telefoonnummers en e-mailadressen gemaskeerd), paginapad zonder parameters, app-versie, browser, taal — geen naam, geen account, geen IP-adres', 'Bugs op uw toestel opsporen en verhelpen', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Abonnement op meldingen (optioneel): het adres van de meldingendienst van uw browser voor dit toestel, de versleutelingssleutels, de taal van de app', 'Dit toestel verwittigen over uw reserveringen (nieuwe aanvraag, antwoord, verval, nieuw bericht); enkel bewaard als u meldingen aanzet', 'Art. 6(1)(a) — uw toestemming']} />
           </tbody>
         </table>
@@ -419,6 +424,7 @@ function PrivacyNL() {
           <li><strong>Boekingsrecords:</strong> 7 jaar (Belgische boekhoudkundige en fiscale verplichting)</li>
           <li><strong>Foto's:</strong> verwijderd binnen 30 dagen na verwijdering van de advertentie</li>
           <li><strong>Sessiecookies:</strong> verlopen bij uitloggen of na 7 dagen inactiviteit</li>
+          <li><strong>Foutrapporten:</strong> automatisch verwijderd na 30 dagen</li>
           <li><strong>Abonnementen op meldingen:</strong> verwijderd wanneer u meldingen uitzet, op dat toestel uitlogt of uw account verwijdert, en automatisch wanneer de meldingendienst het abonnement als verlopen meldt</li>
         </ul>
       </Section>

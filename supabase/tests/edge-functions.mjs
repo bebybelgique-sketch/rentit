@@ -632,6 +632,60 @@ try {
     check(false, 'бронь для переписки создалась', chat.err)
   }
 
+  // ── report-error: приём отчётов о поломках ──────────────────────────
+  //
+  // Приём открыт для анонима (поломки до входа важны не меньше), значит
+  // проверяется в первую очередь то, что НЕ должно пройти, и то, что
+  // таблица закрыта для прямого доступа (миграция 41).
+  //
+  // Строку проверка оставляет — без записи приём не проверить. Текст
+  // начинается с «E2E»: вкладка «Erreurs» в /admin такие не показывает,
+  // и через 30 дней таблица забывает их сама.
+  console.log('\nreport-error')
+  const report = (body) => fetch(`${env.VITE_SUPABASE_URL}/functions/v1/report-error`, {
+    method: 'POST',
+    headers: { apikey: env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  }).then(async (r) => ({ status: r.status, json: await r.json().catch(() => ({})) }))
+
+  const rehearsal = {
+    kind: 'window',
+    message: 'Error: E2E контроль приёма отчётов',
+    stack: null,
+    // Токен в адресе обязан быть отрезан ещё до записи.
+    path: '/e2e?token=SECRET#access_token=SECRET',
+    release: 'e2e',
+    lang: 'fr',
+    userAgent: 'supabase/tests/edge-functions.mjs',
+  }
+  const first = await report(rehearsal)
+  check(first.status === 200 && ['new', 'repeat'].includes(first.json.status),
+    'аноним может прислать отчёт', `HTTP ${first.status} ${JSON.stringify(first.json)}`)
+  const again = await report(rehearsal)
+  check(again.status === 200 && again.json.status === 'repeat',
+    'повтор той же поломки — счётчик, а не новая строка', `HTTP ${again.status} ${JSON.stringify(again.json)}`)
+
+  const junk = await report({ kind: 'hack', message: 'x', path: '/' })
+  check(junk.status === 400 && junk.json.error === 'bad_request', 'не отчёт → 400 bad_request', `HTTP ${junk.status} ${JSON.stringify(junk.json)}`)
+
+  const noise = await report({ kind: 'window', message: 'Script error.', path: '/' })
+  check(noise.status === 200 && noise.json.status === 'ignored', '«Script error.» без следа — шум, не записывается', JSON.stringify(noise.json))
+
+  const huge = await report('x'.repeat(20000))
+  check(huge.status === 413 && huge.json.error === 'payload_too_large', 'больше 16 КБ → 413', `HTTP ${huge.status} ${JSON.stringify(huge.json)}`)
+
+  for (const [client, who] of [[anon, 'аноним'], [renter, 'залогиненный']]) {
+    const { data: peek, error: peekErr } = await client.from('client_errors').select('*').limit(1)
+    check(peekErr?.code === '42501', `${who} не читает client_errors`, peekErr ? peekErr.code : `запрос ПРОШЁЛ, строк ${(peek ?? []).length}`)
+  }
+  // Функция записи — только для служебной роли: иначе приём мимо всех
+  // проверок report-error (длины, маски, шум) был бы открыт любому.
+  const { error: rpcErr } = await anon.rpc('record_client_error', {
+    p_fingerprint: '0'.repeat(32), p_kind: 'window', p_message: 'E2E мимо функции', p_stack: null,
+    p_path: '/', p_release: null, p_user_agent: null, p_lang: null,
+  })
+  check(rpcErr?.code === '42501', 'record_client_error мимо функции не вызывается', rpcErr ? rpcErr.code : 'вызов ПРОШЁЛ')
+
   // ── Триггер регистрации: referred_by ────────────────────────────────
   //
   // handle_new_user() (миграции 01 → 30 → 31) пишет public.users.referred_by

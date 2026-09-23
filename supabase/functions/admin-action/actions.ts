@@ -22,6 +22,10 @@ export type AdminAction =
   // bookings показывает ему только его собственные брони, и вкладка Stats
   // годами показывала личные цифры под видом общих.
   | { type: 'get_stats' }
+  // Чтение: поломки в браузерах людей (таблица client_errors, миграция 41).
+  // Таблица закрыта для всех, кроме служебной роли, — отчёт несёт текст
+  // ошибки и путь страницы, и смотреть на это должен только тот, кто чинит.
+  | { type: 'get_errors' }
 
 /** Куда пишет действие: таблица и строка, ради журнала и ради update. */
 export interface AdminTarget {
@@ -63,6 +67,9 @@ export function parseAction(raw: unknown): AdminAction | null {
     case 'get_stats':
       return { type: 'get_stats' }
 
+    case 'get_errors':
+      return { type: 'get_errors' }
+
     default:
       return null
   }
@@ -83,6 +90,7 @@ export function targetOf(action: AdminAction): AdminTarget | null {
     case 'set_item_available':
       return { table: 'items', id: action.item_id }
     case 'get_stats':
+    case 'get_errors':
       return null
   }
 }
@@ -95,6 +103,7 @@ export function patchOf(action: AdminAction): Record<string, unknown> {
     case 'set_item_available':
       return { available: action.available }
     case 'get_stats':
+    case 'get_errors':
       return {}
   }
 }

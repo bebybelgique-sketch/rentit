@@ -157,7 +157,13 @@ const createHash = (input: string): string => {
   return Math.abs(h).toString(36)
 }
 
+// Какая сборка работает у человека. Без этого отчёт о поломке не отвечает
+// на первый вопрос починки — «это ещё в проде или уже исправлено?».
+// Vercel кладёт коммит в окружение сборки; локально сборка — 'local'.
+const BUILD_ID = (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7) || 'local'
+
 export default defineConfig({
+  define: { __BUILD_ID__: JSON.stringify(BUILD_ID) },
   plugins: [react(), injectSiteUrl(), stripHtmlComments(), emitCrawlerFiles(), buildServiceWorker()],
   server: {
     host: '0.0.0.0',
