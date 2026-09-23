@@ -10,6 +10,7 @@ import BookingOwnerActions from '../components/booking/BookingOwnerActions';
 import CancellationNotice from '../components/common/CancellationNotice';
 import UserRatingBadge from '../components/common/UserRatingBadge';
 import { useRentalsAsOwner } from '../hooks/useRentalsAsOwner';
+import PushBlockedBanner from '../components/push/PushBlockedBanner';
 import { useCatalogHasItems } from '../hooks/useCatalogHasItems';
 import { useTransitionBooking } from '../hooks/mutations/useTransitionBooking';
 import { serverErrorKey } from '../domain/serverErrors';
@@ -208,6 +209,16 @@ const MyRentals: React.FC = () => {
     <div className="page">
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '20px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px' }}>{t('myRentalsTitle')}</h1>
+
+        {/* Полоса C пакета Design: уведомления заблокированы в браузере,
+            а ответ как раз ждут — по своей заявке или по заявке на свою
+            вещь. Сама решает, показываться ли. */}
+        <PushBlockedBanner
+          hasPendingRequest={
+            !!userRentals?.some((r) => r.status === 'pending_approval') ||
+            !!ownerRentals?.some((r) => r.status === 'pending_approval')
+          }
+        />
 
         {/* Одна пустота вместо двух. Ни вкладок, ни двух пустых списков:
             пока сделок нет ни в одну сторону, переключать нечего, и

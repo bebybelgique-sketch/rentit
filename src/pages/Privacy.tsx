@@ -15,9 +15,9 @@ import { usePageTitle } from '../hooks/usePageTitle'
 // По языкам раздельно: строка показывается в трёх разделах, и
 // английское «March 20, 2026» стояло под французским «Dernière mise
 // à jour :» и нидерландским «Laatste update:».
-const LAST_UPDATED_EN = 'August 14, 2026'
-const LAST_UPDATED_FR = '14 août 2026'
-const LAST_UPDATED_NL = '14 augustus 2026'
+const LAST_UPDATED_EN = 'September 23, 2026'
+const LAST_UPDATED_FR = '23 septembre 2026'
+const LAST_UPDATED_NL = '23 september 2026'
 // Ответственный за обработку — физическое лицо, а не «RentIt». До 14.08
 // здесь стояли COMPANY = 'RentIt', ADDRESS = 'Belgium' и ящик
 // privacy@rentit.be: контроллер вымышлен, страна вместо адреса, а домен
@@ -82,6 +82,7 @@ function PrivacyEN() {
             <Tr data={['Ratings and reviews', 'Build trust in the community', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Referral code', 'Track who invited whom', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Session cookie (Supabase auth)', 'Keep you logged in — functional cookies only, no tracking', 'Art. 6(1)(b) — necessary for service']} />
+            <Tr data={['Push notification subscription (optional): the address of your browser\'s push service for this device, its encryption keys, the app language', 'Notify this device about your bookings (new request, reply, expiry, new message); stored only if you turn notifications on', 'Art. 6(1)(a) — your consent']} />
           </tbody>
         </table>
         <p style={{ marginTop: '12px', fontSize: '13px', color: '#666' }}>
@@ -94,6 +95,7 @@ function PrivacyEN() {
           <li>Provide and improve the RentIt platform</li>
           <li>Process bookings — no payment passes through RentIt, settlement is in cash between users</li>
           <li>Send transactional emails about your bookings (request, approval, cancellation, expiry) — not marketing without your consent</li>
+          <li>Send push notifications about your bookings to the devices where you turned them on — never marketing</li>
           <li>Verify your identity via phone OTP</li>
           <li>Resolve disputes between renters and owners</li>
           <li>Comply with legal obligations (Belgian Law of 30 July 2018, GDPR)</li>
@@ -112,6 +114,7 @@ function PrivacyEN() {
           </thead>
           <tbody>
             <Tr data={['Supabase Inc.', 'Database and authentication hosting', 'EU region (Frankfurt)']} />
+            <Tr data={['Your browser\'s push service (Google, Mozilla, Apple or Microsoft, depending on the browser)', 'Carry notifications to your device. The content is end-to-end encrypted: the service sees that a message passes, not what it says', 'Depends on the browser vendor']} />
             <Tr data={['Resend Inc.', 'Transactional email delivery', 'USA — Standard Contractual Clauses apply']} />
             <Tr data={['Other RentIt users', 'Name and phone number shared with the other party only after a booking is confirmed', 'Belgium']} />
           </tbody>
@@ -128,6 +131,7 @@ function PrivacyEN() {
           <li><strong>Booking records:</strong> 7 years (Belgian accounting and tax law requirements)</li>
           <li><strong>Photos:</strong> deleted within 30 days of listing removal</li>
           <li><strong>Session cookies:</strong> expire when you log out or after 7 days of inactivity</li>
+          <li><strong>Notification subscriptions:</strong> deleted when you turn notifications off, log out on that device or delete your account, and automatically when the push service reports the subscription expired</li>
         </ul>
       </Section>
 
@@ -140,7 +144,7 @@ function PrivacyEN() {
           <li><strong>Restriction</strong> — ask us to temporarily stop processing your data</li>
           <li><strong>Portability</strong> — receive your data in a machine-readable format</li>
           <li><strong>Object</strong> — object to processing based on legitimate interest</li>
-          <li><strong>Withdraw consent</strong> — for geolocation data, withdraw at any time without penalty</li>
+          <li><strong>Withdraw consent</strong> — for geolocation data and notifications, withdraw at any time without penalty (notifications: Profile → Notifications → Turn off)</li>
         </ul>
         <p>To exercise any right, email <a href={`mailto:${EMAIL}`}>{EMAIL}</a>. We will respond within <strong>30 days</strong> as required by GDPR Art. 12.</p>
         <p>If you believe we have violated your rights, you may lodge a complaint with the <strong>Belgian Data Protection Authority (APD/GBA)</strong>:</p>
@@ -222,6 +226,7 @@ function PrivacyFR() {
             <Tr data={['Notes et avis', 'Renforcer la confiance dans la communauté', 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Code de parrainage', 'Suivi de qui a invité qui', 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Cookie de session (Supabase auth)', 'Maintenir votre connexion — cookie fonctionnel uniquement, sans traçage', 'Art. 6(1)(b) — nécessaire au service']} />
+            <Tr data={['Abonnement aux notifications (facultatif) : l\'adresse du service de notification de votre navigateur pour cet appareil, ses clés de chiffrement, la langue de l\'app', 'Prévenir cet appareil au sujet de vos réservations (nouvelle demande, réponse, expiration, nouveau message) ; enregistré seulement si vous activez les notifications', 'Art. 6(1)(a) — votre consentement']} />
           </tbody>
         </table>
         <p style={{ marginTop: '12px', fontSize: '13px', color: '#666' }}>
@@ -234,6 +239,7 @@ function PrivacyFR() {
           <li>Fournir et améliorer la plateforme RentIt</li>
           <li>Traiter les réservations — aucun paiement ne transite par RentIt, le règlement se fait en espèces entre utilisateurs</li>
           <li>Envoyer des emails transactionnels liés à vos réservations (demande, approbation, annulation, expiration) — pas de marketing sans votre consentement</li>
+          <li>Envoyer des notifications sur vos réservations aux appareils où vous les avez activées — jamais de marketing</li>
           <li>Vérifier votre identité via OTP téléphonique</li>
           <li>Résoudre les litiges entre locataires et propriétaires</li>
           <li>Respecter nos obligations légales (Loi belge du 30 juillet 2018, RGPD)</li>
@@ -252,6 +258,7 @@ function PrivacyFR() {
           </thead>
           <tbody>
             <Tr data={['Supabase Inc.', 'Hébergement base de données et authentification', 'UE (Francfort)']} />
+            <Tr data={['Le service de notification de votre navigateur (Google, Mozilla, Apple ou Microsoft selon le navigateur)', 'Acheminer les notifications jusqu\'à votre appareil. Le contenu est chiffré de bout en bout : le service voit qu\'un message passe, pas ce qu\'il dit', 'Selon l\'éditeur du navigateur']} />
             <Tr data={['Resend Inc.', "Envoi d'emails transactionnels", 'USA — Clauses Contractuelles Types applicables']} />
             <Tr data={['Autres utilisateurs RentIt', 'Nom et téléphone partagés avec l\'autre partie uniquement après confirmation de réservation', 'Belgique']} />
           </tbody>
@@ -268,6 +275,7 @@ function PrivacyFR() {
           <li><strong>Réservations :</strong> 7 ans (obligations comptables et fiscales belges)</li>
           <li><strong>Photos :</strong> supprimées dans les 30 jours suivant le retrait de l'annonce</li>
           <li><strong>Cookies de session :</strong> expirent à la déconnexion ou après 7 jours d'inactivité</li>
+          <li><strong>Abonnements aux notifications :</strong> supprimés quand vous désactivez les notifications, vous déconnectez de l'appareil ou supprimez votre compte, et automatiquement quand le service de notification signale l'abonnement expiré</li>
         </ul>
       </Section>
 
@@ -280,7 +288,7 @@ function PrivacyFR() {
           <li><strong>de limitation</strong> — nous demander de cesser temporairement le traitement de vos données</li>
           <li><strong>de portabilité</strong> — recevoir vos données dans un format lisible par machine</li>
           <li><strong>d'opposition</strong> — vous opposer au traitement fondé sur un intérêt légitime</li>
-          <li><strong>de retirer votre consentement</strong> — pour la géolocalisation, à tout moment et sans pénalité</li>
+          <li><strong>de retirer votre consentement</strong> — pour la géolocalisation et les notifications, à tout moment et sans pénalité (notifications : Profil → Notifications → Désactiver)</li>
         </ul>
         <p>Pour exercer ces droits : <a href={`mailto:${EMAIL}`}>{EMAIL}</a>. Réponse dans les <strong>30 jours</strong> (RGPD Art. 12).</p>
         <p>Réclamation auprès de l'<strong>Autorité de protection des données (APD/GBA)</strong> :<br />
@@ -362,6 +370,7 @@ function PrivacyNL() {
             <Tr data={['Beoordelingen', 'Vertrouwen opbouwen in de community', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Referralcode', 'Bijhouden wie wie heeft uitgenodigd', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Sessiecookie (Supabase auth)', 'U ingelogd houden — functionele cookie, geen tracking', 'Art. 6(1)(b) — noodzakelijk voor de dienst']} />
+            <Tr data={['Abonnement op meldingen (optioneel): het adres van de meldingendienst van uw browser voor dit toestel, de versleutelingssleutels, de taal van de app', 'Dit toestel verwittigen over uw reserveringen (nieuwe aanvraag, antwoord, verval, nieuw bericht); enkel bewaard als u meldingen aanzet', 'Art. 6(1)(a) — uw toestemming']} />
           </tbody>
         </table>
         <p style={{ marginTop: '12px', fontSize: '13px', color: '#666' }}>
@@ -374,6 +383,7 @@ function PrivacyNL() {
           <li>Het leveren en verbeteren van het RentIt-platform</li>
           <li>Reserveringen verwerken — Er verloopt geen enkele betaling via RentIt, de afrekening gebeurt contant tussen gebruikers</li>
           <li>Transactionele e-mails over uw reserveringen versturen (aanvraag, goedkeuring, annulering, verval) — geen marketing zonder uw toestemming</li>
+          <li>Meldingen over uw reserveringen sturen naar de toestellen waarop u ze hebt aangezet — nooit marketing</li>
           <li>Het verifiëren van uw identiteit via telefoon-OTP</li>
           <li>Het oplossen van geschillen tussen huurders en verhuurders</li>
           <li>Het naleven van wettelijke verplichtingen (Belgische Wet van 30 juli 2018, AVG)</li>
@@ -392,6 +402,7 @@ function PrivacyNL() {
           </thead>
           <tbody>
             <Tr data={['Supabase Inc.', 'Database- en authenticatiehosting', 'EU (Frankfurt)']} />
+            <Tr data={['De meldingendienst van uw browser (Google, Mozilla, Apple of Microsoft, afhankelijk van de browser)', 'Meldingen tot op uw toestel brengen. De inhoud is end-to-end versleuteld: de dienst ziet dat er een bericht passeert, niet wat erin staat', 'Afhankelijk van de browsermaker']} />
             <Tr data={['Resend Inc.', 'Transactionele e-mailbezorging', 'VS — Standaardcontractbepalingen van toepassing']} />
             <Tr data={['Andere RentIt-gebruikers', 'Naam en telefoon gedeeld met de andere partij alleen na bevestigde boeking', 'België']} />
           </tbody>
@@ -408,6 +419,7 @@ function PrivacyNL() {
           <li><strong>Boekingsrecords:</strong> 7 jaar (Belgische boekhoudkundige en fiscale verplichting)</li>
           <li><strong>Foto's:</strong> verwijderd binnen 30 dagen na verwijdering van de advertentie</li>
           <li><strong>Sessiecookies:</strong> verlopen bij uitloggen of na 7 dagen inactiviteit</li>
+          <li><strong>Abonnementen op meldingen:</strong> verwijderd wanneer u meldingen uitzet, op dat toestel uitlogt of uw account verwijdert, en automatisch wanneer de meldingendienst het abonnement als verlopen meldt</li>
         </ul>
       </Section>
 
@@ -420,7 +432,7 @@ function PrivacyNL() {
           <li><strong>Beperking</strong> — ons vragen de verwerking van uw gegevens tijdelijk te staken</li>
           <li><strong>Overdraagbaarheid</strong> — uw gegevens ontvangen in een machineleesbaar formaat</li>
           <li><strong>Bezwaar</strong> — bezwaar maken tegen verwerking op basis van gerechtvaardigd belang</li>
-          <li><strong>Toestemming intrekken</strong> — voor geolocatiegegevens, te allen tijde en zonder gevolgen</li>
+          <li><strong>Toestemming intrekken</strong> — voor geolocatiegegevens en meldingen, te allen tijde en zonder gevolgen (meldingen: Profiel → Meldingen → Uitzetten)</li>
         </ul>
         <p>Verzoek indienen: <a href={`mailto:${EMAIL}`}>{EMAIL}</a>. Reactie binnen <strong>30 dagen</strong> (AVG Art. 12).</p>
         <p>Klacht indienen bij de <strong>Gegevensbeschermingsautoriteit (GBA)</strong>:<br />

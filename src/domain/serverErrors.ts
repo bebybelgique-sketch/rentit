@@ -66,6 +66,17 @@ export const SERVER_ERROR_KEYS = {
   code_expired: 'serverErrors.code_expired',
   code_incorrect: 'serverErrors.code_incorrect',
   too_many_attempts: 'serverErrors.too_many_attempts',
+
+  // Уведомления: push-subscription и notify-message.
+  //
+  // `push_not_configured` — как и `sms_not_configured`: ключи канала ещё
+  // не заведены. Состояние продукта, а не вина человека.
+  // `push_unsupported` ставит сам клиент (src/lib/push.ts), когда у
+  // браузера нет активного воркера — до сервера дело не доходит.
+  push_not_configured: 'serverErrors.push_not_configured',
+  push_endpoint_unsupported: 'serverErrors.push_endpoint_unsupported',
+  push_unsupported: 'serverErrors.push_unsupported',
+  not_found: 'serverErrors.not_found',
 } as const satisfies Record<string, string>;
 
 export type ServerErrorCode = keyof typeof SERVER_ERROR_KEYS;

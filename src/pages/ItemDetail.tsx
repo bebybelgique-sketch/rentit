@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +14,10 @@ import {
 import type { ItemCalendar } from '../domain/availability'
 import { itemHistoryOf, photosOf, type ItemHistory } from '../lib/items'
 import { usePageTitle } from '../hooks/usePageTitle'
+import PushOfferCard from '../components/push/PushOfferCard'
+import BookingStatusBadge from '../components/common/BookingStatusBadge'
+import { dateRange, money, shortName } from '../domain/push'
+import { pushLangOf } from '../lib/push'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
 // power_tools был 🔌, а на витрине ⚡ — одна и та же категория с двумя
@@ -115,6 +119,22 @@ export default function ItemDetail() {
   const [error, setError] = useState('')
   const [loadError, setLoadError] = useState(false)
   const [requestSent, setRequestSent] = useState(false)
+
+  // «Annonce publiée» — сюда приводит ListItem после публикации
+  // (/item/<id>?published=1). До 23.09 параметр не читал никто: владелец
+  // попадал на обычную страницу вещи без слова о том, что она выставлена.
+  //
+  // Признак запоминается при входе, а из адреса убирается: иначе ссылка,
+  // которой владелец тут же поделится, унесла бы ?published=1 соседям, а
+  // перезагрузка показывала бы подтверждение снова.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [justPublished] = useState(() => searchParams.get('published') === '1')
+  useEffect(() => {
+    if (!searchParams.has('published')) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('published')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
 
   const [reviews, setReviews] = useState<any[]>([])
   const [canReview, setCanReview] = useState(false)
@@ -326,6 +346,7 @@ export default function ItemDetail() {
   )
 
   const photos = item.photos || []
+  const ownerFirstName = (item.users?.full_name ?? '').trim().split(/\s+/)[0] || null
   const { year, month } = calMonth
   const daysCount = daysInMonth(year, month)
   // Смещение и подписи дней живут в домене, рядом с остальным расчётом
@@ -386,6 +407,29 @@ export default function ItemDetail() {
             </a>
           </div>
         </div>
+
+        {/* ПОДТВЕРЖДЕНИЕ ПУБЛИКАЦИИ — экран B пакета Design. Только
+            владельцу и только сразу после публикации. Здесь же первый
+            повод предложить уведомления: заявка живёт 24 часа, и без
+            уведомления владелец рискует увидеть её слишком поздно. */}
+        {justPublished && user?.id === item.owner_id && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '22px', fontWeight: 800, margin: 0 }}>{t('itemDetail.publishedTitle')}</h2>
+            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px' }}>
+              {photos[0] && (
+                <img src={photos[0]} alt="" style={{ flex: 'none', width: '44px', height: '44px', borderRadius: 'var(--radius)', objectFit: 'cover', border: '1px solid var(--border)' }} />
+              )}
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '14.5px' }}>{item.title}</span>
+                <span style={{ display: 'block', marginTop: '2px', fontSize: '12.5px', color: 'var(--muted)' }}>
+                  {t('itemDetail.publishedLine', { price: money(item.price_per_day) ?? '' })}
+                </span>
+              </span>
+              <span className="tag tag-green">{t('itemDetail.visibleBadge')}</span>
+            </div>
+            <PushOfferCard trigger="publish" />
+          </div>
+        )}
 
         {/* Photos */}
         <div className="card" style={{ marginBottom: '20px', padding: '0', overflow: 'hidden' }}>
@@ -548,27 +592,32 @@ export default function ItemDetail() {
             {error && <div className="error-msg">{error}</div>}
 
             {requestSent ? (
-              <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                {/* Была ✅ в 40 px — зелёная цветная картинка на экране, где
-                    зелёный больше нигде не встречается. Успех говорит текст,
-                    значок только подтверждает. */}
-                <div style={{ color: 'var(--success)', marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
-                  <StateIcon name="check" size={40} />
+              // ЭКРАН «DEMANDE ENVOYÉE» — A пакета Design. Прежде здесь была
+              // галочка и фраза о 24 часах: человек не видел, ЧТО именно он
+              // отправил, — ни дат, ни суммы. Сводка — та же, что потом
+              // придёт владельцу и вернётся уведомлением: даты и имя
+              // собирает общий с сервером модуль (src/domain/push.ts).
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <h3 style={{ fontWeight: 800, margin: 0 }}>{t('itemDetail.requestSent')}</h3>
+                <span style={{ alignSelf: 'flex-start' }}><BookingStatusBadge status="pending_approval" /></span>
+                <div className="card" style={{ padding: '14px' }}>
+                  <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '15px' }}>{item.title}</div>
+                  <div style={{ marginTop: '4px', fontSize: '13px', color: 'var(--muted)' }}>
+                    {[
+                      shortName(item.users?.full_name),
+                      dateRange(startDate, endDate, pushLangOf(i18n.language)),
+                      [money(rental.total), item.deposit > 0 ? t('itemDetail.depositShort', { amount: money(item.deposit) }) : null]
+                        .filter(Boolean).join(' + '),
+                    ].filter(Boolean).join(' · ')}
+                  </div>
+                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', fontSize: '13px', lineHeight: 1.5, color: 'var(--muted)' }}>
+                    {t('itemDetail.nothingCharged', { owner: ownerFirstName ?? t('push.offer.ownerFallback') })}
+                  </div>
                 </div>
-                <h3 style={{ fontWeight: '800', marginBottom: '8px' }}>{t('itemDetail.requestSent')}</h3>
-                {/* Здесь стояло «Vous serez notifié par email» — обещание,
-                    которого продукт не держит: ключ Resend не задан, письмо
-                    не уходит вовсе. Но и после того, как ключ появится,
-                    обещать канал нельзя: 30.07 на гараже письмо с тремя
-                    зелёными проверками легло в спам, и Resend показывал
-                    «Delivered». Обещаем то, что зависит от нас, — место,
-                    где ответ будет виден наверняка. */}
-                <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-                  {t('itemDetail.ownerHas24h')}
-                </p>
-                <a href="/my-rentals" className="btn btn-secondary" style={{ fontSize: '14px' }}>
+                <PushOfferCard trigger="request" ownerFirstName={ownerFirstName} />
+                <Link to="/my-rentals" className="btn btn-secondary" style={{ fontSize: '14px', alignSelf: 'flex-start' }}>
                   {t('itemDetail.seeMyRentals')}
-                </a>
+                </Link>
               </div>
             ) : (
               <>

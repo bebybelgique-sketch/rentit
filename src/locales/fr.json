@@ -539,7 +539,6 @@
     "dayTooSoon": "Trop tôt — le propriétaire demande d'être prévenu à l'avance",
     "dayPast": "Date passée",
     "noticeHint": "Ce propriétaire demande d'être prévenu à l'avance : première date réservable, le {{date}}.",
-    "ownerHas24h": "Le propriétaire a 24 heures pour répondre. Suivez votre demande dans « Mes locations ».",
     "seeMyRentals": "Voir mes locations →",
     "contactViaBooking": "Prenez contact via la demande de réservation ci-dessous",
     "currentlyUnavailable": "Cet outil est actuellement indisponible",
@@ -552,7 +551,12 @@
     "deliveryAsk": "Je souhaite être livré (€{{fee}})",
     "delivery": "Livraison",
     "deliveryNote": "Le propriétaire livre à l'adresse convenue. À régler sur place, avec la location.",
-    "handoverTimeHint": "Les dates se réservent à la journée : convenez ici de l’heure de remise et de retour."
+    "handoverTimeHint": "Les dates se réservent à la journée : convenez ici de l’heure de remise et de retour.",
+    "nothingCharged": "Rien n'est prélevé. {{owner}} a 24 h pour répondre.",
+    "depositShort": "{{amount}} caution",
+    "publishedTitle": "Annonce publiée",
+    "publishedLine": "{{price}}/jour · visible maintenant",
+    "visibleBadge": "Visible"
   },
   "editItem": {
     "loginToEdit": "Se connecter pour modifier un outil",
@@ -750,6 +754,50 @@
     "transition_not_allowed": "Cette action n'est plus possible dans l'état actuel de la réservation.",
     "not_your_action": "Cette action ne vous appartient pas.",
     "cannot_demote_self": "Vous ne pouvez pas retirer vos propres droits admin.",
-    "target_not_found": "Cet élément n'existe plus. Rechargez la liste."
+    "target_not_found": "Cet élément n'existe plus. Rechargez la liste.",
+    "push_not_configured": "Les notifications ne sont pas encore disponibles. Ce n'est pas vous : le canal n'est pas ouvert.",
+    "push_endpoint_unsupported": "Ce navigateur ne permet pas les notifications de RentIt.",
+    "push_unsupported": "Ce navigateur ne permet pas les notifications de RentIt.",
+    "not_found": "Introuvable. La page a peut-être changé entre-temps."
+  },
+  "push": {
+    "offer": {
+      "requestTitle": "Savoir quand {{owner}} répond ?",
+      "requestBody": "Une notification dès que {{owner}} accepte ou refuse — même l'app fermée. Rien d'autre, jamais de publicité.",
+      "publishTitle": "Être prévenu quand quelqu'un demande ?",
+      "publishBody": "Une demande expire après 24 h. Sans notification, vous risquez de la voir trop tard — et le voisin repart sans réponse.",
+      "ownerFallback": "le propriétaire",
+      "accept": "Me prévenir",
+      "notNow": "Pas maintenant",
+      "granted": "Notifications activées sur cet appareil.",
+      "declinedRequest": "D'accord. La réponse apparaîtra dans {{tab}}.",
+      "declinedPublish": "D'accord. Les demandes apparaîtront dans {{tab}}."
+    },
+    "install": {
+      "text": "Sur iPhone, les notifications ne marchent que si RentIt est sur l'écran d'accueil.",
+      "step1Before": "Touchez ",
+      "step1Strong": "Partager",
+      "step1After": " en bas de Safari",
+      "step2Before": "Choisissez ",
+      "step2Strong": "Sur l'écran d'accueil",
+      "step2After": "",
+      "step3": "Ouvrez RentIt depuis la nouvelle icône",
+      "later": "Plus tard"
+    },
+    "blocked": {
+      "title": "Les notifications sont bloquées",
+      "text": "Votre navigateur les a refusées, et RentIt ne peut pas reposer la question. Les réponses arrivent quand même ici.",
+      "how": "Pour les réactiver : icône à gauche de l'adresse → Notifications → Autoriser, puis rechargez.",
+      "ok": "Compris"
+    },
+    "row": {
+      "title": "Notifications",
+      "off": "Désactivées sur cet appareil",
+      "on": "Activées sur cet appareil",
+      "enable": "Activer",
+      "disable": "Désactiver",
+      "blocked": "Bloquées par le navigateur. À réactiver dans ses réglages : icône à gauche de l'adresse → Notifications.",
+      "install": "Disponibles après ajout de RentIt à l'écran d'accueil."
+    }
   }
 }

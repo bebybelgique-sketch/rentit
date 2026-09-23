@@ -14,6 +14,7 @@ import ReviewList, { type ReviewListItem } from '../components/common/ReviewList
 import ChangeEmail from '../components/common/ChangeEmail';
 import PhoneVerification from '../components/common/PhoneVerification';
 import ChangePassword from '../components/common/ChangePassword';
+import PushSettingsRow from '../components/push/PushSettingsRow';
 import toast from 'react-hot-toast';
 import { usePageTitle } from '../hooks/usePageTitle'
 
@@ -271,6 +272,10 @@ const Profile: React.FC = () => {
         <ChangeEmail currentEmail={user.email ?? ''} />
         <PhoneVerification />
         <ChangePassword email={user.email ?? ''} />
+        {/* Уведомления на ЭТОМ устройстве (F пакета Design). Единственное
+            место, где их включают без повода и выключают совсем. Строки
+            нет, если браузер их не умеет или канал не заведён. */}
+        <PushSettingsRow />
 
         {/* «Avis reçus» — блок из канвы, и он закрывает настоящую дыру.
             Отзыв о человеке писать было КУДА (ReviewForm внутри переписки по
