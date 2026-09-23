@@ -105,6 +105,70 @@ self.addEventListener('message', (event) => {
   }
 })
 
+// ── PUSH ─────────────────────────────────────────────────────────────
+//
+// Текст уведомления собирает сервер (supabase/functions/_shared/
+// pushCopy.ts) на языке получателя; воркер показывает его как есть.
+//
+// `tag: booking-<id>` + `renotify` — одна бронь занимает одно место в
+// шторке: «заявка» сменяется «принята», а не копится стопкой.
+//
+// Адрес перехода принимается только СВОЙ и только путём ('/…'): чужой
+// адрес из тела сообщения открыл бы по нажатию любой сайт. Тело шлёт наш
+// сервер, но воркер не обязан на это полагаться.
+
+const PUSH_ICON = '/icons/icon-192.png'
+const FALLBACK_URL = '/my-rentals'
+
+const safePath = (value) =>
+  typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : FALLBACK_URL
+
+self.addEventListener('push', (event) => {
+  let data = {}
+  try {
+    data = event.data ? event.data.json() : {}
+  } catch {
+    // Не JSON — показать всё равно обязаны: Chrome требует видимое
+    // уведомление на каждое сообщение, иначе покажет своё, служебное.
+    data = {}
+  }
+  const tag = typeof data.tag === 'string' && data.tag ? data.tag : undefined
+  event.waitUntil(
+    self.registration.showNotification(typeof data.title === 'string' && data.title ? data.title : 'RentIt', {
+      body: typeof data.body === 'string' ? data.body : '',
+      tag,
+      // renotify без tag браузер отвергает исключением.
+      renotify: Boolean(tag),
+      icon: PUSH_ICON,
+      lang: typeof data.lang === 'string' ? data.lang : undefined,
+      data: { url: safePath(data.url) },
+    }),
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const path = safePath(event.notification.data && event.notification.data.url)
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      const own = windows.find((w) => new URL(w.url).origin === self.location.origin)
+      if (own) {
+        // Открытая вкладка переходит сама, без перезагрузки: приложение
+        // слушает это сообщение (src/hooks/usePushSync.ts).
+        own.postMessage({ type: 'rentit:navigate', url: path })
+        return own.focus()
+      }
+      return self.clients.openWindow(path)
+    }),
+  )
+})
+
+// Смену адреса подписки браузером (pushsubscriptionchange) здесь не
+// ловим: у воркера нет ключа входа человека, записать новый адрес он не
+// может. Приложение при следующем открытии видит «разрешение есть,
+// подписки на сервере нет» и подписывает заново, а старый адрес сервер
+// удалит сам по ответу 410.
+
 /** Файл сборки: имя содержит хеш, значит содержимое неизменно. */
 const isBuildAsset = (url) => url.pathname.startsWith('/assets/')
 

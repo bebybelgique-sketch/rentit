@@ -539,7 +539,6 @@
     "dayTooSoon": "Te vroeg — de eigenaar wil vooraf verwittigd worden",
     "dayPast": "Datum voorbij",
     "noticeHint": "Deze eigenaar wil vooraf verwittigd worden: de eerste mogelijke datum is {{date}}.",
-    "ownerHas24h": "De eigenaar heeft 24 uur om te antwoorden. Volg uw aanvraag onder « Mijn huurcontracten ».",
     "seeMyRentals": "Mijn huurcontracten bekijken →",
     "contactViaBooking": "Neem contact op via de reservatieaanvraag hieronder",
     "currentlyUnavailable": "Dit gereedschap is momenteel niet beschikbaar",
@@ -552,7 +551,12 @@
     "deliveryAsk": "Ik wil levering (€{{fee}})",
     "delivery": "Levering",
     "deliveryNote": "De eigenaar levert op het afgesproken adres. Ter plaatse te betalen, samen met de huur.",
-    "handoverTimeHint": "Dagen worden per dag geboekt: spreek hier het uur van ophalen en terugbrengen af."
+    "handoverTimeHint": "Dagen worden per dag geboekt: spreek hier het uur van ophalen en terugbrengen af.",
+    "nothingCharged": "Er wordt niets afgerekend. {{owner}} heeft 24 u om te antwoorden.",
+    "depositShort": "{{amount}} borg",
+    "publishedTitle": "Advertentie gepubliceerd",
+    "publishedLine": "{{price}}/dag · nu zichtbaar",
+    "visibleBadge": "Zichtbaar"
   },
   "editItem": {
     "loginToEdit": "Log in om gereedschap te bewerken",
@@ -750,6 +754,50 @@
     "transition_not_allowed": "Deze actie is niet meer mogelijk in de huidige staat van de reservering.",
     "not_your_action": "Deze actie is niet aan u.",
     "cannot_demote_self": "U kunt uw eigen adminrechten niet intrekken.",
-    "target_not_found": "Dit item bestaat niet meer. Herlaad de lijst."
+    "target_not_found": "Dit item bestaat niet meer. Herlaad de lijst.",
+    "push_not_configured": "Meldingen zijn nog niet beschikbaar. Het ligt niet aan jou: het kanaal is nog niet open.",
+    "push_endpoint_unsupported": "Deze browser ondersteunt de meldingen van RentIt niet.",
+    "push_unsupported": "Deze browser ondersteunt de meldingen van RentIt niet.",
+    "not_found": "Niet gevonden. Misschien is de pagina intussen veranderd."
+  },
+  "push": {
+    "offer": {
+      "requestTitle": "Weten wanneer {{owner}} antwoordt?",
+      "requestBody": "Een melding zodra die aanvaardt of weigert — ook als de app dicht is. Verder niets, nooit reclame.",
+      "publishTitle": "Verwittigd worden als iemand aanvraagt?",
+      "publishBody": "Een aanvraag vervalt na 24 u. Zonder melding zie je ze misschien te laat — en blijft je buur zonder antwoord.",
+      "ownerFallback": "de eigenaar",
+      "accept": "Verwittig me",
+      "notNow": "Nu niet",
+      "granted": "Meldingen staan aan op dit toestel.",
+      "declinedRequest": "Oké. Het antwoord verschijnt in {{tab}}.",
+      "declinedPublish": "Oké. Aanvragen verschijnen in {{tab}}."
+    },
+    "install": {
+      "text": "Op iPhone werken meldingen alleen als RentIt op je beginscherm staat.",
+      "step1Before": "Tik onderaan in Safari op ",
+      "step1Strong": "Deel",
+      "step1After": "",
+      "step2Before": "Kies ",
+      "step2Strong": "Zet op beginscherm",
+      "step2After": "",
+      "step3": "Open RentIt via het nieuwe icoon",
+      "later": "Later"
+    },
+    "blocked": {
+      "title": "Meldingen zijn geblokkeerd",
+      "text": "Je browser heeft ze geweigerd en RentIt kan het niet opnieuw vragen. Antwoorden verschijnen gewoon hier.",
+      "how": "Om ze weer aan te zetten: icoon links van het adres → Meldingen → Toestaan, en laad de pagina opnieuw.",
+      "ok": "Begrepen"
+    },
+    "row": {
+      "title": "Meldingen",
+      "off": "Uit op dit toestel",
+      "on": "Aan op dit toestel",
+      "enable": "Aanzetten",
+      "disable": "Uitzetten",
+      "blocked": "Geblokkeerd door de browser. Weer aan te zetten in de instellingen: icoon links van het adres → Meldingen.",
+      "install": "Beschikbaar nadat je RentIt op je beginscherm hebt gezet."
+    }
   }
 }

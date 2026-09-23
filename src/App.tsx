@@ -19,6 +19,8 @@ import AppBoundary from './components/common/AppBoundary'
 import { usePageTitle } from './hooks/usePageTitle'
 import { useOwnerTasks } from './hooks/useOwnerTasks'
 import TaskBadge from './components/common/TaskBadge'
+import { usePushSync } from './hooks/usePushSync'
+import { releaseThisDevice } from './lib/push'
 
 // Создаем клиент для TanStack Query
 const queryClient = new QueryClient({
@@ -101,6 +103,10 @@ function Navbar({ taskCount }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const logout = async () => {
+    // Устройство перестаёт получать уведомления этой учётки. ДО signOut:
+    // после него запрос ушёл бы без ключа входа. Ждёт не дольше пары
+    // секунд и не падает — выйти человек обязан в любом случае.
+    await releaseThisDevice()
     await supabase.auth.signOut()
     navigate('/')
   }
@@ -307,6 +313,8 @@ function AppChrome() {
   const { count: taskCount } = useOwnerTasks()
   const { t } = useTranslation()
   const { pathname } = useLocation()
+  const { user } = useAuth()
+  usePushSync(user?.id ?? null)
 
   // Приложение поднялось — значит прошлая поломка чанка вылечена
   // перезагрузкой. Снимаем флаг, иначе СЛЕДУЮЩИЙ сбой в этой же сессии

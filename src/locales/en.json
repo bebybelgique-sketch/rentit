@@ -539,7 +539,6 @@
     "dayTooSoon": "Too soon — the owner asks for advance notice",
     "dayPast": "Past date",
     "noticeHint": "This owner asks for advance notice: the first bookable date is {{date}}.",
-    "ownerHas24h": "The owner has 24 hours to reply. Follow your request under \"My rentals\".",
     "seeMyRentals": "See my rentals →",
     "contactViaBooking": "Get in touch through the booking request below",
     "currentlyUnavailable": "This tool is currently unavailable",
@@ -552,7 +551,12 @@
     "deliveryAsk": "I want it delivered (€{{fee}})",
     "delivery": "Delivery",
     "deliveryNote": "The owner delivers to the agreed address. Paid on the spot, with the rental.",
-    "handoverTimeHint": "Dates are booked by the day: agree here on the pickup and return time."
+    "handoverTimeHint": "Dates are booked by the day: agree here on the pickup and return time.",
+    "nothingCharged": "Nothing is charged. {{owner}} has 24 h to reply.",
+    "depositShort": "{{amount}} deposit",
+    "publishedTitle": "Listing published",
+    "publishedLine": "{{price}}/day · visible now",
+    "visibleBadge": "Visible"
   },
   "editItem": {
     "loginToEdit": "Log in to edit a tool",
@@ -750,6 +754,50 @@
     "transition_not_allowed": "This action is no longer possible in the booking's current state.",
     "not_your_action": "This action is not yours to take.",
     "cannot_demote_self": "You cannot remove your own admin rights.",
-    "target_not_found": "This entry no longer exists. Reload the list."
+    "target_not_found": "This entry no longer exists. Reload the list.",
+    "push_not_configured": "Notifications aren't available yet. It's not you: the channel isn't open.",
+    "push_endpoint_unsupported": "This browser doesn't support RentIt notifications.",
+    "push_unsupported": "This browser doesn't support RentIt notifications.",
+    "not_found": "Not found. The page may have changed in the meantime."
+  },
+  "push": {
+    "offer": {
+      "requestTitle": "Want to know when {{owner}} replies?",
+      "requestBody": "A notification the moment they accept or decline — even with the app closed. Nothing else, never ads.",
+      "publishTitle": "Get notified when someone asks?",
+      "publishBody": "A request expires after 24 h. Without a notification you may see it too late — and your neighbour leaves without an answer.",
+      "ownerFallback": "the owner",
+      "accept": "Notify me",
+      "notNow": "Not now",
+      "granted": "Notifications are on for this device.",
+      "declinedRequest": "OK. The reply will show up in {{tab}}.",
+      "declinedPublish": "OK. Requests will show up in {{tab}}."
+    },
+    "install": {
+      "text": "On iPhone, notifications only work when RentIt is on your Home Screen.",
+      "step1Before": "Tap ",
+      "step1Strong": "Share",
+      "step1After": " at the bottom of Safari",
+      "step2Before": "Choose ",
+      "step2Strong": "Add to Home Screen",
+      "step2After": "",
+      "step3": "Open RentIt from the new icon",
+      "later": "Later"
+    },
+    "blocked": {
+      "title": "Notifications are blocked",
+      "text": "Your browser declined them and RentIt can't ask again. Replies still show up here.",
+      "how": "To turn them back on: icon left of the address → Notifications → Allow, then reload.",
+      "ok": "Got it"
+    },
+    "row": {
+      "title": "Notifications",
+      "off": "Off on this device",
+      "on": "On for this device",
+      "enable": "Turn on",
+      "disable": "Turn off",
+      "blocked": "Blocked by the browser. Turn them back on in its settings: icon left of the address → Notifications.",
+      "install": "Available once RentIt is on your Home Screen."
+    }
   }
 }

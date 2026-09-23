@@ -505,57 +505,65 @@ try {
     check(r.status === 401, `${fn}: без авторизации → 401`, `HTTP ${r.status}`)
   }
 
-  // Ключ канала. 503 push_not_configured — законное состояние продукта
-  // (секреты VAPID не заведены), но на проде после выката его быть не
-  // должно: клиент тогда молча не предлагает уведомлений вовсе.
+  // Ключ канала. Два законных ответа:
+  //   200 { publicKey } — канал заведён;
+  //   503 push_not_configured — секреты VAPID не заведены. Это СОСТОЯНИЕ
+  //     продукта, а не поломка: клиент тогда не предлагает уведомлений
+  //     вовсе. Подписаться в этом состоянии нельзя, поэтому проверки
+  //     подписки печатаются ПРОПУСКОМ, а не засчитываются.
   const cfg = await callFn('push-subscription', { action: 'config' }, renter)
-  const vapidKey = typeof cfg.json.publicKey === 'string' ? fromB64url(cfg.json.publicKey) : null
-  check(cfg.status === 200 && vapidKey?.length === 65 && vapidKey[0] === 0x04,
-    'config отдаёт публичный ключ VAPID (точка P-256, 65 байт)', `HTTP ${cfg.status} ${JSON.stringify(cfg.json)}`)
+  if (cfg.status === 503 && cfg.json.error === 'push_not_configured') {
+    skip('push-subscription: подписка, статус, язык, снятие',
+      'секреты VAPID не заведены (npx supabase secrets set --env-file <файл пары>) — config честно отвечает 503')
+  } else {
+    const vapidKey = typeof cfg.json.publicKey === 'string' ? fromB64url(cfg.json.publicKey) : null
+    check(cfg.status === 200 && vapidKey?.length === 65 && vapidKey[0] === 0x04,
+      'config отдаёт публичный ключ VAPID (точка P-256, 65 байт)', `HTTP ${cfg.status} ${JSON.stringify(cfg.json)}`)
 
-  // Подписка настоящего формата: ключи — как у браузера, адрес — у службы
-  // Google, но несуществующий. Отправлять на него сервер ничего не будет:
-  // подписка снимается в этом же разделе.
-  const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits'])
-  const p256dh = b64url(new Uint8Array(await crypto.subtle.exportKey('raw', pair.publicKey)))
-  const auth = b64url(crypto.getRandomValues(new Uint8Array(16)))
-  const endpoint = `https://fcm.googleapis.com/fcm/send/e2e-contract-${crypto.randomUUID()}`
+    // Подписка настоящего формата: ключи — как у браузера, адрес — у службы
+    // Google, но несуществующий. Отправлять на него сервер ничего не будет:
+    // подписка снимается в этом же разделе.
+    const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits'])
+    const p256dh = b64url(new Uint8Array(await crypto.subtle.exportKey('raw', pair.publicKey)))
+    const auth = b64url(crypto.getRandomValues(new Uint8Array(16)))
+    const endpoint = `https://fcm.googleapis.com/fcm/send/e2e-contract-${crypto.randomUUID()}`
 
-  const foreign = await callFn('push-subscription', { action: 'subscribe', endpoint: 'https://example.com/push', p256dh, auth }, renter)
-  check(foreign.status === 400 && foreign.json.error === 'push_endpoint_unsupported',
-    'адрес не службы уведомлений → 400 push_endpoint_unsupported (SSRF)', `HTTP ${foreign.status} ${JSON.stringify(foreign.json)}`)
+    const foreign = await callFn('push-subscription', { action: 'subscribe', endpoint: 'https://example.com/push', p256dh, auth }, renter)
+    check(foreign.status === 400 && foreign.json.error === 'push_endpoint_unsupported',
+      'адрес не службы уведомлений → 400 push_endpoint_unsupported (SSRF)', `HTTP ${foreign.status} ${JSON.stringify(foreign.json)}`)
 
-  const badKey = await callFn('push-subscription', { action: 'subscribe', endpoint, p256dh: auth, auth }, renter)
-  check(badKey.status === 400 && badKey.json.error === 'bad_request',
-    'ключ устройства не той длины → 400 bad_request', `HTTP ${badKey.status} ${JSON.stringify(badKey.json)}`)
+    const badKey = await callFn('push-subscription', { action: 'subscribe', endpoint, p256dh: auth, auth }, renter)
+    check(badKey.status === 400 && badKey.json.error === 'bad_request',
+      'ключ устройства не той длины → 400 bad_request', `HTTP ${badKey.status} ${JSON.stringify(badKey.json)}`)
 
-  const unknownAction = await callFn('push-subscription', { action: 'purge', endpoint }, renter)
-  check(unknownAction.status === 400 && unknownAction.json.error === 'bad_request',
-    'неизвестное действие → 400 bad_request', `HTTP ${unknownAction.status} ${JSON.stringify(unknownAction.json)}`)
+    const unknownAction = await callFn('push-subscription', { action: 'purge', endpoint }, renter)
+    check(unknownAction.status === 400 && unknownAction.json.error === 'bad_request',
+      'неизвестное действие → 400 bad_request', `HTTP ${unknownAction.status} ${JSON.stringify(unknownAction.json)}`)
 
-  const subscribed = await callFn('push-subscription', { action: 'subscribe', endpoint, p256dh, auth, lang: 'nl' }, renter)
-  check(subscribed.status === 200 && subscribed.json.ok === true, 'подписка записывается', `HTTP ${subscribed.status} ${JSON.stringify(subscribed.json)}`)
+    const subscribed = await callFn('push-subscription', { action: 'subscribe', endpoint, p256dh, auth, lang: 'nl' }, renter)
+    check(subscribed.status === 200 && subscribed.json.ok === true, 'подписка записывается', `HTTP ${subscribed.status} ${JSON.stringify(subscribed.json)}`)
 
-  try {
-    const mine = await callFn('push-subscription', { action: 'status', endpoint }, renter)
-    check(mine.json.subscribed === true, 'status видит свою подписку', JSON.stringify(mine.json))
+    try {
+      const mine = await callFn('push-subscription', { action: 'status', endpoint }, renter)
+      check(mine.json.subscribed === true, 'status видит свою подписку', JSON.stringify(mine.json))
 
-    const theirs = await callFn('push-subscription', { action: 'status', endpoint }, owner)
-    check(theirs.json.subscribed === false, 'status чужой подписки не выдаёт', JSON.stringify(theirs.json))
+      const theirs = await callFn('push-subscription', { action: 'status', endpoint }, owner)
+      check(theirs.json.subscribed === false, 'status чужой подписки не выдаёт', JSON.stringify(theirs.json))
 
-    const badLang = await callFn('push-subscription', { action: 'lang', endpoint, lang: 'de' }, renter)
-    check(badLang.status === 400 && badLang.json.error === 'bad_request',
-      'язык вне fr/nl/en → 400 bad_request', `HTTP ${badLang.status} ${JSON.stringify(badLang.json)}`)
+      const badLang = await callFn('push-subscription', { action: 'lang', endpoint, lang: 'de' }, renter)
+      check(badLang.status === 400 && badLang.json.error === 'bad_request',
+        'язык вне fr/nl/en → 400 bad_request', `HTTP ${badLang.status} ${JSON.stringify(badLang.json)}`)
 
-    // Снять чужую подписку нельзя: ответ тот же «ok» (итог для вызвавшего —
-    // «у меня подписки нет»), но подписка владельца остаётся.
-    await callFn('push-subscription', { action: 'unsubscribe', endpoint }, owner)
-    const still = await callFn('push-subscription', { action: 'status', endpoint }, renter)
-    check(still.json.subscribed === true, 'чужой unsubscribe подписку не снимает', JSON.stringify(still.json))
-  } finally {
-    const off = await callFn('push-subscription', { action: 'unsubscribe', endpoint }, renter)
-    const gone = await callFn('push-subscription', { action: 'status', endpoint }, renter)
-    check(off.status === 200 && gone.json.subscribed === false, 'уборка: подписка прогона снята', JSON.stringify(gone.json))
+      // Снять чужую подписку нельзя: ответ тот же «ok» (итог для вызвавшего —
+      // «у меня подписки нет»), но подписка владельца остаётся.
+      await callFn('push-subscription', { action: 'unsubscribe', endpoint }, owner)
+      const still = await callFn('push-subscription', { action: 'status', endpoint }, renter)
+      check(still.json.subscribed === true, 'чужой unsubscribe подписку не снимает', JSON.stringify(still.json))
+    } finally {
+      const off = await callFn('push-subscription', { action: 'unsubscribe', endpoint }, renter)
+      const gone = await callFn('push-subscription', { action: 'status', endpoint }, renter)
+      check(off.status === 200 && gone.json.subscribed === false, 'уборка: подписка прогона снята', JSON.stringify(gone.json))
+    }
   }
 
   // notify-message. Одно сообщение — одно уведомление, и только по воле

@@ -1179,3 +1179,75 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
   height: 19px;
   min-width: 19px;
 }
+
+/* ── Уведомления: карточки A/B/D, полоса C, строка F (пакет Design) ──
+   Цвета — только токены продукта: пакет прямо требует «no new colors».
+   Карточка предложения обведена чернилами, а не серой линией: это
+   вопрос, требующий ответа, и он обязан отличаться от сводки над ним. */
+.push-offer {
+  background: #fff;
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: left;
+}
+.push-offer-title {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+.push-offer-body {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.push-offer-steps {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.push-offer-actions { display: flex; gap: 8px; }
+.push-offer-actions .btn { min-height: 48px; font-size: 15px; }
+.push-offer-main { flex: 1; }
+.push-offer-wide { width: 100%; min-height: 46px; font-size: 15px; }
+.push-line {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  line-height: 1.5;
+  text-align: left;
+}
+.push-line--error { color: var(--danger); }
+
+.push-blocked {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: var(--space-5);
+}
+.push-blocked-title { font-size: 14px; font-weight: 600; margin: 0 0 4px; }
+.push-blocked-text { margin: 0 0 10px; font-size: 13.5px; line-height: 1.55; }
+.push-blocked-how { margin: 0 0 12px; font-size: 13px; line-height: 1.55; color: var(--muted); }
+.push-blocked .btn { min-height: 44px; }
+
+.push-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.push-row-status { font-size: 13px; line-height: 1.5; color: var(--muted); }
+.push-row-status--on { color: var(--success); }
+.push-row .btn { flex: none; min-height: 44px; }
