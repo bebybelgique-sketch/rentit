@@ -595,7 +595,6 @@ export default function ItemDetail() {
         {/* Booking calendar */}
         {user?.id !== item.owner_id && item.available && (
           <div className="card" style={{ marginBottom: '20px' }}>
-            {error && <div className="error-msg">{error}</div>}
 
             {requestSent ? (
               // ЭКРАН «DEMANDE ENVOYÉE» — A пакета Design. Прежде здесь была
@@ -847,6 +846,12 @@ export default function ItemDetail() {
                       </div>
                     )}
 
+                    {/* Отказ — ЗДЕСЬ, над кнопкой, а не в начале карточки. До
+                        23.09 он стоял наверху, на ~700 px выше кнопки: человек
+                        жал «отправить», и на видимой части экрана не менялось
+                        ничего — отказ выводился туда, куда он не смотрел.
+                        role="alert" — чтобы его прочла и программа чтения. */}
+                    {error && <div className="error-msg" role="alert" style={{ marginBottom: '10px' }}>{error}</div>}
                     <button
                       onClick={handleRequest}
                       disabled={!startDate || !endDate || requestLoading}
