@@ -3,6 +3,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useDeleteAccount } from '../useDeleteAccount';
 import { supabase } from '../../../lib/supabase';
+import { EdgeError } from '../../../lib/edgeInvoke';
 
 // Hoist mock data and response config to module level
 const { mockSuccessResponse, mockError } = vi.hoisted(() => ({
@@ -100,7 +101,26 @@ describe('useDeleteAccount', () => {
       }
     });
 
+    // Инвариант прежний — отказ функции роняет мутацию. Форма другая:
+    // EdgeError с кодом вместо копии фразы.
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toEqual(mockError);
+    expect(result.current.error).toBeInstanceOf(EdgeError);
+  });
+
+  it('отказ из-за активных броней: код доходит до экрана, из учётки не выходим', async () => {
+    mockInvokeResponseData = null;
+    mockInvokeResponseError = Object.assign(new Error('Edge Function returned a non-2xx status code'), {
+      name: 'FunctionsHttpError',
+      context: new Response(JSON.stringify({ error: 'active_bookings_as_renter' }), { status: 409 }),
+    });
+    vi.mocked(supabase.auth.signOut).mockClear();
+    const { result } = renderHook(() => useDeleteAccount(), { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync().catch(() => {});
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect((result.current.error as EdgeError).code).toBe('active_bookings_as_renter');
+    // Учётка не удалена — значит и выходить из неё нельзя.
+    expect(supabase.auth.signOut).not.toHaveBeenCalled();
   });
 });

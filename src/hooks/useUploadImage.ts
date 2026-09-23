@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { ITEM_PHOTOS_BUCKET } from '../lib/itemPhotos';
+import i18n from '../i18n-next';
 
 // Хук возвращает кортеж (см. сигнатуру ниже), поэтому отдельный интерфейс
 // UploadImageResult, который тут был, ничего не описывал и удалён.
@@ -27,7 +28,9 @@ export const useUploadImage = (): [(file: File, folder: string) => Promise<strin
       .upload(filePath, file, { upsert: true }); // upsert позволяет перезаписать файл с тем же именем
 
     if (uploadError) {
-      setError(uploadError.message);
+      // Экран показывает это как есть — значит, текст наш и на языке человека.
+      console.error('[upload] снимок вещи:', uploadError.message);
+      setError(i18n.t('editItem.photoUploadFailed'));
       setUploading(false);
       throw uploadError;
     }

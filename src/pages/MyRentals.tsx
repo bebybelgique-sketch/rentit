@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { usePageTitle } from '../hooks/usePageTitle'
 import { renterUpdates, liveRenterCount } from '../domain/renterUpdates'
 import { ownerTasks } from '../domain/ownerTasks'
+import { errorText } from '../lib/errorText'
 
 const dateFmt = new Intl.DateTimeFormat('fr-BE', { day: '2-digit', month: 'short', year: 'numeric' });
 const formatDate = (iso: string) => {
@@ -344,7 +345,7 @@ const MyRentals: React.FC = () => {
           )}
 
           {userRentalsLoading && <p>{t('common.loading')}</p>}
-          {userRentalsError && <p>Erreur: {userRentalsError.message}</p>}
+          {userRentalsError && <p className="error-msg">{errorText(t, userRentalsError, 'myRentals.loadFailed')}</p>}
           {userRentals && userRentals.length === 0 && (
             <EmptyState title={t('myRentals.noRentals')} description={t('myRentals.noRentalsHint')} actionLabel={t('myRentals.browseTools')} actionTo="/browse" />
           )}
@@ -413,7 +414,7 @@ const MyRentals: React.FC = () => {
           style={{ marginBottom: '40px' }}
         >
           {ownerRentalsLoading && <p>{t('common.loading')}</p>}
-          {ownerRentalsError && <p>Erreur: {ownerRentalsError.message}</p>}
+          {ownerRentalsError && <p className="error-msg">{errorText(t, ownerRentalsError, 'myRentals.loadFailed')}</p>}
           {ownerRentals && ownerRentals.length === 0 && (
             <EmptyState title={t('myRentals.noRequests')} description={t('myRentals.noRequestsHint')} actionLabel={t('myRentals.listTool')} actionTo="/list-item" />
           )}

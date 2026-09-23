@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { Database } from '../types/database.types'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { errorText } from '../lib/errorText'
 
 // Категории и состояния — из src/domain/catalog.ts. Здесь была четвёртая
 // копия списка категорий и третья копия состояний.
@@ -376,7 +377,8 @@ export default function ListItem() {
       setIsDirty(false) // prevent leave-warning after successful submit
       navigate(`/item/${data.id}?published=1`)
     } catch (err: any) {
-      setError(err.message || t('listItem.couldNotCreate'))
+      console.error('[list-item]', err)
+      setError(errorText(t, err, 'listItem.couldNotCreate'))
     } finally {
       setUploading(false)
       setUploadProgress(0)

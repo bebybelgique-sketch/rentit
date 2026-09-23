@@ -2,6 +2,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { bookingKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
+import i18n from '../../i18n-next';
+import { UserFacingError } from '../../lib/errorText';
 import { BOOKING_PHOTOS_BUCKET, type BookingPhotoPhase } from '../useBookingPhotos';
 
 interface UploadBookingPhotoParams {
@@ -21,10 +23,12 @@ const uploadBookingPhoto = async ({
   file,
 }: UploadBookingPhotoParams): Promise<string> => {
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error('Format non accepté : JPEG, PNG, WebP ou HEIC');
+    // Из словаря, а не строкой: до 23.09 здесь стоял французский текст, и
+    // голландец читал отказ по-французски, хотя перевод в словаре был.
+    throw new UserFacingError(i18n.t('booking.photoBadFormat'));
   }
   if (file.size > MAX_BYTES) {
-    throw new Error('Photo trop lourde : 10 Mo maximum');
+    throw new UserFacingError(i18n.t('booking.photoTooLarge'));
   }
 
   // Первый сегмент пути — идентификатор брони. Это не украшение: политика

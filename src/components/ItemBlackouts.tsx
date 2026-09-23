@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { toISODate } from '../domain/availability'
 import type { ItemBlackout } from '../types'
+import { errorText } from '../lib/errorText'
 
 export default function ItemBlackouts({ itemId }: { itemId: string }) {
   const { t, i18n } = useTranslation()
@@ -36,7 +37,7 @@ export default function ItemBlackouts({ itemId }: { itemId: string }) {
       .select('*')
       .eq('item_id', itemId)
       .order('start_date', { ascending: true })
-    if (err) setError(err.message)
+    if (err) setError(errorText(t, err, 'blackouts.loadFailed'))
     setRows(data ?? [])
     setLoading(false)
   }
@@ -55,7 +56,7 @@ export default function ItemBlackouts({ itemId }: { itemId: string }) {
       note: note.trim() || null,
     }])
     setBusy(false)
-    if (err) return setError(err.message)
+    if (err) return setError(errorText(t, err, 'blackouts.saveFailed'))
     setStart(''); setEnd(''); setNote('')
     load()
   }
@@ -64,7 +65,7 @@ export default function ItemBlackouts({ itemId }: { itemId: string }) {
     setBusy(true)
     const { error: err } = await supabase.from('item_blackouts').delete().eq('id', id)
     setBusy(false)
-    if (err) return setError(err.message)
+    if (err) return setError(errorText(t, err, 'blackouts.saveFailed'))
     load()
   }
 

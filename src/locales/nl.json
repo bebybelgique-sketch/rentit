@@ -267,7 +267,8 @@
     "bothEmptyBody": "Je hebt nog niets uitgeleend of geleend. Allebei beginnen hier.",
     "sectionsLabel": "Je huuraanvragen en ontvangen aanvragen",
     "asRenter": "Als huurder",
-    "requestsForMyTools": "Aanvragen voor mijn gereedschap"
+    "requestsForMyTools": "Aanvragen voor mijn gereedschap",
+    "loadFailed": "Je huurcontracten konden niet worden geladen. Laad de pagina opnieuw."
   },
   "myRentalsAsOwner": "Aanvragen voor mijn items",
   "myRentalsAsRenter": "Als huurder",
@@ -335,7 +336,8 @@
     "deleteSuccess": "Uw account is verwijderd.",
     "deleteError": "Fout bij verwijderen van account.",
     "avatarBadFormat": "Formaat niet aanvaard. Kies een afbeelding in {{formats}}.",
-    "avatarTooLarge": "Afbeelding te zwaar ({{size}} MB). Maximum {{max}} MB."
+    "avatarTooLarge": "Afbeelding te zwaar ({{size}} MB). Maximum {{max}} MB.",
+    "avatarUploadFailed": "De foto kon niet worden verzonden. Probeer opnieuw."
   },
   "publishing": "Wordt geplaatst...",
   "publishListing": "Plaats advertentie",
@@ -582,7 +584,8 @@
     "addressLabel": "Adres",
     "updateButton": "Bijwerken",
     "updating": "Bijwerken...",
-    "backToMyItems": "Terug naar mijn gereedschap"
+    "backToMyItems": "Terug naar mijn gereedschap",
+    "photoUploadFailed": "De foto kon niet worden verzonden. Probeer opnieuw."
   },
   "home": {
     "altText": "Foto van {{title}}",
@@ -723,7 +726,9 @@
     "add": "Periode toevoegen",
     "remove": "Verwijderen",
     "datesRequired": "Geef beide datums op.",
-    "endBeforeStart": "De einddatum kan niet vóór de begindatum liggen."
+    "endBeforeStart": "De einddatum kan niet vóór de begindatum liggen.",
+    "loadFailed": "De periodes van onbeschikbaarheid konden niet worden geladen.",
+    "saveFailed": "De periode kon niet worden opgeslagen. Probeer opnieuw."
   },
   "nearbyUnavailable": "Locatie niet beschikbaar: de browser gaf geen toestemming. Sta het toe, of typ een gemeente in de filters.",
   "admin": {
@@ -758,7 +763,14 @@
     "push_not_configured": "Meldingen zijn nog niet beschikbaar. Het ligt niet aan jou: het kanaal is nog niet open.",
     "push_endpoint_unsupported": "Deze browser ondersteunt de meldingen van RentIt niet.",
     "push_unsupported": "Deze browser ondersteunt de meldingen van RentIt niet.",
-    "not_found": "Niet gevonden. Misschien is de pagina intussen veranderd."
+    "not_found": "Niet gevonden. Misschien is de pagina intussen veranderd.",
+    "own_item": "Je kunt je eigen gereedschap niet huren.",
+    "item_unavailable": "De eigenaar heeft dit gereedschap voorlopig niet meer te huur.",
+    "too_soon": "De eigenaar wil eerder verwittigd worden: kies een latere datum.",
+    "duplicate_request": "Je hebt al een openstaande aanvraag voor deze data.",
+    "delivery_unavailable": "Dit gereedschap wordt niet geleverd.",
+    "active_bookings_as_renter": "Je hebt lopende reserveringen. Rond ze af of annuleer ze voordat je je account verwijdert.",
+    "active_bookings_as_owner": "Er lopen reserveringen op je gereedschap. Rond ze af voordat je je account verwijdert."
   },
   "push": {
     "offer": {

@@ -4,6 +4,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { bookingKeys, itemKeys } from '../../../lib/queryKeys';
 import { useCreateRental } from '../useCreateRental';
+import { EdgeError } from '../../../lib/edgeInvoke';
 // import { supabase } from '../../../lib/supabase'; // Import to mock - not needed if we mock the whole export
 
 // Hoist mock data and response config to module level
@@ -89,8 +90,25 @@ describe('useCreateRental', () => {
       }
     });
 
+    // Инвариант прежний — отказ функции роняет мутацию. Форма другая: с
+    // 23.09 это EdgeError с кодом, а не копия фразы (фразы функция больше
+    // не шлёт, а экран подбирает текст по коду).
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toEqual(mockError);
+    expect(result.current.error).toBeInstanceOf(EdgeError);
+  });
+
+  it('код отказа доходит до экрана: duplicate_request, а не «non-2xx»', async () => {
+    mockInvokeResponseData = null;
+    mockInvokeResponseError = Object.assign(new Error('Edge Function returned a non-2xx status code'), {
+      name: 'FunctionsHttpError',
+      context: new Response(JSON.stringify({ error: 'duplicate_request' }), { status: 409 }),
+    });
+    const { result } = renderHook(() => useCreateRental(), { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync({ item_id: 'item-1', start_date: '2026-10-01', end_date: '2026-10-02' }).catch(() => {});
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect((result.current.error as EdgeError).code).toBe('duplicate_request');
   });
 
   // Ключи инвалидации — суть правки 06.09. До неё хук бил по одному имени

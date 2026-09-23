@@ -4,6 +4,7 @@ import { bookingKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import i18n from '../../i18n-next';
 import { notifyMessageSent } from '../../lib/push';
+import { UserFacingError } from '../../lib/errorText';
 
 interface SendMessageParams {
   bookingId: string;
@@ -19,7 +20,7 @@ interface SendMessageParams {
 // Подделать чужое авторство нельзя даже при правке запроса в консоли.
 const sendMessage = async ({ bookingId, senderId, body }: SendMessageParams): Promise<void> => {
   const trimmed = body.trim();
-  if (!trimmed) throw new Error(i18n.t('booking.messageEmpty'));
+  if (!trimmed) throw new UserFacingError(i18n.t('booking.messageEmpty'));
 
   const { data, error } = await supabase
     .from('booking_messages')

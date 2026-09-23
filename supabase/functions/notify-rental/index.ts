@@ -276,7 +276,7 @@ serve(async (req) => {
     // причина здесь не утечка наружу, а единственный способ увидеть, что
     // письма не уходят. В логах Supabase она же лежит развёрнуто.
     console.error('notify-rental:', err)
-    return new Response(JSON.stringify({ error: err?.message ?? 'notify failed' }), {
+    return new Response(JSON.stringify({ error: 'internal_error', detail: err?.message ?? String(err) }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })

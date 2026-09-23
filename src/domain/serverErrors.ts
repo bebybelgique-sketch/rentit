@@ -39,18 +39,28 @@ export const SERVER_ERROR_KEYS = {
   internal_error: 'serverErrors.internal_error',
   method_not_allowed: 'serverErrors.internal_error',
 
-  // Бронь: respond-to-request и transition-booking
+  // Бронь: request-rental, respond-to-request и transition-booking
   booking_not_found: 'serverErrors.booking_not_found',
   item_not_found: 'serverErrors.item_not_found',
   not_pending: 'serverErrors.not_pending',
   booking_changed: 'serverErrors.booking_changed',
   dates_unavailable: 'serverErrors.dates_unavailable',
+  // Заявка: request-rental. До 23.09 эта функция одна отвечала фразами.
+  own_item: 'serverErrors.own_item',
+  item_unavailable: 'serverErrors.item_unavailable',
+  too_soon: 'serverErrors.too_soon',
+  duplicate_request: 'serverErrors.duplicate_request',
+  delivery_unavailable: 'serverErrors.delivery_unavailable',
   transition_not_allowed: 'serverErrors.transition_not_allowed',
   not_your_action: 'serverErrors.not_your_action',
 
   // Админка: admin-action
   cannot_demote_self: 'serverErrors.cannot_demote_self',
   target_not_found: 'serverErrors.target_not_found',
+
+  // Удаление учётки: delete-account. Прежде — французский текст для всех.
+  active_bookings_as_renter: 'serverErrors.active_bookings_as_renter',
+  active_bookings_as_owner: 'serverErrors.active_bookings_as_owner',
 
   // Телефон: verify-phone.
   //
