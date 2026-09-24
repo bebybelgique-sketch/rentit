@@ -15,9 +15,9 @@ import { usePageTitle } from '../hooks/usePageTitle'
 // По языкам раздельно: строка показывается в трёх разделах, и
 // английское «March 20, 2026» стояло под французским «Dernière mise
 // à jour :» и нидерландским «Laatste update:».
-const LAST_UPDATED_EN = 'September 23, 2026'
-const LAST_UPDATED_FR = '23 septembre 2026'
-const LAST_UPDATED_NL = '23 september 2026'
+const LAST_UPDATED_EN = 'September 24, 2026'
+const LAST_UPDATED_FR = '24 septembre 2026'
+const LAST_UPDATED_NL = '24 september 2026'
 // Ответственный за обработку — физическое лицо, а не «RentIt». До 14.08
 // здесь стояли COMPANY = 'RentIt', ADDRESS = 'Belgium' и ящик
 // privacy@rentit.be: контроллер вымышлен, страна вместо адреса, а домен
@@ -80,7 +80,7 @@ function PrivacyEN() {
             <Tr data={['Listing photos', 'Display your items to other users', 'Art. 6(1)(b) — contract performance']} />
             <Tr data={['Booking history', 'Show each party their bookings and open mutual reviews once the rental is complete', 'Art. 6(1)(b) — contract performance']} />
             <Tr data={['Ratings and reviews', 'Build trust in the community', 'Art. 6(1)(f) — legitimate interest']} />
-            <Tr data={['Referral code', 'Track who invited whom', 'Art. 6(1)(f) — legitimate interest']} />
+            <Tr data={['Invitation link: your personal code and, if someone signs up with it, the record that you invited them', 'Show you how many neighbours joined through your link — the number only, never their names', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Session cookie (Supabase auth)', 'Keep you logged in — functional cookies only, no tracking', 'Art. 6(1)(b) — necessary for service']} />
             <Tr data={['Error reports: error text (phone numbers and email addresses masked), page path without parameters, app version, browser, language — no name, no account, no IP address', 'Find and fix bugs that happen on your device', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Push notification subscription (optional): the address of your browser\'s push service for this device, its encryption keys, the app language', 'Notify this device about your bookings (new request, reply, expiry, new message); stored only if you turn notifications on', 'Art. 6(1)(a) — your consent']} />
@@ -227,7 +227,7 @@ function PrivacyFR() {
             <Tr data={["Photos d'annonces", 'Présenter vos articles aux autres utilisateurs', 'Art. 6(1)(b) — exécution du contrat']} />
             <Tr data={['Historique de réservations', 'Montrer à chaque partie ses réservations et ouvrir les avis mutuels une fois la location terminée', 'Art. 6(1)(b) — exécution du contrat']} />
             <Tr data={['Notes et avis', 'Renforcer la confiance dans la communauté', 'Art. 6(1)(f) — intérêt légitime']} />
-            <Tr data={['Code de parrainage', 'Suivi de qui a invité qui', 'Art. 6(1)(f) — intérêt légitime']} />
+            <Tr data={["Lien d'invitation : votre code personnel et, si quelqu'un s'inscrit avec, la mention que vous l'avez invité", "Vous montrer combien de voisins vous ont rejoint grâce à votre lien — le nombre seulement, jamais leurs noms", 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Cookie de session (Supabase auth)', 'Maintenir votre connexion — cookie fonctionnel uniquement, sans traçage', 'Art. 6(1)(b) — nécessaire au service']} />
             <Tr data={['Rapports d\'erreur : texte de l\'erreur (numéros de téléphone et adresses e-mail masqués), chemin de la page sans paramètres, version de l\'app, navigateur, langue — ni nom, ni compte, ni adresse IP', 'Trouver et corriger les bugs survenus sur votre appareil', 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Abonnement aux notifications (facultatif) : l\'adresse du service de notification de votre navigateur pour cet appareil, ses clés de chiffrement, la langue de l\'app', 'Prévenir cet appareil au sujet de vos réservations (nouvelle demande, réponse, expiration, nouveau message) ; enregistré seulement si vous activez les notifications', 'Art. 6(1)(a) — votre consentement']} />
@@ -374,7 +374,7 @@ function PrivacyNL() {
             <Tr data={["Advertentiefoto's", 'Uw items tonen aan andere gebruikers', 'Art. 6(1)(b) — uitvoering overeenkomst']} />
             <Tr data={['Boekingsgeschiedenis', 'Elke partij haar reserveringen tonen en na afloop de wederzijdse beoordelingen openen', 'Art. 6(1)(b) — uitvoering overeenkomst']} />
             <Tr data={['Beoordelingen', 'Vertrouwen opbouwen in de community', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
-            <Tr data={['Referralcode', 'Bijhouden wie wie heeft uitgenodigd', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
+            <Tr data={['Uitnodigingslink: uw persoonlijke code en, als iemand zich daarmee inschrijft, de vermelding dat u hem hebt uitgenodigd', 'U tonen hoeveel buren via uw link zijn gekomen — enkel het aantal, nooit hun namen', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Sessiecookie (Supabase auth)', 'U ingelogd houden — functionele cookie, geen tracking', 'Art. 6(1)(b) — noodzakelijk voor de dienst']} />
             <Tr data={['Foutrapporten: fouttekst (telefoonnummers en e-mailadressen gemaskeerd), paginapad zonder parameters, app-versie, browser, taal — geen naam, geen account, geen IP-adres', 'Bugs op uw toestel opsporen en verhelpen', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Abonnement op meldingen (optioneel): het adres van de meldingendienst van uw browser voor dit toestel, de versleutelingssleutels, de taal van de app', 'Dit toestel verwittigen over uw reserveringen (nieuwe aanvraag, antwoord, verval, nieuw bericht); enkel bewaard als u meldingen aanzet', 'Art. 6(1)(a) — uw toestemming']} />

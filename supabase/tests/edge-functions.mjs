@@ -727,91 +727,112 @@ try {
   })
   check(rpcErr?.code === '42501', 'record_client_error мимо функции не вызывается', rpcErr ? rpcErr.code : 'вызов ПРОШЁЛ')
 
-  // ── Триггер регистрации: referred_by ────────────────────────────────
+  // ── Приглашения: код, триггер регистрации, закрытые колонки ─────────
   //
-  // handle_new_user() (миграции 01 → 30 → 31) пишет public.users.referred_by
-  // из user_metadata. Столбец связан внешним ключом users_referred_by_fkey с
-  // public.users(id) без ON DELETE, поэтому до миграции 31 правильный по
-  // синтаксису, но отсутствующий UUID ронял INSERT — а с ним и всю
-  // регистрацию: триггер висит AFTER INSERT на auth.users.
+  // Миграция 43. handle_new_user() ищет пригласившего по КОДУ из метаданных
+  // signUp. Прежде клиент искал id сам и слал его в referred_by — ради этого
+  // коды и граф «кто кого пригласил» были открыты анониму у ВСЕХ строк
+  // users, а id в метаданных мог подставить кто угодно (id людей публичны).
   //
-  // Учётки создаём через service.auth.admin.createUser: это всё равно INSERT
-  // в auth.users и тот же AFTER INSERT trigger, но без email rate limit.
-  // user_metadata совпадает с тем, что Register.tsx передаёт через signUp,
-  // поэтому проверяется серверная сторона. Домен @rentit-test.example
+  // Учётки создаём через service.auth.admin.createUser: это тот же INSERT в
+  // auth.users и тот же AFTER INSERT trigger, но без email rate limit.
+  // referred_by читаем служебным ключом: клиентским ролям колонка больше не
+  // читается — и это проверяется здесь же, первым. Домен @rentit-test.example
   // зарезервирован для тестов и не принимает почту.
-  console.log('\nтриггер регистрации: referred_by')
+  console.log('\nприглашения: код, триггер регистрации, закрытые колонки')
   {
+    // 1. Закрытые колонки. Не «пусто», а ОТКАЗ в праве: пустой ответ дала
+    //    бы и политика, а граф открыла бы первая же новая политика.
+    for (const [who, client] of [['аноним', anon], ['вошедший', owner]]) {
+      for (const column of ['referral_code', 'referred_by']) {
+        const { error } = await client.from('users').select(column).limit(1)
+        check(error?.code === '42501', `${who} не читает ${column}`, error ? error.code : 'прочитал')
+      }
+    }
+
+    // 2. Свой код — функцией, и только вошедшему.
+    const { data: mine, error: eMine } = await owner.rpc('my_invite')
+    const myCode = mine?.[0]?.code ?? ''
+    check(!eMine && /^[0-9A-F]{8}$/.test(myCode), 'my_invite отдаёт свой код',
+      eMine ? `${eMine.message} — похоже, миграция 43 не применена` : `code=${myCode}`)
+    const { error: eAnonInvite } = await anon.rpc('my_invite')
+    check(!!eAnonInvite, 'аноним my_invite не вызывает', eAnonInvite ? '' : 'вызвал')
+
     const tmpIds = []
     const stamp = Date.now()
     const password = `progon-${stamp}-Aa1`
+    const signup = async (label, meta) => {
+      const { data, error } = await service.auth.admin.createUser({
+        email: `edge-invite-${label}-${stamp}@rentit-test.example`,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: `E2E прогон (приглашение: ${label})`, ...meta },
+      })
+      if (data?.user) tmpIds.push(data.user.id)
+      return { id: data?.user?.id ?? null, error }
+    }
+    const referrerOf = async (id) => {
+      if (!id) return 'учётка не создалась'
+      const { data } = await service.from('users').select('referred_by').eq('id', id).single()
+      return data ? data.referred_by : 'строки профиля нет'
+    }
+
     try {
-      // UUID, которого в public.users точно нет. Проверяем, а не надеемся:
-      // случайное совпадение превратило бы неприменённую миграцию в зелёный
-      // прогон.
-      const ghost = crypto.randomUUID()
-      const { data: ghostRow } = await anon.from('users').select('id').eq('id', ghost).maybeSingle()
-      check(!ghostRow, 'оснастка: реферера-призрака в базе нет', ghostRow ? `id=${ghostRow.id}` : '')
-
-      // 1. Устаревшее или выдуманное приглашение. До миграции 31 создание
-      //    вернёт ошибку, причём GoTrue прячет нарушение внешнего ключа за
-      //    обтекаемым «Database error saving new user» — это и есть признак
-      //    неприменённой миграции.
       if (!service) {
-        skip('регистрация с несуществующим реферером проходит', 'нет SUPABASE_SERVICE_ROLE_KEY')
-        skip('referred_by не хранит отсутствующий UUID', 'проверка невозможна без service-role ключа')
+        for (const name of [
+          'приглашение по коду засчитывается',
+          'my_invite считает пришедших',
+          'несуществующий код никого не приписывает',
+          'мусор вместо кода — регистрация без приглашения',
+          'id в метаданных приглашение не приписывает',
+        ]) skip(name, 'нет SUPABASE_SERVICE_ROLE_KEY')
       } else {
-        const { data: stale, error: eStale } = await service.auth.admin.createUser({
-          email: `edge-referral-stale-${stamp}@rentit-test.example`,
-          password,
-          email_confirm: true,
-          user_metadata: { full_name: 'E2E прогон (устаревшее приглашение)', referred_by: ghost },
-        })
-        check(!eStale, 'регистрация с несуществующим реферером проходит',
-          eStale ? `${eStale.message} — похоже, миграция 31 не применена` : '')
-        if (stale?.user) {
-          tmpIds.push(stale.user.id)
-          const { data: row } = await anon.from('users').select('referred_by').eq('id', stale.user.id).single()
-          check(row?.referred_by === null, 'referred_by не хранит отсутствующий UUID',
-            `referred_by=${row?.referred_by ?? 'строки профиля нет'}`)
-        } else {
-          check(false, 'referred_by не хранит отсутствующий UUID', 'учётка не создалась')
-        }
+        // 3. Живой код — строчными, как человек копирует ссылку. Положительный
+        //    случай обязателен: без него прогон был бы зелёным и у триггера,
+        //    который просто перестал записывать пригласившего.
+        const live = await signup('live', { referral_code: myCode.toLowerCase() })
+        const liveRef = await referrerOf(live.id)
+        check(!live.error && liveRef === ownerUser.user.id, 'приглашение по коду засчитывается',
+          live.error ? live.error.message : `referred_by=${liveRef}`)
+        const { data: after } = await owner.rpc('my_invite')
+        const joined = after?.[0]?.joined ?? 0
+        check(joined >= 1, 'my_invite считает пришедших', `joined=${joined}`)
 
-        // 2. Живое приглашение. Положительный случай обязателен: без него
-        //    прогон был бы зелёным и у функции, которая просто перестала
-        //    записывать реферера.
-        const { data: fresh, error: eFresh } = await service.auth.admin.createUser({
-          email: `edge-referral-fresh-${stamp}@rentit-test.example`,
-          password,
-          email_confirm: true,
-          user_metadata: { full_name: 'E2E прогон (живое приглашение)', referred_by: ownerUser.user.id },
-        })
-        check(!eFresh, 'регистрация с существующим реферером проходит',
-          eFresh ? eFresh.message : '')
-        if (fresh?.user) {
-          tmpIds.push(fresh.user.id)
-          const { data: row } = await anon.from('users').select('referred_by').eq('id', fresh.user.id).single()
-          check(row?.referred_by === ownerUser.user.id, 'referred_by хранит существующего реферера',
-            `referred_by=${row?.referred_by ?? 'строки профиля нет'}`)
-        } else {
-          check(false, 'referred_by хранит существующего реферера', 'учётка не создалась')
-        }
+        // 4. Код правильной формы, которого нет ни у кого. Проверяем, а не
+        //    надеемся: случайное совпадение сделало бы проверку бессмысленной.
+        let ghost
+        do {
+          ghost = crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()
+        } while ((await service.from('users').select('id').eq('referral_code', ghost).maybeSingle()).data)
+        const stale = await signup('stale', { referral_code: ghost })
+        const staleRef = await referrerOf(stale.id)
+        check(!stale.error && staleRef === null, 'несуществующий код никого не приписывает',
+          stale.error ? `${stale.error.message} — регистрация упала` : `referred_by=${staleRef}`)
+
+        // 5. Мусор вместо кода. Регистрация обязана пройти: исключение в
+        //    триггере отменило бы создание auth.users целиком.
+        const junk = await signup('junk', { referral_code: "x'; drop table users; --" })
+        const junkRef = await referrerOf(junk.id)
+        check(!junk.error && junkRef === null, 'мусор вместо кода — регистрация без приглашения',
+          junk.error ? junk.error.message : `referred_by=${junkRef}`)
+
+        // 6. Прежний путь закрыт: id пригласившего в метаданных больше
+        //    ничего не значит — иначе любой приписал бы себя кому угодно.
+        const forged = await signup('forged', { referred_by: ownerUser.user.id })
+        const forgedRef = await referrerOf(forged.id)
+        check(!forged.error && forgedRef === null, 'id в метаданных приглашение не приписывает',
+          forged.error ? forged.error.message : `referred_by=${forgedRef}`)
       }
     } finally {
-      // Уборка. Триггера на удаление auth.users в проекте нет (есть только
-      // AFTER INSERT из миграции 01), но внешний ключ
-      // public.users.id → auth.users(id) объявлен ON DELETE CASCADE, поэтому
-      // удаление auth-пользователя уносит строку профиля само. Удалить его
-      // может только служебный ключ; без него учётки остаются, и это
-      // печатается пропуском со ссылкой на штатный SQL-веник, а не
-      // засчитывается как успех.
+      // Уборка. Внешний ключ public.users.id → auth.users(id) объявлен ON
+      // DELETE CASCADE: удаление auth-пользователя уносит строку профиля.
+      // Удалить его может только служебный ключ.
       if (service) {
         for (const id of tmpIds) await service.auth.admin.deleteUser(id)
         const { count: leftovers } = await service
           .from('users').select('id', { count: 'exact', head: true }).in('id', tmpIds)
         check(leftovers === 0, 'уборка: учётки прогона удалены', `осталось ${leftovers ?? '?'}`)
-      } else {
+      } else if (tmpIds.length) {
         skip('уборка: учётки прогона удалены',
           `нет SUPABASE_SERVICE_ROLE_KEY; сметите учётки ${tmpIds.length} шт. через supabase/tests/cleanup_test_accounts.sql`)
       }

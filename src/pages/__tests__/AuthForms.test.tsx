@@ -8,6 +8,7 @@ import i18n, { setLanguage, type Language } from '../../i18n-next'
 import Register from '../Register'
 import Login from '../Login'
 import { supabase } from '../../lib/supabase'
+import { captureReferral, forgetReferralForTests } from '../../lib/referral'
 
 // ЯЗЫК ФИКСИРУЕТ ОБВЯЗКА, а не матчер.
 //
@@ -26,9 +27,9 @@ import { supabase } from '../../lib/supabase'
 const navigateMock = vi.hoisted(() => vi.fn())
 const searchParamsMock = vi.hoisted(() => ({ value: new URLSearchParams() }))
 
-// Цепочка запроса за реферером собрана здесь, а не через
-// mockReturnValue({...} as any): типизированные заглушки не требуют
-// приведения к PostgrestFilterBuilder, который руками не собрать.
+// Цепочка запроса к базе. С миграции 43 регистрация к таблицам не ходит
+// вовсе (пригласившего ищет триггер), и заглушка нужна, чтобы это
+// УТВЕРЖДАТЬ: вернись поиск кода в браузер — тест покраснеет.
 const dbMocks = vi.hoisted(() => {
   const maybeSingle = vi.fn()
   const eq = vi.fn(() => ({ maybeSingle }))
@@ -120,6 +121,8 @@ describe('Формы входа и регистрации', () => {
     navigateMock.mockReset()
     searchParamsMock.value = new URLSearchParams()
     dbMocks.maybeSingle.mockResolvedValue({ data: null, error: null })
+    forgetReferralForTests()
+    window.history.replaceState(null, '', '/')
   })
 
   // ИНВАРИАНТ ПРЕЖНИЙ: если нужна проверка почты, человеку об этом
@@ -132,8 +135,7 @@ describe('Формы входа и регистрации', () => {
       data: { user: signedUpUser, session: null },
       error: null,
     })
-    dbMocks.maybeSingle.mockResolvedValue({ data: { id: 'referrer-1' }, error: null })
-    searchParamsMock.value = new URLSearchParams('ref=ABC123')
+    searchParamsMock.value = new URLSearchParams('ref=ab12cd34')
 
     await renderIn('fr', <Register />)
 
@@ -142,17 +144,19 @@ describe('Формы входа и регистрации', () => {
     fireEvent.change(screen.getByLabelText(TEXTS.fr.passwordMin), { target: { value: 'supersecret' } })
     fireEvent.click(screen.getByRole('button', { name: TEXTS.fr.createAccount }))
 
+    // ИНВАРИАНТ ПРЕЖНИЙ: код из ссылки доходит до сервера, и ЗАГЛАВНЫМ — в
+    // базе referral_code лежит так, а человек копирует ссылку как придётся.
+    // Изменилось, КТО ищет пригласившего: с миграции 43 — триггер
+    // регистрации. Прежде браузер искал id сам, и ради этого коды и граф
+    // приглашений всех людей были открыты анониму.
     await waitFor(() => {
-      expect(dbMocks.from).toHaveBeenCalledWith('users')
-      // Код из ссылки уходит в запрос ЗАГЛАВНЫМ: в базе referral_code лежит
-      // так, а человек копирует ссылку как придётся.
-      expect(dbMocks.eq).toHaveBeenCalledWith('referral_code', 'ABC123')
+      expect(dbMocks.from).not.toHaveBeenCalled()
       expect(supabase.auth.signUp).toHaveBeenCalledWith(expect.objectContaining({
         email: 'jane@example.com',
         options: expect.objectContaining({
           data: expect.objectContaining({
             full_name: 'Jane Doe',
-            referred_by: 'referrer-1',
+            referral_code: 'AB12CD34',
           }),
         }),
       }))
@@ -188,7 +192,7 @@ describe('Формы входа и регистрации', () => {
     expect(screen.queryByText(TEXTS.fr.checkInbox)).toBeNull()
   })
 
-  it('без кода приглашения referred_by в метаданные не попадает', async () => {
+  it('без кода приглашения в метаданных нет ни кода, ни реферера', async () => {
     vi.mocked(supabase.auth.signUp).mockResolvedValue({
       data: { user: signedUpUser, session: null },
       error: null,
@@ -205,8 +209,42 @@ describe('Формы входа и регистрации', () => {
 
     const sent = vi.mocked(supabase.auth.signUp).mock.calls[0][0]
     expect(sent.options?.data).not.toHaveProperty('referred_by')
-    // Запроса за реферером без кода нет вовсе.
+    expect(sent.options?.data).not.toHaveProperty('referral_code')
     expect(dbMocks.from).not.toHaveBeenCalled()
+  })
+
+  // Не-код (опечатка, чужая выдумка) не уходит вовсе: сервер его всё равно
+  // отбросит, а метаданные учётки — не место для мусора из адреса.
+  it('не-код из ссылки в метаданные не попадает', async () => {
+    vi.mocked(supabase.auth.signUp).mockResolvedValue({ data: { user: signedUpUser, session: null }, error: null })
+    searchParamsMock.value = new URLSearchParams('ref=hello')
+
+    await renderIn('fr', <Register />)
+    fireEvent.change(screen.getByLabelText(TEXTS.fr.fullName), { target: { value: 'Jane Doe' } })
+    fireEvent.change(screen.getByLabelText(TEXTS.fr.email), { target: { value: 'jane@example.com' } })
+    fireEvent.change(screen.getByLabelText(TEXTS.fr.passwordMin), { target: { value: 'supersecret' } })
+    fireEvent.click(screen.getByRole('button', { name: TEXTS.fr.createAccount }))
+
+    await waitFor(() => expect(supabase.auth.signUp).toHaveBeenCalled())
+    expect(vi.mocked(supabase.auth.signUp).mock.calls[0][0].options?.data).not.toHaveProperty('referral_code')
+  })
+
+  // Ссылку присылают на объявление, а регистрируются через два экрана.
+  // До 24.09 код читала только /register из своего адреса, и он терялся
+  // на первом же переходе.
+  it('код, пойманный на другой странице, доходит до регистрации', async () => {
+    vi.mocked(supabase.auth.signUp).mockResolvedValue({ data: { user: signedUpUser, session: null }, error: null })
+    window.history.replaceState(null, '', '/item/42?ref=ab12cd34')
+    captureReferral()
+
+    await renderIn('fr', <Register />)
+    fireEvent.change(screen.getByLabelText(TEXTS.fr.fullName), { target: { value: 'Jane Doe' } })
+    fireEvent.change(screen.getByLabelText(TEXTS.fr.email), { target: { value: 'jane@example.com' } })
+    fireEvent.change(screen.getByLabelText(TEXTS.fr.passwordMin), { target: { value: 'supersecret' } })
+    fireEvent.click(screen.getByRole('button', { name: TEXTS.fr.createAccount }))
+
+    await waitFor(() => expect(supabase.auth.signUp).toHaveBeenCalled())
+    expect(vi.mocked(supabase.auth.signUp).mock.calls[0][0].options?.data).toMatchObject({ referral_code: 'AB12CD34' })
   })
 
   it('вход с неподтверждённой почтой объясняет причину, а не печатает отказ supabase', async () => {

@@ -838,6 +838,13 @@ export type Database = {
           item_id: string
         }[]
       }
+      my_invite: {
+        Args: never
+        Returns: {
+          code: string
+          joined: number
+        }[]
+      }
       recompute_user_rating_for: {
         Args: { p_user_id: string }
         Returns: undefined

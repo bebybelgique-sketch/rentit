@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useTranslation } from 'react-i18next'
 import { authErrorKey } from '../domain/authErrors'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { normalizeReferral, pendingReferral } from '../lib/referral'
 
 export default function Register() {
   const { t } = useTranslation()
@@ -14,7 +15,9 @@ export default function Register() {
   // Куда человек шёл, когда его попросили войти, — страж маршрута кладёт
   // это в state входа, а вход передаёт сюда (ссылка «S'inscrire»).
   const from = (location.state as { from?: string } | null)?.from ?? '/'
-  const refCode = searchParams.get('ref') || ''
+  // Код приглашения: из адреса этой страницы или пойманный при запуске на
+  // любой другой (ссылки ведут на витрину и на объявления).
+  const refCode = normalizeReferral(searchParams.get('ref')) ?? pendingReferral()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -27,26 +30,16 @@ export default function Register() {
     if (password.length < 8) return setError(t('register.passwordMinimum'))
     setLoading(true); setError('')
 
-    let referrerId: string | null = null
-    if (refCode) {
-      const { data: referrer, error: referrerError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('referral_code', refCode.toUpperCase())
-        .maybeSingle()
-
-      if (referrerError) {
-        console.error('Referral lookup failed', referrerError)
-      }
-      if (referrer) referrerId = referrer.id
-    }
-
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
         data: {
           full_name: name.trim(),
-          ...(referrerId ? { referred_by: referrerId } : {}),
+          // САМ КОД, а не id пригласившего: код ищет триггер регистрации
+          // (миграция 43). Прежде id искался здесь, запросом анонима, — и
+          // для этого коды и граф приглашений всех людей были открыты
+          // любому. А id в метаданных мог подставить кто угодно.
+          ...(refCode ? { referral_code: refCode } : {}),
         },
       },
     })

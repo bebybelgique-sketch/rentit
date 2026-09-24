@@ -387,6 +387,16 @@
     "whatsappText": "📦 {{title}} — €{{price}}/dag op RentIt",
     "copyFailed": "Kopiëren mislukt — kopieer het adres uit de browserbalk"
   },
+  "invite": {
+    "title": "Een buur uitnodigen",
+    "body": "Hoe meer buren er in uw buurt meedoen, hoe meer gereedschap er te lenen valt — en hoe meer mensen het uwe kunnen huren.",
+    "share": "Mijn link delen",
+    "copyFailed": "Kopiëren lukt niet — selecteer de link hieronder",
+    "shareText": "Gereedschap huren van buren, hier in de buurt: RentIt. Hier is mijn link:",
+    "joined_one": "{{count}} buur is via u bij RentIt gekomen",
+    "joined_other": "{{count}} buren zijn via u bij RentIt gekomen",
+    "privacy": "Schrijft iemand zich in via uw link, dan noteren we dat u hem hebt uitgenodigd. U ziet het aantal, niet de namen."
+  },
   "cookies": {
     "header": "Privacyverklaring · GDPR-conform",
     "title": "Deze site gebruikt cookies",
