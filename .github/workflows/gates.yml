@@ -23,15 +23,25 @@ concurrency:
   group: gates-${{ github.ref }}
   cancel-in-progress: true
 
+# ОБРАЗ И ВЕРСИИ ДЕЙСТВИЙ ЗАКРЕПЛЕНЫ (24.09.2026).
+#
+# `ubuntu-latest` с 19.10.2026 переезжает на Ubuntu 26 — об этом
+# предупреждал каждый прогон. Браузерный джоб ставит системные зависимости
+# Playwright под конкретную версию системы, и такой переезд мог бы в один
+# день покрасить main без единой правки кода. Образ закреплён на 24.04 —
+# том, на котором всё зелёное сегодня; на 26 переходить отдельной правкой.
+#
+# checkout и setup-node — v5: v4 собраны под Node 20, срок поддержки
+# которого истёк, и раннер уже запускал их на Node 24 принудительно.
 jobs:
   gates:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
@@ -149,7 +159,7 @@ jobs:
   browser:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: gates
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
 
     # Сценарии создают и удаляют НАСТОЯЩИЕ строки в единственной базе
@@ -160,9 +170,9 @@ jobs:
       cancel-in-progress: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
