@@ -387,6 +387,16 @@
     "whatsappText": "📦 {{title}} — €{{price}}/day on RentIt",
     "copyFailed": "Could not copy — copy the address from the browser bar"
   },
+  "invite": {
+    "title": "Invite a neighbour",
+    "body": "The more neighbours join near you, the more tools there are to borrow — and the more people to rent yours to.",
+    "share": "Share my link",
+    "copyFailed": "Could not copy — select the link below",
+    "shareText": "Tools to rent from neighbours, right around here: RentIt. Here's my link:",
+    "joined_one": "{{count}} neighbour joined RentIt through you",
+    "joined_other": "{{count}} neighbours joined RentIt through you",
+    "privacy": "When someone signs up with your link, we record that you invited them. You see the number, not the names."
+  },
   "cookies": {
     "header": "Privacy notice · GDPR compliant",
     "title": "This site uses cookies",

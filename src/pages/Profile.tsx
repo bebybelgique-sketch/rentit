@@ -15,6 +15,7 @@ import ChangeEmail from '../components/common/ChangeEmail';
 import PhoneVerification from '../components/common/PhoneVerification';
 import ChangePassword from '../components/common/ChangePassword';
 import PushSettingsRow from '../components/push/PushSettingsRow';
+import InviteSection from '../components/invite/InviteSection';
 import toast from 'react-hot-toast';
 import { usePageTitle } from '../hooks/usePageTitle'
 import { errorText } from '../lib/errorText';
@@ -277,6 +278,9 @@ const Profile: React.FC = () => {
             место, где их включают без повода и выключают совсем. Строки
             нет, если браузер их не умеет или канал не заведён. */}
         <PushSettingsRow />
+        {/* Своя ссылка приглашения. До 24.09 код был у каждого, а взять
+            его было негде — см. InviteSection. */}
+        <InviteSection />
 
         {/* «Avis reçus» — блок из канвы, и он закрывает настоящую дыру.
             Отзыв о человеке писать было КУДА (ReviewForm внутри переписки по

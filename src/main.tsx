@@ -7,11 +7,16 @@ import './index.css'
 import { registerServiceWorker } from './lib/registerServiceWorker'
 import { installErrorCapture } from './lib/errorLog'
 import { i18nReady } from './i18n-next'
+import { captureReferral } from './lib/referral'
 
 // Ловим то, что мимо React: отклонённые обещания и глобальные ошибки.
 // Ставится ДО отрисовки — иначе падение на первом же рендере пройдёт
 // мимо журнала.
 installErrorCapture()
+
+// Код приглашения из ?ref=… — в память и прочь из адреса, ДО того как
+// маршрутизатор прочтёт адрес (см. src/lib/referral.ts).
+captureReferral()
 
 // Ждём словарь выбранного языка. Для француза промис уже разрешён —
 // задержки нет; нидерландцу первый экран приезжает на его языке, а не

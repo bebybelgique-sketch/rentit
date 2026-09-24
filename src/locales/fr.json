@@ -387,6 +387,16 @@
     "whatsappText": "📦 {{title}} — {{price}} €/jour sur RentIt",
     "copyFailed": "Copie impossible — copiez l’adresse depuis la barre du navigateur"
   },
+  "invite": {
+    "title": "Inviter un voisin",
+    "body": "Plus il y a de voisins inscrits près de chez vous, plus il y a d'outils à emprunter — et de gens à qui louer les vôtres.",
+    "share": "Partager mon lien",
+    "copyFailed": "Copie impossible — sélectionnez le lien ci-dessous",
+    "shareText": "Des outils à louer entre voisins, près de chez nous : RentIt. Voici mon lien :",
+    "joined_one": "{{count}} voisin a rejoint RentIt grâce à vous",
+    "joined_other": "{{count}} voisins ont rejoint RentIt grâce à vous",
+    "privacy": "Quand quelqu'un s'inscrit avec votre lien, nous notons que vous l'avez invité. Vous voyez le nombre, pas les noms."
+  },
   "cookies": {
     "header": "Mention de confidentialité · conforme RGPD",
     "title": "Ce site utilise des cookies",

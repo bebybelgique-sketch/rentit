@@ -84,6 +84,8 @@ export const bookingKeys = {
 export const profileKeys = {
   all: ['profile'],
   one: (userId: string | undefined) => ['profile', userId],
+  /** Свой код приглашения и число пришедших (useMyInvite). */
+  invite: (userId: string | undefined) => ['profile', userId, 'invite'],
 } as const;
 
 /**

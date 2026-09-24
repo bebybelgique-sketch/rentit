@@ -77,8 +77,6 @@ export type Profile = Pick<
   | 'phone_verified'
   | 'village'
   | 'role'
-  | 'referral_code'
-  | 'referred_by'
   | 'rating_as_owner'
   | 'rating_as_renter'
   | 'is_pro'
