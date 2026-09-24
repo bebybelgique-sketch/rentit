@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createSupabaseServiceClient } from '../_shared/supabase.ts'
 import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
-import { notifyRental } from '../_shared/notify.ts'
+import { notifyRentalInBackground } from '../_shared/notify.ts'
 import { checkRangeAvailable } from '../_shared/availability.ts'
 import type { RpcCaller } from '../_shared/availability.ts'
 
@@ -113,7 +113,7 @@ serve(async (req) => {
       }
       if (!rejected || rejected.length === 0) return changedMeanwhile()
 
-      await notifyRental(booking_id, 'rejected')
+      await notifyRentalInBackground(booking_id, 'rejected')
 
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...CORS, 'Content-Type': 'application/json' },
@@ -223,12 +223,12 @@ serve(async (req) => {
       }
       // Notify each rejected renter
       for (const b of autoRejected ?? []) {
-        await notifyRental(b.id, 'rejected')
+        await notifyRentalInBackground(b.id, 'rejected')
       }
     }
 
     // Notify renter that they're approved
-    await notifyRental(booking_id, 'approved')
+    await notifyRentalInBackground(booking_id, 'approved')
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },

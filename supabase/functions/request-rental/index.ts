@@ -3,7 +3,7 @@ import { createSupabaseServiceClient } from '../_shared/supabase.ts'
 import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
 import { computeRentalPrice } from '../_shared/pricing.ts'
-import { notifyRental } from '../_shared/notify.ts'
+import { notifyRentalInBackground } from '../_shared/notify.ts'
 import { checkRangeAvailable } from '../_shared/availability.ts'
 import type { RpcCaller } from '../_shared/availability.ts'
 import { json } from '../_shared/json.ts'
@@ -172,8 +172,9 @@ serve(async (req) => {
       return json({ error: 'internal_error' }, 500)
     }
 
-    // Notify owner
-    await notifyRental(booking.id, 'pending_approval')
+    // Владельцу — в фоне: арендатор получает ответ, не дожидаясь писем и
+    // push (см. notifyRentalInBackground — там замер).
+    await notifyRentalInBackground(booking.id, 'pending_approval')
 
     return json({ booking_id: booking.id })
   } catch (err: any) {

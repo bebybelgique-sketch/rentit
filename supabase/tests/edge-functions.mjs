@@ -58,6 +58,8 @@ const service = env.SUPABASE_SERVICE_ROLE_KEY
 const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10)
 
 let passed = 0
+// Сколько ждал арендатор ответа на УСПЕШНУЮ заявку, мс (см. ask).
+const askTimes = []
 let failed = 0
 let skipped = 0
 const check = (ok, label, detail = '') => {
@@ -104,7 +106,9 @@ try {
   // брони нет, и не видел, ЧТО функция отвечает. Так 23.09 и нашлось,
   // что она отвечала английскими фразами.
   const ask = async (body, as = renter) => {
+    const started = Date.now()
     const { data, error } = await as.functions.invoke('request-rental', { body })
+    if (data?.booking_id) askTimes.push(Date.now() - started)
     let err = data?.error ?? null
     if (!err && error?.context?.json) {
       try { err = (await error.context.clone().json()).error ?? null } catch { err = null }
@@ -634,16 +638,25 @@ try {
 
   // ── Лента событий (миграция 42) ─────────────────────────────────────
   //
-  // Одно событие — одна запись, и пишет её сервер: заявку — notify-rental
-  // (его ждёт request-rental, поэтому строка есть к моменту ответа),
+  // Одно событие — одна запись, и пишет её сервер: заявку — notify-rental,
   // сообщение — триггер базы в той же транзакции. Клиент читает только
   // своё и меняет только read_at.
+  //
+  // С 24.09 request-rental НЕ ждёт notify-rental: уведомления уходят в
+  // фоне, и человек получает ответ на заявку, не дожидаясь писем и push.
+  // Поэтому запись о заявке появляется чуть ПОЗЖЕ ответа — проверка ждёт
+  // её с потолком (пять попыток, до ~8 с), а не смотрит один раз.
   console.log('\nлента событий')
   const feedAsk = await ask({ item_id: itemId, start_date: day(15), end_date: day(16) })
   if (feedAsk.bookingId) {
     const ownerId = ownerUser.user.id
-    const { data: reqRows } = await owner.from('notifications').select('id, kind, read_at').eq('booking_id', feedAsk.bookingId)
-    check((reqRows ?? []).some((r) => r.kind === 'new_request' && r.read_at === null),
+    let reqRows = []
+    for (const pause of [0, 500, 1000, 2000, 4000]) {
+      if (pause) await new Promise((r) => setTimeout(r, pause))
+      reqRows = (await owner.from('notifications').select('id, kind, read_at').eq('booking_id', feedAsk.bookingId)).data ?? []
+      if (reqRows.some((r) => r.kind === 'new_request')) break
+    }
+    check(reqRows.some((r) => r.kind === 'new_request' && r.read_at === null),
       'заявка → запись «new_request» у владельца', JSON.stringify(reqRows))
 
     const { data: feedMsg, error: feedMsgErr } = await renter.from('booking_messages')
@@ -854,6 +867,10 @@ try {
   await renter.auth.signOut()
 }
 
+if (askTimes.length) {
+  const sorted = [...askTimes].sort((a, b) => a - b)
+  console.log(`\nrequest-rental, успешные заявки: ${sorted.length} шт., медиана ${sorted[Math.floor(sorted.length / 2)]} мс, максимум ${sorted[sorted.length - 1]} мс`)
+}
 console.log(`\nитог: ${passed} прошло, ${failed} провалено${skipped ? `, ${skipped} пропущено` : ''}`)
 if (skipped) console.log('пропуск — это не «прошло»: см. TEST_ADMIN_* и SUPABASE_SERVICE_ROLE_KEY в README прогона')
 process.exit(failed ? 1 : 0)

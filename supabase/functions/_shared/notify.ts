@@ -33,6 +33,34 @@ export type RentalEvent =
   | 'active'
   | 'completed'
 
+/**
+ * То же, что notifyRental, но ответ человеку НЕ ждёт отправки.
+ *
+ * До 24.09 каждое действие с бронью (заявка, ответ владельца, переходы)
+ * ждало notify-rental целиком — а та по очереди достаёт бронь, шлёт письма
+ * и push и пишет ленту. Замер прогоном против прода: медиана ответа на
+ * заявку 1430 мс, максимум 14 098 мс — холодный старт notify-rental
+ * ложился на ожидание арендатора целиком. Всё это время человек смотрит
+ * на крутящуюся кнопку ради писем, которые ему самому не нужны.
+ *
+ * EdgeRuntime.waitUntil держит функцию живой, пока отправка не закончится,
+ * но ответ уходит сразу. Исход по-прежнему пишется в лог (notifyRental не
+ * бросает). Вне рантайма Supabase — тесты — фона нет, и отправка
+ * ждётся, как раньше.
+ *
+ * Для ночных задач (expire-bookings) это не нужно: ответа там никто не
+ * ждёт, а дождаться отправки до конца там надёжнее.
+ */
+export function notifyRentalInBackground(bookingId: string, event: RentalEvent): Promise<void> {
+  const task = notifyRental(bookingId, event)
+  const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime
+  if (typeof runtime?.waitUntil === 'function') {
+    runtime.waitUntil(task)
+    return Promise.resolve()
+  }
+  return task
+}
+
 /** Зовёт notify-rental. Никогда не бросает. Любой исход пишется в лог. */
 export async function notifyRental(bookingId: string, event: RentalEvent): Promise<void> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
