@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 import type { Database } from '../types/database.types'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { errorText } from '../lib/errorText'
+import { useListingStart, NO_START, type ListingStart } from '../hooks/useListingStart'
 
 // Категории и состояния — из src/domain/catalog.ts. Здесь была четвёртая
 // копия списка категорий и третья копия состояний.
@@ -29,9 +30,33 @@ const MAX_QUANTITY = 999
 const MAX_NOTICE_DAYS = 90
 const MAX_BUFFER_DAYS = 30
 
+// «Позже» по просьбе о фото — на сессию вкладки и на человека (см.
+// photoDeferred). Хранилище может быть недоступно (приватный режим, запрет
+// сайта) — тогда просто спросим снова, как раньше.
+const photoLaterKey = (userId: string) => `rentit_photo_later:${userId}`
+const readPhotoLater = (userId: string | undefined): boolean => {
+  if (!userId) return false
+  try { return sessionStorage.getItem(photoLaterKey(userId)) === '1' } catch { return false }
+}
+const rememberPhotoLater = (userId: string) => {
+  try { sessionStorage.setItem(photoLaterKey(userId), '1') } catch { /* спросим снова */ }
+}
+
+// Сначала узнаём, что нужно форме, потом показываем её — один раз и уже
+// заполненной (см. useListingStart). Форма берёт ответ в начальное
+// состояние: без эффекта, который мог бы переписать позицию, уже
+// выбранную человеком.
 export default function ListItem() {
   const { t } = useTranslation()
   usePageTitle(t('pageTitle.listItem'))
+  const { user } = useAuth()
+  const start = useListingStart(user?.id)
+  if (start.isPending) return <div className="page"><div className="loading">{t('common.loading')}</div></div>
+  return <ListItemForm start={start.data ?? NO_START} />
+}
+
+function ListItemForm({ start }: { start: ListingStart }) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -64,7 +89,7 @@ export default function ListItem() {
     delivery_fee: '',
     delivery_radius_km: '',
     deposit: '',
-    address: '',
+    address: start.lastPlace?.address ?? '',
     // Доступность. Умолчания — ровно прежнее поведение продукта: одна
     // единица, без зазора, без предупреждения. Сосед с одной дрелью не
     // заметит, что поля появились; прокатчик со стульями без них не зайдёт.
@@ -74,8 +99,12 @@ export default function ListItem() {
   })
   const [photos, setPhotos] = useState<File[]>([])
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
-  const [lat, setLat] = useState<number | null>(null)
-  const [lng, setLng] = useState<number | null>(null)
+  // Позиция — с прошлого объявления, если оно было (замер 23.09: пять
+  // инструментов подряд — пять раз «Utiliser ma position»). Кнопка
+  // остаётся: инструмент может лежать в другом месте.
+  const [lat, setLat] = useState<number | null>(start.lastPlace?.lat ?? null)
+  const [lng, setLng] = useState<number | null>(start.lastPlace?.lng ?? null)
+  const [positionFromLast, setPositionFromLast] = useState(start.lastPlace !== null)
   const [geoLoading, setGeoLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -84,11 +113,18 @@ export default function ListItem() {
   // фотографий, а не в шапке формы за несколько экранов оттуда.
   const [photoNotice, setPhotoNotice] = useState<string[]>([])
   const [isDirty, setIsDirty] = useState(false)
-  const [needsPhoto, setNeedsPhoto] = useState(false)
-  // Просьбу о фото можно отложить. Отказ живёт в состоянии страницы:
-  // повторно в том же заходе она не показывается, но и не запоминается
-  // навсегда — при следующем объявлении спросим снова, мягко.
-  const [photoDeferred, setPhotoDeferred] = useState(false)
+  // Просьбу о фото можно отложить — на СЕССИЮ вкладки, не навсегда.
+  //
+  // Прежде отказ жил в состоянии страницы, а замысел был «повторно в том
+  // же заходе не спрашивать». Страница же монтируется заново на каждое
+  // объявление, и заходом оказывалось одно объявление: замер 23.09 —
+  // сосед выкладывает пять инструментов подряд и пять раз за полминуты
+  // жмёт «Plus tard». Это уже не мягкая просьба, а пошлина.
+  //
+  // Теперь «позже» держится до закрытия вкладки (sessionStorage, ключ на
+  // человека). Навсегда по-прежнему НЕ запоминается: в следующий раз
+  // спросим снова.
+  const [photoDeferred, setPhotoDeferred] = useState(() => readPhotoLater(user?.id))
   const [estimatedValue, setEstimatedValue] = useState('')
   // Тумблер доставки. Это ИНТЕРФЕЙС поверх одного поля, а не второе поле:
   // в базе признак услуги ровно один — непустая delivery_fee. Держать его
@@ -117,13 +153,8 @@ export default function ListItem() {
   // раскрывается тогда, когда она нужна, — в момент встречи, а не в
   // момент публикации. Фото приведено к тому же правилу: просьба, а не
   // стена. НЕ возвращать блокировку без отдельного решения.
-  useEffect(() => {
-    if (!user) return
-    supabase.from('users').select('avatar_url').eq('id', user.id).single()
-      .then(({ data }) => {
-        if (!data?.avatar_url) setNeedsPhoto(true)
-      })
-  }, [user])
+  //
+  // Нужна ли просьба, узнаёт useListingStart ДО показа формы.
 
   // Auto-calculate deposit at 20% of estimated value
   const handleValueChange = (val: string) => {
@@ -228,6 +259,7 @@ export default function ListItem() {
       pos => {
         setLat(pos.coords.latitude)
         setLng(pos.coords.longitude)
+        setPositionFromLast(false)
         setGeoLoading(false)
         // Reverse-geocode via free Nominatim API so address stays in sync
         fetch(
@@ -387,7 +419,7 @@ export default function ListItem() {
 
   const isLocked = uploading
 
-  if (needsPhoto && !photoDeferred) return (
+  if (start.needsPhoto && !photoDeferred) return (
     <div className="page" style={{ maxWidth: '480px', margin: '60px auto', textAlign: 'center' }}>
       {/* Был 📸 — см. StateIcon.tsx. */}
       <div style={{ color: 'var(--silver-edge)', marginBottom: '20px' }}>
@@ -409,7 +441,7 @@ export default function ListItem() {
         {/* Выход, которого не было. Без него экран — стена. */}
         <button
           type="button"
-          onClick={() => setPhotoDeferred(true)}
+          onClick={() => { if (user) rememberPhotoLater(user.id); setPhotoDeferred(true) }}
           className="btn btn-secondary"
           style={{ minHeight: '44px', fontSize: '15px', padding: '10px 24px' }}
         >
@@ -601,7 +633,9 @@ export default function ListItem() {
               {geoLoading ? t('common.loading') : lat !== null ? t('listItem.positionSet') : t('listItem.setPosition')}
             </button>
             {lat !== null
-              ? <p className="form-hint">{lat.toFixed(4)}, {lng?.toFixed(4)}</p>
+              ? <p className="form-hint">{positionFromLast
+                  ? t('listItem.positionFromLast', { place: form.address.trim() || `${lat.toFixed(4)}, ${lng?.toFixed(4)}` })
+                  : <>{lat.toFixed(4)}, {lng?.toFixed(4)}</>}</p>
               : <p className="form-hint">{t('listItem.positionMissing')}</p>}
           </div>
 

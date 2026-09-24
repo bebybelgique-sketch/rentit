@@ -173,6 +173,7 @@
     "photosFirstLabel": "Photos of the tool",
     "positionSet": "Position saved",
     "setPosition": "Use my position",
+    "positionFromLast": "Same place as your previous listing: {{place}}. Tool somewhere else? Tap this button to use your current position.",
     "positionMissing": "Without a position, your tool will not appear in the «Nearby» search — only in the full list.",
     "lateFeeNote": "An amount announced in advance and settled between you at handback. RentIt neither calculates nor collects it.",
     "uploadingPhoto": "Uploading photo {{done}}/{{total}}…",

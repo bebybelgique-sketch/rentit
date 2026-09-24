@@ -58,6 +58,12 @@ export const itemKeys = {
    * и этот ключ, и пустой экран исчезает сам, без ручного шага.
    */
   anyExist: ['items', 'anyExist'],
+  /**
+   * Что форма выкладки знает до показа: нужна ли просьба о фото и где
+   * стоял прошлый инструмент (useListingStart). Под префиксом ['items']:
+   * выложил вещь — ответ устарел.
+   */
+  listingStart: (userId: string | undefined) => ['items', 'listingStart', userId],
 } as const;
 
 /** Брони (таблица bookings) — оба взгляда на одну таблицу. */

@@ -20,6 +20,8 @@ export default function Login() {
   // предложения, где каждый посетитель на счету, это лишний шаг ровно
   // в том месте, где его быть не должно.
   const from = (location.state as { from?: string } | null)?.from ?? '/'
+  // Просьба проверить почту — от регистрации, когда сессии ещё нет.
+  const notice = (location.state as { notice?: string } | null)?.notice
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -48,6 +50,7 @@ export default function Login() {
       <div style={{ maxWidth: '420px', margin: '40px auto' }}>
         <h1 style={{ marginBottom: '28px', fontSize: '26px', fontWeight: '800', textAlign: 'center' }}>{t('loginTitle')}</h1>
         <div className="card">
+          {notice === 'checkInbox' && <div className="success-msg" role="status" style={{ marginBottom: '16px' }}>{t('register.checkInbox')}</div>}
           {error && <div className="error-msg">{error}</div>}
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -66,7 +69,7 @@ export default function Login() {
             </button>
           </form>
           <p style={{ textAlign: 'center', marginTop: '20px', color: '#666', fontSize: '14px' }}>
-            {t('noAccount')} <Link to="/register" style={{ fontWeight: '600' }}>{t('signUpLink')}</Link>
+            {t('noAccount')} <Link to="/register" state={{ from }} style={{ fontWeight: '600' }}>{t('signUpLink')}</Link>
           </p>
         </div>
       </div>

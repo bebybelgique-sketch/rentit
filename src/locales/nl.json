@@ -173,6 +173,7 @@
     "photosFirstLabel": "Foto's van het gereedschap",
     "positionSet": "Positie opgeslagen",
     "setPosition": "Mijn positie gebruiken",
+    "positionFromLast": "Zelfde plek als uw vorige advertentie: {{place}}. Ligt het gereedschap elders? Tik op deze knop om uw huidige positie te nemen.",
     "positionMissing": "Zonder positie verschijnt uw gereedschap niet in de zoekopdracht « In de buurt » — alleen in de volledige lijst.",
     "lateFeeNote": "Een vooraf aangekondigd bedrag, onderling geregeld bij teruggave. RentIt berekent noch int het.",
     "uploadingPhoto": "Foto {{done}}/{{total}} uploaden…",
