@@ -173,6 +173,7 @@
     "photosFirstLabel": "Photos de l'outil",
     "positionSet": "Position enregistrée",
     "setPosition": "Utiliser ma position",
+    "positionFromLast": "Même endroit que votre annonce précédente : {{place}}. L'outil est ailleurs ? Touchez ce bouton pour prendre votre position actuelle.",
     "positionMissing": "Sans position, votre outil n'apparaîtra pas dans la recherche « À proximité » — seulement dans la liste complète.",
     "lateFeeNote": "Montant annoncé à l'avance, réglé entre vous à la restitution. RentIt ne le calcule ni ne le prélève.",
     "uploadingPhoto": "Envoi photo {{done}}/{{total}}…",

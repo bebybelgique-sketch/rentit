@@ -62,7 +62,7 @@ const signedUpUser = {
   created_at: '2026-09-06T00:00:00.000Z',
 }
 
-const renderIn = async (language: Language, page: React.ReactElement) => {
+const renderIn = async (language: Language, page: React.ReactElement, state?: Record<string, unknown>) => {
   // setLanguage, а не changeLanguage: словари nl и en больше не лежат
   // в главном куске, их подвозят по требованию. Прямое переключение
   // применяется мгновенно и до приезда словаря отдаёт запасной —
@@ -71,7 +71,7 @@ const renderIn = async (language: Language, page: React.ReactElement) => {
   await setLanguage(language)
   return render(
     <I18nextProvider i18n={i18n}>
-      <MemoryRouter>{page}</MemoryRouter>
+      <MemoryRouter initialEntries={[state ? { pathname: '/', state } : '/']}>{page}</MemoryRouter>
     </I18nextProvider>,
   )
 }
@@ -122,7 +122,12 @@ describe('Формы входа и регистрации', () => {
     dbMocks.maybeSingle.mockResolvedValue({ data: null, error: null })
   })
 
-  it('новая регистрация уходит на страницу входа и просит подтвердить почту', async () => {
+  // ИНВАРИАНТ ПРЕЖНИЙ: если нужна проверка почты, человеку об этом
+  // сказано. Изменилось МЕСТО: просьба стоит на странице входа. Прежде
+  // она ставилась на регистрации за миг до ухода с неё, и в живом
+  // браузере её не видел никто — тест проверял текст в размонтированном
+  // экране, чего с заглушкой navigate не заметно.
+  it('нужна проверка почты — на вход, с просьбой проверить почту', async () => {
     vi.mocked(supabase.auth.signUp).mockResolvedValue({
       data: { user: signedUpUser, session: null },
       error: null,
@@ -151,13 +156,36 @@ describe('Формы входа и регистрации', () => {
           }),
         }),
       }))
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true })
+      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true, state: { from: '/', notice: 'checkInbox' } })
     })
+  })
 
+  it('вход показывает просьбу проверить почту, пришедшую от регистрации', async () => {
+    await renderIn('fr', <Login />, { notice: 'checkInbox' })
     // Точная строка, а не «похоже на подтверждение почты»: у сообщения
     // страницы входа то же начало, и прежний матчер /vérifiez|controleer/
     // принял бы его за успех регистрации.
-    expect(screen.getByText(TEXTS.fr.checkInbox)).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(TEXTS.fr.checkInbox)
+  })
+
+  // Прод сегодня: подтверждение почты ВЫКЛЮЧЕНО, signUp сразу отдаёт
+  // сессию. Замерено 23.09 на живом сайте: вошедшего человека отправляли
+  // на форму входа, и нажавший «Déposer un outil» терял дорогу к форме.
+  it('сессия сразу есть — туда, куда шёл, без просьбы о почте', async () => {
+    vi.mocked(supabase.auth.signUp).mockResolvedValue({
+      data: { user: signedUpUser, session: { access_token: 't' } },
+      error: null,
+    } as never)
+
+    await renderIn('fr', <Register />, { from: '/list-item' })
+
+    fireEvent.change(screen.getByLabelText(TEXTS.fr.fullName), { target: { value: 'Jane Doe' } })
+    fireEvent.change(screen.getByLabelText(TEXTS.fr.email), { target: { value: 'jane@example.com' } })
+    fireEvent.change(screen.getByLabelText(TEXTS.fr.passwordMin), { target: { value: 'supersecret' } })
+    fireEvent.click(screen.getByRole('button', { name: TEXTS.fr.createAccount }))
+
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/list-item', { replace: true }))
+    expect(screen.queryByText(TEXTS.fr.checkInbox)).toBeNull()
   })
 
   it('без кода приглашения referred_by в метаданные не попадает', async () => {
