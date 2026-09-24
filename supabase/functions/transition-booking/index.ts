@@ -24,7 +24,7 @@ import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
 import { json } from '../_shared/json.ts'
 import type { BookingStatus } from '../_shared/types.ts'
-import { notifyRental, type RentalEvent } from '../_shared/notify.ts'
+import { notifyRentalInBackground, type RentalEvent } from '../_shared/notify.ts'
 
 const supabase = createSupabaseServiceClient()
 
@@ -137,9 +137,10 @@ serve(async (req) => {
       return json({ error: 'booking_changed' }, 409)
     }
 
-    // Письма не должны валить переход: он уже произошёл и зафиксирован.
-    // notifyRental наружу не бросает, но и не молчит — исход в логе.
-    await notifyRental(booking_id, rule.event)
+    // Письма не должны ни валить переход (он уже произошёл и
+    // зафиксирован), ни задерживать ответ: отправка уходит в фоне, исход —
+    // в логе (см. notifyRentalInBackground).
+    await notifyRentalInBackground(booking_id, rule.event)
 
     return json({ ok: true, status: rule.to })
   } catch (err) {
