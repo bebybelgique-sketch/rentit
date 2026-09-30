@@ -84,6 +84,18 @@ const EXEMPT_LINES = [
   },
 ];
 
+/**
+ * Миграции новее источника, которым daterange() понадобился НЕ для
+ * занятости вещи, — и ПОЧЕМУ. Правило то же, что у EXEMPT_LINES: каждая
+ * запись — место, где человек прочитал шапку этого файла и решил осознанно.
+ */
+const EXEMPT_MIGRATIONS = [
+  {
+    file: '20260930000045_one_pending_request.sql',
+    why: 'правило «одна ожидающая заявка арендатора на те же даты» (раздел 9 источника) переехало из функции в ограничение исключения; функция удалена там же, копия правила по-прежнему одна',
+  },
+];
+
 function walk(dir, out = []) {
   let entries;
   try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
@@ -131,6 +143,7 @@ export function findLateMigrationsWithOverlap() {
   try { files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')); } catch { return []; }
   return files
     .filter((f) => f > SOURCE_MIGRATION)
+    .filter((f) => !EXEMPT_MIGRATIONS.some((e) => e.file === f))
     .filter((f) => /\bdaterange\s*\(/.test(fs.readFileSync(path.join(dir, f), 'utf8')))
     .sort();
 }
@@ -146,12 +159,19 @@ export function countScannedFiles() {
  * начинает прикрывать что-то другое.
  */
 export function findStaleExemptions() {
-  return EXEMPT_LINES.filter((e) => {
+  const staleLines = EXEMPT_LINES.filter((e) => {
     const full = path.join(ROOT, e.file);
     if (!fs.existsSync(full)) return true;
     const lines = fs.readFileSync(full, 'utf8').split(/\r?\n/).map((l) => l.trim());
     return !lines.includes(e.code);
   }).map((e) => `${e.file} :: ${e.code}`);
+  // Миграция из списка, в которой daterange() больше нет (или самой
+  // миграции нет), ничего не объясняет — и прикрыла бы следующую.
+  const staleMigrations = EXEMPT_MIGRATIONS.filter((e) => {
+    const full = path.join(ROOT, 'supabase/migrations', e.file);
+    return !fs.existsSync(full) || !/\bdaterange\s*\(/.test(fs.readFileSync(full, 'utf8'));
+  }).map((e) => `supabase/migrations/${e.file}`);
+  return [...staleLines, ...staleMigrations];
 }
 
 // Сравнение с import.meta.url на Windows не работает: там file:///C:/…
