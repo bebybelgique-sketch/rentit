@@ -112,7 +112,6 @@ serve(async (req) => {
       ownerId: item?.owner_id ?? null,
       ownerName: owner?.full_name ?? null,
       renterName: renter?.full_name ?? null,
-      cancelledBy: booking.cancelled_by ?? null,
     })
 
     const { data: ownerAuth } = await supabase.auth.admin.getUserById(item?.owner_id || '')

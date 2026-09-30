@@ -315,6 +315,15 @@ try {
     check(statuses === 'confirmed,rejected',
       'вторая заявка закрыта, а не осталась висеть у человека как живая', `статусы: ${statuses}`)
 
+    // Лента (миграция 46): строку пишет триггер в той же транзакции, что
+    // статус, поэтому она есть сразу после ответа — без ожидания рассылки.
+    const { data: acceptedRows } = await renter.from('notifications').select('kind').eq('booking_id', first.bookingId)
+    check((acceptedRows ?? []).some((n) => n.kind === 'accepted'),
+      'одобрение → запись «accepted» у арендатора сразу', JSON.stringify(acceptedRows))
+    const { data: declinedRows } = await secondRenter.from('notifications').select('kind').eq('booking_id', second.bookingId)
+    check((declinedRows ?? []).some((n) => n.kind === 'declined'),
+      'автоотказ → запись «declined» у второго арендатора сразу', JSON.stringify(declinedRows))
+
     await owner.from('bookings').delete().in('id', [first.bookingId, second.bookingId])
   }
    }
@@ -660,26 +669,20 @@ try {
 
   // ── Лента событий (миграция 42) ─────────────────────────────────────
   //
-  // Одно событие — одна запись, и пишет её сервер: заявку — notify-rental,
-  // сообщение — триггер базы в той же транзакции. Клиент читает только
-  // своё и меняет только read_at.
+  // Одно событие — одна запись, и пишет её база: о брони — триггер на
+  // bookings (миграция 46), о сообщении — триггер на booking_messages
+  // (миграция 42), оба в той же транзакции, что само событие. Клиент
+  // читает только своё и меняет только read_at.
   //
-  // С 24.09 request-rental НЕ ждёт notify-rental: уведомления уходят в
-  // фоне, и человек получает ответ на заявку, не дожидаясь писем и push.
-  // Поэтому запись о заявке появляется чуть ПОЗЖЕ ответа — проверка ждёт
-  // её с потолком (пять попыток, до ~8 с), а не смотрит один раз.
+  // Поэтому запись о заявке смотрится ОДИН раз, сразу после ответа: до
+  // миграции 46 её писала фоновая рассылка, и проверка ждала с потолком.
   console.log('\nлента событий')
   const feedAsk = await ask({ item_id: itemId, start_date: day(15), end_date: day(16) })
   if (feedAsk.bookingId) {
     const ownerId = ownerUser.user.id
-    let reqRows = []
-    for (const pause of [0, 500, 1000, 2000, 4000]) {
-      if (pause) await new Promise((r) => setTimeout(r, pause))
-      reqRows = (await owner.from('notifications').select('id, kind, read_at').eq('booking_id', feedAsk.bookingId)).data ?? []
-      if (reqRows.some((r) => r.kind === 'new_request')) break
-    }
+    const reqRows = (await owner.from('notifications').select('id, kind, read_at').eq('booking_id', feedAsk.bookingId)).data ?? []
     check(reqRows.some((r) => r.kind === 'new_request' && r.read_at === null),
-      'заявка → запись «new_request» у владельца', JSON.stringify(reqRows))
+      'заявка → запись «new_request» у владельца сразу, в ответе', JSON.stringify(reqRows))
 
     const { data: feedMsg, error: feedMsgErr } = await renter.from('booking_messages')
       .insert({ booking_id: feedAsk.bookingId, sender_id: targetUserId, body: 'E2E лента: à quelle heure ?' })
