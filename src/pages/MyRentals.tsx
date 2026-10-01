@@ -228,9 +228,14 @@ const MyRentals: React.FC = () => {
   const renderCancellation = (rental: Rental, otherPartyName: string) => {
     if (rental.status !== 'cancelled' || !rental.cancelled_at) return null;
     const byMe = rental.cancelled_by === user.id;
+    // Пустой cancelled_by — бронь закрыл планировщик (expire-bookings), а не
+    // человек. Без этой развилки пустое поле «не равно мне», и отмена
+    // приписывалась второй стороне.
+    const automatic = !rental.cancelled_by;
     return (
       <CancellationNotice
         cancelledByName={byMe ? t('rental.cancelledByYouShort') : otherPartyName}
+        automatic={automatic}
         cancelledAt={rental.cancelled_at}
         reason={rental.cancellation_reason ?? null}
       />

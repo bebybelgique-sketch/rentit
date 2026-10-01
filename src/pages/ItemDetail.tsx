@@ -519,7 +519,7 @@ export default function ItemDetail() {
               )}
               {item.deposit > 0 && (
                 <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>
-                  + €{item.deposit.toFixed(2)} caution
+                  + {t('itemDetail.depositShort', { amount: money(item.deposit) })}
                 </div>
               )}
               {/* Доставка показывается, только если владелец её объявил. */}
@@ -531,7 +531,7 @@ export default function ItemDetail() {
               )}
               {item.late_fee_per_day != null && (
                 <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>
-                  Retard : €{Number(item.late_fee_per_day).toFixed(2)} / jour
+                  {t('itemDetail.lateFeeLine', { amount: money(item.late_fee_per_day) })}
                 </div>
               )}
             </div>

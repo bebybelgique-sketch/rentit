@@ -30,4 +30,21 @@ describe('CancellationNotice', () => {
     );
     expect(screen.getByText('Aucune raison indiquée')).toBeInTheDocument();
   });
+
+  // Закрыл таймер — не человек. До 01.10 пустой cancelled_by приписывал
+  // отмену второй стороне: каждая читала «Annulée par <имя другой>».
+  it('закрытие таймером не приписывается никому из сторон', () => {
+    render(
+      <CancellationNotice
+        cancelledByName="Marie"
+        automatic
+        cancelledAt="2026-08-11T10:00:00Z"
+        reason="Clôturée automatiquement : la période de location est passée et la remise n'a pas été confirmée."
+      />,
+    );
+    expect(screen.getByText(/Clôturée automatiquement/)).toBeInTheDocument();
+    expect(screen.queryByText(/Annulée par/)).not.toBeInTheDocument();
+    // Причину сервер пишет по-французски для всех; показывается словарная.
+    expect(screen.getByText(/la remise n’a pas été confirmée/)).toBeInTheDocument();
+  });
 });

@@ -572,6 +572,7 @@
     "handoverTimeHint": "Les dates se réservent à la journée : convenez ici de l’heure de remise et de retour.",
     "nothingCharged": "Rien n'est prélevé. {{owner}} a 24 h pour répondre.",
     "depositShort": "{{amount}} caution",
+    "lateFeeLine": "Retard : {{amount}} / jour",
     "publishedTitle": "Annonce publiée",
     "publishedLine": "{{price}}/jour · visible maintenant",
     "visibleBadge": "Visible"
@@ -621,10 +622,15 @@
     "titleHandover": "État de l'outil à la remise",
     "titleReturn": "État de l'outil au retour",
     "noPhotos": "Aucune photo",
+    "phaseHandover": "Remise",
+    "phaseReturn": "Retour",
     "deletePhoto": "Supprimer la photo"
   },
   "cancellationNotice": {
-    "noReason": "Aucune raison indiquée"
+    "noReason": "Aucune raison indiquée",
+    "by": "Annulée par {{name}}",
+    "automatic": "Clôturée automatiquement",
+    "automaticReason": "La période de location est passée et la remise n’a pas été confirmée."
   },
   "userRating": {
     "reviewCount_one": "{{count}} avis",

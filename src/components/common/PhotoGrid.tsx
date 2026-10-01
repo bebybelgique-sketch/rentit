@@ -16,16 +16,17 @@ interface PhotoGridProps {
   emptyLabel?: string;
 }
 
-const PHASE_TITLE: Record<'handover' | 'return', string> = {
-  handover: 'Remise',
-  return: 'Retour',
-};
-
 const PhotoGrid: React.FC<PhotoGridProps> = ({
   photos, onRemove, emptyLabel,
 }) => {
   const { t } = useTranslation();
   const defaultEmptyLabel = emptyLabel || t('photoGrid.noPhotos');
+  // Заголовки групп — из словаря: до 01.10 «Remise» и «Retour» были вшиты
+  // по-французски для всех языков.
+  const PHASE_TITLE: Record<'handover' | 'return', string> = {
+    handover: t('photoGrid.phaseHandover'),
+    return: t('photoGrid.phaseReturn'),
+  };
   const PHASE_ALT: Record<'handover' | 'return', string> = {
     handover: t('photoGrid.titleHandover'),
     return: t('photoGrid.titleReturn'),

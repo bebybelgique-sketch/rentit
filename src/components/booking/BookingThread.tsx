@@ -74,12 +74,15 @@ const BookingThread: React.FC<BookingThreadProps> = ({
   // соответствовать стороне: политика в базе отвергнет любое иное сочетание.
   const reviewType = role === 'renter' ? 'owner' : 'renter';
 
-  const handleSend = async (body: string) => {
+  // Ответ для поля ввода: false — не отправилось, и текст вернётся в поле.
+  const handleSend = async (body: string): Promise<boolean> => {
     setLocalError(null);
     try {
       await sendMessage.mutateAsync({ bookingId, senderId: currentUserId, body });
+      return true;
     } catch (err: any) {
       setLocalError(errorText(t, err, 'booking.messageSendFailed'));
+      return false;
     }
   };
 
