@@ -94,3 +94,64 @@ export async function planSweep(opts: SweepOptions): Promise<SweepPlan> {
 
   return { checked: known.size, scanned, orphans }
 }
+
+/** Страница ответа PostgREST с точным счётом (`select(…, { count: 'exact' })`). */
+export interface CountedPage<T> {
+  data: T[] | null
+  error: { message: string } | null
+  count: number | null
+}
+
+/**
+ * ВСЕ строки таблицы — страницами, со сверкой с точным счётом.
+ *
+ * ПОЧЕМУ НЕ ОДИН select. PostgREST режет ответ лимитом Max rows (у Supabase
+ * по умолчанию 1000), молча и без ошибки. Для уборки это не «недоудалит»,
+ * а наоборот: путь, не попавший в усечённый ответ, считается сиротой, и
+ * 1001-й аватар или снимок витрины удаляется — каждую ночь, необратимо,
+ * с отчётом «removed: N», похожим на обычную работу.
+ *
+ * Поэтому: страницы по `pageSize`, сдвиг — на число ДЕЙСТВИТЕЛЬНО пришедших
+ * строк (лимит сервера может оказаться меньше нашей страницы), и сверка с
+ * `count`. Не сошлось — бросаем: уборка без полного знания не удаляет
+ * ничего, лучше мусор до следующей ночи, чем чужой снимок.
+ */
+export async function fetchAllRows<T>(
+  page: (from: number, to: number) => PromiseLike<CountedPage<T>>,
+  pageSize = 1000,
+): Promise<T[]> {
+  const rows: T[] = []
+  let total: number | null = null
+  for (;;) {
+    const { data, error, count } = await page(rows.length, rows.length + pageSize - 1)
+    if (error) throw new Error(error.message)
+    if (count === null || count === undefined) throw new Error('нет точного счёта строк: полноту выборки не проверить')
+    total = count
+    const got = data ?? []
+    rows.push(...got)
+    if (rows.length >= total || got.length === 0) break
+  }
+  if (rows.length !== total) {
+    throw new Error(`выборка неполная: пришло ${rows.length} из ${total} — уборка остановлена`)
+  }
+  return rows
+}
+
+/**
+ * Всё содержимое папки Storage — страницами.
+ *
+ * `list` отдаёт не больше `limit` записей (по умолчанию 100) и без
+ * `offset` возвращает всегда одну и ту же первую сотню: сироты дальше
+ * сотой позиции в папке не находились никогда.
+ */
+export async function listAllEntries(
+  listPage: (offset: number, limit: number) => Promise<StorageEntry[]>,
+  pageSize = 100,
+): Promise<StorageEntry[]> {
+  const all: StorageEntry[] = []
+  for (;;) {
+    const got = await listPage(all.length, pageSize)
+    all.push(...got)
+    if (got.length < pageSize) return all
+  }
+}

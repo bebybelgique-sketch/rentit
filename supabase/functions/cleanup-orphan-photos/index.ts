@@ -43,7 +43,7 @@ import { handleOPTIONS } from '../_shared/cors.ts'
 import { json } from '../_shared/json.ts'
 import { ITEM_PHOTOS_BUCKET, itemPhotoPaths } from '../_shared/item-photos.ts'
 import { AVATARS_BUCKET, avatarPath } from '../_shared/avatars.ts'
-import { planSweep } from '../_shared/sweep.ts'
+import { fetchAllRows, listAllEntries, planSweep } from '../_shared/sweep.ts'
 
 const supabase = createSupabaseServiceClient()
 const BOOKING_BUCKET = 'booking-photos'
@@ -76,13 +76,15 @@ serve(async (req) => {
         root,
         depth,
         minAgeMs: MIN_AGE_MS,
-        list: async (prefix) => {
+        // Папка целиком, страницами: без offset `list` отдавал всегда одну и
+        // ту же первую сотню, и сироты дальше неё не находились никогда.
+        list: (prefix) => listAllEntries(async (offset, limit) => {
           const { data, error } = await supabase.storage
             .from(bucket)
-            .list(prefix, { limit: PAGE })
+            .list(prefix, { limit, offset, sortBy: { column: 'name', order: 'asc' } })
           if (error) throw new Error(`list ${bucket}:${prefix || '/'}: ${error.message}`)
           return data || []
-        },
+        }, PAGE),
       })
 
       if (plan.orphans.length === 0) {
@@ -95,18 +97,21 @@ serve(async (req) => {
       return { checked: plan.checked, scanned: plan.scanned, removed: plan.orphans.length }
     }
 
+    // Ссылки из базы — ВСЕ строки, страницами и со сверкой счёта
+    // (fetchAllRows). Один select резался бы лимитом Max rows, и всё, что
+    // в него не влезло, ушло бы в сироты — то есть под удаление. Неполная
+    // выборка бросает, и уборка не удаляет ничего (ответ — 500 с причиной).
+
     // --- booking-photos: удерживает строка в booking_photos ---
-    const { data: photoRows, error: photoErr } = await supabase
-      .from('booking_photos')
-      .select('storage_path')
     // Код — в error, причина — в detail: ответ читает журнал cron, и
     // причина ему нужна, но договор «error — это код» един для всех функций.
-    if (photoErr) return json({ error: 'internal_error', detail: photoErr.message }, 500)
+    const photoRows = await fetchAllRows<{ storage_path: string }>((from, to) =>
+      supabase.from('booking_photos').select('storage_path', { count: 'exact' }).order('id').range(from, to))
 
     // Пути `<booking_id>/<phase>/<файл>`: от пустого корня два уровня папок.
     const bookings = await sweep(
       BOOKING_BUCKET,
-      new Set((photoRows || []).map((r) => r.storage_path as string)),
+      new Set(photoRows.map((r) => r.storage_path)),
       '',
       2,
     )
@@ -117,16 +122,14 @@ serve(async (req) => {
     // молчания: неузнанный путь выглядит сиротой, и уборка снесла бы живой
     // снимок с витрины. Поэтому разбор вынесен в отдельный модуль и покрыт
     // тестами на стороне браузера (`src/lib/__tests__/itemPhotos.test.ts`).
-    const { data: itemRows, error: itemErr } = await supabase
-      .from('items')
-      .select('photos')
-    if (itemErr) return json({ error: 'internal_error', detail: itemErr.message }, 500)
+    const itemRows = await fetchAllRows<{ photos?: unknown }>((from, to) =>
+      supabase.from('items').select('photos', { count: 'exact' }).order('id').range(from, to))
 
     // Пути `items/<uid>/<файл>`: первый сегмент фиксирован, значит от корня
     // `items` остаётся ОДИН уровень папок, а не два.
     const items = await sweep(
       ITEM_PHOTOS_BUCKET,
-      new Set((itemRows || []).flatMap((i: { photos?: unknown }) => itemPhotoPaths(i.photos))),
+      new Set(itemRows.flatMap((i) => itemPhotoPaths(i.photos))),
       'items',
       1,
     )
@@ -141,18 +144,16 @@ serve(async (req) => {
     // Внешние адреса (аватар из OAuth, ссылка, вставленная руками, пока поле
     // было текстовым) `avatarPath` отбрасывает: они не в нашем бакете, и
     // держать по ним нечего.
-    const { data: userRows, error: userErr } = await supabase
-      .from('users')
-      .select('avatar_url')
-    if (userErr) return json({ error: 'internal_error', detail: userErr.message }, 500)
+    const userRows = await fetchAllRows<{ avatar_url?: unknown }>((from, to) =>
+      supabase.from('users').select('avatar_url', { count: 'exact' }).order('id').range(from, to))
 
     // Пути `<uid>.<расширение>` лежат в корне бакета: папок между корнем и
     // файлами нет вовсе.
     const avatars = await sweep(
       AVATARS_BUCKET,
       new Set(
-        (userRows || [])
-          .map((u: { avatar_url?: unknown }) => avatarPath(u.avatar_url))
+        userRows
+          .map((u) => avatarPath(u.avatar_url))
           .filter((p): p is string => p !== null),
       ),
       '',
