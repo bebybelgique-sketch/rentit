@@ -452,7 +452,7 @@
     "not3": "Vandaag geen commissie. Komen er ooit betalende opties, dan worden ze aangekondigd, niet stilletjes ingevoerd.",
     "not4": "Geen beloofd bezoek. Een advertentie is zichtbaar; ze verkoopt zichzelf niet.",
     "stateTitle": "Waar we echt staan",
-    "stateBody": "De etalage is nieuw en leeg: de demonstratie-advertenties zijn verwijderd, want een verzonnen catalogus zegt niets waars. We zoeken de eerste verhuurders van Waals-Brabant. Eerste zijn betekent weinig concurrentie en een luisterend oor — geen rij wachtende klanten.",
+    "stateBody": "De etalage is nieuw: de demonstratie-advertenties zijn verwijderd, want een verzonnen catalogus zegt niets waars. We zoeken de eerste verhuurders van Waals-Brabant. Eerste zijn betekent weinig concurrentie en een luisterend oor — geen rij wachtende klanten.",
     "ctaPrimary": "Account aanmaken",
     "ctaSecondary": "Bekijk de etalage"
   },
@@ -512,6 +512,9 @@
     "renterTitle": "Er staat vandaag niets online — we verbergen dat niet.",
     "renterBody": "Kijk gerust, of kom terug wanneer een buur het eerste gereedschap heeft geplaatst.",
     "finalTitle": "Het eerste gereedschap van Waals-Brabant staat nog niet online.",
+    "renterTitleLive": "Gereedschap nodig? Misschien heeft een buur het.",
+    "renterBodyLive": "Elk gereedschap in de etalage is van iemand uit Waals-Brabant. Jij kiest de data, de eigenaar beslist, je betaalt bij de overhandiging.",
+    "finalTitleLive": "Gereedschap dat in je garage ligt, kan dit weekend een buur helpen.",
     "finalBody": "Vijf minuten, gratis, en elke aanvraag blijft jouw beslissing.",
     "finalCta": "Gereedschap plaatsen",
     "privacy": "Privacy",

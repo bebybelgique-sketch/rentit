@@ -452,7 +452,7 @@
     "not3": "Aucune commission aujourd'hui. Si des options payantes arrivent un jour, elles seront annoncées, pas glissées.",
     "not4": "Aucun trafic promis. Une annonce est visible, elle ne se vend pas toute seule.",
     "stateTitle": "Où nous en sommes, sans arrondi",
-    "stateBody": "La vitrine est neuve et vide : les annonces de démonstration ont été retirées, parce qu'un catalogue inventé ne dit rien de vrai. Nous cherchons les premiers loueurs du Brabant wallon. Être le premier, c'est peu de concurrence et une oreille attentive — pas une file d'attente de clients.",
+    "stateBody": "La vitrine est neuve : les annonces de démonstration ont été retirées, parce qu'un catalogue inventé ne dit rien de vrai. Nous cherchons les premiers loueurs du Brabant wallon. Être le premier, c'est peu de concurrence et une oreille attentive — pas une file d'attente de clients.",
     "ctaPrimary": "Créer un compte",
     "ctaSecondary": "Voir la vitrine"
   },
@@ -512,6 +512,9 @@
     "renterTitle": "La vitrine est vide aujourd’hui — nous ne le cachons pas.",
     "renterBody": "Regardez ce qu’il y a, ou revenez quand un voisin aura déposé le premier outil.",
     "finalTitle": "Le premier outil du Brabant Wallon n’est pas encore en ligne.",
+    "renterTitleLive": "Besoin d’un outil ? Un voisin l’a peut-être.",
+    "renterBodyLive": "Chaque outil de la vitrine appartient à quelqu’un du Brabant wallon. Vous choisissez les dates, il décide, vous réglez en main propre.",
+    "finalTitleLive": "Un outil qui dort dans votre garage peut servir à un voisin ce week-end.",
     "finalBody": "Cinq minutes, gratuit, et vous restez maître de chaque demande.",
     "finalCta": "Déposer un outil",
     "privacy": "Confidentialité",
