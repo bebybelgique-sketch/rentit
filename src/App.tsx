@@ -102,7 +102,14 @@ function Navbar({ taskCount }: NavbarProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  // Вход и регистрация из шапки возвращают туда, где человек стоял, —
+  // тот же путь `from`, что кладёт страж маршрута. Со страниц входа и
+  // регистрации их собственный `from` передаётся дальше как есть.
+  const onAuthPage = location.pathname === '/login' || location.pathname === '/register'
+  const authState = onAuthPage ? location.state : { from: `${location.pathname}${location.search}` }
 
   const logout = async () => {
     // Устройство перестаёт получать уведомления этой учётки. ДО signOut:
@@ -199,8 +206,8 @@ function Navbar({ taskCount }: NavbarProps) {
             </>
           ) : (
             <>
-              <Link to="/login" className="navbar-link" onClick={close}>{t('login')}</Link>
-              <Link to="/register" className="btn btn-primary btn-sm" onClick={close}>{t('signup')}</Link>
+              <Link to="/login" state={authState} className="navbar-link" onClick={close}>{t('login')}</Link>
+              <Link to="/register" state={authState} className="btn btn-primary btn-sm" onClick={close}>{t('signup')}</Link>
             </>
           )}
           <div ref={langRef} style={{ position: 'relative' }}>

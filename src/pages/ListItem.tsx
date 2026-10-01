@@ -435,7 +435,9 @@ function ListItemForm({ start }: { start: ListingStart }) {
         {t('addPhotoHint')}
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', alignItems: 'center' }}>
-        <Link to="/profile" className="btn btn-primary" style={{ minHeight: '48px', fontSize: '16px', padding: '14px 32px' }}>
+        {/* Профиль после сохранения фото возвращает сюда (state.from):
+            иначе человек оставался в профиле без дороги к форме. */}
+        <Link to="/profile" state={{ from: '/list-item' }} className="btn btn-primary" style={{ minHeight: '48px', fontSize: '16px', padding: '14px 32px' }}>
           {t('addPhotoBtn')}
         </Link>
         {/* Выход, которого не было. Без него экран — стена. */}
