@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { SITE_URL } from '../_shared/operator.ts'
 import { pushForBookingEvent, supabaseDeps } from '../_shared/push.ts'
+import { esc } from '../_shared/html.ts'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -124,17 +125,27 @@ serve(async (req) => {
     const myRentalsLink = `${APP_URL}/my-rentals`
     // payLink больше не нужен: оплаты в платформе нет
 
+    // Всё, что написали люди, — только экранированным (см. esc). Сырые
+    // значения остаются для темы письма: она текст, а не HTML.
+    const title = esc(item?.title)
+    const renterName = esc(renter?.full_name)
+    const ownerName = esc(owner?.full_name)
+    const renterPhone = esc(renter?.phone)
+    const ownerPhone = esc(owner?.phone)
+    const requestMessage = esc(booking.request_message)
+    const dates = `${esc(booking.start_date)} → ${esc(booking.end_date)}`
+
     // --- NEW: Owner receives rental request ---
     if (event === 'pending_approval') {
       if (ownerEmail) {
         await sendEmail(ownerEmail, `Nouvelle demande de location : ${item?.title}`, `
           <h2>Vous avez une nouvelle demande de location</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>Demandeur : <strong>${renter?.full_name}</strong></p>
-          <p>Dates : ${booking.start_date} → ${booking.end_date} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
+          <p>Article : <strong>${title}</strong></p>
+          <p>Demandeur : <strong>${renterName}</strong></p>
+          <p>Dates : ${dates} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
           <p>Prix de location : €${Number(booking.total_price).toFixed(2)}</p>
           ${booking.delivery_requested ? `<p>Livraison demandée : <strong>€${Number(booking.delivery_fee).toFixed(2)}</strong> — à régler sur place, en plus de la location.</p>` : ''}
-          ${booking.request_message ? `<p>Message : <em>"${booking.request_message}"</em></p>` : ''}
+          ${booking.request_message ? `<p>Message : <em>"${requestMessage}"</em></p>` : ''}
           <p><strong>Vous avez 24 heures pour répondre.</strong> Passé ce délai, la demande sera automatiquement annulée.</p>
           <p><a href="${myItemsLink}" style="background:#080808;color:#F2F0EB;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block;margin-top:8px;">Répondre à la demande</a></p>
         `)
@@ -146,13 +157,13 @@ serve(async (req) => {
       if (renterEmail) {
         await sendEmail(renterEmail, `Réservation confirmée — ${item?.title}`, `
           <h2>Votre réservation est confirmée</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>Dates : ${booking.start_date} → ${booking.end_date} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
+          <p>Article : <strong>${title}</strong></p>
+          <p>Dates : ${dates} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
           <p>Montant convenu : €${Number(booking.total_price).toFixed(2)}${booking.deposit_amount > 0 ? ` + €${Number(booking.deposit_amount).toFixed(2)} de caution` : ''}</p>
           ${booking.delivery_requested ? `<p>Livraison : <strong>€${Number(booking.delivery_fee).toFixed(2)}</strong>, en plus du montant ci-dessus. Convenez de l'adresse avec le propriétaire.</p>` : ''}
           <p><strong>Le règlement se fait en espèces, directement au propriétaire, lors de la remise de l'article.</strong> RentIt ne perçoit aucun paiement et ne prélève aucune commission.</p>
           <p>Convenez ensemble du lieu et de l'heure de la remise. Pensez à rendre l'article dans l'état où vous l'avez reçu — la caution vous sera restituée à la restitution.</p>
-          <p>Propriétaire : <strong>${owner?.full_name || '—'}</strong>${owner?.phone ? ` · ${owner.phone}` : ''}</p>
+          <p>Propriétaire : <strong>${ownerName || '—'}</strong>${ownerPhone ? ` · ${ownerPhone}` : ''}</p>
           <p><a href="${APP_URL}/my-rentals" style="background:#080808;color:#F2F0EB;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block;margin-top:8px;">Voir ma réservation</a></p>
         `)
       }
@@ -161,9 +172,9 @@ serve(async (req) => {
       if (ownerEmail) {
         await sendEmail(ownerEmail, `Réservation confirmée — ${item?.title}`, `
           <h2>Vous avez accepté cette demande</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>Locataire : <strong>${renter?.full_name || '—'}</strong>${renter?.phone ? ` · ${renter.phone}` : ''}</p>
-          <p>Dates : ${booking.start_date} → ${booking.end_date} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
+          <p>Article : <strong>${title}</strong></p>
+          <p>Locataire : <strong>${renterName || '—'}</strong>${renterPhone ? ` · ${renterPhone}` : ''}</p>
+          <p>Dates : ${dates} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
           <p>Montant convenu : €${Number(booking.total_price).toFixed(2)}${booking.deposit_amount > 0 ? ` + €${Number(booking.deposit_amount).toFixed(2)} de caution` : ''}, à percevoir <strong>en espèces</strong> lors de la remise.</p>
           <p><a href="${myItemsLink}">Gérer mes annonces</a></p>
         `)
@@ -175,8 +186,8 @@ serve(async (req) => {
       if (renterEmail) {
         await sendEmail(renterEmail, `Demande refusée : ${item?.title}`, `
           <h2>Votre demande de location a été refusée</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>Dates demandées : ${booking.start_date} → ${booking.end_date}</p>
+          <p>Article : <strong>${title}</strong></p>
+          <p>Dates demandées : ${dates}</p>
           <p>Le propriétaire ne peut pas honorer cette demande. Vous pouvez chercher d'autres outils disponibles.</p>
           <p><a href="${APP_URL}/browse">Parcourir les outils disponibles</a></p>
         `)
@@ -188,8 +199,8 @@ serve(async (req) => {
       if (renterEmail) {
         await sendEmail(renterEmail, `Demande expirée : ${item?.title}`, `
           <h2>Votre demande de location a expiré</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>Dates demandées : ${booking.start_date} → ${booking.end_date}</p>
+          <p>Article : <strong>${title}</strong></p>
+          <p>Dates demandées : ${dates}</p>
           <p>Le propriétaire n'a pas répondu dans les 24 heures. La demande a été annulée automatiquement.</p>
           <p><a href="${APP_URL}/browse">Parcourir les outils disponibles</a></p>
         `)
@@ -201,9 +212,9 @@ serve(async (req) => {
       if (ownerEmail) {
         await sendEmail(ownerEmail, `Paiement non reçu : ${item?.title}`, `
           <h2>Le locataire n'a pas finalisé le paiement</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>Locataire : <strong>${renter?.full_name}</strong></p>
-          <p>Dates : ${booking.start_date} → ${booking.end_date}</p>
+          <p>Article : <strong>${title}</strong></p>
+          <p>Locataire : <strong>${renterName}</strong></p>
+          <p>Dates : ${dates}</p>
           <p>Le locataire n'a pas payé dans le délai de 2 heures. Ces dates sont à nouveau disponibles.</p>
           <p><a href="${myItemsLink}">Gérer mes annonces</a></p>
         `)
@@ -215,44 +226,76 @@ serve(async (req) => {
       if (renterEmail) {
         await sendEmail(renterEmail, `Réservation confirmée : ${item?.title}`, `
           <h2>Votre location est confirmée !</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>Dates : ${booking.start_date} → ${booking.end_date} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
+          <p>Article : <strong>${title}</strong></p>
+          <p>Dates : ${dates} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
           <p>Total payé : €${(booking.amount_paid / 100).toFixed(2)}</p>
-          ${owner?.phone ? `<p>Téléphone du propriétaire : <strong>${owner.phone}</strong></p>` : ''}
+          ${ownerPhone ? `<p>Téléphone du propriétaire : <strong>${ownerPhone}</strong></p>` : ''}
           <p><a href="${myRentalsLink}">Voir mes locations</a></p>
         `)
       }
       if (ownerEmail) {
         await sendEmail(ownerEmail, `Nouvelle location confirmée : ${item?.title}`, `
           <h2>Votre outil a été loué !</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>Locataire : <strong>${renter?.full_name}</strong></p>
-          <p>Dates : ${booking.start_date} → ${booking.end_date} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
+          <p>Article : <strong>${title}</strong></p>
+          <p>Locataire : <strong>${renterName}</strong></p>
+          <p>Dates : ${dates} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
           <p>Revenu de location : €${Number(booking.total_price).toFixed(2)}</p>
           <p><a href="${myItemsLink}">Gérer mes annonces</a></p>
         `)
       }
     }
 
+    // Об отмене узнаёт ТА сторона, которая не отменяла. До 01.10 письмо
+    // уходило только арендатору, кто бы ни отменил: владелец, у которого
+    // арендатор снял бронь накануне, ехал на встречу. Пустой cancelled_by —
+    // бронь закрыл планировщик, и узнают обе стороны (как в ленте).
+    //
+    // Обещания «remboursement complet» больше нет: RentIt денег не держит
+    // (Conditions §6), возвращать нечего.
     if (event === 'cancelled') {
-      if (renterEmail) {
+      const byRenter = booking.cancelled_by === booking.renter_id
+      const byOwner = !!item?.owner_id && booking.cancelled_by === item.owner_id
+      const reason = booking.cancellation_reason?.trim()
+        ? `<p>Motif : <em>"${esc(booking.cancellation_reason.trim())}"</em></p>`
+        : ''
+      const toRenter = !byRenter
+      const toOwner = !byOwner
+      if (toRenter && renterEmail) {
         await sendEmail(renterEmail, `Location annulée : ${item?.title}`, `
           <h2>Votre location a été annulée</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>Dates : ${booking.start_date} → ${booking.end_date}</p>
-          <p>Si vous avez payé, vous recevrez un remboursement complet.</p>
+          <p>Article : <strong>${title}</strong></p>
+          <p>Dates : ${dates}</p>
+          ${reason}
+          <p>RentIt ne perçoit aucun paiement : il n'y a rien à rembourser de notre côté.</p>
           <p><a href="${APP_URL}/browse">Parcourir les outils</a></p>
         `)
       }
+      if (toOwner && ownerEmail) {
+        await sendEmail(ownerEmail, `Location annulée : ${item?.title}`, `
+          <h2>La location de votre outil a été annulée</h2>
+          <p>Article : <strong>${title}</strong></p>
+          <p>Locataire : <strong>${renterName || '—'}</strong></p>
+          <p>Dates : ${dates}</p>
+          ${reason}
+          <p>Ces dates sont à nouveau libres pour d'autres demandes.</p>
+          <p><a href="${myItemsLink}">Gérer mes annonces</a></p>
+        `)
+      }
     }
+
+    // Залог — между сторонами, наличными. Писать «sera remboursée» значило
+    // обещать от имени площадки то, чего она не держит и не возвращает.
+    const depositLine = Number(booking.deposit_amount) > 0
+      ? `<p>La caution (€${Number(booking.deposit_amount).toFixed(2)}) se règle directement entre vous, à la restitution de l'outil.</p>`
+      : ''
 
     if (event === 'active') {
       if (renterEmail) {
         await sendEmail(renterEmail, `Location démarrée : ${item?.title}`, `
           <h2>La période de location a commencé</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>À retourner avant le : <strong>${booking.end_date}</strong></p>
-          <p>Votre caution de €${booking.deposit_amount} sera remboursée après le retour de l'outil.</p>
+          <p>Article : <strong>${title}</strong></p>
+          <p>À retourner avant le : <strong>${esc(booking.end_date)}</strong></p>
+          ${depositLine}
         `)
       }
     }
@@ -261,9 +304,9 @@ serve(async (req) => {
       if (renterEmail) {
         await sendEmail(renterEmail, `Location terminée : ${item?.title}`, `
           <h2>Location terminée — merci !</h2>
-          <p>Article : <strong>${item?.title}</strong></p>
-          <p>Votre caution de €${booking.deposit_amount} sera remboursée prochainement.</p>
-          <p>Laisser un avis : <a href="${APP_URL}/item/${booking.item_id}">Évaluer cet outil</a></p>
+          <p>Article : <strong>${title}</strong></p>
+          ${depositLine}
+          <p>Laisser un avis : <a href="${APP_URL}/item/${esc(booking.item_id)}">Évaluer cet outil</a></p>
         `)
       }
     }
