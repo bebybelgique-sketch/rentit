@@ -452,7 +452,7 @@
     "not3": "No commission today. If paid options ever arrive, they will be announced, not slipped in.",
     "not4": "No traffic promised. A listing is visible; it does not sell itself.",
     "stateTitle": "Where we actually stand",
-    "stateBody": "The showcase is new and empty: the demo listings were removed, because an invented catalogue tells you nothing true. We are looking for the first rental businesses in Walloon Brabant. Being first means little competition and a listening ear — not a queue of customers.",
+    "stateBody": "The showcase is new: the demo listings were removed, because an invented catalogue tells you nothing true. We are looking for the first rental businesses in Walloon Brabant. Being first means little competition and a listening ear — not a queue of customers.",
     "ctaPrimary": "Create an account",
     "ctaSecondary": "See the showcase"
   },
@@ -512,6 +512,9 @@
     "renterTitle": "There is nothing listed today — we are not hiding it.",
     "renterBody": "Have a look anyway, or come back once a neighbour has listed the first tool.",
     "finalTitle": "The first tool in Walloon Brabant is not online yet.",
+    "renterTitleLive": "Need a tool? A neighbour may have it.",
+    "renterBodyLive": "Every tool in the showcase belongs to someone in Walloon Brabant. You pick the dates, the owner decides, you pay in person at handover.",
+    "finalTitleLive": "A tool sleeping in your garage could help a neighbour this weekend.",
     "finalBody": "Five minutes, free, and every request stays your call.",
     "finalCta": "List a tool",
     "privacy": "Privacy",

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import HeroSection from '../components/landing/HeroSection'
 import CategoriesSection from '../components/landing/CategoriesSection'
 import { useDefaultPageTitle } from '../hooks/usePageTitle'
+import { useCatalogHasItems } from '../hooks/useCatalogHasItems'
 
 /**
  * Лендинг.
@@ -41,6 +42,13 @@ export default function Landing() {
   // поисковика и для превью. Завести здесь вторую копию той же
   // маркетинговой строки значило бы развести их при первой же правке.
   useDefaultPageTitle()
+
+  // Пустоту витрины страница называет вслух — но только пока она правда.
+  // Тот же счёт и та же запись кэша, что у героя (HeroSection): строки о
+  // пустом каталоге стояли без условия и соврали бы в минуту первой вещи —
+  // первому же владельцу. Пока ответа нет (undefined), показываем тексты,
+  // верные при любом каталоге.
+  const { catalogIsEmpty } = useCatalogHasItems()
 
   const steps = [
     { n: '01', title: t('landing.step1Title'), body: t('landing.step1Body') },
@@ -124,9 +132,11 @@ export default function Landing() {
           </div>
           <div>
             <h2 className="lp-h2" style={{ fontSize: 'clamp(21px, 2.9vw, 30px)', maxWidth: '26ch', marginBottom: 'var(--space-4)' }}>
-              {t('landing.renterTitle')}
+              {catalogIsEmpty ? t('landing.renterTitle') : t('landing.renterTitleLive')}
             </h2>
-            <p className="lp-txt" style={{ marginBottom: 'var(--space-5)' }}>{t('landing.renterBody')}</p>
+            <p className="lp-txt" style={{ marginBottom: 'var(--space-5)' }}>
+              {catalogIsEmpty ? t('landing.renterBody') : t('landing.renterBodyLive')}
+            </p>
             <div className="lp-btns">
               <Link to="/browse" className="lp-btn lp-btn-alt">{t('landing.ctaSecondary')}</Link>
             </div>
@@ -136,7 +146,7 @@ export default function Landing() {
 
       <section className="lp-band lp-band-dark lp-final">
         <div className="lp-wrap">
-          <h2 className="lp-h2">{t('landing.finalTitle')}</h2>
+          <h2 className="lp-h2">{catalogIsEmpty ? t('landing.finalTitle') : t('landing.finalTitleLive')}</h2>
           <p className="lp-txt" style={{ maxWidth: '46ch' }}>{t('landing.finalBody')}</p>
           <div className="lp-btns">
             <Link to="/list-item" className="lp-btn lp-btn-do">{t('landing.finalCta')}</Link>
