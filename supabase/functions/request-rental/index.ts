@@ -100,19 +100,11 @@ serve(async (req) => {
       return json({ error: 'dates_unavailable', day: problem.day }, 409)
     }
 
-    // Повторная заявка того же человека на пересекающиеся даты. Правило
-    // про арендатора, а не про вещь, но пересечение считает та же
-    // сторона — база (см. миграцию 20260817000022, раздел 9).
-    const { data: duplicate } = await supabase.rpc('renter_has_pending_request', {
-      p_item_id: item_id,
-      p_renter_id: user.id,
-      p_start: start_date,
-      p_end: end_date,
-    })
-
-    if (duplicate) {
-      return json({ error: 'duplicate_request' }, 409)
-    }
+    // Повторная заявка того же человека на пересекающиеся даты отсекается
+    // при вставке ниже — ограничением bookings_one_pending_request
+    // (миграция 45). Проверки «спросить, потом вставить» здесь нет
+    // намеренно: два одновременных запроса оба слышали «нет» и оба
+    // вставляли.
 
     // Calculate amounts for the booking record
     // ВАЖНО: формула числа дней сохранена как есть (product owner решает изменение)
@@ -167,6 +159,12 @@ serve(async (req) => {
       .select('id')
       .single()
 
+    // 23P01 — сработало ограничение исключения: своя заявка на эти даты уже
+    // ждёт ответа. В том числе когда это тот же запрос, пришедший второй
+    // раз, пока первый ещё писался.
+    if (bookingErr?.code === '23P01') {
+      return json({ error: 'duplicate_request' }, 409)
+    }
     if (bookingErr) {
       console.error(bookingErr)
       return json({ error: 'internal_error' }, 500)

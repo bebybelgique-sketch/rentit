@@ -217,6 +217,20 @@ try {
   check(!!firstAsk.bookingId && !secondAsk.bookingId && secondAsk.err === 'duplicate_request',
     'повторная заявка на те же даты → duplicate_request', `${firstAsk.err ?? ''} ${secondAsk.err ?? ''}`)
 
+  // Две ОДИНАКОВЫЕ заявки одновременно — ровно одна бронь (миграция 45).
+  // До неё обе слышали «дубля нет» и обе вставляли: проверка и вставка
+  // были двумя запросами без блокировки. Даты свои: брони выше не
+  // удаляются (клиенту нельзя с миграции 37) и ещё ждут ответа.
+  const race = await Promise.all([
+    ask({ item_id: itemId, start_date: day(30), end_date: day(31) }),
+    ask({ item_id: itemId, start_date: day(30), end_date: day(31) }),
+  ])
+  const raceWon = race.filter((r) => r.bookingId)
+  const raceLost = race.filter((r) => !r.bookingId)
+  check(raceWon.length === 1 && raceLost.length === 1 && raceLost[0].err === 'duplicate_request',
+    'две одновременные заявки на те же даты → одна бронь и duplicate_request',
+    `броней ${raceWon.length}, отказы: ${raceLost.map((r) => r.err).join(', ') || 'нет'}`)
+
   // ── Снятые функции платной модели ───────────────────────────────────
   // Сторож против случайного возврата: 12.08 пять функций Stripe были
   // сняты с развёртывания и уехали в parked/. Если какая-то вернётся

@@ -862,15 +862,6 @@ export type Database = {
         }
         Returns: string
       }
-      renter_has_pending_request: {
-        Args: {
-          p_end: string
-          p_item_id: string
-          p_renter_id: string
-          p_start: string
-        }
-        Returns: boolean
-      }
       unavailable_days: {
         Args: {
           p_exclude_booking?: string
