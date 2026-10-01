@@ -236,6 +236,8 @@
     "requestsCount_one": "{{count}} aanvraag",
     "requestsCount_other": "{{count}} aanvragen",
     "deleteConfirm": "Deze advertentie verwijderen? Dit kan niet ongedaan worden gemaakt.",
+    "deleteBlocked_one": "Deze advertentie heeft een lopende aanvraag of reservering. Verwijderen wist ook die van je buur, zonder hem te verwittigen. Verberg haar liever: ze verdwijnt uit de etalage, de reservering blijft.",
+    "deleteBlocked_other": "Deze advertentie heeft {{count}} lopende aanvragen of reserveringen. Verwijderen wist die ook, zonder je buren te verwittigen. Verberg haar liever: ze verdwijnt uit de etalage, de reserveringen blijven.",
     "title": "Mijn gereedschap",
     "newListing": "+ Nieuwe advertentie",
     "activeTab": "Actief",
