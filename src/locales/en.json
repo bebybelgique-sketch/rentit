@@ -236,6 +236,8 @@
     "requestsCount_one": "{{count}} request",
     "requestsCount_other": "{{count}} requests",
     "deleteConfirm": "Delete this listing? This action cannot be undone.",
+    "deleteBlocked_one": "This listing has a request or booking in progress. Deleting it would erase your neighbour's too, without telling them. Hide it instead: it leaves the showcase, the booking stays.",
+    "deleteBlocked_other": "This listing has {{count}} requests or bookings in progress. Deleting it would erase them too, without telling your neighbours. Hide it instead: it leaves the showcase, the bookings stay.",
     "title": "My tools",
     "newListing": "+ New listing",
     "activeTab": "Active",

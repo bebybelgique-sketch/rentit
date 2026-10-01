@@ -14,6 +14,13 @@ import { useDeleteItem } from '../hooks/mutations/useDeleteItem'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { errorText } from '../lib/errorText'
 
+/**
+ * Брони, которые ещё живут: заявка ждёт ответа или сделка не закрыта.
+ * Тот же список, что у delete-account на сервере, — удаление учётки
+ * отказывает при них по той же причине.
+ */
+const LIVE_BOOKING_STATUSES = ['pending_approval', 'pending_payment', 'confirmed', 'active']
+
 // Прямых обращений к базе и ручных setQueryData на этой странице больше нет.
 //
 // До 06.09 «скрыть» и «удалить» звали supabase из компонента и сами правили
@@ -44,7 +51,18 @@ export default function MyItems() {
     setAvailability.mutate({ id, available: !current })
   }
 
-  const askDeleteItem = (id: string) => {
+  // Вещь с живыми бронями не удаляется. Брони висят на ней каскадом
+  // (bookings.item_id … on delete cascade): удаление молча стирало чужую
+  // заявку или подтверждённую бронь — вместе с перепиской, фото и записью в
+  // ленте, без отмены и без уведомления соседа. Условия обещают отмену «с
+  // автором, датой и причиной», а не исчезновение. Скрыть вещь можно всегда:
+  // она уходит с витрины, брони остаются.
+  const askDeleteItem = (id: string, bookings: Array<{ status: string | null }>) => {
+    const live = bookings.filter(b => LIVE_BOOKING_STATUSES.includes(b.status ?? '')).length
+    if (live > 0) {
+      alert(t('myItems.deleteBlocked', { count: live }))
+      return
+    }
     if (!confirm(t('myItems.deleteConfirm'))) return
     removeItem.mutate({ id })
   }
@@ -246,7 +264,7 @@ export default function MyItems() {
                         {(item.available ?? false) ? t('myItems.hide') : t('myItems.show')}
                       </button>
                       <button
-                        onClick={() => askDeleteItem(item.id)}
+                        onClick={() => askDeleteItem(item.id, item.bookings)}
                         className="btn btn-sm"
                         style={{ color: 'var(--danger)', border: '1.5px solid var(--danger)', background: 'transparent' }}
                       >

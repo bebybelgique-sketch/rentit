@@ -236,6 +236,8 @@
     "requestsCount_one": "{{count}} demande",
     "requestsCount_other": "{{count}} demandes",
     "deleteConfirm": "Supprimer cette annonce ? Cette action est irréversible.",
+    "deleteBlocked_one": "Cette annonce a une demande ou une réservation en cours. La supprimer effacerait aussi celle de votre voisin, sans le prévenir. Masquez-la plutôt : elle disparaît de la vitrine, la réservation reste.",
+    "deleteBlocked_other": "Cette annonce a {{count}} demandes ou réservations en cours. La supprimer les effacerait aussi, sans prévenir vos voisins. Masquez-la plutôt : elle disparaît de la vitrine, les réservations restent.",
     "title": "Mes outils",
     "newListing": "+ Nouvelle annonce",
     "activeTab": "Actifs",
