@@ -181,6 +181,13 @@ serve(async (req) => {
       approved_at: new Date().toISOString(),
     }).eq('id', booking_id).eq('status', 'pending_approval').select('id')
     if (approveErr) {
+      // Триггер занятости отклонил одобрение: даты уже отдал другой
+      // подтверждённой брони — например, одновременное одобрение соседней
+      // заявки выиграло очередь на вещь (миграция 48). Для человека это не
+      // сбой, а «даты заняты».
+      if (approveErr.message?.includes('Item is not available')) {
+        return fail('dates_unavailable', 409)
+      }
       console.error('[respond-to-request] approve failed', { booking_id, approveErr })
       return fail('update_failed', 500)
     }
