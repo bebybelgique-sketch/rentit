@@ -162,6 +162,35 @@ const main = async () => {
   check('посторонний не видит записей о фото',
         Array.isArray(seen.body) && seen.body.length === 0, JSON.stringify(seen.body));
 
+  // --- Публичный бакет item-photos: своя папка и только картинки (миграция 47) ---
+  // До неё любой вошедший клал в публичный бакет что угодно и куда угодно,
+  // и файл раздавался с домена хранилища проекта.
+  const uploadItemPhoto = (token, path, type = 'image/png', body = PNG) =>
+    api(`/storage/v1/object/item-photos/${path}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': type },
+      body,
+    });
+  const ownPhoto = `items/${owner.id}/${tag}.png`;
+  r = await uploadItemPhoto(owner.token, ownPhoto);
+  check('владелец кладёт снимок вещи в свою папку', r.status === 200, `HTTP ${r.status}`);
+
+  r = await uploadItemPhoto(stranger.token, `items/${owner.id}/${tag}-intrus.png`);
+  check('чужую папку item-photos не занять', r.status >= 400, `HTTP ${r.status}`);
+
+  r = await uploadItemPhoto(owner.token, `${tag}-racine.png`);
+  check('файл вне items/<uid>/ не принимается', r.status >= 400, `HTTP ${r.status}`);
+
+  r = await uploadItemPhoto(owner.token, `items/${owner.id}/${tag}.html`, 'text/html', Buffer.from('<h1>x</h1>'));
+  check('HTML в публичный бакет не кладётся', r.status >= 400, `HTTP ${r.status}`);
+
+  // Свой снимок — за собой: публичный бакет не место для следов прогона.
+  await jsonApi('/storage/v1/object/item-photos', {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${owner.token}` },
+    body: JSON.stringify({ prefixes: [ownPhoto] }),
+  });
+
   console.log(`\nИТОГ: ${pass} прошло, ${fail} провалено`);
   console.log(`МЕТКА ДЛЯ УБОРКИ: ${tag}`);
   if (fail > 0) process.exit(1);
