@@ -117,6 +117,16 @@ const main = async () => {
     return r.body[0]
   }
 
+  // Лента человека по брони: какие события у него записаны. Строку пишет
+  // триггер в той же транзакции, что статус (миграция 46), поэтому она
+  // есть СРАЗУ после ответа функции — без ожидания фоновой рассылки.
+  const feedOf = async (who, bookingId) => {
+    const r = await api(`/rest/v1/notifications?booking_id=eq.${bookingId}&select=kind`, {
+      headers: { Authorization: `Bearer ${who.token}` },
+    })
+    return Array.isArray(r.body) ? r.body.map((n) => n.kind).sort().join(',') : `HTTP ${r.status}`
+  }
+
   // --- Ветка 1: арендатор отменяет заявку до одобрения ---
   const b1 = await request(10, 12)
   check('заявка создана в pending_approval', b1.status === 'pending_approval', b1.status)
@@ -138,6 +148,10 @@ const main = async () => {
   check('статус стал cancelled', s1.status === 'cancelled', s1.status)
   check('записано, кто отменил', s1.cancelled_by === renter.id)
   check('записана причина', s1.cancellation_reason === 'Plus besoin finalement', String(s1.cancellation_reason))
+  const f1Owner = await feedOf(owner, b1.id)
+  check('лента владельца: заявка и отмена арендатором', f1Owner === 'cancelled,new_request', f1Owner)
+  const f1Renter = await feedOf(renter, b1.id)
+  check('лента арендатора: своей отмены не пишет', f1Renter === '', f1Renter)
 
   // --- Ветка 2: полный цикл до completed ---
   const b2 = await request(20, 22)
@@ -190,6 +204,11 @@ const main = async () => {
   r = await fn('transition-booking', owner.token, { booking_id: b2.id, action: 'handover' })
   check('повторный переход из completed отклонён', r.status === 409, `HTTP ${r.status}`)
 
+  const f2Renter = await feedOf(renter, b2.id)
+  check('лента арендатора: одобрение есть, выдачи и возврата нет', f2Renter === 'accepted', f2Renter)
+  const f2Owner = await feedOf(owner, b2.id)
+  check('лента владельца: только заявка', f2Owner === 'new_request', f2Owner)
+
   // --- Ветка 3: владелец отменяет подтверждённую бронь ---
   const b3 = await request(40, 41)
   await fn('respond-to-request', owner.token, { booking_id: b3.id, action: 'approve' })
@@ -199,6 +218,10 @@ const main = async () => {
   check('владелец отменяет подтверждённую бронь', r.status === 200, `HTTP ${r.status}`)
   const s3 = await statusOf(b3.id)
   check('отмена владельцем записана на него', s3.cancelled_by === owner.id)
+  const f3Renter = await feedOf(renter, b3.id)
+  check('лента арендатора: одобрение и отмена владельцем', f3Renter === 'accepted,cancelled', f3Renter)
+  const f3Owner = await feedOf(owner, b3.id)
+  check('лента владельца: своей отмены не пишет', f3Owner === 'new_request', f3Owner)
 
   // --- Ветка 4: переписка и взаимные отзывы по завершённой броне ---
   const msg = await api('/rest/v1/booking_messages', {
