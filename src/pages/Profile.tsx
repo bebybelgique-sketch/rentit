@@ -1,6 +1,6 @@
 // src/pages/Profile.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next'; // Импортируем хук
 import { useAuth } from '../context/AuthContext';
@@ -37,6 +37,11 @@ const Profile: React.FC = () => {
   usePageTitle(t('profile.title')) // Используем хук
   const { user } = useAuth();
   const navigate = useNavigate();
+  // Сюда приводит просьба о фото из формы выкладки (ListItem кладёт
+  // state.from). Сохранили фото — возвращаем к форме: из профиля дороги
+  // к ней не было, и «5 минут» обрывались здесь.
+  const location = useLocation();
+  const returnToListing = (location.state as { from?: string } | null)?.from === '/list-item';
   const queryClient = useQueryClient();
   const updateProfileMutation = useUpdateProfile();
   const deleteAccountMutation = useDeleteAccount();
@@ -110,6 +115,7 @@ const Profile: React.FC = () => {
       });
       setProfileData(prev => ({ ...prev, avatar_url: result.url }));
       toast.success(t('profile.avatarSaved'));
+      if (returnToListing) navigate('/list-item');
     } catch (err: any) {
       // Файл уже в бакете, а ссылка не записалась: показать «готово» здесь
       // значило бы соврать — при перезагрузке аватар исчезнет.

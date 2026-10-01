@@ -95,7 +95,7 @@ export default function Register() {
             </button>
           </form>
           <p style={{ textAlign: 'center', marginTop: '20px', color: '#666', fontSize: '14px' }}>
-            {t('alreadyAccount')} <Link to="/login" style={{ fontWeight: '600' }}>{t('logInLink')}</Link>
+            {t('alreadyAccount')} <Link to="/login" state={{ from }} style={{ fontWeight: '600' }}>{t('logInLink')}</Link>
           </p>
         </div>
       </div>

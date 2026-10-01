@@ -863,9 +863,12 @@ export default function ItemDetail() {
                     </p>
                   </>
                 ) : (
-                  <a href="/login" className="btn btn-secondary" style={{ width: '100%', display: 'block', textAlign: 'center', minHeight: '44px' }}>
+                  // Вход возвращает сюда же, к этой вещи: голая ссылка
+                  // на /login уводила гостя после входа на лендинг, и
+                  // дрель, ради которой он пришёл, надо было искать заново.
+                  <Link to="/login" state={{ from: `/item/${item.id}` }} className="btn btn-secondary" style={{ width: '100%', display: 'block', textAlign: 'center', minHeight: '44px' }}>
                     {t('loginToBook')}
-                  </a>
+                  </Link>
                 )}
               </>
             )}
