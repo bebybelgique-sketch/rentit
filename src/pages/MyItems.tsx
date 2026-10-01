@@ -222,7 +222,9 @@ export default function MyItems() {
                       </div>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         <span className={`tag ${(item.available ?? false) ? 'tag-green' : 'tag-gray'}`}>
-                          {(item.available ?? false) ? t('landing.finalCta') : t('myItems.hidden')}
+                          {/* Статус, а не призыв: тут стояла подпись кнопки лендинга
+                              «Déposer un outil», и выложенная вещь выглядела невыложенной. */}
+                          {(item.available ?? false) ? t('itemDetail.visibleBadge') : t('myItems.hidden')}
                         </span>
                         {pendingRequests.length > 0 && (
                           <span className="tag tag-yellow">

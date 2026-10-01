@@ -1,8 +1,14 @@
 // src/components/common/MessageComposer.tsx
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface MessageComposerProps {
-  onSend: (body: string) => void;
+  /**
+   * Отправка. Если она вернёт обещание, которое разрешится в `false`
+   * (не отправилось), текст возвращается в поле — набирать заново длинное
+   * сообщение о месте и времени встречи никто не станет.
+   */
+  onSend: (body: string) => void | Promise<boolean | void>;
   sending?: boolean;
   disabled?: boolean;
   placeholder?: string;
@@ -12,18 +18,25 @@ interface MessageComposerProps {
 
 const MessageComposer: React.FC<MessageComposerProps> = ({
   onSend, sending = false, disabled = false,
-  placeholder = 'Votre message', sendLabel = 'Envoyer', maxLength = 2000,
+  placeholder, sendLabel, maxLength = 2000,
 }) => {
+  // Подписи — из словаря. До 01.10 значения по умолчанию были вшиты
+  // по-французски, а единственный вызов (BookingThread) их не передавал:
+  // голландец и англичанин писали в поле «Votre message» и жали «Envoyer».
+  const { t } = useTranslation();
   const [value, setValue] = useState('');
   const blocked = disabled || sending;
   const canSend = value.trim().length > 0 && !blocked;
 
-  const submit = () => {
+  const submit = async () => {
     if (!canSend) return;
-    onSend(value.trim());
+    const body = value.trim();
     // Поле очищается сразу: страница перечитает переписку сама, а
     // оставленный текст выглядит как «не отправилось».
     setValue('');
+    const sent = await onSend(body);
+    // Не отправилось — возвращаем текст, если человек не начал писать новый.
+    if (sent === false) setValue((now) => (now === '' ? body : now));
   };
 
   return (
@@ -31,12 +44,12 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
       <textarea
         value={value}
         maxLength={maxLength}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('booking.messagePlaceholder')}
         disabled={blocked}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
           // Enter отправляет, Shift+Enter переносит строку.
-          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void submit(); }
         }}
         rows={1}
         style={{
@@ -47,10 +60,10 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
       <button
         type="button"
         className="btn btn-secondary btn-sm"
-        onClick={submit}
+        onClick={() => void submit()}
         disabled={!canSend}
       >
-        {sending ? '...' : sendLabel}
+        {sending ? '...' : sendLabel ?? t('booking.messageSend')}
       </button>
     </div>
   );

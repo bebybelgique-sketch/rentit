@@ -293,9 +293,13 @@ function ListItemForm({ start }: { start: ListingStart }) {
     if (!(day > 0)) return ''
     const dead: string[] = []
     const p3 = parseFloat(form.price_3days)
-    if (p3 > 0 && p3 >= day * 3) dead.push(`${t('listItem.package3Days')} (€${p3.toFixed(2)}) ${t('listItem.packageWeek') /* coûte plus que 3 jours */} (€${(day * 3).toFixed(2)})`)
+    // Сравнение записано арифметикой, а не словами: до 01.10 вместо «дороже
+    // 3 дней по дневной цене» стояла подпись НЕДЕЛЬНОГО пакета, и выходило
+    // «Forfait 3 jours (€40.00) Forfait semaine (€36.00)» — неправда о
+    // тарифах самого владельца. Формула понятна на любом языке.
+    if (p3 > 0 && p3 >= day * 3) dead.push(`${t('listItem.package3Days')} (€${p3.toFixed(2)} ≥ 3 × €${day.toFixed(2)})`)
     const pw = parseFloat(form.price_week)
-    if (pw > 0 && pw >= day * 7) dead.push(`${t('listItem.packageWeek')} (€${pw.toFixed(2)}) ${t('listItem.packageWeek') /* coûte plus que 7 jours */} (€${(day * 7).toFixed(2)})`)
+    if (pw > 0 && pw >= day * 7) dead.push(`${t('listItem.packageWeek')} (€${pw.toFixed(2)} ≥ 7 × €${day.toFixed(2)})`)
     if (dead.length === 0) return ''
     return t('listItem.packageWarning', { packages: dead.join(' ; ') })
   })()

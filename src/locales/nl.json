@@ -148,7 +148,7 @@
     "depositNonNegative": "Borg kan niet negatief zijn.",
     "package3Days": "3-dagenpakket",
     "packageWeek": "Weekpakket",
-    "lateFeesLabel": "Verspillingsbedrag",
+    "lateFeesLabel": "Bedrag bij te late teruggave",
     "couldNotCreate": "Kan advertentie niet maken. Probeer opnieuw.",
     "titleLabel": "Titel gereedschap *",
     "categoryLabel": "Categorie *",
@@ -162,7 +162,7 @@
     "packageWeekHint": "totale prijs voor 7 dagen",
     "depositLabel": "Borg (€)",
     "depositHint": "Automatisch berekend als 20% van waarde",
-    "lateFeeLabel": "Verspilling (€ / dag)",
+    "lateFeeLabel": "Te late teruggave (€ / dag)",
     "addressLabel": "Straat, plaats (zichtbaar voor huurders)",
     "deletePhoto": "Foto verwijderen",
     "packageWarning": "Opgelet: {{packages}} zal nooit van toepassing zijn. Huurders betalen altijd het laagste tarief.",
@@ -569,6 +569,7 @@
     "handoverTimeHint": "Dagen worden per dag geboekt: spreek hier het uur van ophalen en terugbrengen af.",
     "nothingCharged": "Er wordt niets afgerekend. {{owner}} heeft 24 u om te antwoorden.",
     "depositShort": "{{amount}} borg",
+    "lateFeeLine": "Te late teruggave: {{amount}} / dag",
     "publishedTitle": "Advertentie gepubliceerd",
     "publishedLine": "{{price}}/dag · nu zichtbaar",
     "visibleBadge": "Zichtbaar"
@@ -589,7 +590,7 @@
     "package3DaysHint": "totale prijs voor 3 dagen",
     "packageWeek": "Weekpakket (€)",
     "packageWeekHint": "totale prijs voor 7 dagen",
-    "lateFee": "Verspilling (€ / dag)",
+    "lateFee": "Te late teruggave (€ / dag)",
     "categoryLabel": "Categorie",
     "selectCategory": "Selecteer een categorie",
     "conditionLabel": "Staat",
@@ -618,10 +619,15 @@
     "titleHandover": "Staat gereedschap bij overdracht",
     "titleReturn": "Staat gereedschap bij teruggave",
     "noPhotos": "Geen foto's",
+    "phaseHandover": "Overdracht",
+    "phaseReturn": "Teruggave",
     "deletePhoto": "Foto verwijderen"
   },
   "cancellationNotice": {
-    "noReason": "Geen reden opgegeven"
+    "noReason": "Geen reden opgegeven",
+    "by": "Geannuleerd door {{name}}",
+    "automatic": "Automatisch afgesloten",
+    "automaticReason": "De huurperiode is voorbij en de overhandiging is niet bevestigd."
   },
   "userRating": {
     "reviewCount_one": "{{count}} beoordeling",
