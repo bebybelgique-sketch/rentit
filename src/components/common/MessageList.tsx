@@ -1,5 +1,6 @@
 // src/components/common/MessageList.tsx
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import MessageBubble from './MessageBubble';
 
 export interface MessageListItem {
@@ -7,7 +8,7 @@ export interface MessageListItem {
   body: string;
   createdAt: string;
   senderId: string;
-  senderName: string;
+  senderName: string | null;
 }
 
 interface MessageListProps {
@@ -17,10 +18,11 @@ interface MessageListProps {
 }
 
 const MessageList: React.FC<MessageListProps> = ({
-  messages, currentUserId, emptyLabel = 'Aucun message',
+  messages, currentUserId, emptyLabel,
 }) => {
+  const { t } = useTranslation();
   if (messages.length === 0) {
-    return <p style={{ fontSize: '13px', color: '#666' }}>{emptyLabel}</p>;
+    return <p style={{ fontSize: '13px', color: '#666' }}>{emptyLabel ?? t('booking.messagesEmpty')}</p>;
   }
 
   return (

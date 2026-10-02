@@ -9,7 +9,8 @@ export interface BookingMessage {
   sender_id: string;
   body: string;
   created_at: string;
-  senderName: string;
+  /** null — имя не названо; подпись на языке читателя ставит экран. */
+  senderName: string | null;
 }
 
 // Кто увидит переписку, решает RLS ("Participants read booking messages"),
@@ -49,7 +50,7 @@ const fetchBookingMessages = async (bookingId: string | undefined): Promise<Book
       sender_id: row.sender_id,
       body: row.body,
       created_at: row.created_at,
-      senderName: sender?.full_name || 'Utilisateur',
+      senderName: sender?.full_name || null,
     };
   });
 };

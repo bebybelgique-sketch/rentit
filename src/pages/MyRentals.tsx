@@ -396,7 +396,7 @@ const MyRentals: React.FC = () => {
                     className="card"
                     style={{ padding: '16px', marginBottom: '12px', ...focusStyle(rental.id) }}
                   >
-                    <p><strong>{t('rental.labelItem')}:</strong> {rental.item?.title || 'N/A'}</p>
+                    <p><strong>{t('rental.labelItem')}:</strong> {rental.item?.title || t('myItems.untitled')}</p>
                     <p>
                       <strong>{t('rental.labelOwner')}:</strong> {owner?.full_name || t('rental.unknownUser')}{' '}
                       <UserRatingBadge rating={owner?.rating_as_owner ?? null} role="owner" />
@@ -409,7 +409,7 @@ const MyRentals: React.FC = () => {
                     {rental.delivery_requested && rental.delivery_fee != null && (
                       <p><strong>{t('rental.labelDelivery')}:</strong> €{Number(rental.delivery_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
                     )}
-                    {renderCancellation(rental, owner?.full_name || "l'autre partie")}
+                    {renderCancellation(rental, owner?.full_name || t('cancellationNotice.otherParty'))}
 
                     {CANCELLABLE_BY_RENTER.includes(rental.status ?? '') && (
                       <div style={{ marginTop: '8px' }}>
@@ -429,7 +429,7 @@ const MyRentals: React.FC = () => {
                         itemId={rental.item_id ?? ''}
                         currentUserId={user.id}
                         counterpartyId={owner.id}
-                        counterpartyName={owner.full_name || 'Utilisateur'}
+                        counterpartyName={owner.full_name || t('rental.unknownUser')}
                         status={rental.status ?? 'pending_approval'}
                         role="renter"
                       />
@@ -470,7 +470,7 @@ const MyRentals: React.FC = () => {
                     <strong>{t('rental.labelRenter')}:</strong> {rental.renter?.full_name || t('rental.unknownUser')}{' '}
                     <UserRatingBadge rating={rental.renter?.rating_as_renter ?? null} role="renter" />
                   </p>
-                  <p><strong>{t('rental.labelItem')}:</strong> {rental.item?.title || 'N/A'}</p>
+                  <p><strong>{t('rental.labelItem')}:</strong> {rental.item?.title || t('myItems.untitled')}</p>
                   <p><strong>{t('rental.labelDates')}:</strong> {t('rental.datesRange', { start: formatDate(rental.start_date ?? ''), end: formatDate(rental.end_date ?? '') })}</p>
                   <p><strong>{t('rental.labelStatus')} :</strong> <BookingStatusBadge status={rental.status ?? 'pending_approval'} />{newMark(rental.id)}</p>
                   {/* Поля message в bookings нет: столбец называется
@@ -479,7 +479,7 @@ const MyRentals: React.FC = () => {
                     <p><strong>{t('rental.labelDelivery')}:</strong> €{Number(rental.delivery_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
                   )}
                   {rental.request_message && <p><strong>{t('rental.labelMessage')}:</strong> {rental.request_message}</p>}
-                  {renderCancellation(rental, rental.renter?.full_name || "l'autre partie")}
+                  {renderCancellation(rental, rental.renter?.full_name || t('cancellationNotice.otherParty'))}
 
                   {/* Весь путь сделки владельца — от ответа на заявку до
                       возврата — не покидая эту страницу. Раньше здесь
@@ -499,7 +499,7 @@ const MyRentals: React.FC = () => {
                       itemId={rental.item_id ?? ''}
                       currentUserId={user.id}
                       counterpartyId={rental.renter.id}
-                      counterpartyName={rental.renter.full_name || 'Utilisateur'}
+                      counterpartyName={rental.renter.full_name || t('rental.unknownUser')}
                       status={rental.status ?? 'pending_approval'}
                       role="owner"
                     />

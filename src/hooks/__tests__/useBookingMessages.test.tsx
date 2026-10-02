@@ -46,7 +46,11 @@ describe('useBookingMessages', () => {
     expect(result.current.data?.[0].body).toBe('Bonjour');
   });
 
-  it('не показывает пустоту вместо имени, когда профиль без имени', async () => {
+  // Пустое имя — не подпись. С 02.10 хук отдаёт null, а слово «Utilisateur»
+  // на языке читателя ставит MessageBubble: зашитое здесь французское слово
+  // оседало в кэше и не менялось при смене языка. Инвариант «пустоты вместо
+  // имени не бывает» проверяет MessageBubble.test.
+  it('профиль без имени — имя null, а не пустая строка и не французское слово', async () => {
     mockRows = [{
       id: 'm1', booking_id: 'b1', sender_id: 'u1', body: 'Salut',
       created_at: '2026-08-11T10:00:00Z', users: { full_name: null },
@@ -55,7 +59,7 @@ describe('useBookingMessages', () => {
     const { result } = renderHook(() => useBookingMessages('b1'), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data?.[0].senderName).toBe('Utilisateur');
+    expect(result.current.data?.[0].senderName).toBeNull();
   });
 
   it('пробрасывает ошибку запроса', async () => {

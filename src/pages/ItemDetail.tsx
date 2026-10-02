@@ -898,7 +898,7 @@ export default function ItemDetail() {
               <div className="rating" style={{ marginBottom: '16px' }}>
                 ★ {avgRating.toFixed(1)}
                 <span style={{ color: 'var(--muted)', fontWeight: '400', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>
-                  {' '}({reviews.length} avis)
+                  {' '}({t('userRating.reviewCount', { count: reviews.length })})
                 </span>
               </div>
             )}
@@ -906,7 +906,7 @@ export default function ItemDetail() {
               {reviews.map(r => (
                 <div key={r.id} style={{ borderTop: '1px solid var(--border)', paddingTop: '14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <strong style={{ fontSize: '14px' }}>{r.users?.full_name || 'Anonyme'}</strong>
+                    <strong style={{ fontSize: '14px' }}>{r.users?.full_name || t('rental.unknownUser')}</strong>
                     <span className="rating" style={{ fontSize: '13px' }}>{'★'.repeat(r.rating)}</span>
                   </div>
                   {r.comment && <p style={{ color: '#555', fontSize: '14px', lineHeight: 1.6 }}>{r.comment}</p>}

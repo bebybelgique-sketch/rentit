@@ -13,6 +13,7 @@ import { useSetItemAvailability } from '../hooks/mutations/useSetItemAvailabilit
 import { useDeleteItem } from '../hooks/mutations/useDeleteItem'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { errorText } from '../lib/errorText'
+import { money } from '../domain/push'
 
 /**
  * Брони, которые ещё живут: заявка ждёт ответа или сделка не закрыта.
@@ -218,7 +219,7 @@ export default function MyItems() {
               <div key={item.id} className="card">
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'start' }}>
                   {itemPhotos[0] ? (
-                   <img src={itemPhotos[0]} alt={item.title ?? 'Item'} style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                   <img src={itemPhotos[0]} alt={item.title ?? t('myItems.untitled')} style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
                   ) : (
                     <div style={{ width: '80px', height: '80px', borderRadius: '8px', background: 'var(--surface)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexShrink: 0 }}>
                      <CategoryIcon category={item.category ?? ''} size={32} />
@@ -234,8 +235,8 @@ export default function MyItems() {
                             глазами. */}
                         <h3 style={{ marginBottom: '4px' }}>{item.title ?? t('myItems.untitled')}</h3>
                         <div style={{ color: '#999', fontSize: '13px' }}>
-                          €{item.price_per_day ?? 0}/jour
-                          {(item.deposit ?? 0) > 0 && ` · €${item.deposit ?? 0} caution`}
+                          {money(item.price_per_day ?? 0)}{t('home.perDay')}
+                          {(item.deposit ?? 0) > 0 && ` · ${t('itemDetail.depositShort', { amount: money(item.deposit) })}`}
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -292,7 +293,7 @@ export default function MyItems() {
                         <div key={booking.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8f9ff', padding: '10px 14px', borderRadius: '8px', flexWrap: 'wrap', gap: '10px' }}>
                           <div>
                             <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                              {booking.renter?.full_name ?? 'Utilisateur'}
+                              {booking.renter?.full_name || t('rental.unknownUser')}
                             </div>
                             <div style={{ fontSize: '13px', color: '#666' }}>
                               {(booking.start_date ?? '')} → {(booking.end_date ?? '')} · {t('common.days', { count: booking.total_days ?? 0 })} · €{Number(booking.total_price ?? 0).toFixed(2)}
