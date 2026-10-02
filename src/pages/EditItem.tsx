@@ -45,7 +45,6 @@ const EditItem: React.FC = () => {
     address: string;
     lat: number | null;
     lng: number | null;
-    available: boolean;
     quantity: number;
     min_notice_days: number;
     buffer_days: number;
@@ -68,7 +67,10 @@ const EditItem: React.FC = () => {
     address: '',
     lat: null as number | null,
     lng: null as number | null,
-    available: true,
+    // available в форме НЕТ намеренно: поля для него на экране нет, а
+    // снимок из формы уходил в базу целиком и молча возвращал на витрину
+    // вещь, скрытую в другой вкладке или администратором. Скрыть и показать
+    // — кнопки «Mes outils» (useSetItemAvailability).
     quantity: 1,
     min_notice_days: 0,
     buffer_days: 0,
@@ -98,7 +100,6 @@ const EditItem: React.FC = () => {
         address: item.address ?? '',
         lat: item.lat ?? null,
         lng: item.lng ?? null,
-        available: item.available ?? true,
         quantity: item.quantity ?? 1,
         min_notice_days: item.min_notice_days ?? 0,
         buffer_days: item.buffer_days ?? 0,
@@ -211,11 +212,19 @@ const EditItem: React.FC = () => {
         delivery_radius_km: delivers && delivery_radius_km.trim() !== '' ? parseInt(delivery_radius_km, 10) : null,
       };
 
+      // Файл и база меняются В ПОРЯДКЕ, который ничего не теряет:
+      // новый файл → запись в базу → удаление старого. До 02.10 старый файл
+      // удалялся ДО записи: упала запись (сеть, пустое поле залога) — файла
+      // уже нет, а база ссылается на него, и главное фото объявления битое
+      // на витрине без всякой возможности вернуть.
+      let replaced: string | null = null;
+      let uploaded: string | null = null;
       if (imageFile) {
         // Путь обязан быть `items/<uid>/…`: правило удаления в Storage
         // сверяет владельца со ВТОРЫМ сегментом пути. При прежнем `items/…`
         // файл нельзя было бы удалить даже собственнику.
         const newUrl = await uploadImage(imageFile, `items/${user.id}`);
+        uploaded = itemPhotoPath(newUrl);
 
         // Подпись у поля обещает заменить «l'actuelle» — текущий снимок,
         // то есть первый. Остальные снимки объявления остаются: прежний код
@@ -223,28 +232,39 @@ const EditItem: React.FC = () => {
         // оставлял один.
         const previous = photosOf(item);
         updates.photos = [newUrl, ...previous.slice(1)];
-
-        // Заменённый файл больше ничем не удерживается. Не удалить его
-        // здесь — значит оставить снимок чужой вещи в публичном бакете
-        // навсегда, вопреки обещанию политики конфиденциальности.
-        const replaced = itemPhotoPath(previous[0]);
-        if (replaced) {
-          const { error: rmErr } = await supabase.storage
-            .from(ITEM_PHOTOS_BUCKET)
-            .remove([replaced]);
-          // Уборка не должна валить сохранение: объявление важнее файла, а
-          // недобитый файл подберёт cleanup-orphan-photos.
-          if (rmErr) console.error('Не удалось удалить заменённый снимок:', rmErr.message);
-        }
+        replaced = itemPhotoPath(previous[0]);
       }
       // Без нового файла `photos` не трогаем вовсе — иначе любое изменение
       // цены переписывало бы список снимков.
 
-      await updateItemMutation.mutateAsync({
-        id: itemId!,
-        updates,
-        userId: user.id,
-      });
+      try {
+        await updateItemMutation.mutateAsync({
+          id: itemId!,
+          updates,
+          userId: user.id,
+        });
+      } catch (saveError) {
+        // Запись не прошла: старый снимок на месте и база ссылается на него,
+        // а только что загруженный не удерживается ничем — убираем его.
+        if (uploaded) {
+          const { error: rmNewErr } = await supabase.storage.from(ITEM_PHOTOS_BUCKET).remove([uploaded]);
+          if (rmNewErr) console.error('Не удалось убрать неиспользованный снимок:', rmNewErr.message);
+        }
+        throw saveError;
+      }
+
+      // Заменённый файл больше ничем не удерживается — и только теперь, когда
+      // база ссылается на новый. Не удалить его — значит оставить снимок
+      // чужой вещи в публичном бакете навсегда, вопреки обещанию политики
+      // конфиденциальности.
+      if (replaced) {
+        const { error: rmErr } = await supabase.storage
+          .from(ITEM_PHOTOS_BUCKET)
+          .remove([replaced]);
+        // Уборка не должна валить сохранение: объявление уже записано, а
+        // недобитый файл подберёт cleanup-orphan-photos.
+        if (rmErr) console.error('Не удалось удалить заменённый снимок:', rmErr.message);
+      }
       // Перенаправить на страницу просмотра или список
       alert(t('editItem.updateSuccess'));
       navigate(`/item/${itemId}`);

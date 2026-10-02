@@ -105,13 +105,28 @@ const Profile: React.FC = () => {
     const result = await uploadAvatar(file, user.id);
     if (!result.ok) {
       toast.error(result.text);
+      // Новый снимок не лёг, а прежний уже убран из бакета (порядок
+      // вынужденный, см. useUploadAvatar). Ссылка в профиле теперь ведёт в
+      // пустоту — битая картинка на каждой странице. Стираем её честно:
+      // «фото нет» лучше, чем фото, которое не грузится.
+      if (result.reason === 'upload' && result.previousRemoved && profileData.avatar_url) {
+        try {
+          await updateProfileMutation.mutateAsync({ userId: user.id, updates: { avatar_url: null } });
+          setProfileData(prev => ({ ...prev, avatar_url: '' }));
+        } catch {
+          // Не записалось — останется ссылка; ночная уборка её не тронет, но
+          // и хуже, чем было до попытки, не стало.
+        }
+      }
       return;
     }
 
     try {
       await updateProfileMutation.mutateAsync({
         userId: user.id,
-        updates: { full_name: profileData.full_name, avatar_url: result.url },
+        // Только снимок. Имя здесь не отправляется: человек мог начать его
+        // править и не сохранить — недописанное ушло бы в базу вместе с фото.
+        updates: { avatar_url: result.url },
       });
       setProfileData(prev => ({ ...prev, avatar_url: result.url }));
       toast.success(t('profile.avatarSaved'));
