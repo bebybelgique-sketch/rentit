@@ -163,7 +163,7 @@
     "depositLabel": "Borg (€)",
     "depositHint": "Automatisch berekend als 20% van waarde",
     "lateFeeLabel": "Te late teruggave (€ / dag)",
-    "addressLabel": "Straat, plaats (zichtbaar voor huurders)",
+    "addressLabel": "Gemeente (zichtbaar voor iedereen) — het exacte adres geef je in het gesprek, na akkoord",
     "deletePhoto": "Foto verwijderen",
     "packageWarning": "Opgelet: {{packages}} zal nooit van toepassing zijn. Huurders betalen altijd het laagste tarief.",
     "titlePlaceholder": "bv. boormachine, reiniger",
@@ -600,7 +600,7 @@
     "selectCategory": "Selecteer een categorie",
     "conditionLabel": "Staat",
     "selectCondition": "Selecteer een staat",
-    "addressLabel": "Adres",
+    "addressLabel": "Gemeente (zichtbaar voor iedereen) — het exacte adres geef je in het gesprek, na akkoord",
     "updateButton": "Bijwerken",
     "updating": "Bijwerken...",
     "backToMyItems": "Terug naar mijn gereedschap",
@@ -627,6 +627,10 @@
     "phaseHandover": "Overdracht",
     "phaseReturn": "Teruggave",
     "deletePhoto": "Foto verwijderen"
+  },
+  "distance": {
+    "underOneKm": "op minder dan 1 km",
+    "about": "op ≈ {{km}} km"
   },
   "cancellationNotice": {
     "noReason": "Geen reden opgegeven",

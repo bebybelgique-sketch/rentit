@@ -163,7 +163,7 @@
     "depositLabel": "Caution (€)",
     "depositHint": "Calculée automatiquement à 20% de la valeur",
     "lateFeeLabel": "Retard (€ / jour)",
-    "addressLabel": "Rue, ville (visible par les locataires)",
+    "addressLabel": "Commune (visible par tous) — l’adresse exacte se donne dans la conversation, après accord",
     "deletePhoto": "Supprimer la photo",
     "packageWarning": "Attention : {{packages}} ne s'appliquera jamais. Le locataire paiera toujours le tarif le moins cher.",
     "titlePlaceholder": "ex. Perceuse, nettoyeur HP",
@@ -600,7 +600,7 @@
     "selectCategory": "Sélectionnez une catégorie",
     "conditionLabel": "État",
     "selectCondition": "Sélectionnez un état",
-    "addressLabel": "Adresse",
+    "addressLabel": "Commune (visible par tous) — l’adresse exacte se donne dans la conversation, après accord",
     "updateButton": "Mettre à jour",
     "updating": "Mise à jour en cours...",
     "backToMyItems": "Retour à mes outils",
@@ -627,6 +627,10 @@
     "phaseHandover": "Remise",
     "phaseReturn": "Retour",
     "deletePhoto": "Supprimer la photo"
+  },
+  "distance": {
+    "underOneKm": "à moins d’1 km",
+    "about": "à ≈ {{km}} km"
   },
   "cancellationNotice": {
     "noReason": "Aucune raison indiquée",

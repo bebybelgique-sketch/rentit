@@ -163,7 +163,7 @@
     "depositLabel": "Deposit (€)",
     "depositHint": "Auto-calculated as 20% of value",
     "lateFeeLabel": "Late fee (€ / day)",
-    "addressLabel": "Street, city (visible to renters)",
+    "addressLabel": "Town (visible to everyone) — the exact address is shared in the conversation, after you accept",
     "deletePhoto": "Delete photo",
     "packageWarning": "Attention: {{packages}} will never apply. Renters always pay the lowest rate.",
     "titlePlaceholder": "e.g. drill, pressure washer",
@@ -600,7 +600,7 @@
     "selectCategory": "Select a category",
     "conditionLabel": "Condition",
     "selectCondition": "Select a condition",
-    "addressLabel": "Address",
+    "addressLabel": "Town (visible to everyone) — the exact address is shared in the conversation, after you accept",
     "updateButton": "Update",
     "updating": "Updating...",
     "backToMyItems": "Back to my tools",
@@ -627,6 +627,10 @@
     "phaseHandover": "Handover",
     "phaseReturn": "Return",
     "deletePhoto": "Delete photo"
+  },
+  "distance": {
+    "underOneKm": "less than 1 km away",
+    "about": "≈ {{km}} km away"
   },
   "cancellationNotice": {
     "noReason": "No reason given",
