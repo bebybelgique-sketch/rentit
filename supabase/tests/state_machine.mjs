@@ -5,11 +5,14 @@
 // репозиторий публичный, а прибитый гвоздями адрес проекта делает тест
 // непереносимым (ровно этим он и умер в прошлый раз, когда проект сменился).
 //
-// Уборка после прогона: supabase/tests/cleanup_test_accounts.sql
+// Уборка: вещь прогона снимается с витрины в конце прогона, даже упавшего;
+// учётки убирает supabase/tests/cleanup_test_accounts.sql
 import { readFileSync } from 'node:fs'
 import { randomBytes } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { createClient } from '@supabase/supabase-js'
+import { removeTestItems } from '../../scripts/close-live-bookings.mjs'
 
 const readEnvFile = () => {
   try {
@@ -44,6 +47,23 @@ let pass = 0, fail = 0
 const check = (name, ok, extra = '') => {
   console.log(`${ok ? 'OK    ' : 'ПРОВАЛ'}  ${name}${extra ? '  — ' + extra : ''}`)
   ok ? pass++ : fail++
+}
+
+// Вещь прогона живёт на публичной витрине, пока её не снимут. До 03.10 её
+// снимала только ручная уборка учёток: между прогоном и уборкой «sm-…
+// perceuse» видел любой посетитель, а лендинг по ней решал, что каталог
+// живой (#120). Так их и нашли — сторож уборки в edge-functions.mjs увидел
+// на витрине вещи двух других прогонов.
+let runItem = null
+
+const retireRunItem = async ({ token, id }) => {
+  const owner = createClient(URL, KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  })
+  const { remaining, failures } = await removeTestItems(owner, [id])
+  check('уборка: вещь прогона снята с витрины', remaining === 0 && failures.length === 0,
+        failures.join('; ') || `осталось ${remaining}`)
 }
 
 const api = async (path, opts = {}) => {
@@ -96,6 +116,7 @@ const main = async () => {
   })
   if (itemRes.status !== 201) throw new Error('item: ' + JSON.stringify(itemRes.body))
   const itemId = itemRes.body[0].id
+  runItem = { token: owner.token, id: itemId }
   console.log(`вещь: ${itemId}\n`)
 
   const request = async (from, to) => {
@@ -259,10 +280,17 @@ const main = async () => {
   })
   check('рейтинг владельца пересчитан триггером',
         Number(prof.body[0]?.rating_as_owner) === 5, JSON.stringify(prof.body[0]))
-
-  console.log(`\nИТОГ: ${pass} прошло, ${fail} провалено`)
-  console.log(`МЕТКА ДЛЯ УБОРКИ: ${tag}`)
-  if (fail > 0) process.exit(1)
 }
 
-main().catch((e) => { console.error('СБОЙ ПРОГОНА:', e.message); process.exit(1) })
+try {
+  await main()
+} catch (e) {
+  fail++
+  console.error('СБОЙ ПРОГОНА:', e.message)
+} finally {
+  if (runItem) await retireRunItem(runItem)
+}
+
+console.log(`\nИТОГ: ${pass} прошло, ${fail} провалено`)
+console.log(`МЕТКА ДЛЯ УБОРКИ: ${tag}`)
+process.exit(fail > 0 ? 1 : 0)

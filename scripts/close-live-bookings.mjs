@@ -55,3 +55,34 @@ export async function closeLiveBookings(client, itemIds) {
   const found = (data ?? []).length
   return { found, closed: found - failures.length, failures }
 }
+
+/**
+ * Снимает вещи прогона с витрины: живые брони — штатным выходом, затем
+ * удаление и проверка, что вещей больше нет. Витрина публичная: вещь,
+ * оставленная до ручной уборки, видна любому посетителю.
+ *
+ * @param {import('@supabase/supabase-js').SupabaseClient} client — вошедший владелец
+ * @param {string[]} itemIds
+ * @returns {Promise<{ remaining: number, failures: string[] }>}
+ */
+export async function removeTestItems(client, itemIds) {
+  if (!itemIds.length) return { remaining: 0, failures: [] }
+
+  // Уборка не бросает: её зовут из finally, и исключение здесь спрятало бы
+  // итог прогона. Что не вышло — в отказы.
+  const failures = []
+  try {
+    failures.push(...(await closeLiveBookings(client, itemIds)).failures)
+  } catch (err) {
+    failures.push(err.message)
+  }
+  const { error } = await client.from('items').delete().in('id', itemIds)
+  if (error) failures.push(`удаление: ${error.message}`)
+
+  const { count, error: countError } = await client
+    .from('items')
+    .select('id', { count: 'exact', head: true })
+    .in('id', itemIds)
+  if (countError) failures.push(`проверка: ${countError.message}`)
+  return { remaining: count ?? itemIds.length, failures }
+}
