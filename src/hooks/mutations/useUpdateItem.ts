@@ -69,6 +69,8 @@ export const useUpdateItem = () => {
 
   return useMutation({
     mutationFn: updateItemById,
+    // Сбой показывает место вызова — EditItem: окно и строка с причиной.
+    meta: { errorShownBy: 'caller' },
     onSuccess: (updatedItem) => {
       // Инвалидируем кэш для списка вещей
       void queryClient.invalidateQueries({ queryKey: itemKeys.all });

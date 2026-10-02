@@ -67,6 +67,8 @@ export const useUploadBookingPhoto = () => {
 
   return useMutation({
     mutationFn: uploadBookingPhoto,
+    // Сбой показывает место вызова — BookingThread: причина под перепиской.
+    meta: { errorShownBy: 'caller' },
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: bookingKeys.photos(variables.bookingId) });
     },

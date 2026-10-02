@@ -24,6 +24,8 @@ export const useRejectRental = () => {
 
   return useMutation({
     mutationFn: rejectRental,
+    // Сбой показывает место вызова — BookingOwnerActions: тост с причиной от сервера.
+    meta: { errorShownBy: 'caller' },
     onSuccess: () => {
       // Оба списка броней и списки вещей: заявка видна владельцу в «Моих
       // вещах», а занятость дат — на витрине. Набор ключей один на все

@@ -59,7 +59,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         }}
       />
 
-      {error && <p style={{ color: 'var(--danger)', fontSize: '13px', marginBottom: '8px' }}>{error}</p>}
+      {error && <p role="alert" style={{ color: 'var(--danger)', fontSize: '13px', marginBottom: '8px' }}>{error}</p>}
 
       <div style={{ display: 'flex', gap: '8px' }}>
         <button type="submit" className="btn btn-primary btn-sm" disabled={!canSubmit}>

@@ -103,9 +103,13 @@ const BookingThread: React.FC<BookingThreadProps> = ({
     }
   };
 
-  const handleReview = async ({ rating, comment }: { rating: number; comment: string }) => {
+  // Сбой показывает сама форма — из createReview.error. Поэтому mutate, а не
+  // mutateAsync: отклонённое обещание здесь некому ловить, и каждый
+  // неудачный отзыв уходил в client_errors (errorLog.ts) как поломка
+  // приложения, хотя человек видел причину.
+  const handleReview = ({ rating, comment }: { rating: number; comment: string }) => {
     setLocalError(null);
-    await createReview.mutateAsync({
+    createReview.mutate({
       bookingId, itemId, fromUserId: currentUserId, toUserId: counterpartyId,
       reviewType, rating, comment,
     });
@@ -122,7 +126,7 @@ const BookingThread: React.FC<BookingThreadProps> = ({
   return (
     <div>
       {localError && (
-        <p style={{ color: 'var(--danger)', fontSize: '13px', marginTop: '8px' }}>{localError}</p>
+        <p role="alert" style={{ color: 'var(--danger)', fontSize: '13px', marginTop: '8px' }}>{localError}</p>
       )}
 
       <div style={box}>
