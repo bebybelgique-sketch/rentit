@@ -32,11 +32,17 @@ beforeEach(() => {
     Object.defineProperty(window, 'location', { configurable: true, value: original })
   }
 })
-afterEach(() => restore())
+afterEach(() => {
+  restore()
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
+
+const CHUNK = () => new TypeError('Failed to fetch dynamically imported module: /assets/Login-B7v.js')
 
 const renderWith = (error: Error) =>
   render(
-    <RouteBoundary message="La page n'a pas pu s'afficher." retry="Réessayer">
+    <RouteBoundary message="La page n'a pas pu s'afficher." retry="Réessayer" offlineMessage="Pas disponible hors connexion.">
       <Boom error={error} />
     </RouteBoundary>,
   )
@@ -62,5 +68,41 @@ describe('RouteBoundary', () => {
     renderWith(error)
     expect(reload).not.toHaveBeenCalled()
     expect(mocks.logError).toHaveBeenCalledWith('render', error)
+  })
+
+  // ГЛАВНОЕ (02.10). Флаг хранит время, и снять его «по дороге» больше
+  // некому: до этого оболочка снимала его при монтировании, и без сети
+  // перезагрузка шла по кругу без конца.
+  it('перезагрузка минуту назад — второй раз не перезагружаемся', () => {
+    sessionStorage.setItem('rentit_chunk_reload', String(Date.now() - 5_000))
+    renderWith(CHUNK())
+    expect(reload).not.toHaveBeenCalled()
+  })
+
+  // Следующий выкат в той же вкладке — снова законная попытка.
+  it('перезагрузка давно — новая попытка разрешена', () => {
+    sessionStorage.setItem('rentit_chunk_reload', String(Date.now() - 10 * 60_000))
+    renderWith(CHUNK())
+    expect(reload).toHaveBeenCalledTimes(1)
+  })
+
+  // Без сети кусок, которого нет в кэше, не загрузит никакая перезагрузка.
+  it('без сети — честный текст, без перезагрузки и без отчёта', () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    renderWith(CHUNK())
+    expect(reload).not.toHaveBeenCalled()
+    expect(mocks.logError).not.toHaveBeenCalled()
+    expect(screen.getByText('Pas disponible hors connexion.')).toBeInTheDocument()
+  })
+
+  // Запрещённое хранилище бросает. Последняя преграда перед белым экраном
+  // не должна падать вместе с ним — и не должна перезагружать по кругу:
+  // без памяти о прошлой перезагрузке сама она не перезагружает.
+  it('хранилище запрещено — экран ошибки на месте, по кругу не перезагружает', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('SecurityError') })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('SecurityError') })
+    renderWith(CHUNK())
+    expect(reload).not.toHaveBeenCalled()
+    expect(screen.getByText("La page n'a pas pu s'afficher.")).toBeInTheDocument()
   })
 })

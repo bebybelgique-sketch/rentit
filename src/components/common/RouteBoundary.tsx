@@ -25,11 +25,55 @@ import { logError } from '../../lib/errorLog'
  *
  * Лечение здесь ровно одно и оно верное: перезагрузить страницу. Свежий
  * index.html назовёт правильные имена файлов. Перезагружаем ОДИН раз —
- * флаг в sessionStorage не даёт зациклиться, если дело не в чанке, а в
+ * отметка времени в sessionStorage не даёт зациклиться, если дело не в чанке, а в
  * настоящей ошибке; тогда человек увидит текст и кнопку, а не пустоту.
  */
 
 const RELOADED = 'rentit_chunk_reload'
+
+/**
+ * Не чаще раза в минуту. Флаг хранит ВРЕМЯ последней автоматической
+ * перезагрузки, а не «было/не было».
+ *
+ * До 02.10 флаг снимала оболочка приложения при монтировании (AppChrome),
+ * чтобы следующий сбой в той же сессии получил свою попытку. Без сети это
+ * давало петлю: кусок страницы не грузится → перезагрузка → оболочка из
+ * кэша воркера снимает флаг → кусок снова не грузится → перезагрузка — и
+ * так без конца, быстрее, чем человек успевает уйти. Время закрывает обе
+ * задачи: повтор через минуту законен (новый выкат), повтор сразу — нет.
+ */
+const RELOAD_WINDOW_MS = 60_000
+
+// sessionStorage бывает запрещён настройкой браузера и тогда БРОСАЕТ. Здесь
+// это последняя преграда перед белым экраном — ронять её нельзя.
+// undefined — хранилище недоступно (не путать с null — «отметки нет»).
+const readReloadedAt = (): string | null | undefined => {
+  try { return sessionStorage.getItem(RELOADED) } catch { return undefined }
+}
+const markReloaded = () => {
+  try { sessionStorage.setItem(RELOADED, String(Date.now())) } catch { /* без памяти — без отметки */ }
+}
+const clearReloaded = () => {
+  try { sessionStorage.removeItem(RELOADED) } catch { /* см. выше */ }
+}
+
+/**
+ * Перезагружались ли только что. Непонятное значение — считаем, что да.
+ * Хранилище недоступно — тоже да: без памяти о прошлой перезагрузке
+ * автоматическая пошла бы по кругу. Человек получает текст и кнопку.
+ */
+const reloadedRecently = (now = Date.now()): boolean => {
+  const raw = readReloadedAt()
+  if (raw === undefined) return true
+  if (raw === null) return false
+  const at = Number(raw)
+  // Не похоже на время (старое значение «1») — считаем, что перезагружались.
+  const isTimestamp = at > 1e12
+  if (!isTimestamp) return true
+  return now - at < RELOAD_WINDOW_MS
+}
+
+const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false
 
 // Сообщения браузеров при непогрузившемся модуле. Chrome и Edge говорят
 // одно, Firefox другое, Safari третье — поэтому список, а не одна строка.
@@ -38,18 +82,34 @@ const looksLikeChunkFailure = (err: unknown) => {
   return /ChunkLoadError|Loading chunk|Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed/i.test(msg)
 }
 
-type Props = { children: ReactNode; message: string; retry: string }
-type State = { failed: boolean }
+type Props = {
+  children: ReactNode
+  message: string
+  retry: string
+  /** Текст, когда кусок страницы не загрузился без сети: перезагрузка тут не поможет. */
+  offlineMessage: string
+}
+type State = { failed: boolean; offline: boolean }
 
 export default class RouteBoundary extends Component<Props, State> {
-  state: State = { failed: false }
+  state: State = { failed: false, offline: false }
 
-  static getDerivedStateFromError(): State {
+  static getDerivedStateFromError(): Partial<State> {
     return { failed: true }
   }
 
   componentDidCatch(error: unknown) {
-    const firstChunkFailure = looksLikeChunkFailure(error) && !sessionStorage.getItem(RELOADED)
+    const chunk = looksLikeChunkFailure(error)
+
+    // Без сети кусок, которого нет в кэше, не загрузит никакая перезагрузка.
+    // Честный текст вместо петли; это не поломка продукта — в журнал не идёт.
+    if (chunk && isOffline()) {
+      console.error('RouteBoundary (hors ligne):', error)
+      this.setState({ offline: true })
+      return
+    }
+
+    const firstChunkFailure = chunk && !reloadedRecently()
 
     // В журнал и на сервер — всё, КРОМЕ первого непогрузившегося чанка: он
     // ожидаем после каждого выката и лечится перезагрузкой ниже. Если и
@@ -62,10 +122,9 @@ export default class RouteBoundary extends Component<Props, State> {
     else logError('render', error)
 
     if (firstChunkFailure) {
-      // Отмечаем ДО перезагрузки: если новая версия тоже упадёт, второй
-      // раз не перезагружаемся, а показываем текст. Бесконечная
-      // перезагрузка хуже честной ошибки — из неё человек не выйдет.
-      sessionStorage.setItem(RELOADED, '1')
+      // Отмечаем ДО перезагрузки: если новая версия тоже упадёт в течение
+      // минуты, второй раз не перезагружаемся, а показываем текст.
+      markReloaded()
       window.location.reload()
     }
   }
@@ -74,14 +133,14 @@ export default class RouteBoundary extends Component<Props, State> {
     if (!this.state.failed) return this.props.children
 
     return (
-      <div className="page" style={{ textAlign: 'center', paddingTop: 'var(--space-8)' }}>
+      <div className="page" role="alert" style={{ textAlign: 'center', paddingTop: 'var(--space-8)' }}>
         <p style={{ fontSize: 'var(--text-base)', color: 'var(--muted)', marginBottom: 'var(--space-5)' }}>
-          {this.props.message}
+          {this.state.offline ? this.props.offlineMessage : this.props.message}
         </p>
         <button
           className="btn btn-primary"
           style={{ minHeight: '48px' }}
-          onClick={() => { sessionStorage.removeItem(RELOADED); window.location.reload() }}
+          onClick={() => { clearReloaded(); window.location.reload() }}
         >
           {this.props.retry}
         </button>
@@ -89,6 +148,3 @@ export default class RouteBoundary extends Component<Props, State> {
     )
   }
 }
-
-/** Успешная загрузка снимает флаг: следующая поломка снова получит попытку. */
-export const clearChunkReloadFlag = () => sessionStorage.removeItem(RELOADED)

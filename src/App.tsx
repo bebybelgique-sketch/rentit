@@ -12,7 +12,7 @@ import { useAuth } from './context/AuthContext'
 import { supabase } from './lib/supabase'
 import CookieBanner from './components/CookieBanner'
 import BottomNav from './components/layout/BottomNav'
-import RouteBoundary, { clearChunkReloadFlag } from './components/common/RouteBoundary'
+import RouteBoundary from './components/common/RouteBoundary'
 import RouteAnnouncer from './components/common/RouteAnnouncer'
 import OfflineNotice from './components/common/OfflineNotice'
 import AppBoundary from './components/common/AppBoundary'
@@ -298,7 +298,9 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   const location = useLocation()
   if (loading) return null
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  // С адресом и строкой запроса: push ведёт на /my-rentals?booking=…, и
+  // без неё после входа терялась нужная бронь.
+  if (!user) return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />
   return <>{children}</>
 }
 
@@ -329,11 +331,6 @@ function AppChrome() {
   const { user } = useAuth()
   usePushSync(user?.id ?? null)
 
-  // Приложение поднялось — значит прошлая поломка чанка вылечена
-  // перезагрузкой. Снимаем флаг, иначе СЛЕДУЮЩИЙ сбой в этой же сессии
-  // не получит своей попытки и человек упрётся в текст вместо того,
-  // чтобы просто поехать дальше.
-  useEffect(() => { clearChunkReloadFlag() }, [])
 
   // ПОСЛЕДНЯЯ ПРЕГРАДА между поломкой и белым экраном.
   //
@@ -382,7 +379,9 @@ function AppChrome() {
             добавляя лишней остановки при обходе клавиатурой: сюда
             переводит фокус RouteAnnouncer после смены адреса. */}
         <main id="main-content" tabIndex={-1} className="flex flex-col flex-1">
-        <RouteBoundary message={t('routeError')} retry={t('routeRetry')}>
+        {/* key — адрес: упавшая страница не должна закрывать собой все
+            остальные. Без него экран ошибки оставался и после перехода. */}
+        <RouteBoundary key={pathname} message={t('routeError')} retry={t('routeRetry')} offlineMessage={t('routeOffline')}>
         <Suspense fallback={<div className="loading">{t('common.loading')}</div>}>
           <Routes>
             <Route path="/" element={<Landing />} />
