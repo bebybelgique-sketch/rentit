@@ -1,6 +1,7 @@
 // src/components/common/CancellationNotice.tsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatMoment } from '../../domain/dates';
 
 interface CancellationNoticeProps {
   /** Кто отменил — «vous» или имя второй стороны. Не нужно, если закрыл таймер. */
@@ -17,15 +18,11 @@ interface CancellationNoticeProps {
   noReasonLabel?: string;
 }
 
-// Дата — по языку читателя, а не жёстко по 'fr-BE' (как в ReviewList):
-// «11 août» в нидерландском интерфейсе — тот же французский хвост.
-const formatDate = (iso: string, locale: string) => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return new Intl.DateTimeFormat(locale, {
-    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  }).format(d);
-};
+// Дата — по языку читателя (src/domain/dates.ts): «11 août» в нидерландском
+// интерфейсе — тот же французский хвост, а голое 'en' дало бы американский
+// порядок.
+const formatDate = (iso: string, lang: string) =>
+  formatMoment(iso, lang, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) || iso;
 
 // Отмена без имени и причины оставляет вторую сторону в догадках — а именно
 // это и превращает несостоявшуюся сделку в обиду. Поэтому оба поля видимы,

@@ -25,6 +25,7 @@ import { useActivityFeed, useMarkActivityRead } from '../hooks/useActivity'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { groupByDay, toEntry, type ActivityEntry, type DayGroup } from '../domain/activity'
 import { pushLangOf } from '../lib/push'
+import { formatMoment } from '../domain/dates'
 import { errorText } from '../lib/errorText'
 import EmptyState from '../components/common/EmptyState'
 
@@ -67,8 +68,8 @@ export default function Activity() {
   }
   const when = (e: ActivityEntry, group: DayGroup) =>
     group === 'earlier'
-      ? new Date(e.createdAt).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })
-      : new Date(e.createdAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })
+      ? formatMoment(e.createdAt, i18n.language, { day: 'numeric', month: 'short' })
+      : formatMoment(e.createdAt, i18n.language, { hour: '2-digit', minute: '2-digit' })
 
   return (
     <div className="page">

@@ -1,6 +1,7 @@
 // src/components/common/RatingStars.tsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatNumber } from '../../domain/dates';
 
 interface RatingStarsProps {
   value: number;
@@ -37,7 +38,7 @@ const RatingStars: React.FC<RatingStarsProps> = ({
         role="img"
         aria-label={t('review.ratingAria', {
           label,
-          value: value.toLocaleString(i18n.language),
+          value: formatNumber(value, i18n.language),
           max,
         })}
         style={{ display: 'inline-flex', gap: '2px', lineHeight: 1 }}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import RatingStars from './RatingStars';
+import { formatNumber } from '../../domain/dates';
 
 interface UserRatingBadgeProps {
   rating: number | null;
@@ -15,7 +16,7 @@ interface UserRatingBadgeProps {
 const UserRatingBadge: React.FC<UserRatingBadgeProps> = ({
   rating, count, role, noRatingLabel,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const ROLE_LABEL: Record<'owner' | 'renter', string> = {
     owner: t('userRating.asOwner'),
     renter: t('userRating.asRenter'),
@@ -34,7 +35,7 @@ const UserRatingBadge: React.FC<UserRatingBadgeProps> = ({
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
       <RatingStars value={rating} size="sm" ariaLabel={`${t('review.ratingLabel')} — ${roleLabel}`} />
-      <strong>{rating.toLocaleString('fr-BE', { minimumFractionDigits: 1, maximumFractionDigits: 2 })}</strong>
+      <strong>{formatNumber(rating, i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}</strong>
       {typeof count === 'number' && (
         <span style={{ color: '#666' }}>({t('userRating.reviewCount', { count })})</span>
       )}

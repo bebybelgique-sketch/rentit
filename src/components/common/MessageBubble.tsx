@@ -1,6 +1,7 @@
 // src/components/common/MessageBubble.tsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatMoment } from '../../domain/dates';
 
 interface MessageBubbleProps {
   body: string;
@@ -10,22 +11,13 @@ interface MessageBubbleProps {
   senderName: string | null;
 }
 
-const timeFmt = new Intl.DateTimeFormat('fr-BE', {
-  day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-});
-
-const formatTime = (iso: string) => {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '' : timeFmt.format(d);
-};
-
 // Текст выводится как текст. Сообщения пишут незнакомые друг другу люди —
 // разметка из чужих рук в разметку страницы попасть не должна. Переносы
 // строк сохраняются: адрес в одну строку нечитаем.
 const MessageBubble: React.FC<MessageBubbleProps> = ({ body, createdAt, mine, senderName }) => {
   // «Vous» и «Utilisateur» — из словаря: до 02.10 «Vous» стояло над каждым
   // своим сообщением на всех трёх языках, хотя ключ booking.messageMine был.
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
   <div
     style={{
@@ -38,7 +30,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ body, createdAt, mine, se
   >
     <div style={{ fontSize: '11px', color: '#666', marginBottom: '2px', display: 'flex', gap: '6px' }}>
       <span>{mine ? t('booking.messageMine') : (senderName || t('rental.unknownUser'))}</span>
-      <time dateTime={createdAt} style={{ color: '#999' }}>{formatTime(createdAt)}</time>
+      <time dateTime={createdAt} style={{ color: '#999' }}>{formatMoment(createdAt, i18n.language)}</time>
     </div>
     <div style={{ fontSize: '14px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{body}</div>
   </div>

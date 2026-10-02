@@ -23,12 +23,8 @@ import { usePageTitle } from '../hooks/usePageTitle'
 import { renterUpdates, liveRenterCount } from '../domain/renterUpdates'
 import { ownerTasks } from '../domain/ownerTasks'
 import { errorText } from '../lib/errorText'
+import { formatDay } from '../domain/dates'
 
-const dateFmt = new Intl.DateTimeFormat('fr-BE', { day: '2-digit', month: 'short', year: 'numeric' });
-const formatDate = (iso: string) => {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : dateFmt.format(d);
-};
 
 // Отменить можно, пока вещь не уехала. После передачи отменять нечего:
 // инструмент физически в чужих руках, и закрывается это возвратом.
@@ -40,7 +36,10 @@ const CANCELLABLE_BY_RENTER = ['pending_approval', 'confirmed'];
 
 const MyRentals: React.FC = () => {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Даты — на языке читателя (src/domain/dates.ts): до 02.10 здесь стоял
+  // жёсткий 'fr-BE', и голландец читал «Van 15 août 2026 tot…».
+  const formatDate = (iso: string) => formatDay(iso, i18n.language);
   usePageTitle(t('myRentalsTitle'))
 
   // Ссылка вида /my-rentals?booking=<id> ведёт К КОНКРЕТНОЙ брони.
