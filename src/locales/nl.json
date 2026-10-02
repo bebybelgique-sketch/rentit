@@ -660,6 +660,7 @@
   },
   "routeError": "Deze pagina kon niet laden. Een nieuwere versie van de site is misschien beschikbaar.",
   "routeRetry": "Pagina herladen",
+  "routeOffline": "Deze pagina is offline niet beschikbaar. Maak opnieuw verbinding en probeer het dan nog eens.",
   "loadFailed": "Je advertenties konden niet worden geladen.",
   "retry": "Opnieuw proberen",
   "itemGone": "Dit gereedschap staat niet meer online.",
