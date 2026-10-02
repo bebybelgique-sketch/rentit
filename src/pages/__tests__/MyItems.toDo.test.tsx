@@ -24,10 +24,10 @@ vi.mock('../../hooks/useOwnerItems', () => ({
   useOwnerItems: () => ({ data: items, isLoading: false, isError: false }),
 }));
 vi.mock('../../hooks/mutations/useSetItemAvailability', () => ({
-  useSetItemAvailability: () => ({ mutate: vi.fn(), error: null }),
+  useSetItemAvailability: () => ({ mutate: vi.fn(), reset: vi.fn(), error: null }),
 }));
 vi.mock('../../hooks/mutations/useDeleteItem', () => ({
-  useDeleteItem: () => ({ mutate: vi.fn(), error: null }),
+  useDeleteItem: () => ({ mutate: vi.fn(), reset: vi.fn(), error: null }),
 }));
 
 import MyItems from '../MyItems';

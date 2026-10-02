@@ -2,9 +2,9 @@ import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 // ИМПОРТЫ ДЛЯ TanStack Query и Toast
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import toast, { Toaster } from 'react-hot-toast' // Импортируем Toaster
+import { Toaster } from 'react-hot-toast' // Импортируем Toaster
 // --- НОВЫЕ ИМПОРТЫ ДЛЯ I18N ---
-import i18n, { LANGUAGES, setLanguage, type Language } from './i18n-next' // импорт и инициализация i18next разом
+import { LANGUAGES, setLanguage, type Language } from './i18n-next' // импорт и инициализация i18next разом
 import { useTranslation } from 'react-i18next'
 import { useDocumentLanguage } from './hooks/useDocumentLanguage'
 // --------------------------
@@ -22,28 +22,17 @@ import TaskBadge from './components/common/TaskBadge'
 import ActivityBell from './components/common/ActivityBell'
 import { usePushSync } from './hooks/usePushSync'
 import { releaseThisDevice } from './lib/push'
+import { createMutationCache } from './lib/mutationErrors'
 
 // Создаем клиент для TanStack Query
 const queryClient = new QueryClient({
+  // Сбой мутации: в консоль — всегда, человеку — общий тост, только если
+  // мутация не сообщает о сбое сама (src/lib/mutationErrors.ts).
+  mutationCache: createMutationCache(),
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 минут
       gcTime: 10 * 60 * 1000, // 10 минут (в react-query v5 cacheTime переименован)
-    },
-    mutations: {
-      // Глобальная обработка ошибок для мутаций.
-      //
-      // Человеку — словарная строка, разработчику — техническая.
-      // Раньше здесь стояло `error?.message || t('errors.generic')`, то
-      // есть словарь включался только когда сообщения нет. А сообщение
-      // приходит от Supabase и всегда по-английски: французский
-      // пользователь получал «permission denied for table users»
-      // поверх французской страницы, и это ровно та строка, которую он
-      // видел вместо объяснения при блокере 11.08.
-      onError: (error) => {
-        console.error(error)
-        toast.error(i18n.t('errors.generic'))
-      },
     },
   },
 })

@@ -35,8 +35,11 @@ const LIVE_BOOKING_STATUSES = ['pending_approval', 'pending_payment', 'confirmed
 //
 // Теперь действия — мутации (useSetItemAvailability, useDeleteItem), статусы
 // броней приходят перечитыванием списка после invalidateBookingCaches, а
-// отказ живёт в мутации: react-query сбрасывает его сам, когда начинается
-// следующее действие, поэтому отдельного setActionError('') больше нет.
+// отказ живёт в мутации: react-query сбрасывает его сам, когда эта же
+// мутация начинается заново, поэтому отдельного setActionError('') больше
+// нет. Отказ ДРУГОЙ мутации он не трогает — его сбрасываем мы (reset):
+// иначе после неудачного «скрыть» и удачного «удалить» над списком
+// оставалась бы причина от прошлого действия.
 export default function MyItems() {
   const { t, i18n } = useTranslation()
   usePageTitle(t('myItems.title'))
@@ -50,6 +53,7 @@ export default function MyItems() {
   const actionError = failed ? errorText(t, failed, 'errors.generic') : ''
 
   const toggleAvailable = (id: string, current: boolean) => {
+    removeItem.reset()
     setAvailability.mutate({ id, available: !current })
   }
 
@@ -66,6 +70,7 @@ export default function MyItems() {
       return
     }
     if (!confirm(t('myItems.deleteConfirm'))) return
+    setAvailability.reset()
     removeItem.mutate({ id })
   }
 
@@ -87,7 +92,7 @@ export default function MyItems() {
 
   return (
     <div className="page">
-      {actionError && <div className="error-msg" style={{ marginBottom: '16px' }}>{actionError}</div>}
+      {actionError && <div role="alert" className="error-msg" style={{ marginBottom: '16px' }}>{actionError}</div>}
 
       {/* Сбой загрузки — с объяснением и кнопкой, а не пустым списком. */}
       {loadError && (

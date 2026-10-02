@@ -22,5 +22,7 @@ const deleteAccount = async (): Promise<void> => {
 export const useDeleteAccount = () => {
   return useMutation({
     mutationFn: deleteAccount,
+    // Сбой показывает место вызова — Profile: тост с причиной.
+    meta: { errorShownBy: 'caller' },
   });
 };

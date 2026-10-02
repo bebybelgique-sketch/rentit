@@ -41,6 +41,8 @@ export const useSendMessage = () => {
 
   return useMutation({
     mutationFn: sendMessage,
+    // Сбой показывает место вызова — BookingThread: причина под перепиской, текст возвращается в поле.
+    meta: { errorShownBy: 'caller' },
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: bookingKeys.messages(variables.bookingId) });
     },

@@ -99,12 +99,12 @@ const ToolDemandForm: React.FC<ToolDemandFormProps> = ({ initialTool = '' }) => 
       </div>
 
       {emptyError && (
-        <p style={{ color: 'var(--danger)', fontSize: 'var(--text-sm)', marginBottom: 0 }}>
+        <p role="alert" style={{ color: 'var(--danger)', fontSize: 'var(--text-sm)', marginBottom: 0 }}>
           {t('toolDemand.empty')}
         </p>
       )}
       {isError && !emptyError && (
-        <p style={{ color: 'var(--danger)', fontSize: 'var(--text-sm)', marginBottom: 0 }}>
+        <p role="alert" style={{ color: 'var(--danger)', fontSize: 'var(--text-sm)', marginBottom: 0 }}>
           {t('toolDemand.failed')}
         </p>
       )}

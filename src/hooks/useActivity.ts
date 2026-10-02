@@ -99,8 +99,8 @@ export const useMarkActivityRead = (userId: string | undefined) => {
       void queryClient.invalidateQueries({ queryKey: activityKeys.all })
     },
     // Сбой отметки — не событие для человека: счётчик останется прежним,
-    // и следующая попытка сделает то же самое. Глобальный тост мутаций
-    // (App.tsx) здесь только мешал бы.
-    onError: (error) => console.warn('[activity] отметка не удалась:', error),
+    // и следующая попытка сделает то же самое. В консоль сбой пишет общий
+    // обработчик (src/lib/mutationErrors.ts), тост он здесь не покажет.
+    meta: { errorShownBy: 'nobody' },
   })
 }

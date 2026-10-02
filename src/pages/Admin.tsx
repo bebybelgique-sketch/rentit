@@ -108,7 +108,7 @@ export default function Admin() {
   return (
     <div className="page">
       <h1 style={{ marginBottom: '24px', fontSize: '24px', fontWeight: '800' }}>Admin</h1>
-      {adminError && <div className="error-msg" style={{ marginBottom: '16px' }}>{adminError}</div>}
+      {adminError && <div role="alert" className="error-msg" style={{ marginBottom: '16px' }}>{adminError}</div>}
 
       <div className="tabs">
         <button className={`tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')}>Stats</button>

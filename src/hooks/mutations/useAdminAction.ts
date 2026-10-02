@@ -34,6 +34,8 @@ export const useAdminAction = () => {
 
   return useMutation({
     mutationFn: (action: AdminAction) => invokeEdge<AdminActionResult>('admin-action', action),
+    // Сбой показывает место вызова — Admin: строка с причиной над таблицей.
+    meta: { errorShownBy: 'caller' },
     onSuccess: (_data, action) => {
       // Скрытое администратором объявление обязано пропасть из витрины и
       // со своей страницы — иначе человек откроет ссылку из поиска и

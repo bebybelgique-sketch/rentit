@@ -46,4 +46,6 @@ const recordToolDemand = async ({ tool, searchedQuery, locale }: RecordToolDeman
   if (error) throw new Error(error.message);
 };
 
-export const useRecordToolDemand = () => useMutation({ mutationFn: recordToolDemand });
+// Сбой показывает место вызова — ToolDemandForm: причина под формой.
+export const useRecordToolDemand = () =>
+  useMutation({ mutationFn: recordToolDemand, meta: { errorShownBy: 'caller' } });

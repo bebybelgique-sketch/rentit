@@ -61,6 +61,8 @@ export const useCreateUserReview = () => {
 
   return useMutation({
     mutationFn: createUserReview,
+    // Сбой показывает место вызова — BookingThread: причина под формой отзыва.
+    meta: { errorShownBy: 'caller' },
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: reviewKeys.of(variables.toUserId) });
       // Рейтинг в users пересчитывает триггер recompute_user_rating,

@@ -56,6 +56,8 @@ export const useUpdateProfile = () => {
 
   return useMutation({
     mutationFn: updateProfile,
+    // Сбой показывает место вызова — Profile: тост с причиной.
+    meta: { errorShownBy: 'caller' },
     onSuccess: (updatedProfile) => {
       void queryClient.invalidateQueries({ queryKey: profileKeys.one(updatedProfile.id) });
     },

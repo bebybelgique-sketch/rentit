@@ -24,6 +24,8 @@ export const useDeleteItem = () => {
 
   return useMutation({
     mutationFn: deleteItem,
+    // Сбой показывает место вызова — MyItems: строка с причиной над списком.
+    meta: { errorShownBy: 'caller' },
     onSuccess: (_result, variables) => {
       // Карточку удалённой вещи ВЫБРАСЫВАЕМ из кэша, а не помечаем устаревшей:
       // инвалидация оставила бы в памяти строку, которой в базе больше нет, и

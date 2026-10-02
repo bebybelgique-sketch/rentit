@@ -36,6 +36,8 @@ export const useSetItemAvailability = () => {
 
   return useMutation({
     mutationFn: setItemAvailability,
+    // Сбой показывает место вызова — MyItems: строка с причиной над списком.
+    meta: { errorShownBy: 'caller' },
     onSuccess: (_result, variables) => {
       // Доступность меняет и списки вещей, и занятость дат на витрине.
       invalidateItemCaches(queryClient, variables.id);
