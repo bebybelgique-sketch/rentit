@@ -25,6 +25,7 @@
 
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
+import { closeLiveBookings } from '../../scripts/close-live-bookings.mjs'
 
 const env = Object.fromEntries(
   readFileSync(new URL('../../.env', import.meta.url), 'utf8')
@@ -882,8 +883,14 @@ try {
   console.log(`\nПРОВАЛ прогона: ${err.message}`)
 } finally {
   // Уборка обязательна: витрина пуста намеренно, и прогон не имеет права
-  // оставить на ней запись. Удаление предмета каскадом снимает и брони.
-  if (itemId) await owner.from('items').delete().eq('id', itemId)
+  // оставить на ней запись. Живые брони сначала закрываются штатно (отказ,
+  // отмена, завершение) — вещь с ними не удаляется; закрытые снимает каскад.
+  if (itemId) {
+    const closing = await closeLiveBookings(owner, [itemId])
+    if (closing.failures.length) console.log(`  уборка: не закрылись брони — ${closing.failures.join('; ')}`)
+    const { error: delErr } = await owner.from('items').delete().eq('id', itemId)
+    if (delErr) console.log(`  уборка: вещь не удалилась — ${delErr.message}`)
+  }
   const { count: items } = await owner.from('items').select('id', { count: 'exact', head: true })
   const { count: bookings } = await owner.from('bookings').select('id', { count: 'exact', head: true })
   console.log(`\nуборка: items ${items}, bookings ${bookings}`)

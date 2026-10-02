@@ -12,6 +12,7 @@
 //   node scripts/cleanup-e2e-items.mjs --apply  — удалить
 import { readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
+import { closeLiveBookings } from './close-live-bookings.mjs'
 
 const PREFIX = 'E2E '
 
@@ -71,6 +72,15 @@ for (const item of items) console.log(`  ${item.created_at.slice(0, 19)}  ${item
 if (!apply) {
   console.log('\nЭто список, а не удаление. Повторите с --apply, чтобы удалить.')
   process.exit(0)
+}
+
+// Живые брони сначала закрываются штатно (отказ, отмена, завершение): вещь
+// с ними не удаляется, а каскад стирал бы их молча (см. close-live-bookings).
+const closing = await closeLiveBookings(supabase, items.map(i => i.id))
+if (closing.found) console.log(`\nЖивых броней: ${closing.found}, закрыто штатно: ${closing.closed}.`)
+if (closing.failures.length) {
+  console.error(`Не закрылись — вещи с ними не удаляются:\n  ${closing.failures.join('\n  ')}`)
+  process.exit(1)
 }
 
 const { error: deleteError } = await supabase
