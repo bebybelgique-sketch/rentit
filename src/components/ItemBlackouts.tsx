@@ -13,6 +13,7 @@
 // потерять их при первой же ошибке в другом поле.
 
 import { useEffect, useState } from 'react'
+import { formatDay } from '../domain/dates'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { toISODate } from '../domain/availability'
@@ -69,7 +70,7 @@ export default function ItemBlackouts({ itemId }: { itemId: string }) {
     load()
   }
 
-  const fmt = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString(i18n.language)
+  const fmt = (iso: string) => formatDay(iso, i18n.language)
 
   return (
     <section className="card" style={{ marginTop: 'var(--space-6)' }}>

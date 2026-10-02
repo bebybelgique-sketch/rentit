@@ -21,6 +21,7 @@ import { withReferral } from '../lib/referral'
 import BookingStatusBadge from '../components/common/BookingStatusBadge'
 import { dateRange, money, shortName } from '../domain/push'
 import { pushLangOf } from '../lib/push'
+import { formatDay } from '../domain/dates'
 import { invokeEdge } from '../lib/edgeInvoke'
 import { errorText } from '../lib/errorText'
 
@@ -369,7 +370,7 @@ export default function ItemDetail() {
   // ЧИТАТЕЛЯ, а не из жёсткого 'fr-FR' и не из словаря — названия дней это
   // работа Intl, а три копии в locales расходятся сами собой.
   const firstDay = monthStartOffset(year, month)
-  const monthLabel = new Date(year, month).toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' })
+  const monthLabel = formatDay(`${year}-${String(month + 1).padStart(2, '0')}-01`, i18n.language, { month: 'long', year: 'numeric' })
   const dayLabels = weekdayLabels(i18n.language)
   const avgRating = reviews.length > 0
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
@@ -494,8 +495,7 @@ export default function ItemDetail() {
                     <>
                       {' · '}
                       {t('itemDetail.lastRented', {
-                        month: new Date(history.last_rented + 'T00:00:00')
-                          .toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' }),
+                        month: formatDay(history.last_rented, i18n.language, { month: 'long', year: 'numeric' }),
                       })}
                     </>
                   )}
@@ -649,7 +649,7 @@ export default function ItemDetail() {
                     {calendar && calendar.earliestStart > todayISO && (
                       <p className="form-hint" style={{ marginBottom: '20px' }}>
                         {t('itemDetail.noticeHint', {
-                          date: new Date(calendar.earliestStart + 'T00:00:00').toLocaleDateString(i18n.language),
+                          date: formatDay(calendar.earliestStart, i18n.language),
                         })}
                       </p>
                     )}
@@ -731,8 +731,8 @@ export default function ItemDetail() {
 
                     {startDate && (
                       <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>
-                        <div><span style={{ color: 'var(--muted)' }}>{t('itemDetail.rangeFrom')} </span>{startDate}</div>
-                        {endDate && <div><span style={{ color: 'var(--muted)' }}>{t('itemDetail.rangeTo')} </span>{endDate}</div>}
+                        <div><span style={{ color: 'var(--muted)' }}>{t('itemDetail.rangeFrom')} </span>{formatDay(startDate, i18n.language)}</div>
+                        {endDate && <div><span style={{ color: 'var(--muted)' }}>{t('itemDetail.rangeTo')} </span>{formatDay(endDate, i18n.language)}</div>}
                         {/* Множественное число считает библиотека. Вручную
                             («> 1 ? 's' : ''») его повторять нельзя: правил
                             счёта во французском и нидерландском не две штуки,
@@ -911,7 +911,7 @@ export default function ItemDetail() {
                   </div>
                   {r.comment && <p style={{ color: '#555', fontSize: '14px', lineHeight: 1.6 }}>{r.comment}</p>}
                   <div style={{ color: 'var(--muted)', fontSize: '12px', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
-                    {new Date(r.created_at).toLocaleDateString()}
+                    {formatDay(r.created_at, i18n.language)}
                   </div>
                 </div>
               ))}

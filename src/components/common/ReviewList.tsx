@@ -1,6 +1,7 @@
 // src/components/common/ReviewList.tsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatMoment } from '../../domain/dates';
 import RatingStars from './RatingStars';
 
 export interface ReviewListItem {
@@ -18,13 +19,9 @@ interface ReviewListProps {
   emptyLabel?: string;
 }
 
-// Дата форматируется по языку читателя, а не жёстко по 'fr-BE': «15 août»
-// в английском интерфейсе — тот же французский хвост, что и подписи.
-const formatDate = (iso: string, locale: string) => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', year: 'numeric' }).format(d);
-};
+// Дата — по языку читателя (src/domain/dates.ts): «15 août» в английском
+// интерфейсе — тот же французский хвост, что и подписи.
+const formatDate = (iso: string, lang: string) => formatMoment(iso, lang, { day: '2-digit', month: 'short', year: 'numeric' });
 
 const ReviewList: React.FC<ReviewListProps> = ({ reviews, emptyLabel }) => {
   const { t, i18n } = useTranslation();

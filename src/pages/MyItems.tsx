@@ -13,7 +13,8 @@ import { useSetItemAvailability } from '../hooks/mutations/useSetItemAvailabilit
 import { useDeleteItem } from '../hooks/mutations/useDeleteItem'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { errorText } from '../lib/errorText'
-import { money } from '../domain/push'
+import { dateRange, money } from '../domain/push'
+import { pushLangOf } from '../lib/push'
 
 /**
  * Брони, которые ещё живут: заявка ждёт ответа или сделка не закрыта.
@@ -37,7 +38,7 @@ const LIVE_BOOKING_STATUSES = ['pending_approval', 'pending_payment', 'confirmed
 // отказ живёт в мутации: react-query сбрасывает его сам, когда начинается
 // следующее действие, поэтому отдельного setActionError('') больше нет.
 export default function MyItems() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   usePageTitle(t('myItems.title'))
   const { user } = useAuth()
   const { data: items = [], isLoading: loading, isError } = useOwnerItems(user?.id)
@@ -140,9 +141,9 @@ export default function MyItems() {
                   {item.title ?? t('myItems.untitled')}
                 </div>
                 <div style={{ fontSize: '13px', color: '#666' }}>
-                  {booking.renter?.full_name ?? t('rental.unknownUser')}
+                  {booking.renter?.full_name || t('rental.unknownUser')}
                   {' · '}
-                  {(booking.start_date ?? '')} → {(booking.end_date ?? '')}
+                  {dateRange(booking.start_date, booking.end_date, pushLangOf(i18n.language)) ?? ''}
                   {' · '}
                   {t('common.days', { count: booking.total_days ?? 0 })}
                   {' · €'}{Number(booking.total_price ?? 0).toFixed(2)}
@@ -296,7 +297,7 @@ export default function MyItems() {
                               {booking.renter?.full_name || t('rental.unknownUser')}
                             </div>
                             <div style={{ fontSize: '13px', color: '#666' }}>
-                              {(booking.start_date ?? '')} → {(booking.end_date ?? '')} · {t('common.days', { count: booking.total_days ?? 0 })} · €{Number(booking.total_price ?? 0).toFixed(2)}
+                              {dateRange(booking.start_date, booking.end_date, pushLangOf(i18n.language)) ?? ''} · {t('common.days', { count: booking.total_days ?? 0 })} · €{Number(booking.total_price ?? 0).toFixed(2)}
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>

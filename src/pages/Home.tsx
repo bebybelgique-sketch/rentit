@@ -9,6 +9,7 @@ import CategoryIcon from '../components/icons/CategoryIcon'
 import StateIcon from '../components/icons/StateIcon'
 import { coverPhoto } from '../lib/items'
 import { money } from '../domain/push'
+import { formatNumber } from '../domain/dates'
 import { useBrowseItems } from '../hooks/useBrowseItems'
 import { useCatalogHasItems } from '../hooks/useCatalogHasItems'
 import ToolDemandForm from '../components/common/ToolDemandForm'
@@ -116,7 +117,7 @@ function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: numbe
  */
 function formatDistance(km: number, t: TFunction, lang: string): string {
   if (km < 1) return t('distance.underOneKm')
-  const value = new Intl.NumberFormat(lang, { maximumFractionDigits: km < 10 ? 1 : 0 }).format(km)
+  const value = formatNumber(km, lang, { maximumFractionDigits: km < 10 ? 1 : 0 })
   return t('distance.about', { km: value })
 }
 
