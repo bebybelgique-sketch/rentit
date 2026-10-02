@@ -267,11 +267,15 @@ function ListItemForm({ start }: { start: ListingStart }) {
         )
           .then(r => r.json())
           .then(data => {
-            if (data?.display_name) {
-              // Trim to street + city
-              const parts = data.display_name.split(',')
-              const short = parts.slice(0, 3).join(',').trim()
-              setForm(p => ({ ...p, address: short }))
+            // Только индекс и коммуна. До 02.10 сюда ложились первые три
+            // куска display_name — номер дома и улица, — а карточка
+            // витрины показывает первый кусок адреса всем, без входа.
+            // Точный адрес стороны договаривают в переписке после одобрения
+            // (база и координаты хранит лишь примерные, миграция 50).
+            const a = data?.address ?? {}
+            const place = a.village || a.town || a.city || a.municipality || a.suburb
+            if (place) {
+              setForm(p => ({ ...p, address: [a.postcode, place].filter(Boolean).join(' ') }))
             }
           })
           .catch(() => {}) // silent fail — address field remains editable

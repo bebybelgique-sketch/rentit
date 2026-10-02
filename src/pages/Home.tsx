@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import {
   CATEGORIES, categoryLabelKey, conditionLabelKey, isCategoryValue,
 } from '../domain/catalog'
 import CategoryIcon from '../components/icons/CategoryIcon'
 import StateIcon from '../components/icons/StateIcon'
 import { coverPhoto } from '../lib/items'
+import { money } from '../domain/push'
 import { useBrowseItems } from '../hooks/useBrowseItems'
 import { useCatalogHasItems } from '../hooks/useCatalogHasItems'
 import ToolDemandForm from '../components/common/ToolDemandForm'
@@ -104,14 +106,18 @@ function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: numbe
 // отказ сборки, а пустые карточки.
 
 /**
- * Расстояние в том виде, в каком его читает человек: до километра — в метрах
- * с шагом 50, дальше — километры. «0.8 km» и «1.24 km» одинаково неудобны,
- * когда решаешь, дойти пешком или ехать.
+ * Расстояние в том виде, в каком его читает человек.
+ *
+ * С 02.10 точка вещи в базе примерная — сетка ~500 м (миграция 50), поэтому
+ * метры с шагом 50 были бы точностью, которой нет: «à 150 m» про вещь,
+ * стоящую в полукилометре. Ближе километра — «moins d'1 km», дальше — «≈».
+ * Текст из словаря и число по языку читателя: прежнее «à … km» было вшито
+ * по-французски для всех.
  */
-function formatDistance(km: number): string {
-  if (km < 1) return `à ${Math.max(50, Math.round(km * 1000 / 50) * 50)} m`
-  if (km < 10) return `à ${km.toFixed(1).replace('.', ',')} km`
-  return `à ${Math.round(km)} km`
+function formatDistance(km: number, t: TFunction, lang: string): string {
+  if (km < 1) return t('distance.underOneKm')
+  const value = new Intl.NumberFormat(lang, { maximumFractionDigits: km < 10 ? 1 : 0 }).format(km)
+  return t('distance.about', { km: value })
 }
 
 /**
@@ -124,7 +130,7 @@ function formatDistance(km: number): string {
  * колбэке map нужен блок, а не выражение.
  */
 function BrowseCard({ item }: { item: BrowseRow }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   // Обложка — через coverPhoto, а не `photos[0]`: внутри jsonb может лежать
   // null или объект, и такой элемент не должен доехать до src пустой строкой.
   const cover = coverPhoto(item)
@@ -160,7 +166,7 @@ function BrowseCard({ item }: { item: BrowseRow }) {
           </div>
           {item.deposit > 0 && (
             <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
-              + €{item.deposit.toFixed(2)} caution
+              + {t('itemDetail.depositShort', { amount: money(item.deposit) })}
             </div>
           )}
           {/* Была 📍 внутри шаблонной строки — эмодзи там неизбежен, потому
@@ -181,7 +187,7 @@ function BrowseCard({ item }: { item: BrowseRow }) {
               fontFamily: 'var(--font-mono)', fontSize: '11px',
               color: 'var(--muted)', marginTop: '4px',
             }}>
-              {formatDistance(item.distance_m / 1000)}
+              {formatDistance(item.distance_m / 1000, t, i18n.language)}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>

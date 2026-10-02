@@ -66,7 +66,9 @@ test.describe('поиск по близости', () => {
     await expect(card).toBeVisible({ timeout: 20000 })
 
     // Расстояние считалось и раньше — ради фильтра, — но на экран не попадало.
-    await expect(card).toContainText(/à \d+([.,]\d+)? (m|km)/, { timeout: 20000 })
+    // С 02.10 точка вещи примерная (~500 м, миграция 50), и расстояние
+    // пишется так же: «à moins d’1 km» или «à ≈ 3,4 km».
+    await expect(card).toContainText(/à (moins d.1 km|≈ \d+([.,]\d+)? km)/, { timeout: 20000 })
   })
 
   test('вещь вне радиуса отсекает база — до браузера она не доезжает', async ({ page, context }) => {
