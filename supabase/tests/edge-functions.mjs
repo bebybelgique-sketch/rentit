@@ -325,6 +325,24 @@ try {
     check((declinedRows ?? []).some((n) => n.kind === 'declined'),
       'автоотказ → запись «declined» у второго арендатора сразу', JSON.stringify(declinedRows))
 
+    // Два одобрения ОДНОВРЕМЕННО (миграция 48). Выше одобрения идут по
+    // очереди; здесь обе заявки на одни даты одобряются в один момент.
+    // Без очереди на вещь в триггере оба одобрения видели соседа ещё
+    // ожидающим и оба ставили confirmed — одна единица выдавалась дважды.
+    const third = await ask({ item_id: itemId, start_date: day(26), end_date: day(27) })
+    const fourth = await ask({ item_id: itemId, start_date: day(26), end_date: day(27) }, secondRenter)
+    if (third.bookingId && fourth.bookingId) {
+      const raced = await Promise.all([approve(third.bookingId), approve(fourth.bookingId)])
+      const won = raced.filter((r) => r.status === 200).length
+      const { data: raceConfirmed } = await owner.from('bookings')
+        .select('id').in('id', [third.bookingId, fourth.bookingId]).eq('status', 'confirmed')
+      check(won === 1 && (raceConfirmed ?? []).length === 1,
+        'два одобрения одновременно → ровно одна подтверждённая бронь',
+        `ответы: ${raced.map((r) => `${r.status} ${r.json.error ?? ''}`).join(' / ')}; confirmed: ${(raceConfirmed ?? []).length}`)
+    } else {
+      check(false, 'две заявки для одновременного одобрения создались', `${third.err ?? ''} ${fourth.err ?? ''}`)
+    }
+
     await owner.from('bookings').delete().in('id', [first.bookingId, second.bookingId])
   }
    }
