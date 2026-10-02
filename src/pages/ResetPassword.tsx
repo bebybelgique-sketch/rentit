@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { authErrorKey } from '../domain/authErrors'
 import { supabase } from '../lib/supabase'
+import { authRedirect } from '../lib/authRedirect'
 import { usePageTitle } from '../hooks/usePageTitle'
 
 // Вторая половина пути восстановления пароля, тоже была целиком
@@ -14,14 +15,27 @@ export default function ResetPassword() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [ready, setReady] = useState(false)
+  // checking — ждём, чем кончился разбор ссылки; ready — можно задать
+  // пароль; invalid — ссылка не годится, и это надо сказать, а не ждать.
+  const [state, setState] = useState<'checking' | 'ready' | 'invalid'>(
+    authRedirect.error ? 'invalid' : 'checking',
+  )
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setReady(true)
+    if (state !== 'checking') return
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') { setState('ready'); return }
+      if (event !== 'INITIAL_SESSION') return
+      // INITIAL_SESSION приходит, когда auth-js уже разобрал ссылку. Событие
+      // восстановления могло уйти раньше нашей подписки — страница грузится
+      // лениво, — поэтому решаем по сессии: годится ТОЛЬКО та, что пришла из
+      // этой ссылки (токен совпадает). Любая другая — нет: иначе вошедший
+      // задал бы новый пароль без текущего, мимо проверки в ChangePassword.
+      const fromThisLink = !!authRedirect.recoveryToken && session?.access_token === authRedirect.recoveryToken
+      setState(fromThisLink ? 'ready' : 'invalid')
     })
     return () => subscription.unsubscribe()
-  }, [])
+  }, [state])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,11 +46,26 @@ export default function ResetPassword() {
     else navigate('/profile')
   }
 
-  if (!ready) {
+  if (state === 'checking') {
     return (
       <div className="page">
         <div style={{ maxWidth: '420px', margin: '40px auto', textAlign: 'center' }}>
           <div className="loading">{t('passwordRecovery.verifying')}</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Просрочена, уже использована, открыта не та — выход должен быть: новая
+  // ссылка в один шаг, а не вечное ожидание.
+  if (state === 'invalid') {
+    return (
+      <div className="page">
+        <div className="card" role="alert" style={{ maxWidth: '420px', margin: '40px auto', textAlign: 'center' }}>
+          <p style={{ marginBottom: '20px', lineHeight: 1.6 }}>{t('passwordRecovery.linkInvalid')}</p>
+          <Link to="/forgot-password" className="btn btn-primary" style={{ display: 'inline-block', minHeight: '44px' }}>
+            {t('passwordRecovery.requestNew')}
+          </Link>
         </div>
       </div>
     )

@@ -733,6 +733,8 @@
     "wrongCurrent": "Huidig wachtwoord is onjuist."
   },
   "passwordRecovery": {
+    "linkInvalid": "Deze link is niet meer geldig: hij is verlopen of al gebruikt. Vraag een nieuwe aan, die komt binnen enkele minuten.",
+    "requestNew": "Een nieuwe link ontvangen",
     "requestTitle": "Wachtwoord vergeten",
     "sentText": "Bekijk uw mailbox: daarin vindt u een link om een nieuw wachtwoord te kiezen.",
     "emailLabel": "E-mailadres",

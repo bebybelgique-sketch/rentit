@@ -733,6 +733,8 @@
     "wrongCurrent": "Current password is incorrect."
   },
   "passwordRecovery": {
+    "linkInvalid": "This link is no longer valid: it has expired or was already used. Request a new one — it arrives within minutes.",
+    "requestNew": "Get a new link",
     "requestTitle": "Forgotten password",
     "sentText": "Check your inbox: you will find a link to choose a new password.",
     "emailLabel": "Email address",

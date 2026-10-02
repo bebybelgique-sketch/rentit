@@ -1,4 +1,7 @@
 // src/lib/supabase.ts
+// Первым: адрес ссылки из письма надо прочитать до createClient — auth-js
+// разбирает его и стирает хеш (см. authRedirect.ts).
+import './authRedirect'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database.types'
 
