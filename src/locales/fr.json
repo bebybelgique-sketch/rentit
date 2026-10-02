@@ -733,6 +733,8 @@
     "wrongCurrent": "Mot de passe actuel incorrect."
   },
   "passwordRecovery": {
+    "linkInvalid": "Ce lien n’est plus valable : il a expiré ou a déjà servi. Demandez-en un nouveau, il arrive en quelques minutes.",
+    "requestNew": "Recevoir un nouveau lien",
     "requestTitle": "Mot de passe oublié",
     "sentText": "Consultez votre boîte mail : vous y trouverez un lien pour choisir un nouveau mot de passe.",
     "emailLabel": "Adresse e-mail",
