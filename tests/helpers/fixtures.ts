@@ -1,5 +1,34 @@
 import { expect, type Page } from '@playwright/test'
+import { createClient } from '@supabase/supabase-js'
 import { UI, dismissCookies, withDialog } from './app'
+import { closeLiveBookings } from '../../scripts/close-live-bookings.mjs'
+
+/**
+ * Закрывает живые брони вещи штатными функциями — от имени тестового
+ * владельца, отдельной сессией по API.
+ *
+ * С 01.10 вещь с живыми бронями из «Mes outils» не удаляется (#122): кнопка
+ * объясняет, почему, и предлагает скрыть. Тесты брони оставляют заявки и
+ * подтверждённые брони, поэтому уборка сначала закрывает их тем же путём,
+ * что и человек (отказ, отмена, завершение), и только потом удаляет вещь.
+ *
+ * signOut здесь не зовётся намеренно: по умолчанию он отзывает ВСЕ сессии
+ * учётки, и браузер теста оказался бы разлогинен посреди уборки.
+ */
+async function closeItemBookings(id: string): Promise<void> {
+  const url = process.env.VITE_SUPABASE_URL
+  const key = process.env.VITE_SUPABASE_ANON_KEY
+  const email = process.env.TEST_OWNER_EMAIL
+  const password = process.env.TEST_OWNER_PASSWORD
+  if (!url || !key || !email || !password) {
+    throw new Error('[fixtures] для уборки броней нужны VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY и TEST_OWNER_* в окружении')
+  }
+  const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+  const { error } = await client.auth.signInWithPassword({ email, password })
+  if (error) throw new Error(`[fixtures] вход владельца для уборки броней не удался: ${error.message}`)
+  const { failures } = await closeLiveBookings(client, [id])
+  if (failures.length) throw new Error(`[fixtures] брони вещи ${id} не закрылись: ${failures.join('; ')}`)
+}
 
 /**
  * Витрина пуста НАМЕРЕННО: 26 сгенерированных объявлений удалены, и это
@@ -181,6 +210,7 @@ export async function createItem(
  */
 export async function removeItem(page: Page, id: string) {
   try {
+    await closeItemBookings(id)
     await page.goto('/my-items', { waitUntil: 'load' })
     await dismissCookies(page)
 

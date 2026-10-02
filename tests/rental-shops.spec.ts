@@ -59,6 +59,10 @@ test.describe('страница для прокатных контор', () => {
     // а выдуманное число обесценивает всё остальное на странице.
     const body = await page.locator('body').innerText()
     expect(body).not.toMatch(/\d+\s*(loueurs|magasins|partenaires|professionnels)\s/i)
-    expect(body).toMatch(/vitrine est neuve et vide/i)
+    // Состояние названо честно: витрина новая, прокатчиков ищем — первых.
+    // До 01.10 здесь стояло «neuve et vide», но «vide» перестаёт быть
+    // правдой с первой выложенной вещью (#120), а ноль контор — нет.
+    expect(body).toMatch(/vitrine est neuve/i)
+    expect(body).toMatch(/premiers loueurs/i)
   })
 })
