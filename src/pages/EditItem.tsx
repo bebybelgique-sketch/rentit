@@ -364,7 +364,7 @@ const EditItem: React.FC = () => {
               onChange={e => setFormData(prev => ({ ...prev, late_fee_per_day: e.target.value }))}
               min="0.50"
               step="0.50"
-              placeholder="ex. 10.00"
+              placeholder="10.00"
               style={{ width: '100%' }}
             />
             {/* Тот же текст уже жил в словарях как listItem.lateFeeNote —

@@ -82,7 +82,7 @@ function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: numbe
         <div style="min-width:180px;font-family:inherit">
           ${photo}
           <div style="font-weight:700;font-size:14px;margin-bottom:4px">${esc(item.title)}</div>
-          <div style="font-size:13px;color:#666;margin-bottom:10px">€${Number(item.price_per_day).toFixed(2)}${t('home.perDay')}${item.deposit > 0 ? ` · €${Number(item.deposit).toFixed(2)} caution` : ''}</div>
+          <div style="font-size:13px;color:#666;margin-bottom:10px">€${Number(item.price_per_day).toFixed(2)}${t('home.perDay')}${item.deposit > 0 ? ` · ${t('itemDetail.depositShort', { amount: money(item.deposit) })}` : ''}</div>
           <a href="/item/${esc(item.id)}" style="display:block;background:#121417;color:#F0F1F3;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;text-align:center;text-decoration:none;border:1px solid rgba(198,205,213,0.45)">${t('home.seeMore')}</a>
         </div>
       `)
@@ -406,7 +406,7 @@ export default function Home() {
               style={{ whiteSpace: 'nowrap', minHeight: '44px' }}
               aria-expanded={filtersOpen}
             >
-              Filtres{extraFilterCount > 0 ? ` · ${extraFilterCount}` : ''} {filtersOpen ? '▴' : '▾'}
+              {t('home.filtersButton')}{extraFilterCount > 0 ? ` · ${extraFilterCount}` : ''} {filtersOpen ? '▴' : '▾'}
             </button>
             {nearby && (
               <select

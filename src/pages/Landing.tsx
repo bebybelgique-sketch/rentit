@@ -161,7 +161,7 @@ export default function Landing() {
               Rent<span style={{ color: 'var(--action)' }}>It</span>
             </span>
             <span style={{ fontFamily: 'var(--font-text)', fontSize: '14px', color: 'var(--text-faint)' }}>
-              Belgium · {new Date().getFullYear()}
+              {t('landing.footerCountry')} · {new Date().getFullYear()}
             </span>
           </div>
           <div className="lp-foot-l">

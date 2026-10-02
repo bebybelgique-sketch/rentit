@@ -479,6 +479,7 @@
   "yourListing": "C'est votre annonce",
   "addPhotoLater": "Plus tard — déposer mon outil",
   "landing": {
+    "footerCountry": "Belgique",
     "eyebrow": "Brabant Wallon — entre voisins",
     "h1a": "Vos outils dorment.",
     "h1b": "Ceux du voisin aussi.",
@@ -607,6 +608,7 @@
     "photoUploadFailed": "La photo n'a pas pu être envoyée. Réessayez."
   },
   "home": {
+    "filtersButton": "Filtres",
     "altText": "Photo de {{title}}",
     "seeMore": "Voir l'outil →",
     "maxPriceLabel": "Prix max / jour",
@@ -633,6 +635,7 @@
     "about": "à ≈ {{km}} km"
   },
   "cancellationNotice": {
+    "otherParty": "l’autre partie",
     "noReason": "Aucune raison indiquée",
     "by": "Annulée par {{name}}",
     "automatic": "Clôturée automatiquement",

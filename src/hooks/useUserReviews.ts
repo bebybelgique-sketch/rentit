@@ -14,7 +14,8 @@ export interface UserReview {
   rating: number;
   comment: string | null;
   created_at: string;
-  authorName: string;
+  /** null — имя не названо; подпись на языке читателя ставит экран. */
+  authorName: string | null;
   authorAvatarUrl: string | null;
 }
 
@@ -53,7 +54,7 @@ const fetchUserReviews = async (
       rating: row.rating,
       comment: row.comment,
       created_at: row.created_at,
-      authorName: author?.full_name || 'Utilisateur',
+      authorName: author?.full_name || null,
       authorAvatarUrl: author?.avatar_url ?? null,
     };
   });

@@ -33,7 +33,7 @@ const UserRatingBadge: React.FC<UserRatingBadgeProps> = ({
 
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-      <RatingStars value={rating} size="sm" ariaLabel={`Note ${roleLabel}`} />
+      <RatingStars value={rating} size="sm" ariaLabel={`${t('review.ratingLabel')} — ${roleLabel}`} />
       <strong>{rating.toLocaleString('fr-BE', { minimumFractionDigits: 1, maximumFractionDigits: 2 })}</strong>
       {typeof count === 'number' && (
         <span style={{ color: '#666' }}>({t('userRating.reviewCount', { count })})</span>

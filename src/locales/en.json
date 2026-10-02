@@ -479,6 +479,7 @@
   "yourListing": "This is your listing",
   "addPhotoLater": "Later — list my tool",
   "landing": {
+    "footerCountry": "Belgium",
     "eyebrow": "Walloon Brabant — between neighbours",
     "h1a": "Your tools are asleep.",
     "h1b": "So are your neighbour’s.",
@@ -607,6 +608,7 @@
     "photoUploadFailed": "The photo couldn't be uploaded. Try again."
   },
   "home": {
+    "filtersButton": "Filters",
     "altText": "Photo of {{title}}",
     "seeMore": "See tool →",
     "maxPriceLabel": "Max price / day",
@@ -633,6 +635,7 @@
     "about": "≈ {{km}} km away"
   },
   "cancellationNotice": {
+    "otherParty": "the other party",
     "noReason": "No reason given",
     "by": "Cancelled by {{name}}",
     "automatic": "Closed automatically",

@@ -479,6 +479,7 @@
   "yourListing": "Dit is jouw advertentie",
   "addPhotoLater": "Later — mijn gereedschap plaatsen",
   "landing": {
+    "footerCountry": "België",
     "eyebrow": "Waals-Brabant — onder buren",
     "h1a": "Je gereedschap slaapt.",
     "h1b": "Dat van je buur ook.",
@@ -607,6 +608,7 @@
     "photoUploadFailed": "De foto kon niet worden verzonden. Probeer opnieuw."
   },
   "home": {
+    "filtersButton": "Filters",
     "altText": "Foto van {{title}}",
     "seeMore": "Gereedschap bekijken →",
     "maxPriceLabel": "Max prijs / dag",
@@ -633,6 +635,7 @@
     "about": "op ≈ {{km}} km"
   },
   "cancellationNotice": {
+    "otherParty": "de andere partij",
     "noReason": "Geen reden opgegeven",
     "by": "Geannuleerd door {{name}}",
     "automatic": "Automatisch afgesloten",

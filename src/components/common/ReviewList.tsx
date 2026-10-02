@@ -5,7 +5,8 @@ import RatingStars from './RatingStars';
 
 export interface ReviewListItem {
   id: string;
-  authorName: string;
+  /** null — имя не названо: подпись «Utilisateur» на языке читателя. */
+  authorName: string | null;
   authorAvatarUrl?: string | null;
   rating: number;
   comment: string | null;
@@ -53,13 +54,13 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews, emptyLabel }) => {
                 justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#6d28d9',
               }}
             >
-              {r.authorName.charAt(0).toUpperCase()}
+              {(r.authorName || t('rental.unknownUser')).charAt(0).toUpperCase()}
             </div>
           )}
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <strong style={{ fontSize: '14px' }}>{r.authorName}</strong>
-              <RatingStars value={r.rating} size="sm" ariaLabel={t('review.ratingOf', { name: r.authorName })} />
+              <strong style={{ fontSize: '14px' }}>{r.authorName || t('rental.unknownUser')}</strong>
+              <RatingStars value={r.rating} size="sm" ariaLabel={t('review.ratingOf', { name: r.authorName || t('rental.unknownUser') })} />
               <time dateTime={r.createdAt} style={{ fontSize: '12px', color: '#999' }}>
                 {formatDate(r.createdAt, i18n.language)}
               </time>
