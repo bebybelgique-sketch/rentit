@@ -26,7 +26,10 @@ export type UploadAvatarResult =
   // text — уже переведённый текст для человека. Не message: так называется
   // текст ЧУЖИХ ошибок, и сторож (src/__tests__/rawErrorText.test.ts) не
   // пускает его на экран.
-  | { ok: false; reason: 'type' | 'size' | 'upload'; text: string };
+  | { ok: false; reason: 'type' | 'size'; text: string }
+  // previousRemoved: прежний снимок уже убран из бакета (порядок вынужденный,
+  // см. ниже), значит ссылка на него в профиле теперь ведёт в пустоту.
+  | { ok: false; reason: 'upload'; text: string; previousRemoved: boolean };
 
 export function useUploadAvatar() {
   const [uploading, setUploading] = useState(false);
@@ -83,7 +86,7 @@ export function useUploadAvatar() {
       // ничего не скажет.
       if (upErr) {
         console.error('[avatar] загрузка:', upErr.message);
-        return { ok: false, reason: 'upload', text: i18n.t('profile.avatarUploadFailed') };
+        return { ok: false, reason: 'upload', text: i18n.t('profile.avatarUploadFailed'), previousRemoved: !rmErr };
       }
 
       const { data } = supabase.storage.from(AVATARS_BUCKET).getPublicUrl(name);
