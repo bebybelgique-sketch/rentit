@@ -24,6 +24,7 @@ const mockItem: Item = {
   price_per_day: 25,
   price_3days: 60,
   price_week: 140,
+  price_weekend: null,
   late_fee_per_day: 5,
   deposit: 30,
   photos: ['https://example.com/drill.jpg'],

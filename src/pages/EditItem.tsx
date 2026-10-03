@@ -36,6 +36,7 @@ const EditItem: React.FC = () => {
     price_per_day: number;
     price_3days: string;
     price_week: string;
+    price_weekend: string;
     late_fee_per_day: string;
     delivery_fee: string;
     delivery_radius_km: string;
@@ -56,6 +57,7 @@ const EditItem: React.FC = () => {
     // от нуля, а ноль здесь означал бы «неделя бесплатно».
     price_3days: '' as string,
     price_week: '' as string,
+    price_weekend: '' as string,
     late_fee_per_day: '' as string,
     // Доставка держится строками по той же причине, что и тарифы: пустое
     // поле — «услуги нет», и это не ноль.
@@ -91,6 +93,7 @@ const EditItem: React.FC = () => {
         // приводить пустое к строке надо ровно там, где оно пустое.
         price_3days: item.price_3days == null ? '' : String(item.price_3days),
         price_week: item.price_week == null ? '' : String(item.price_week),
+        price_weekend: item.price_weekend == null ? '' : String(item.price_weekend),
         late_fee_per_day: item.late_fee_per_day == null ? '' : String(item.late_fee_per_day),
         delivery_fee: item.delivery_fee == null ? '' : String(item.delivery_fee),
         delivery_radius_km: item.delivery_radius_km == null ? '' : String(item.delivery_radius_km),
@@ -191,7 +194,7 @@ const EditItem: React.FC = () => {
         return v;
       };
 
-      const { price_3days, price_week, late_fee_per_day, delivery_fee, delivery_radius_km, ...rest } = formData;
+      const { price_3days, price_week, price_weekend, late_fee_per_day, delivery_fee, delivery_radius_km, ...rest } = formData;
 
       // Включённая доставка без цены — обещание услуги, условий которой
       // никто не знает. Пустое поле здесь НЕ приводим молча к «услуги нет»:
@@ -205,6 +208,7 @@ const EditItem: React.FC = () => {
         ...rest,
         price_3days: tier(price_3days, t('listItem.package3Days')),
         price_week: tier(price_week, t('listItem.packageWeek')),
+        price_weekend: tier(price_weekend, t('listItem.packageWeekend')),
         late_fee_per_day: tier(late_fee_per_day, t('listItem.lateFeesLabel')),
         // Выключенный тумблер стирает обе колонки: снятая галка обязана
         // означать «не вожу», а не «вожу, но цену больше не показываю».
@@ -370,6 +374,21 @@ const EditItem: React.FC = () => {
               min="0.50"
               step="0.50"
               placeholder={t('editItem.packageWeekHint')}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="price_weekend">{t('editItem.packageWeekend')} <span style={{ color: 'var(--muted)', fontWeight: '400' }}>{t('common.optional')}</span></label>
+            <input
+              id="price_weekend"
+              name="price_weekend"
+              type="number"
+              value={formData.price_weekend}
+              onChange={e => setFormData(prev => ({ ...prev, price_weekend: e.target.value }))}
+              min="0.50"
+              step="0.50"
+              placeholder={t('listItem.packageWeekendHint')}
               style={{ width: '100%' }}
             />
           </div>

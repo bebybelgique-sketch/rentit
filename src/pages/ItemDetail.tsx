@@ -45,6 +45,7 @@ interface Item {
   price_per_day: number
   price_3days: number | null
   price_week: number | null
+  price_weekend: number | null
   late_fee_per_day: number | null
   // Доставка. Непустая цена — единственный признак того, что услуга есть:
   // пусто, и вторая сторона не видит про доставку ни строчки.
@@ -294,16 +295,21 @@ export default function ItemDetail() {
   // оказалась бы другая, и разошлись бы они уже при встрече.
   const rental = item
     ? computeRentalPrice(
-        { pricePerDay: item.price_per_day, price3Days: item.price_3days, priceWeek: item.price_week },
+        {
+          pricePerDay: item.price_per_day, price3Days: item.price_3days,
+          priceWeek: item.price_week, priceWeekend: item.price_weekend,
+        },
         totalDays,
+        // Пакету выходных нужна дата начала: он привязан к дням недели.
+        startDate ?? undefined,
       )
-    : { total: 0, weeks: 0, packs3: 0, days: 0 }
+    : { total: 0, weeks: 0, packs3: 0, weekends: 0, days: 0 }
   // Доставка — отдельная услуга владельца, а не часть аренды: в
   // bookings.total_price она не входит (там цена по тарифам, её считает
   // сервер), но в то, что арендатор отдаст при встрече, — входит.
   const deliveryFee = item && wantsDelivery && item.delivery_fee != null ? Number(item.delivery_fee) : 0
   const totalPrice = totalDays > 0 && item ? rental.total + item.deposit + insuranceFee + deliveryFee : 0
-  const hasTiers = !!item && (!!item.price_3days || !!item.price_week)
+  const hasTiers = !!item && (!!item.price_3days || !!item.price_week || !!item.price_weekend)
   // Экономия против дневной цены. Показываем, только если она есть: иначе
   // строка «вы экономите 0 €» превращается в насмешку.
   const savedVsDaily = item && totalDays > 0
@@ -555,6 +561,7 @@ export default function ItemDetail() {
                 <div style={{ marginTop: 'var(--space-2)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', color: 'var(--muted)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   {item.price_3days != null && <div>€{Number(item.price_3days).toFixed(2)} {t('itemDetail.perThreeDays')}</div>}
                   {item.price_week != null && <div>€{Number(item.price_week).toFixed(2)} {t('itemDetail.perWeek')}</div>}
+                  {item.price_weekend != null && <div>€{Number(item.price_weekend).toFixed(2)} {t('itemDetail.perWeekend')}</div>}
                 </div>
               )}
               {item.deposit > 0 && (
@@ -798,6 +805,12 @@ export default function ItemDetail() {
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                             <span style={{ color: 'var(--muted)' }}>€{Number(item.price_3days).toFixed(2)} × {t('common.packs3', { count: rental.packs3 })}</span>
                             <span>€{(Number(item.price_3days) * rental.packs3).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {rental.weekends > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ color: 'var(--muted)' }}>€{Number(item.price_weekend).toFixed(2)} × {t('common.weekends', { count: rental.weekends })}</span>
+                            <span>€{(Number(item.price_weekend) * rental.weekends).toFixed(2)}</span>
                           </div>
                         )}
                         {rental.days > 0 && (

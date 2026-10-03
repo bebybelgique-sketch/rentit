@@ -69,6 +69,7 @@ function ListItemForm({ start }: { start: ListingStart }) {
     price_per_day: string;
     price_3days: string;
     price_week: string;
+    price_weekend: string;
     late_fee_per_day: string;
     delivery_fee: string;
     delivery_radius_km: string;
@@ -85,6 +86,7 @@ function ListItemForm({ start }: { start: ListingStart }) {
     price_per_day: '',
     price_3days: '',
     price_week: '',
+    price_weekend: '',
     late_fee_per_day: '',
     delivery_fee: '',
     delivery_radius_km: '',
@@ -304,6 +306,10 @@ function ListItemForm({ start }: { start: ListingStart }) {
     if (p3 > 0 && p3 >= day * 3) dead.push(`${t('listItem.package3Days')} (€${p3.toFixed(2)} ≥ 3 × €${day.toFixed(2)})`)
     const pw = parseFloat(form.price_week)
     if (pw > 0 && pw >= day * 7) dead.push(`${t('listItem.packageWeek')} (€${pw.toFixed(2)} ≥ 7 × €${day.toFixed(2)})`)
+    // Выходные длиннее четырёх дней не бывают (пт–пн): пакет не дешевле
+    // четырёх дней не выберется никогда.
+    const pwe = parseFloat(form.price_weekend)
+    if (pwe > 0 && pwe >= day * 4) dead.push(`${t('listItem.packageWeekend')} (€${pwe.toFixed(2)} ≥ 4 × €${day.toFixed(2)})`)
     if (dead.length === 0) return ''
     return t('listItem.packageWarning', { packages: dead.join(' ; ') })
   })()
@@ -322,6 +328,7 @@ function ListItemForm({ start }: { start: ListingStart }) {
     for (const [field, label] of [
       ['price_3days', t('listItem.package3Days')],
       ['price_week', t('listItem.packageWeek')],
+      ['price_weekend', t('listItem.packageWeekend')],
       ['late_fee_per_day', t('listItem.lateFeesLabel')],
     ] as const) {
       const raw = form[field]
@@ -396,6 +403,7 @@ function ListItemForm({ start }: { start: ListingStart }) {
         // «неделя бесплатно», и расчёт принял бы его всерьёз.
         price_3days:      form.price_3days      === '' ? null : parseFloat(form.price_3days),
         price_week:       form.price_week       === '' ? null : parseFloat(form.price_week),
+        price_weekend:    form.price_weekend    === '' ? null : parseFloat(form.price_weekend),
         late_fee_per_day: form.late_fee_per_day === '' ? null : parseFloat(form.late_fee_per_day),
         // Выключенный тумблер уходит как NULL по обоим полям — иначе цена,
         // набранная и потом отменённая, осталась бы в базе обещанием.
@@ -818,6 +826,24 @@ function ListItemForm({ start }: { start: ListingStart }) {
                   value={form.price_week}
                   onChange={set('price_week')}
                   placeholder={t('listItem.packageWeekHint')}
+                  disabled={isLocked}
+                />
+              </div>
+              {/* Выходные — по правилам прокатчиков: окно пт–пн с субботой
+                  и воскресеньем (supabase/functions/_shared/pricing.ts). */}
+              <div className="form-group">
+                <label htmlFor="li-pwe">
+                  {t('listItem.packageWeekendLabel')}{' '}
+                  <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{t('common.optional')}</span>
+                </label>
+                <input
+                  id="li-pwe"
+                  type="number"
+                  min="0.50"
+                  step="0.50"
+                  value={form.price_weekend}
+                  onChange={set('price_weekend')}
+                  placeholder={t('listItem.packageWeekendHint')}
                   disabled={isLocked}
                 />
               </div>

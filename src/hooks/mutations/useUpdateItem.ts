@@ -26,6 +26,7 @@ export type ItemUpdate = Partial<Pick<
   | 'price_per_day'
   | 'price_3days'
   | 'price_week'
+  | 'price_weekend'
   | 'late_fee_per_day'
   | 'deposit'
   | 'photos'

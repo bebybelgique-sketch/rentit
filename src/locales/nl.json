@@ -144,6 +144,9 @@
   "joinRentIt": "Sluit je aan bij RentIt",
   "listFirstTool": "Plaats je eerste gereedschap →",
   "listItem": {
+    "packageWeekend": "Het weekendpakket",
+    "packageWeekendLabel": "Weekendpakket (€)",
+    "packageWeekendHint": "van vrijdag tot maandag",
     "geolocationDenied": "Locatietoegang geweigerd. Voer uw adres handmatig in.",
     "titleRequired": "Titel is vereist.",
     "priceMustBePositive": "Prijs moet groter zijn dan 0.",
@@ -528,6 +531,8 @@
     "terms": "Voorwaarden"
   },
   "common": {
+    "weekends_one": "{{count}} weekend",
+    "weekends_other": "{{count}} weekends",
     "days_one": "{{count}} dag",
     "days_other": "{{count}} dagen",
     "weeks_one": "{{count}} week",
@@ -539,6 +544,7 @@
     "refundableAtReturn": "— terugbetaalbaar bij teruggave"
   },
   "itemDetail": {
+    "perWeekend": "/ weekend (vr. → ma.)",
     "perThreeDays": "/ 3 dagen",
     "perWeek": "/ week",
     "rangeFrom": "Van",
@@ -585,6 +591,7 @@
     "visibleBadge": "Zichtbaar"
   },
   "editItem": {
+    "packageWeekend": "Weekendpakket (€)",
     "loginToEdit": "Log in om gereedschap te bewerken",
     "loading": "Gereedschap laden...",
     "notFound": "Gereedschap niet gevonden",
