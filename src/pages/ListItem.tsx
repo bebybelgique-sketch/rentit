@@ -110,6 +110,8 @@ function ListItemForm({ start }: { start: ListingStart }) {
   const [lng, setLng] = useState<number | null>(start.lastPlace?.lng ?? null)
   const [positionFromLast, setPositionFromLast] = useState(start.lastPlace !== null)
   const [geoLoading, setGeoLoading] = useState(false)
+  // Отказ позиции — у самой кнопки, а не в шапке формы (см. getLocation).
+  const [geoError, setGeoError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState('')
@@ -262,6 +264,12 @@ function ListItemForm({ start }: { start: ListingStart }) {
   }
 
   const getLocation = () => {
+    setGeoError(null)
+    // Нет API — кнопка всё равно должна ответить, а не молчать.
+    if (!navigator.geolocation) {
+      setGeoError(t('listItem.geoUnavailable'))
+      return
+    }
     setGeoLoading(true)
     navigator.geolocation.getCurrentPosition(
       pos => {
@@ -288,9 +296,17 @@ function ListItemForm({ start }: { start: ListingStart }) {
           })
           .catch(() => {}) // silent fail — address field remains editable
       },
-      () => {
+      err => {
         setGeoLoading(false)
-        setError(t('listItem.geolocationDenied'))
+        // Отказ показывается У КНОПКИ и называет причину. До 03.10 он уходил
+        // в шапку формы — далеко над кнопкой, и казалось, что кнопка молчит
+        // (замер владельца с ноутбука). А текст «доступ запрещён» стоял и
+        // там, где разрешение есть, но система не знает позиции
+        // (местоположение выключено в Windows) или не успела ответить.
+        // Коды стандарта: 1 — запрещено, 2 — позиция недоступна, 3 — не успела.
+        setGeoError(t(err.code === 1 ? 'listItem.geoDenied'
+          : err.code === 3 ? 'listItem.geoTimeout'
+          : 'listItem.geoUnavailable'))
       },
       { timeout: 10000 }
     )
@@ -662,6 +678,7 @@ function ListItemForm({ start }: { start: ListingStart }) {
               </svg>
               {geoLoading ? t('common.loading') : lat !== null ? t('listItem.positionSet') : t('listItem.setPosition')}
             </button>
+            {geoError && <p className="error-msg" role="alert">{geoError}</p>}
             {lat !== null
               ? <p className="form-hint">{positionFromLast
                   ? t('listItem.positionFromLast', { place: form.address.trim() || `${lat.toFixed(4)}, ${lng?.toFixed(4)}` })
