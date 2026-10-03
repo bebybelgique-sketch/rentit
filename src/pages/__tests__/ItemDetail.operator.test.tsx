@@ -9,6 +9,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // 90 € в день; оператор 160 € в день.
 
 const edge = vi.hoisted(() => ({ invoke: vi.fn() }));
+// Пакеты аренды задаёт тест: по умолчанию их нет, только цена дня.
+const rates = vi.hoisted(() => ({ price_weekend: null as number | null, price_week: null as number | null }));
 
 vi.mock('../../lib/edgeInvoke', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/edgeInvoke')>()),
@@ -26,7 +28,7 @@ vi.mock('../../lib/supabase', () => {
   const chain = (table: string) => {
     const c: Record<string, unknown> = {};
     for (const m of ['select', 'eq', 'order', 'limit']) c[m] = () => c;
-    c.single = async () => ({ data: table === 'items' ? item : null, error: null });
+    c.single = async () => ({ data: table === 'items' ? { ...item, ...rates } : null, error: null });
     c.maybeSingle = async () => ({ data: null, error: null });
     c.then = (resolve: (v: unknown) => unknown) => resolve({ data: [], error: null });
     return c;
@@ -129,5 +131,70 @@ describe('оператор на странице вещи', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Envoyer une demande de réservation' }));
     await screen.findByText('Demande envoyée !');
     expect(edge.invoke).toHaveBeenCalledWith('request-rental', expect.objectContaining({ operator_requested: false }));
+  });
+});
+
+// Оператор считается отдельно от пакетов аренды (ревью GPT 03.10, «weekend ×
+// operator»). Аренда берёт самую выгодную раскладку по пакетам, а оператор —
+// цена × дни его работы, которые называет арендатор. Пакеты — из того же
+// объявления: выходные 150 €, неделя 350 €.
+describe('оператор и пакеты аренды не смешиваются', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 1, 12, 0, 0));
+    edge.invoke.mockReset().mockResolvedValue({ booking_id: 'b-new' });
+    rates.price_weekend = 150;
+    rates.price_week = 350;
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    rates.price_weekend = null;
+    rates.price_week = null;
+  });
+
+  const pick = async (from: number, to: number) => {
+    renderPage();
+    await screen.findByText('Mini-pelle 1 t');
+    fireEvent.click(day(from));
+    fireEvent.click(day(to));
+    fireEvent.click(screen.getByLabelText('Avec opérateur (+€160.00 / jour)'));
+  };
+  // Сумма строки разбора стоит справа от подписи.
+  const amount = (label: string) => screen.getByText(label).nextElementSibling?.textContent;
+
+  it('сб–вс: пакет выходных 150 и оператор 2 × 160', async () => {
+    await pick(10, 11);
+    expect(await screen.findByText('Opérateur €160.00 × 2 j')).toBeInTheDocument();
+    expect(amount('€150.00 × 1 week-end')).toBe('€150.00');
+    expect(amount('Opérateur €160.00 × 2 j')).toBe('€320.00');
+    expect(amount('Total estimé')).toBe('€470.00');
+  });
+
+  it('пт–пн: день и пакет сб–пн; дней оператора — сколько назовёт арендатор', async () => {
+    await pick(9, 12);
+    expect(await screen.findByText('Opérateur €160.00 × 4 j')).toBeInTheDocument();
+    expect(amount('€90.00 × 1 jour')).toBe('€90.00');
+    expect(amount('€150.00 × 1 week-end')).toBe('€150.00');
+    expect(amount('Total estimé')).toBe('€880.00');
+    fireEvent.change(screen.getByLabelText('Jours avec opérateur'), { target: { value: '2' } });
+    expect(await screen.findByText('Opérateur €160.00 × 2 j')).toBeInTheDocument();
+    expect(amount('Total estimé')).toBe('€560.00');
+  });
+
+  it('три будних дня: аренда по дням, оператор 3 × 160', async () => {
+    await pick(13, 15);
+    expect(await screen.findByText('Opérateur €160.00 × 3 j')).toBeInTheDocument();
+    expect(amount('€90.00 × 3 jours')).toBe('€270.00');
+    expect(amount('Total estimé')).toBe('€750.00');
+  });
+
+  it('семь дней: неделя 350, оператор по своим дням', async () => {
+    await pick(12, 18);
+    expect(await screen.findByText('Opérateur €160.00 × 7 j')).toBeInTheDocument();
+    expect(amount('€350.00 × 1 semaine')).toBe('€350.00');
+    expect(amount('Total estimé')).toBe('€1470.00');
+    fireEvent.change(screen.getByLabelText('Jours avec opérateur'), { target: { value: '3' } });
+    expect(await screen.findByText('Opérateur €160.00 × 3 j')).toBeInTheDocument();
+    expect(amount('Total estimé')).toBe('€830.00');
   });
 });
