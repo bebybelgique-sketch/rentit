@@ -69,9 +69,9 @@ describe('тариф выходных на странице вещи', () => {
     vi.useRealTimers();
   });
 
-  it('виден среди тарифов — с окном пт–пн', async () => {
+  it('виден среди тарифов — с окном сб–пн', async () => {
     renderPage();
-    expect(await screen.findByText('€150.00 / week-end (ven. → lun.)')).toBeInTheDocument();
+    expect(await screen.findByText('€150.00 / week-end (sam. → lun.)')).toBeInTheDocument();
   });
 
   it('суббота–воскресенье — пакет за 150, а не 2 × 90', async () => {

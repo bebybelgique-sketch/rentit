@@ -30,16 +30,16 @@ const type = (id: string, value: string) =>
   fireEvent.change(document.getElementById(id) as HTMLInputElement, { target: { value } });
 
 describe('выкладка: тариф выходных', () => {
-  it('поле есть и подписано окном пт–пн', () => {
+  it('поле есть и подписано окном сб–пн', () => {
     render(<MemoryRouter><ListItem /></MemoryRouter>);
-    expect(screen.getByLabelText(/Forfait week-end \(€\)/)).toHaveAttribute('placeholder', 'du vendredi au lundi');
+    expect(screen.getByLabelText(/Forfait week-end \(€\)/)).toHaveAttribute('placeholder', 'du samedi au lundi');
   });
 
-  it('пакет не дешевле четырёх дней — предупреждение с формулой', () => {
+  it('пакет не дешевле трёх дней — предупреждение с формулой', () => {
     render(<MemoryRouter><ListItem /></MemoryRouter>);
     type('li-price', '90');
-    type('li-pwe', '400');
-    expect(screen.getByText(/Le forfait week-end \(€400\.00 ≥ 4 × €90\.00\)/)).toBeInTheDocument();
+    type('li-pwe', '300');
+    expect(screen.getByText(/Le forfait week-end \(€300\.00 ≥ 3 × €90\.00\)/)).toBeInTheDocument();
   });
 
   it('выгодный пакет — без предупреждения', () => {
