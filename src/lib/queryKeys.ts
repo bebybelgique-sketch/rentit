@@ -129,10 +129,20 @@ export const adminKeys = {
  * набор ключей, и наборы разошлись (useCreateRental не знал про
  * ['rentalsAsOwner'], а про ['bookings', userId] не знал никто). Здесь
  * расхождение невозможно — список один.
+ *
+ * ПОМОЩНИКИ ВОЗВРАЩАЮТ ОБЕЩАНИЕ — и мутация его возвращает из onSuccess.
+ * Тогда мутация считается завершённой, когда открытые на экране списки уже
+ * перечитаны. До 03.10 успех наступал раньше: тост «demande acceptée»
+ * висел над карточкой, которая ещё полсекунды показывала заявку с живыми
+ * кнопками, и второе нажатие возвращало 409 — «успех» и «ошибка» об одном
+ * действии подряд. Сбой перечитывания успех не отменяет: invalidateQueries
+ * его не бросает.
  */
-export function invalidateBookingCaches(queryClient: QueryClient): void {
-  void queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-  void queryClient.invalidateQueries({ queryKey: itemKeys.all });
+export function invalidateBookingCaches(queryClient: QueryClient): Promise<void> {
+  return settle([
+    queryClient.invalidateQueries({ queryKey: bookingKeys.all }),
+    queryClient.invalidateQueries({ queryKey: itemKeys.all }),
+  ]);
 }
 
 /**
@@ -140,17 +150,26 @@ export function invalidateBookingCaches(queryClient: QueryClient): void {
  * броней и вещей устарели переписка и фото — их пишет она, а не мы, и ни
  * одна наша мутация их не тронет.
  */
-export function invalidateCounterpartyChanges(queryClient: QueryClient): void {
-  invalidateBookingCaches(queryClient);
-  void queryClient.invalidateQueries({ queryKey: bookingKeys.allMessages });
-  void queryClient.invalidateQueries({ queryKey: bookingKeys.allPhotos });
+export function invalidateCounterpartyChanges(queryClient: QueryClient): Promise<void> {
+  return settle([
+    invalidateBookingCaches(queryClient),
+    queryClient.invalidateQueries({ queryKey: bookingKeys.allMessages }),
+    queryClient.invalidateQueries({ queryKey: bookingKeys.allPhotos }),
+  ]);
 }
 
 /**
  * Вещь изменилась (цена, доступность, удаление): устарели списки вещей и
  * карточка одной вещи.
  */
-export function invalidateItemCaches(queryClient: QueryClient, itemId?: string): void {
-  void queryClient.invalidateQueries({ queryKey: itemKeys.all });
-  if (itemId) void queryClient.invalidateQueries({ queryKey: itemKeys.one(itemId) });
+export function invalidateItemCaches(queryClient: QueryClient, itemId?: string): Promise<void> {
+  return settle([
+    queryClient.invalidateQueries({ queryKey: itemKeys.all }),
+    itemId ? queryClient.invalidateQueries({ queryKey: itemKeys.one(itemId) }) : Promise.resolve(),
+  ]);
+}
+
+/** Дождаться всех перечитываний; результат не нужен, только момент. */
+export function settle(pending: Array<Promise<unknown>>): Promise<void> {
+  return Promise.all(pending).then(() => undefined);
 }

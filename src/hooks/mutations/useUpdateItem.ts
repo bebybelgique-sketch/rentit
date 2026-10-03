@@ -72,11 +72,11 @@ export const useUpdateItem = () => {
     // Сбой показывает место вызова — EditItem: окно и строка с причиной.
     meta: { errorShownBy: 'caller' },
     onSuccess: (updatedItem) => {
-      // Инвалидируем кэш для списка вещей
-      void queryClient.invalidateQueries({ queryKey: itemKeys.all });
       // Обновляем конкретный элемент в кэше. Ключ в единственном числе:
       // префикс ['items'] его не задевает (см. src/lib/queryKeys.ts).
       queryClient.setQueryData(itemKeys.one(updatedItem.id), updatedItem);
+      // Списки вещей — перечитать и дождаться (src/lib/queryKeys.ts, settle).
+      return queryClient.invalidateQueries({ queryKey: itemKeys.all });
     },
   });
 };

@@ -59,7 +59,7 @@ export const useUpdateProfile = () => {
     // Сбой показывает место вызова — Profile: тост с причиной.
     meta: { errorShownBy: 'caller' },
     onSuccess: (updatedProfile) => {
-      void queryClient.invalidateQueries({ queryKey: profileKeys.one(updatedProfile.id) });
+      return queryClient.invalidateQueries({ queryKey: profileKeys.one(updatedProfile.id) });
     },
   });
 };

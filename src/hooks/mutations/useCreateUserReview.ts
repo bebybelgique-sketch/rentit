@@ -1,6 +1,6 @@
 // src/hooks/mutations/useCreateUserReview.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { itemKeys, profileKeys, reviewKeys } from '../../lib/queryKeys';
+import { itemKeys, profileKeys, reviewKeys, settle } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 import i18n from '../../i18n-next';
 import { UserFacingError } from '../../lib/errorText';
@@ -64,12 +64,14 @@ export const useCreateUserReview = () => {
     // Сбой показывает место вызова — BookingThread: причина под формой отзыва.
     meta: { errorShownBy: 'caller' },
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: reviewKeys.of(variables.toUserId) });
       // Рейтинг в users пересчитывает триггер recompute_user_rating,
       // поэтому профиль обязан перечитаться — иначе на экране останется
       // прежнее число, которого в базе уже нет.
-      void queryClient.invalidateQueries({ queryKey: profileKeys.one(variables.toUserId) });
-      void queryClient.invalidateQueries({ queryKey: itemKeys.one(variables.itemId) });
+      return settle([
+        queryClient.invalidateQueries({ queryKey: reviewKeys.of(variables.toUserId) }),
+        queryClient.invalidateQueries({ queryKey: profileKeys.one(variables.toUserId) }),
+        queryClient.invalidateQueries({ queryKey: itemKeys.one(variables.itemId) }),
+      ]);
     },
   });
 };

@@ -1,6 +1,6 @@
 // src/hooks/mutations/useDeleteItem.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { bookingKeys, itemKeys } from '../../lib/queryKeys';
+import { bookingKeys, itemKeys, settle } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabase';
 
 interface DeleteItemParams {
@@ -31,10 +31,12 @@ export const useDeleteItem = () => {
       // инвалидация оставила бы в памяти строку, которой в базе больше нет, и
       // ItemDetail перечитал бы её в PGRST116 («Row not found»).
       queryClient.removeQueries({ queryKey: itemKeys.one(variables.id) });
-      void queryClient.invalidateQueries({ queryKey: itemKeys.all });
       // Брони вещи удаляются вместе с ней (bookings.item_id — внешний ключ),
       // поэтому оба списка броней тоже устарели.
-      void queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      return settle([
+        queryClient.invalidateQueries({ queryKey: itemKeys.all }),
+        queryClient.invalidateQueries({ queryKey: bookingKeys.all }),
+      ]);
     },
   });
 };

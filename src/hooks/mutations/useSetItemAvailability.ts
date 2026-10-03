@@ -40,7 +40,7 @@ export const useSetItemAvailability = () => {
     meta: { errorShownBy: 'caller' },
     onSuccess: (_result, variables) => {
       // Доступность меняет и списки вещей, и занятость дат на витрине.
-      invalidateItemCaches(queryClient, variables.id);
+      return invalidateItemCaches(queryClient, variables.id);
     },
   });
 };

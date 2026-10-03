@@ -116,7 +116,7 @@ export const useActivityRefreshesBookings = (userId: string | undefined): void =
     const at = data.latestAt ?? 0
     const prev = seen.current?.userId === userId ? seen.current.at : null
     seen.current = { userId, at: Math.max(prev ?? 0, at) }
-    if (prev !== null && at > prev) invalidateCounterpartyChanges(queryClient)
+    if (prev !== null && at > prev) void invalidateCounterpartyChanges(queryClient)
   }, [userId, isSuccess, isPlaceholderData, data, queryClient])
 }
 
