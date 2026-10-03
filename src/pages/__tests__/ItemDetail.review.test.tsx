@@ -51,23 +51,23 @@ vi.mock('../../lib/supabase', () => {
     },
   };
 });
-vi.mock('../../context/AuthContext', () => {
-  const user = { id: 'u-renter' };
-  return { useAuth: () => ({ user }) };
-});
+// Вошедший — из держателя: тест «сессия прочиталась позже» меняет его на ходу.
+const auth = vi.hoisted(() => ({ user: { id: 'u-renter' } as { id: string } | null }));
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: auth.user }) }));
 vi.mock('../../hooks/useMyInvite', () => ({ useMyInvite: () => ({ data: null }) }));
 vi.mock('../../components/push/PushOfferCard', () => ({ default: () => null }));
 
 import ItemDetail from '../ItemDetail';
 
-const renderPage = () =>
-  render(
-    <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter initialEntries={['/item/i-1']}>
-        <Routes><Route path="/item/:id" element={<ItemDetail />} /></Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
+const client = new QueryClient();
+const page = () => (
+  <QueryClientProvider client={client}>
+    <MemoryRouter initialEntries={['/item/i-1']}>
+      <Routes><Route path="/item/:id" element={<ItemDetail />} /></Routes>
+    </MemoryRouter>
+  </QueryClientProvider>
+);
+const renderPage = () => render(page());
 
 const submitReview = async () => {
   fireEvent.click(await screen.findByRole('button', { name: /Envoyer l'avis/i }));
@@ -77,6 +77,20 @@ describe('отзыв о вещи на её странице', () => {
   beforeEach(() => {
     db.insertError = null;
     db.bookingsCalls = [];
+    auth.user = { id: 'u-renter' };
+  });
+
+  // Открыл страницу по ссылке: сессия читается после того, как вещь уже
+  // загружена. До 03.10 проверка права шла внутри загрузки вещи с user =
+  // null, и форма не появлялась вовсе.
+  it('вошедший определился позже вещи — форма отзыва всё равно появляется', async () => {
+    auth.user = null;
+    const view = renderPage();
+    await screen.findByText('Perceuse Bosch');
+    expect(screen.queryByRole('button', { name: /Envoyer l'avis/i })).not.toBeInTheDocument();
+    auth.user = { id: 'u-renter' };
+    view.rerender(page());
+    expect(await screen.findByRole('button', { name: /Envoyer l'avis/i })).toBeInTheDocument();
   });
 
   it('запись не удалась — причина под формой, а не тишина', async () => {

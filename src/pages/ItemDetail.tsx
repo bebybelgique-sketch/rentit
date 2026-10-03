@@ -196,7 +196,6 @@ export default function ItemDetail() {
       setCalendar(calendarData)
       setReviews(reviewData || [])
       setHistory(itemHistoryOf(historyData))
-      if (user && itemData) checkCanReview(itemData.id, itemData.owner_id)
     } catch (err) {
       console.error(err)
       setLoadError(true)
@@ -205,8 +204,29 @@ export default function ItemDetail() {
     }
   }
 
-  const checkCanReview = async (iId: string, ownerId: string) => {
-    if (!user || user.id === ownerId) return
+  // Право оставить отзыв зависит от вошедшего — а вошедший известен не
+  // сразу. При открытии страницы по ссылке AuthContext ещё читает сессию,
+  // и до 03.10 проверка внутри fetchItem видела user = null: форма отзыва
+  // не появлялась у того, кто вправе её заполнить, пока он не перезагрузит
+  // страницу. Теперь проверка идёт следом за вошедшим и за вещью.
+  useEffect(() => {
+    if (!user || !item) {
+      setCanReview(false)
+      return
+    }
+    let cancelled = false
+    void checkCanReview(item.id, item.owner_id).then((allowed) => {
+      if (!cancelled) setCanReview(allowed)
+    })
+    return () => {
+      cancelled = true
+    }
+    // checkCanReview читает user из этого же рендера.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, item?.id, item?.owner_id])
+
+  const checkCanReview = async (iId: string, ownerId: string): Promise<boolean> => {
+    if (!user || user.id === ownerId) return false
     // Последняя завершённая аренда, а не «единственная»: maybeSingle() на
     // двух строках отдаёт ошибку, и арендатор, бравший вещь дважды, не мог
     // её оценить — форма просто не появлялась.
@@ -215,7 +235,7 @@ export default function ItemDetail() {
         .order('end_date', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('reviews').select('id').eq('item_id', iId).eq('from_user_id', user.id).eq('review_type', 'item').maybeSingle(),
     ])
-    setCanReview(!!booking && !existing)
+    return !!booking && !existing
   }
 
   const handleShare = async () => {
@@ -334,7 +354,11 @@ export default function ItemDetail() {
       // и типа): человеку это «вы уже оценили», а не «ошибка базы».
       if (error?.code === '23505') throw new UserFacingError(t('review.alreadyLeft'))
       if (error) throw error
-      setReviewSuccess(true); setCanReview(false)
+      // Форму не прячем: на её месте — «спасибо». До 03.10 здесь стояло
+      // setCanReview(false), и карточка исчезала вместе с благодарностью —
+      // человек не видел, что отзыв принят. При следующем открытии формы
+      // не будет: отзыв уже есть (checkCanReview).
+      setReviewSuccess(true)
       fetchItem()
     } catch (err) {
       console.error(err)
@@ -932,7 +956,7 @@ export default function ItemDetail() {
           </div>
         )}
 
-        {canReview && (
+        {(canReview || reviewSuccess) && (
           <div className="card">
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px' }}>
               {t('review.leaveTitle')}
