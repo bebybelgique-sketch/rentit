@@ -460,7 +460,7 @@ const MyRentals: React.FC = () => {
                       <p><strong>{t('rental.labelDelivery')}:</strong> €{Number(rental.delivery_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
                     )}
                     {rental.operator_requested && rental.operator_fee != null && (
-                      <p><strong>{t('rental.labelOperator')}:</strong> €{Number(rental.operator_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
+                      <p><strong>{t('rental.labelOperator')}:</strong> €{Number(rental.operator_fee).toFixed(2)}{rental.operator_days != null && ` (${t('common.days', { count: rental.operator_days })})`} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
                     )}
                     {renderCancellation(rental, owner?.full_name || t('cancellationNotice.otherParty'))}
 
@@ -532,7 +532,7 @@ const MyRentals: React.FC = () => {
                     <p><strong>{t('rental.labelDelivery')}:</strong> €{Number(rental.delivery_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
                   )}
                   {rental.operator_requested && rental.operator_fee != null && (
-                    <p><strong>{t('rental.labelOperator')}:</strong> €{Number(rental.operator_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
+                    <p><strong>{t('rental.labelOperator')}:</strong> €{Number(rental.operator_fee).toFixed(2)}{rental.operator_days != null && ` (${t('common.days', { count: rental.operator_days })})`} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
                   )}
                   {rental.request_message && <p><strong>{t('rental.labelMessage')}:</strong> {rental.request_message}</p>}
                   {renderCancellation(rental, rental.renter?.full_name || t('cancellationNotice.otherParty'))}

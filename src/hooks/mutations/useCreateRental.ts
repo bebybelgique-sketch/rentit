@@ -18,6 +18,8 @@ interface CreateRentalParams {
   delivery_requested?: boolean;
   // Оператор — так же: только выбор, сумму сервер берёт из вещи.
   operator_requested?: boolean;
+  // Сколько дней работает оператор (1…длина брони); по умолчанию — вся бронь.
+  operator_days?: number;
 }
 
 const createRental = async (params: CreateRentalParams): Promise<{ booking_id: string }> => {

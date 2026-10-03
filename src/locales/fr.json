@@ -144,6 +144,8 @@
   "joinRentIt": "Rejoindre RentIt",
   "listFirstTool": "Déposer votre premier outil →",
   "listItem": {
+    "operatorConsent": "Je confirme être assuré pour cette activité et assumer la responsabilité de mon intervention chez le locataire.",
+    "operatorConsentRequired": "Cochez la confirmation d’assurance pour proposer l’opérateur.",
     "operatorToggle": "Je peux venir avec l’engin (opérateur)",
     "operatorFeeLabel": "Prix de l’opérateur (€ / jour)",
     "operatorFeeHint": "en plus de la location, par jour",
@@ -550,6 +552,8 @@
     "refundableAtReturn": "— remboursable au retour"
   },
   "itemDetail": {
+    "operatorDaysLabel": "Jours avec opérateur",
+    "operatorDaysOf": "sur {{days}} j de location",
     "operatorOffer": "Avec opérateur : +€{{fee}} / jour",
     "operatorAsk": "Avec opérateur (+€{{fee}} / jour)",
     "operatorNote": "Le propriétaire conduit lui-même l’engin. À régler sur place, avec la location.",

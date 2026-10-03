@@ -125,6 +125,8 @@ export default function ItemDetail() {
   // встрече.
   const [wantsDelivery, setWantsDelivery] = useState(false)
   const [wantsOperator, setWantsOperator] = useState(false)
+  // Дни работы оператора — не дни аренды (миграция 56). Пусто — вся бронь.
+  const [operatorDaysInput, setOperatorDaysInput] = useState<number | null>(null)
   // Заявка — мутацией, а не прямым вызовом функции: после неё брони
   // перечитываются (invalidateBookingCaches). До 03.10 «Mes locations»,
   // открытые меньше минуты назад, показывали список без новой заявки.
@@ -313,8 +315,10 @@ export default function ItemDetail() {
   const deliveryFee = item && wantsDelivery && item.delivery_fee != null ? Number(item.delivery_fee) : 0
   // Оператор — тоже отдельная услуга: в bookings.total_price не входит, но
   // на месте платится. За каждый день аренды, как и считает сервер.
-  const operatorFee = item && wantsOperator && item.operator_fee_per_day != null
-    ? Math.round(Number(item.operator_fee_per_day) * totalDays * 100) / 100
+  // Не больше длины брони: сменил даты на более короткие — дни подрезаются.
+  const operatorDays = Math.max(1, Math.min(operatorDaysInput ?? totalDays, totalDays))
+  const operatorFee = item && wantsOperator && item.operator_fee_per_day != null && totalDays > 0
+    ? Math.round(Number(item.operator_fee_per_day) * operatorDays * 100) / 100
     : 0
   const totalPrice = totalDays > 0 && item ? rental.total + item.deposit + insuranceFee + deliveryFee + operatorFee : 0
   const hasTiers = !!item && (!!item.price_3days || !!item.price_week || !!item.price_weekend)
@@ -340,6 +344,7 @@ export default function ItemDetail() {
         item_id: item.id, start_date: startDate, end_date: endDate,
         message: requestMessage.trim() || undefined, delivery_requested: wantsDelivery,
         operator_requested: wantsOperator,
+        operator_days: wantsOperator ? operatorDays : undefined,
       })
       setRequestSent(true)
     } catch (err) {
@@ -847,7 +852,7 @@ export default function ItemDetail() {
                         )}
                         {operatorFee > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: 'var(--muted)' }}>{t('itemDetail.operatorLine', { fee: Number(item.operator_fee_per_day).toFixed(2), days: totalDays })}</span>
+                            <span style={{ color: 'var(--muted)' }}>{t('itemDetail.operatorLine', { fee: Number(item.operator_fee_per_day).toFixed(2), days: operatorDays })}</span>
                             <span>€{operatorFee.toFixed(2)}</span>
                           </div>
                         )}
@@ -881,6 +886,22 @@ export default function ItemDetail() {
                           />
                           {t('itemDetail.operatorAsk', { fee: Number(item.operator_fee_per_day).toFixed(2) })}
                         </label>
+                        {wantsOperator && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '14px' }}>
+                            <label htmlFor="operator-days">{t('itemDetail.operatorDaysLabel')}</label>
+                            <input
+                              id="operator-days"
+                              type="number"
+                              min={1}
+                              max={totalDays}
+                              step={1}
+                              value={operatorDays}
+                              onChange={e => setOperatorDaysInput(parseInt(e.target.value, 10) || 1)}
+                              style={{ width: '72px', minHeight: 0 }}
+                            />
+                            <span style={{ color: 'var(--muted)' }}>{t('itemDetail.operatorDaysOf', { days: totalDays })}</span>
+                          </div>
+                        )}
                         <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '6px', lineHeight: 1.5 }}>
                           {t('itemDetail.operatorNote')}
                         </p>

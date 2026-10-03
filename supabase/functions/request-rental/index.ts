@@ -41,8 +41,8 @@ serve(async (req) => {
 
     // Нечитаемое тело — ошибка запроса, а не сервера: прежде оно падало в
     // общий catch и отвечало 500.
-    const body = await req.json().catch(() => null) as { item_id?: string; start_date?: string; end_date?: string; message?: string; delivery_requested?: boolean; operator_requested?: boolean } | null
-    const { item_id, start_date, end_date, message, delivery_requested, operator_requested } = body ?? {}
+    const body = await req.json().catch(() => null) as { item_id?: string; start_date?: string; end_date?: string; message?: string; delivery_requested?: boolean; operator_requested?: boolean; operator_days?: number } | null
+    const { item_id, start_date, end_date, message, delivery_requested, operator_requested, operator_days } = body ?? {}
     if (!item_id || !start_date || !end_date) {
       return json({ error: 'bad_request' }, 400)
     }
@@ -152,7 +152,15 @@ serve(async (req) => {
     if (operatorRequested && !(itemOperatorFee != null && itemOperatorFee > 0)) {
       return json({ error: 'operator_unavailable' }, 400)
     }
-    const operatorFee = operatorRequested ? Math.round(itemOperatorFee! * totalDays * 100) / 100 : null
+    // Дни работы оператора называет арендатор (миграция 56): от 1 до длины
+    // брони, по умолчанию — вся бронь. Выходные сб–пн — пакет с возвратом в
+    // понедельник, а оператор работает два дня; неделя аренды с оператором
+    // на первый день — один.
+    const operatorDays = operatorRequested ? (operator_days ?? totalDays) : null
+    if (operatorDays !== null && !(Number.isInteger(operatorDays) && operatorDays >= 1 && operatorDays <= totalDays)) {
+      return json({ error: 'bad_request' }, 400)
+    }
+    const operatorFee = operatorDays !== null ? Math.round(itemOperatorFee! * operatorDays * 100) / 100 : null
 
     // Create booking with pending_approval
     const { data: booking, error: bookingErr } = await supabase
@@ -170,6 +178,7 @@ serve(async (req) => {
         delivery_requested: deliveryRequested,
         delivery_fee: deliveryFee,
         operator_requested: operatorRequested,
+        operator_days: operatorDays,
         operator_fee: operatorFee,
       }])
       .select('id')

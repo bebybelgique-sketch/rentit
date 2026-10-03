@@ -144,6 +144,8 @@
   "joinRentIt": "Sluit je aan bij RentIt",
   "listFirstTool": "Plaats je eerste gereedschap →",
   "listItem": {
+    "operatorConsent": "Ik bevestig dat ik voor deze activiteit verzekerd ben en de verantwoordelijkheid draag voor mijn werk bij de huurder.",
+    "operatorConsentRequired": "Vink de bevestiging van verzekering aan om een bediener aan te bieden.",
     "operatorToggle": "Ik kan meekomen met de machine (bediener)",
     "operatorFeeLabel": "Prijs van de bediener (€ / dag)",
     "operatorFeeHint": "bovenop de huur, per dag",
@@ -550,6 +552,8 @@
     "refundableAtReturn": "— terugbetaalbaar bij teruggave"
   },
   "itemDetail": {
+    "operatorDaysLabel": "Dagen met bediener",
+    "operatorDaysOf": "van {{days}} d huur",
     "operatorOffer": "Met bediener: +€{{fee}} / dag",
     "operatorAsk": "Met bediener (+€{{fee}} / dag)",
     "operatorNote": "De eigenaar bedient de machine zelf. Ter plaatse te betalen, samen met de huur.",

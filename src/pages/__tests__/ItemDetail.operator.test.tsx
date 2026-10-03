@@ -94,6 +94,33 @@ describe('оператор на странице вещи', () => {
     expect(edge.invoke).toHaveBeenCalledWith('request-rental', expect.objectContaining({ operator_requested: true }));
   });
 
+  // Дни оператора — не дни аренды (миграция 56): сб–пн — пакет выходных с
+  // возвратом в понедельник, а оператор работает два дня.
+  it('дни оператора задаёт арендатор — сумма и заявка по ним', async () => {
+    renderPage();
+    await screen.findByText('Mini-pelle 1 t');
+    // Суббота 10 — понедельник 12 октября: три дня брони.
+    fireEvent.click(day(10));
+    fireEvent.click(day(12));
+    fireEvent.click(screen.getByLabelText('Avec opérateur (+€160.00 / jour)'));
+    expect(await screen.findByText('Opérateur €160.00 × 3 j')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Jours avec opérateur'), { target: { value: '2' } });
+    expect(await screen.findByText('Opérateur €160.00 × 2 j')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Envoyer une demande de réservation' }));
+    await screen.findByText('Demande envoyée !');
+    expect(edge.invoke).toHaveBeenCalledWith('request-rental', expect.objectContaining({ operator_requested: true, operator_days: 2 }));
+  });
+
+  it('дней оператора не больше, чем дней брони', async () => {
+    renderPage();
+    await screen.findByText('Mini-pelle 1 t');
+    fireEvent.click(day(13));
+    fireEvent.click(day(14));
+    fireEvent.click(screen.getByLabelText('Avec opérateur (+€160.00 / jour)'));
+    fireEvent.change(screen.getByLabelText('Jours avec opérateur'), { target: { value: '9' } });
+    expect(await screen.findByText('Opérateur €160.00 × 2 j')).toBeInTheDocument();
+  });
+
   it('без выбора — в заявке оператора нет', async () => {
     renderPage();
     await screen.findByText('Mini-pelle 1 t');

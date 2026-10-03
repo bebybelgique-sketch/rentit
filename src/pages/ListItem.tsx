@@ -138,6 +138,8 @@ function ListItemForm({ start }: { start: ListingStart }) {
   const [delivers, setDelivers] = useState(false)
   // Оператор — тот же приём: тумблер поверх одного поля цены (миграция 54).
   const [operates, setOperates] = useState(false)
+  // Согласие владельца (миграция 56): без него цену оператора база не примет.
+  const [operatorConsent, setOperatorConsent] = useState(false)
 
   // Есть ли фото профиля. Раньше отсутствие фото ЗАКРЫВАЛО выкладку:
   // человек нажимал «déposer un outil» и получал вместо формы требование
@@ -351,6 +353,8 @@ function ListItemForm({ start }: { start: ListingStart }) {
     }
     if (operates && !(parseFloat(form.operator_fee_per_day) > 0))
       return setError(t('listItem.operatorFeeRequired'))
+    if (operates && !operatorConsent)
+      return setError(t('listItem.operatorConsentRequired'))
 
     // Целые поля доступности. Проверка та же, что в базе, но ответ здесь —
     // отказ Postgres на французской странице человеку ничего не говорит.
@@ -416,6 +420,7 @@ function ListItemForm({ start }: { start: ListingStart }) {
         delivery_fee:       delivers && form.delivery_fee !== '' ? parseFloat(form.delivery_fee) : null,
         delivery_radius_km: delivers && form.delivery_radius_km !== '' ? parseInt(form.delivery_radius_km, 10) : null,
         operator_fee_per_day: operates && form.operator_fee_per_day !== '' ? parseFloat(form.operator_fee_per_day) : null,
+        operator_terms_accepted_at: operates ? new Date().toISOString() : null,
         deposit:       parseFloat(form.deposit) || 0,
         photos:        photoUrls,
         lat,
@@ -968,6 +973,17 @@ function ListItemForm({ start }: { start: ListingStart }) {
                     disabled={isLocked}
                   />
                   <p className="form-hint">{t('listItem.operatorNote')}</p>
+                  <label htmlFor="li-operator-consent" style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-2)', cursor: 'pointer', marginTop: 'var(--space-2)' }}>
+                    <input
+                      id="li-operator-consent"
+                      type="checkbox"
+                      checked={operatorConsent}
+                      onChange={e => setOperatorConsent(e.target.checked)}
+                      disabled={isLocked}
+                      style={{ width: 'auto', minHeight: 0, marginTop: '3px' }}
+                    />
+                    {t('listItem.operatorConsent')}
+                  </label>
                 </div>
               )}
             </div>

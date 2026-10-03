@@ -145,7 +145,7 @@ serve(async (req) => {
           <p>Dates : ${dates} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
           <p>Prix de location : €${Number(booking.total_price).toFixed(2)}</p>
           ${booking.delivery_requested ? `<p>Livraison demandée : <strong>€${Number(booking.delivery_fee).toFixed(2)}</strong> — à régler sur place, en plus de la location.</p>` : ''}
-          ${booking.operator_requested ? `<p>Opérateur demandé : <strong>€${Number(booking.operator_fee).toFixed(2)}</strong> pour la durée de la location — à régler sur place, en plus de la location.</p>` : ''}
+          ${booking.operator_requested ? `<p>Opérateur demandé : <strong>${booking.operator_days} jour${booking.operator_days !== 1 ? 's' : ''} de travail, €${Number(booking.operator_fee).toFixed(2)}</strong> — à régler sur place, en plus de la location.</p>` : ''}
           ${booking.request_message ? `<p>Message : <em>"${requestMessage}"</em></p>` : ''}
           <p><strong>Vous avez 24 heures pour répondre.</strong> Passé ce délai, la demande sera automatiquement annulée.</p>
           <p><a href="${myItemsLink}" style="background:#080808;color:#F2F0EB;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block;margin-top:8px;">Répondre à la demande</a></p>
@@ -162,7 +162,7 @@ serve(async (req) => {
           <p>Dates : ${dates} (${booking.total_days} jour${booking.total_days !== 1 ? 's' : ''})</p>
           <p>Montant convenu : €${Number(booking.total_price).toFixed(2)}${booking.deposit_amount > 0 ? ` + €${Number(booking.deposit_amount).toFixed(2)} de caution` : ''}</p>
           ${booking.delivery_requested ? `<p>Livraison : <strong>€${Number(booking.delivery_fee).toFixed(2)}</strong>, en plus du montant ci-dessus. Convenez de l'adresse avec le propriétaire.</p>` : ''}
-          ${booking.operator_requested ? `<p>Avec opérateur : <strong>€${Number(booking.operator_fee).toFixed(2)}</strong>, en plus du montant ci-dessus. Le propriétaire conduit lui-même l'engin.</p>` : ''}
+          ${booking.operator_requested ? `<p>Avec opérateur : <strong>${booking.operator_days} jour${booking.operator_days !== 1 ? 's' : ''} de travail, €${Number(booking.operator_fee).toFixed(2)}</strong>, en plus du montant ci-dessus. Le propriétaire conduit lui-même l'engin.</p>` : ''}
           <p><strong>Le règlement se fait en espèces, directement au propriétaire, lors de la remise de l'article.</strong> RentIt ne perçoit aucun paiement et ne prélève aucune commission.</p>
           <p>Convenez ensemble du lieu et de l'heure de la remise. Pensez à rendre l'article dans l'état où vous l'avez reçu — la caution vous sera restituée à la restitution.</p>
           <p>Propriétaire : <strong>${ownerName || '—'}</strong>${ownerPhone ? ` · ${ownerPhone}` : ''}</p>

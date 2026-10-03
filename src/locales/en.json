@@ -144,6 +144,8 @@
   "joinRentIt": "Join RentIt",
   "listFirstTool": "List your first tool",
   "listItem": {
+    "operatorConsent": "I confirm I’m insured for this activity and take responsibility for my work at the renter’s site.",
+    "operatorConsentRequired": "Tick the insurance confirmation to offer an operator.",
     "operatorToggle": "I can come with the machine (operator)",
     "operatorFeeLabel": "Operator price (€ / day)",
     "operatorFeeHint": "on top of the rental, per day",
@@ -550,6 +552,8 @@
     "refundableAtReturn": "— refundable upon return"
   },
   "itemDetail": {
+    "operatorDaysLabel": "Days with operator",
+    "operatorDaysOf": "of {{days}} rental days",
     "operatorOffer": "With operator: +€{{fee}} / day",
     "operatorAsk": "With operator (+€{{fee}} / day)",
     "operatorNote": "The owner operates the machine. Paid on site, together with the rental.",
