@@ -15,9 +15,9 @@ import { usePageTitle } from '../hooks/usePageTitle'
 // По языкам раздельно: строка показывается в трёх разделах, и
 // английское «March 20, 2026» стояло под французским «Dernière mise
 // à jour :» и нидерландским «Laatste update:».
-const LAST_UPDATED_EN = 'August 14, 2026'
-const LAST_UPDATED_FR = '14 août 2026'
-const LAST_UPDATED_NL = '14 augustus 2026'
+const LAST_UPDATED_EN = 'October 3, 2026'
+const LAST_UPDATED_FR = '3 octobre 2026'
+const LAST_UPDATED_NL = '3 oktober 2026'
 // Сторона договора — физическое лицо, а не «RentIt». До 14.08 здесь
 // стояли COMPANY = 'RentIt', ADDRESS = 'Belgium' и два ящика на
 // rentit.be — домене, принадлежащем ПОСТОРОННЕМУ лицу: человек,
@@ -81,7 +81,8 @@ function TermsEN() {
         <ul style={listStyle}>
           <li>You must own or have the legal right to rent the items you list.</li>
           <li>Listings must be accurate, complete, and not misleading. Photos must represent the actual item.</li>
-          <li>You set your own price per day and optional deposit.</li>
+          <li>You set your own price per day, any packages (3 days, week, weekend), the deposit and the late fee.</li>
+          <li>You may offer delivery and the operator option, at prices you set. These are your own services, paid to you directly (see sections 6 and 8).</li>
           <li>You are responsible for ensuring the item is in the condition described, clean, safe to use, and in working order at the time of handover.</li>
           <li>You may not list items that are: illegal, dangerous without proper certification, stolen, or subject to a lien that prevents rental.</li>
           <li>By listing an item, you grant RentIt a non-exclusive, royalty-free licence to display your listing photos on the platform for marketing purposes.</li>
@@ -115,6 +116,8 @@ function TermsEN() {
             <Tr data={['Rental price', 'Owner, shown on the listing', 'Between the parties, at handover']} />
             <Tr data={['Deposit (if any)', 'Owner, shown on the listing', 'Between the parties, returned at the end']} />
             <Tr data={['Late fee (if announced)', 'Owner, shown on the listing', 'Between the parties, at the return']} />
+            <Tr data={['Delivery (if requested)', 'Owner, shown on the listing', 'Between the parties, at handover']} />
+            <Tr data={['Operator (if requested), per working day', 'Owner, shown on the listing', 'Between the parties, on site']} />
           </tbody>
         </table>
 
@@ -126,7 +129,7 @@ function TermsEN() {
       </Section>
 
       <Section title="7. Cancellations">
-        <p>Either party may cancel before the item changes hands. The cancellation is recorded with its author, its date and its reason, and the other party is notified by email.</p>
+        <p>Either party may cancel before the item changes hands. The cancellation is recorded with its author, its date and its reason, and the other party is notified on the platform.</p>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
           <thead>
@@ -147,18 +150,28 @@ function TermsEN() {
       </Section>
 
       <Section title="8. Liability">
-        <p><strong>RentIt provides no insurance.</strong> There is no damage cover, no guarantee fund and no compensation scheme. The item is lent between private individuals, under their own responsibility.</p>
+        <p><strong>RentIt provides no insurance.</strong> There is no damage cover, no guarantee fund and no compensation scheme. The item is rented out between users, under their own responsibility.</p>
         <ul style={listStyle}>
           <li>The Renter is liable to the Owner for damage, loss or theft of the item.</li>
           <li>The Owner is responsible for the item being safe and fit for its stated use.</li>
           <li>Both parties are strongly advised to <strong>photograph the item at handover and at return</strong> — the platform provides this for each booking, and the photos remain visible to both.</li>
-          <li>Check whether your home insurance (<em>responsabilité civile familiale</em>) covers this type of loan.</li>
+          <li>Check whether your home insurance (<em>responsabilité civile familiale</em>) covers this type of rental.</li>
         </ul>
-        <p><strong>RentIt is not a party to the rental agreement.</strong> Its role is limited to putting people in touch and hosting their exchanges. RentIt is not liable for: the condition or quality of items, loss of earnings, consequential or indirect damages, or disputes between users.</p>
+        <p><strong>Operator option.</strong> The Owner may offer to come and operate the machine at the Renter's site, at a price per working day shown on the listing. The Renter chooses this option, and the number of days with the operator, when requesting the rental; the amount is settled directly between them, on site. This is the Owner's own service: RentIt does not provide, perform or invoice it and does not receive its price. The platform only lets the Owner offer it and the Renter request it, and keeps a record of what was agreed (price per day, number of days).</p>
+        <ul style={listStyle}>
+          <li>While the Owner operates the machine or keeps it with them, the machine remains the Owner's responsibility. The rest of the time, the rental rules above apply.</li>
+          <li>If the machine stays at the Renter's site outside working hours, the Renter keeps it safe and does not use it unless the parties have agreed otherwise. The parties agree in the booking conversation on who keeps the keys.</li>
+          <li>Agree in writing, in the booking conversation, on the work to be done: what it is, where and when.</li>
+          <li>The Renter provides safe access to the site and, before work starts, tells the Owner what they know about the ground: cables, pipes, obstacles.</li>
+          <li>Damage caused by the work itself — to the ground, to cables and pipes, to the property of the Renter or of third parties — is the Owner's responsibility, unless it results from an instruction or inaccurate information given by the Renter.</li>
+          <li>By offering this option, the Owner confirms being insured for this activity and taking responsibility for their work at the Renter's site.</li>
+          <li>An Owner who offers this option as part of a professional activity complies with the obligations attached to that activity.</li>
+        </ul>
+        <p><strong>RentIt is not a party to the agreements between the Owner and the Renter</strong>, whether for the rental of the item or, where applicable, the service with an operator. Its role is limited to putting people in touch and hosting their exchanges. RentIt is not liable for: the condition or quality of items, loss of earnings, consequential or indirect damages, or disputes between users.</p>
       </Section>
 
       <Section title="9. Disputes Between Users">
-        <p>RentIt is an intermediary and is not a party to rental agreements between Owners and Renters. <strong>RentIt does not arbitrate disputes and cannot decide who owes what.</strong> We hold no deposit, so we can neither release nor withhold one.</p>
+        <p>RentIt is an intermediary and is not a party to the agreements between Owners and Renters. <strong>RentIt does not arbitrate disputes and cannot decide who owes what.</strong> We hold no deposit, so we can neither release nor withhold one.</p>
         <ul style={listStyle}>
           <li>Talk to the other party in the booking conversation. It is written down and both of you keep it.</li>
           <li>The handover and return photos are your evidence — take them.</li>
@@ -200,7 +213,7 @@ function TermsEN() {
       </Section>
 
       <Section title="15. Changes to These Terms">
-        <p>We may update these Terms from time to time. We will notify you of material changes by email at least <strong>30 days</strong> before they take effect. Continued use of the platform after that date constitutes acceptance of the new Terms.</p>
+        <p>We may update these Terms from time to time. We will notify you of material changes by email or by a prominent notice on the platform at least <strong>30 days</strong> before they take effect. Continued use of the platform after that date constitutes acceptance of the new Terms.</p>
       </Section>
 
       <Section title="16. Contact">
@@ -249,7 +262,8 @@ function TermsFR() {
         <ul style={listStyle}>
           <li>Vous devez posséder l'objet publié ou avoir le droit de le louer.</li>
           <li>L'annonce doit être exacte, complète et non trompeuse. Les photos doivent représenter l'objet réel.</li>
-          <li>Vous fixez vous-même le prix par jour, les éventuels forfaits (3 jours, semaine), la caution et le montant de retard.</li>
+          <li>Vous fixez vous-même le prix par jour, les éventuels forfaits (3 jours, semaine, week-end), la caution et le montant de retard.</li>
+          <li>Vous pouvez proposer la livraison et l'option avec opérateur, aux prix que vous fixez. Ce sont vos propres services, qui vous sont réglés directement (voir les articles 6 et 8).</li>
           <li>Vous répondez de l'état annoncé : l'outil doit être propre, sûr et en état de marche au moment de la remise.</li>
           <li>Vous ne pouvez pas publier un objet illégal, dangereux sans certification, volé, ou grevé d'un droit empêchant la location.</li>
           <li>En publiant une annonce, vous accordez à RentIt une licence non exclusive et gratuite d'afficher vos photos d'annonce sur la plateforme.</li>
@@ -282,6 +296,8 @@ function TermsFR() {
             <Tr data={['Prix de location', "Le Propriétaire, affiché sur l'annonce", 'Entre les parties, à la remise']} />
             <Tr data={['Dépôt de garantie (le cas échéant)', "Le Propriétaire, affiché sur l'annonce", 'Entre les parties, restitué à la fin']} />
             <Tr data={['Montant de retard (si annoncé)', "Le Propriétaire, affiché sur l'annonce", 'Entre les parties, à la restitution']} />
+            <Tr data={['Livraison (si demandée)', "Le Propriétaire, affiché sur l'annonce", 'Entre les parties, à la remise']} />
+            <Tr data={['Opérateur (si demandé), par jour de travail', "Le Propriétaire, affiché sur l'annonce", 'Entre les parties, sur place']} />
           </tbody>
         </table>
 
@@ -293,7 +309,7 @@ function TermsFR() {
       </Section>
 
       <Section title="7. Annulations">
-        <p>Chaque partie peut annuler tant que l'outil n'a pas changé de mains. L'annulation est enregistrée avec son auteur, sa date et son motif, et l'autre partie en est informée par e-mail.</p>
+        <p>Chaque partie peut annuler tant que l'outil n'a pas changé de mains. L'annulation est enregistrée avec son auteur, sa date et son motif, et l'autre partie en est avertie sur la plateforme.</p>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
           <thead>
@@ -314,18 +330,28 @@ function TermsFR() {
       </Section>
 
       <Section title="8. Responsabilité">
-        <p><strong>RentIt ne fournit aucune assurance.</strong> Il n'existe ni couverture des dommages, ni fonds de garantie, ni indemnisation. L'outil est prêté entre particuliers, sous leur propre responsabilité.</p>
+        <p><strong>RentIt ne fournit aucune assurance.</strong> Il n'existe ni couverture des dommages, ni fonds de garantie, ni indemnisation. L'outil est loué entre utilisateurs, sous leur propre responsabilité.</p>
         <ul style={listStyle}>
           <li>Le Locataire répond envers le Propriétaire des dommages, de la perte ou du vol de l'outil.</li>
           <li>Le Propriétaire répond de la sécurité de l'outil et de son aptitude à l'usage annoncé.</li>
           <li>Il est vivement conseillé aux deux parties de <strong>photographier l'outil à la remise et au retour</strong> — la plateforme le permet pour chaque réservation, et les photos restent visibles des deux côtés.</li>
-          <li>Vérifiez si votre assurance <em>responsabilité civile familiale</em> couvre ce type de prêt.</li>
+          <li>Vérifiez si votre assurance <em>responsabilité civile familiale</em> couvre ce type de location.</li>
         </ul>
-        <p><strong>RentIt n'est pas partie au contrat de location.</strong> Son rôle se limite à mettre les personnes en relation et à héberger leurs échanges. RentIt n'est pas responsable de l'état ou de la qualité des outils, des pertes de revenus, des dommages indirects, ni des litiges entre utilisateurs.</p>
+        <p><strong>Option avec opérateur.</strong> Le Propriétaire peut proposer de venir conduire lui-même son engin chez le Locataire, pour un prix par jour de travail affiché sur l'annonce. Le Locataire choisit cette option, et le nombre de jours avec opérateur, en faisant sa demande ; le montant se règle directement entre eux, sur place. Ce service est celui du Propriétaire : RentIt ne le fournit pas, ne l'exécute pas, ne le facture pas et n'en perçoit pas le prix. La plateforme permet seulement au Propriétaire de le proposer et au Locataire de le demander, et garde la trace de ce qui a été convenu (prix par jour, nombre de jours).</p>
+        <ul style={listStyle}>
+          <li>Tant que le Propriétaire conduit l'engin ou le garde avec lui, l'engin reste sous sa responsabilité. Le reste du temps, les règles de la location ci-dessus s'appliquent.</li>
+          <li>Si l'engin reste chez le Locataire en dehors des heures de travail, le Locataire veille à sa sécurité et ne l'utilise pas, sauf accord des parties. Les parties conviennent dans la conversation de réservation de qui garde les clés.</li>
+          <li>Convenez par écrit, dans la conversation de réservation, du travail à faire : sa nature, le lieu et les horaires.</li>
+          <li>Le Locataire donne un accès sûr au terrain et signale au Propriétaire, avant le début du travail, ce qu'il sait du sol : câbles, conduites, obstacles.</li>
+          <li>Les dommages causés par le travail lui-même — au terrain, aux câbles et conduites, aux biens du Locataire ou de tiers — relèvent du Propriétaire, sauf s'ils résultent d'une consigne ou d'une information inexacte du Locataire.</li>
+          <li>En proposant cette option, le Propriétaire confirme être assuré pour cette activité et assumer la responsabilité de son intervention chez le Locataire.</li>
+          <li>Le Propriétaire qui propose cette option dans le cadre d'une activité professionnelle respecte les obligations qui s'y attachent.</li>
+        </ul>
+        <p><strong>RentIt n'est pas partie aux contrats conclus entre le Propriétaire et le Locataire</strong>, qu'il s'agisse de la location de l'outil ou, le cas échéant, du service avec opérateur. Son rôle se limite à mettre les personnes en relation et à héberger leurs échanges. RentIt n'est pas responsable de l'état ou de la qualité des outils, des pertes de revenus, des dommages indirects, ni des litiges entre utilisateurs.</p>
       </Section>
 
       <Section title="9. Litiges entre utilisateurs">
-        <p>RentIt est un intermédiaire et n'est pas partie au contrat de location. <strong>RentIt n'arbitre pas les litiges et ne décide pas qui doit quoi à qui.</strong> Nous ne détenons aucune caution : nous ne pouvons donc ni la libérer ni la retenir.</p>
+        <p>RentIt est un intermédiaire et n'est pas partie aux contrats conclus entre Propriétaires et Locataires. <strong>RentIt n'arbitre pas les litiges et ne décide pas qui doit quoi à qui.</strong> Nous ne détenons aucune caution : nous ne pouvons donc ni la libérer ni la retenir.</p>
         <ul style={listStyle}>
           <li>Parlez-vous dans la conversation de réservation : elle est écrite et vous la conservez tous les deux.</li>
           <li>Les photos de remise et de retour sont vos preuves — prenez-les.</li>
@@ -367,7 +393,7 @@ function TermsFR() {
       </Section>
 
       <Section title="15. Modification des présentes Conditions">
-        <p>Nous pouvons mettre à jour ces Conditions. En cas de modification substantielle, nous vous en informerons par e-mail au moins <strong>30 jours</strong> avant son entrée en vigueur. L'usage de la plateforme après cette date vaut acceptation des nouvelles Conditions.</p>
+        <p>Nous pouvons mettre à jour ces Conditions. En cas de modification substantielle, nous vous en informerons par e-mail ou par un avis bien visible sur la plateforme au moins <strong>30 jours</strong> avant son entrée en vigueur. L'usage de la plateforme après cette date vaut acceptation des nouvelles Conditions.</p>
       </Section>
 
       <Section title="16. Contact">
@@ -414,7 +440,8 @@ function TermsNL() {
         <ul style={listStyle}>
           <li>U moet het geplaatste voorwerp bezitten of het recht hebben het te verhuren.</li>
           <li>De advertentie moet juist, volledig en niet misleidend zijn. Foto's moeten het echte voorwerp tonen.</li>
-          <li>U bepaalt zelf de dagprijs, eventuele forfaits (3 dagen, week), de borg en het bedrag bij te late teruggave.</li>
+          <li>U bepaalt zelf de dagprijs, eventuele forfaits (3 dagen, week, weekend), de borg en het bedrag bij te late teruggave.</li>
+          <li>U kunt levering en de optie met bediener aanbieden, tegen prijzen die u zelf bepaalt. Dat zijn uw eigen diensten, die rechtstreeks aan u worden betaald (zie artikels 6 en 8).</li>
           <li>U staat in voor de aangekondigde staat: het gereedschap is schoon, veilig en werkend bij de overhandiging.</li>
           <li>U mag geen voorwerp plaatsen dat illegaal is, gevaarlijk zonder certificering, gestolen, of bezwaard met een recht dat verhuur belet.</li>
           <li>Door een advertentie te plaatsen verleent u RentIt een niet-exclusieve, kosteloze licentie om uw advertentiefoto's op het platform te tonen.</li>
@@ -447,6 +474,8 @@ function TermsNL() {
             <Tr data={['Huurprijs', 'Verhuurder, vermeld in de advertentie', 'Tussen partijen, bij de overhandiging']} />
             <Tr data={['Borg (indien van toepassing)', 'Verhuurder, vermeld in de advertentie', 'Tussen partijen, terug bij afloop']} />
             <Tr data={['Bedrag bij te late teruggave (indien aangekondigd)', 'Verhuurder, vermeld in de advertentie', 'Tussen partijen, bij de teruggave']} />
+            <Tr data={['Levering (indien gevraagd)', 'Verhuurder, vermeld in de advertentie', 'Tussen partijen, bij de overhandiging']} />
+            <Tr data={['Bediener (indien gevraagd), per werkdag', 'Verhuurder, vermeld in de advertentie', 'Tussen partijen, ter plaatse']} />
           </tbody>
         </table>
 
@@ -458,7 +487,7 @@ function TermsNL() {
       </Section>
 
       <Section title="7. Annuleringen">
-        <p>Elke partij kan annuleren zolang het gereedschap niet is overhandigd. De annulering wordt vastgelegd met auteur, datum en reden, en de andere partij wordt per e-mail verwittigd.</p>
+        <p>Elke partij kan annuleren zolang het gereedschap niet is overhandigd. De annulering wordt vastgelegd met auteur, datum en reden, en de andere partij wordt via het platform verwittigd.</p>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '12px' }}>
           <thead>
@@ -479,18 +508,28 @@ function TermsNL() {
       </Section>
 
       <Section title="8. Aansprakelijkheid">
-        <p><strong>RentIt biedt geen verzekering.</strong> Er is geen schadedekking, geen waarborgfonds en geen vergoedingsregeling. Het gereedschap wordt tussen particulieren uitgeleend, onder hun eigen verantwoordelijkheid.</p>
+        <p><strong>RentIt biedt geen verzekering.</strong> Er is geen schadedekking, geen waarborgfonds en geen vergoedingsregeling. Het gereedschap wordt tussen gebruikers verhuurd, onder hun eigen verantwoordelijkheid.</p>
         <ul style={listStyle}>
           <li>De Huurder is tegenover de Verhuurder aansprakelijk voor schade, verlies of diefstal van het gereedschap.</li>
           <li>De Verhuurder staat in voor de veiligheid van het gereedschap en de geschiktheid voor het aangekondigde gebruik.</li>
           <li>Beide partijen wordt sterk aangeraden het gereedschap <strong>te fotograferen bij de overhandiging en bij de teruggave</strong> — het platform voorziet dit per reservering, en de foto's blijven voor beide zichtbaar.</li>
-          <li>Ga na of uw <em>familiale burgerlijke aansprakelijkheidsverzekering</em> dit soort uitlening dekt.</li>
+          <li>Ga na of uw <em>familiale burgerlijke aansprakelijkheidsverzekering</em> dit soort verhuur dekt.</li>
         </ul>
-        <p><strong>RentIt is geen partij bij de huurovereenkomst.</strong> De rol beperkt zich tot het in contact brengen van mensen en het hosten van hun uitwisselingen. RentIt is niet aansprakelijk voor de staat of kwaliteit van het gereedschap, gederfde inkomsten, indirecte schade of geschillen tussen gebruikers.</p>
+        <p><strong>Optie met bediener.</strong> De Verhuurder kan aanbieden zelf met de machine mee te komen en ze bij de Huurder te bedienen, tegen een prijs per werkdag die in de advertentie staat. De Huurder kiest deze optie, en het aantal dagen met bediener, bij de aanvraag; het bedrag wordt rechtstreeks tussen beiden ter plaatse betaald. Dit is een eigen dienst van de Verhuurder: RentIt levert of verricht die niet, factureert die niet en ontvangt de prijs ervan niet. Het platform laat de Verhuurder alleen toe die aan te bieden en de Huurder om die te vragen, en bewaart wat werd afgesproken (prijs per dag, aantal dagen).</p>
+        <ul style={listStyle}>
+          <li>Zolang de Verhuurder de machine bedient of bij zich houdt, blijft ze onder de verantwoordelijkheid van de Verhuurder. De rest van de tijd gelden de regels van de verhuur hierboven.</li>
+          <li>Blijft de machine buiten de werkuren bij de Huurder, dan bewaart de Huurder ze veilig en gebruikt ze niet, tenzij de partijen anders overeenkomen. In het reserveringsgesprek spreken de partijen af wie de sleutels bewaart.</li>
+          <li>Spreek schriftelijk, in het reserveringsgesprek, het uit te voeren werk af: wat, waar en wanneer.</li>
+          <li>De Huurder zorgt voor een veilige toegang tot het terrein en meldt de Verhuurder vóór het werk begint wat over de grond bekend is: kabels, leidingen, obstakels.</li>
+          <li>Schade door het werk zelf — aan de grond, aan kabels en leidingen, aan goederen van de Huurder of van derden — is voor rekening van de Verhuurder, tenzij ze het gevolg is van een instructie of onjuiste informatie van de Huurder.</li>
+          <li>Door deze optie aan te bieden bevestigt de Verhuurder voor deze activiteit verzekerd te zijn en de verantwoordelijkheid te dragen voor het werk bij de Huurder.</li>
+          <li>Een Verhuurder die deze optie in het kader van een beroepsactiviteit aanbiedt, leeft de verplichtingen na die daaraan verbonden zijn.</li>
+        </ul>
+        <p><strong>RentIt is geen partij bij de overeenkomsten tussen de Verhuurder en de Huurder</strong>, of het nu gaat om de huur van het gereedschap of, in voorkomend geval, de dienst met bediener. De rol beperkt zich tot het in contact brengen van mensen en het hosten van hun uitwisselingen. RentIt is niet aansprakelijk voor de staat of kwaliteit van het gereedschap, gederfde inkomsten, indirecte schade of geschillen tussen gebruikers.</p>
       </Section>
 
       <Section title="9. Geschillen tussen gebruikers">
-        <p>RentIt is een tussenpersoon en geen partij bij de huurovereenkomst. <strong>RentIt beslecht geen geschillen en bepaalt niet wie wat verschuldigd is.</strong> Wij houden geen borg aan: wij kunnen die dus niet vrijgeven en niet inhouden.</p>
+        <p>RentIt is een tussenpersoon en geen partij bij de overeenkomsten tussen Verhuurders en Huurders. <strong>RentIt beslecht geen geschillen en bepaalt niet wie wat verschuldigd is.</strong> Wij houden geen borg aan: wij kunnen die dus niet vrijgeven en niet inhouden.</p>
         <ul style={listStyle}>
           <li>Praat met elkaar in het reserveringsgesprek: het staat op schrift en u bewaart het allebei.</li>
           <li>De foto's bij overhandiging en teruggave zijn uw bewijs — maak ze.</li>
@@ -532,7 +571,7 @@ function TermsNL() {
       </Section>
 
       <Section title="15. Wijziging van deze Voorwaarden">
-        <p>Wij kunnen deze Voorwaarden bijwerken. Bij een wezenlijke wijziging informeren wij u per e-mail ten minste <strong>30 dagen</strong> vóór de inwerkingtreding. Gebruik van het platform na die datum geldt als aanvaarding van de nieuwe Voorwaarden.</p>
+        <p>Wij kunnen deze Voorwaarden bijwerken. Bij een wezenlijke wijziging informeren wij u per e-mail of via een prominente mededeling op het platform ten minste <strong>30 dagen</strong> vóór de inwerkingtreding. Gebruik van het platform na die datum geldt als aanvaarding van de nieuwe Voorwaarden.</p>
       </Section>
 
       <Section title="16. Contact">
