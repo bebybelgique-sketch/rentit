@@ -77,6 +77,30 @@ export function daysBetween(startISO: string, endISO: string): string[] {
   return out
 }
 
+/**
+ * Строка — ровно календарный день YYYY-MM-DD, и такой день существует.
+ *
+ * `new Date()` принимает что угодно: «2026-10-10T23:00:00-11:00»,
+ * «October 10, 2026», «2026-02-30» (молча станет 2 марта). База же
+ * приводит строку к дате по-своему — по написанным цифрам, без поясов. До
+ * 03.10 request-rental считал дни аренды из Date, а в бронь клал строку:
+ * присланные с часами и поясами концы давали меньше оплаченных дней, чем
+ * записано в брони.
+ */
+export function isISODate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const [y, m, d] = value.split('-').map(Number)
+  const dt = new Date(Date.UTC(y, m - 1, d))
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d
+}
+
+/** Сколько дней в отрезке включительно — по календарю, без часов и поясов. */
+export function inclusiveDays(startISO: string, endISO: string): number {
+  const [ys, ms, ds] = startISO.split('-').map(Number)
+  const [ye, me, de] = endISO.split('-').map(Number)
+  return Math.round((Date.UTC(ye, me - 1, de) - Date.UTC(ys, ms - 1, ds)) / 86_400_000) + 1
+}
+
 // --- Толкование ответа -----------------------------------------------
 
 /**

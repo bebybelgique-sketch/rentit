@@ -4,7 +4,7 @@ import { handleOPTIONS } from '../_shared/cors.ts'
 import { getUserFromAuthHeader } from '../_shared/auth.ts'
 import { computeRentalPrice } from '../_shared/pricing.ts'
 import { notifyRentalInBackground } from '../_shared/notify.ts'
-import { checkRangeAvailable } from '../_shared/availability.ts'
+import { checkRangeAvailable, inclusiveDays, isISODate } from '../_shared/availability.ts'
 import type { RpcCaller } from '../_shared/availability.ts'
 import { json } from '../_shared/json.ts'
 
@@ -47,13 +47,17 @@ serve(async (req) => {
       return json({ error: 'bad_request' }, 400)
     }
 
-    // Validate dates: parsable, end >= start, start not in past
-    const start = new Date(start_date)
-    const end = new Date(end_date)
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    // Даты — ровно YYYY-MM-DD и существующие дни (isISODate), конец не
+    // раньше начала. Календарь страницы вещи шлёт именно так; всё прочее
+    // `new Date()` принял бы, а база привела бы к дню иначе — и дни
+    // аренды в цене разошлись бы с днями в брони.
+    if (!isISODate(start_date) || !isISODate(end_date)) {
       return json({ error: 'bad_request' }, 400)
     }
-    if (end.getTime() < start.getTime()) {
+    // Число дней — по календарю. Меньше одного — конец раньше начала.
+    // ВАЖНО: формула числа дней сохранена как есть (product owner решает изменение)
+    const totalDays = inclusiveDays(start_date, end_date)
+    if (totalDays < 1) {
       return json({ error: 'bad_request' }, 400)
     }
     // Проверки «дата не в прошлом» здесь больше нет — не потому, что она
@@ -107,8 +111,6 @@ serve(async (req) => {
     // вставляли.
 
     // Calculate amounts for the booking record
-    // ВАЖНО: формула числа дней сохранена как есть (product owner решает изменение)
-    const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
 
     // Безопасное приведение цен: Number() + проверка
     const pricePerDay = Number(item.price_per_day)
