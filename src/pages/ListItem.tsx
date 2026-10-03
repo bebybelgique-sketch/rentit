@@ -73,6 +73,7 @@ function ListItemForm({ start }: { start: ListingStart }) {
     late_fee_per_day: string;
     delivery_fee: string;
     delivery_radius_km: string;
+    operator_fee_per_day: string;
     deposit: string;
     address: string;
     quantity: string;
@@ -90,6 +91,7 @@ function ListItemForm({ start }: { start: ListingStart }) {
     late_fee_per_day: '',
     delivery_fee: '',
     delivery_radius_km: '',
+    operator_fee_per_day: '',
     deposit: '',
     address: start.lastPlace?.address ?? '',
     // Доступность. Умолчания — ровно прежнее поведение продукта: одна
@@ -134,6 +136,8 @@ function ListItemForm({ start }: { start: ListingStart }) {
   // рано или поздно разойдётся с ценой («доставляю» стоит, цены нет — что
   // показывать арендатору?). Выключение чистит оба поля.
   const [delivers, setDelivers] = useState(false)
+  // Оператор — тот же приём: тумблер поверх одного поля цены (миграция 54).
+  const [operates, setOperates] = useState(false)
 
   // Есть ли фото профиля. Раньше отсутствие фото ЗАКРЫВАЛО выкладку:
   // человек нажимал «déposer un outil» и получал вместо формы требование
@@ -345,6 +349,8 @@ function ListItemForm({ start }: { start: ListingStart }) {
       if (form.delivery_radius_km !== '' && !(parseInt(form.delivery_radius_km, 10) > 0))
         return setError(t('listItem.deliveryRadiusMustBePositive'))
     }
+    if (operates && !(parseFloat(form.operator_fee_per_day) > 0))
+      return setError(t('listItem.operatorFeeRequired'))
 
     // Целые поля доступности. Проверка та же, что в базе, но ответ здесь —
     // отказ Postgres на французской странице человеку ничего не говорит.
@@ -409,6 +415,7 @@ function ListItemForm({ start }: { start: ListingStart }) {
         // набранная и потом отменённая, осталась бы в базе обещанием.
         delivery_fee:       delivers && form.delivery_fee !== '' ? parseFloat(form.delivery_fee) : null,
         delivery_radius_km: delivers && form.delivery_radius_km !== '' ? parseInt(form.delivery_radius_km, 10) : null,
+        operator_fee_per_day: operates && form.operator_fee_per_day !== '' ? parseFloat(form.operator_fee_per_day) : null,
         deposit:       parseFloat(form.deposit) || 0,
         photos:        photoUrls,
         lat,
@@ -927,6 +934,42 @@ function ListItemForm({ start }: { start: ListingStart }) {
                 </div>
               )}
               {delivers && <p className="form-hint">{t('listItem.deliveryNote')}</p>}
+            </div>
+
+            {/* С оператором: владелец сам ведёт технику. Услуги нет, пока
+                галка не стоит, — сосед с дрелью этого вопроса не встречает. */}
+            <div className="form-group">
+              <label htmlFor="li-operates" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer' }}>
+                <input
+                  id="li-operates"
+                  type="checkbox"
+                  checked={operates}
+                  onChange={e => {
+                    const on = e.target.checked
+                    setOperates(on)
+                    if (!on) setForm(p => ({ ...p, operator_fee_per_day: '' }))
+                  }}
+                  disabled={isLocked}
+                  style={{ width: 'auto', minHeight: 0 }}
+                />
+                {t('listItem.operatorToggle')}
+              </label>
+              {operates && (
+                <div className="form-group" style={{ marginTop: 'var(--space-3)' }}>
+                  <label htmlFor="li-operator-fee">{t('listItem.operatorFeeLabel')}</label>
+                  <input
+                    id="li-operator-fee"
+                    type="number"
+                    min="0.50"
+                    step="0.50"
+                    value={form.operator_fee_per_day}
+                    onChange={set('operator_fee_per_day')}
+                    placeholder={t('listItem.operatorFeeHint')}
+                    disabled={isLocked}
+                  />
+                  <p className="form-hint">{t('listItem.operatorNote')}</p>
+                </div>
+              )}
             </div>
           </details>
 

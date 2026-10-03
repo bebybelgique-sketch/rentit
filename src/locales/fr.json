@@ -144,6 +144,11 @@
   "joinRentIt": "Rejoindre RentIt",
   "listFirstTool": "Déposer votre premier outil →",
   "listItem": {
+    "operatorToggle": "Je peux venir avec l’engin (opérateur)",
+    "operatorFeeLabel": "Prix de l’opérateur (€ / jour)",
+    "operatorFeeHint": "en plus de la location, par jour",
+    "operatorFeeRequired": "Indiquez le prix de l’opérateur, ou décochez la case.",
+    "operatorNote": "Vous conduisez vous-même la machine chez le locataire. Le locataire choisit cette option en demandant la location ; le montant se règle sur place.",
     "packageWeekend": "Le forfait week-end",
     "packageWeekendLabel": "Forfait week-end (€)",
     "packageWeekendHint": "du vendredi au lundi",
@@ -355,6 +360,7 @@
   "publishListing": "Publier l'annonce",
   "reject": "Refuser",
   "rental": {
+    "labelOperator": "Opérateur",
     "labelItem": "Article",
     "labelOwner": "Propriétaire",
     "labelRenter": "Locataire",
@@ -544,6 +550,10 @@
     "refundableAtReturn": "— remboursable au retour"
   },
   "itemDetail": {
+    "operatorOffer": "Avec opérateur : +€{{fee}} / jour",
+    "operatorAsk": "Avec opérateur (+€{{fee}} / jour)",
+    "operatorNote": "Le propriétaire conduit lui-même l’engin. À régler sur place, avec la location.",
+    "operatorLine": "Opérateur €{{fee}} × {{days}} j",
     "perWeekend": "/ week-end (ven. → lun.)",
     "perThreeDays": "/ 3 jours",
     "perWeek": "/ semaine",
@@ -793,6 +803,7 @@
     }
   },
   "serverErrors": {
+    "operator_unavailable": "Le propriétaire ne propose pas d’opérateur pour cet outil.",
     "phone_invalid": "Numéro invalide. Format international attendu, par exemple +32470123456.",
     "sms_not_configured": "La vérification par SMS n’est pas encore active. Ce n’est pas vous : le canal n’est pas ouvert.",
     "sms_send_failed": "Le SMS n’a pas pu partir. Réessayez dans un instant.",

@@ -459,6 +459,9 @@ const MyRentals: React.FC = () => {
                     {rental.delivery_requested && rental.delivery_fee != null && (
                       <p><strong>{t('rental.labelDelivery')}:</strong> €{Number(rental.delivery_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
                     )}
+                    {rental.operator_requested && rental.operator_fee != null && (
+                      <p><strong>{t('rental.labelOperator')}:</strong> €{Number(rental.operator_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
+                    )}
                     {renderCancellation(rental, owner?.full_name || t('cancellationNotice.otherParty'))}
 
                     {CANCELLABLE_BY_RENTER.includes(rental.status ?? '') && (
@@ -527,6 +530,9 @@ const MyRentals: React.FC = () => {
                       request_message, и страница показывала пустоту. */}
                   {rental.delivery_requested && rental.delivery_fee != null && (
                     <p><strong>{t('rental.labelDelivery')}:</strong> €{Number(rental.delivery_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
+                  )}
+                  {rental.operator_requested && rental.operator_fee != null && (
+                    <p><strong>{t('rental.labelOperator')}:</strong> €{Number(rental.operator_fee).toFixed(2)} <span style={{ color: 'var(--muted)' }}>{t('rental.deliveryOnSite')}</span></p>
                   )}
                   {rental.request_message && <p><strong>{t('rental.labelMessage')}:</strong> {rental.request_message}</p>}
                   {renderCancellation(rental, rental.renter?.full_name || t('cancellationNotice.otherParty'))}

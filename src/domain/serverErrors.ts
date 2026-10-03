@@ -51,6 +51,7 @@ export const SERVER_ERROR_KEYS = {
   too_soon: 'serverErrors.too_soon',
   duplicate_request: 'serverErrors.duplicate_request',
   delivery_unavailable: 'serverErrors.delivery_unavailable',
+  operator_unavailable: 'serverErrors.operator_unavailable',
   transition_not_allowed: 'serverErrors.transition_not_allowed',
   not_your_action: 'serverErrors.not_your_action',
 
