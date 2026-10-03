@@ -664,6 +664,7 @@
   },
   "routeError": "Cette page n'a pas pu se charger. Une nouvelle version du site est peut-être disponible.",
   "routeRetry": "Recharger la page",
+  "sessionOffline": "Pas de connexion : votre session reprendra dès le retour du réseau.",
   "routeOffline": "Cette page n’est pas disponible hors connexion. Reconnectez-vous, puis réessayez.",
   "loadFailed": "Vos annonces n'ont pas pu être chargées.",
   "retry": "Réessayer",
