@@ -41,4 +41,16 @@ describe('выкладка: оператор', () => {
     fireEvent.submit(document.querySelector('form') as HTMLFormElement);
     expect(screen.getByText('Indiquez le prix de l’opérateur, ou décochez la case.')).toBeInTheDocument();
   });
+
+  // Граница до проверки юристом (миграция 56): владелец подтверждает, что
+  // застрахован и отвечает за своё вмешательство. Без подтверждения — отказ.
+  it('цена есть, подтверждения нет — отказ с объяснением', () => {
+    render(<MemoryRouter><ListItem /></MemoryRouter>);
+    fireEvent.change(document.getElementById('li-title') as HTMLInputElement, { target: { value: 'Mini-pelle' } });
+    fireEvent.change(document.getElementById('li-price') as HTMLInputElement, { target: { value: '90' } });
+    fireEvent.click(screen.getByLabelText(/Je peux venir avec l’engin/));
+    fireEvent.change(screen.getByLabelText('Prix de l’opérateur (€ / jour)'), { target: { value: '160' } });
+    fireEvent.submit(document.querySelector('form') as HTMLFormElement);
+    expect(screen.getByText('Cochez la confirmation d’assurance pour proposer l’opérateur.')).toBeInTheDocument();
+  });
 });

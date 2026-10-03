@@ -38,6 +38,7 @@ const mockItem: Item = {
   delivery_fee: null,
   delivery_radius_km: null,
   operator_fee_per_day: null,
+  operator_terms_accepted_at: null,
   created_at: '2023-01-01T00:00:00Z',
   location: null,
   is_business: false,

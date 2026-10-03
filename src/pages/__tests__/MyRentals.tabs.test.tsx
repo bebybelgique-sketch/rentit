@@ -101,10 +101,12 @@ describe('«Mes locations»: вкладки должны быть вкладка
   // Оператор (миграция 54) — из СНИМКА в брони, как доставка: владелец мог
   // поменять цену, а договорённость была на этой.
   it('оператор из снимка брони виден обеим сторонам', () => {
-    asRenter = [booking('b-r', { status: 'confirmed', operator_requested: true, operator_fee: 320 })];
-    asOwner = [booking('b-o', { status: 'confirmed', operator_requested: true, operator_fee: 320 })];
+    asRenter = [booking('b-r', { status: 'confirmed', operator_requested: true, operator_fee: 320, operator_days: 2 })];
+    asOwner = [booking('b-o', { status: 'confirmed', operator_requested: true, operator_fee: 320, operator_days: 2 })];
     renderAt('/my-rentals');
     expect(screen.getAllByText(/€320\.00/).length).toBeGreaterThan(0);
+    // Дни работы рядом с суммой (миграция 56): сумма без дней — повод для спора.
+    expect(screen.getAllByText(/\(2 jours\)/).length).toBeGreaterThan(0);
     fireEvent.click(tabOwner());
     expect(screen.getAllByText('Opérateur:').length).toBeGreaterThan(0);
   });

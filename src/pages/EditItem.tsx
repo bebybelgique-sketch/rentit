@@ -85,6 +85,10 @@ const EditItem: React.FC = () => {
   // намеренно, иначе она разойдётся с ценой.
   const [delivers, setDelivers] = useState(false);
   const [operates, setOperates] = useState(false);
+  // Согласие владельца (миграция 56). Уже данное хранит свой момент — при
+  // правке цены не обновляется.
+  const [operatorConsentAt, setOperatorConsentAt] = useState<string | null>(null);
+  const [operatorConsent, setOperatorConsent] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -115,6 +119,8 @@ const EditItem: React.FC = () => {
       // Отдельного «включено» в базе нет, и хранить его негде.
       setDelivers(item.delivery_fee != null);
       setOperates(item.operator_fee_per_day != null);
+      setOperatorConsentAt(item.operator_terms_accepted_at ?? null);
+      setOperatorConsent(item.operator_terms_accepted_at != null);
     }
   }, [item]);
 
@@ -210,6 +216,8 @@ const EditItem: React.FC = () => {
         throw new UserFacingError(t('listItem.deliveryRadiusMustBePositive'));
       if (operates && !(parseFloat(operator_fee_per_day) > 0))
         throw new UserFacingError(t('listItem.operatorFeeRequired'));
+      if (operates && !operatorConsent)
+        throw new UserFacingError(t('listItem.operatorConsentRequired'));
 
       const updates: ItemUpdate = {
         ...rest,
@@ -222,6 +230,7 @@ const EditItem: React.FC = () => {
         delivery_fee: delivers ? parseFloat(delivery_fee) : null,
         delivery_radius_km: delivers && delivery_radius_km.trim() !== '' ? parseInt(delivery_radius_km, 10) : null,
         operator_fee_per_day: operates ? parseFloat(operator_fee_per_day) : null,
+        operator_terms_accepted_at: operates ? (operatorConsentAt ?? new Date().toISOString()) : null,
       };
 
       // Файл и база меняются В ПОРЯДКЕ, который ничего не теряет:
@@ -513,6 +522,19 @@ const EditItem: React.FC = () => {
                 <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '5px', lineHeight: 1.5 }}>
                   {t('listItem.operatorNote')}
                 </p>
+                <label htmlFor="operator_consent" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', marginTop: '8px' }}>
+                  <input
+                    id="operator_consent"
+                    type="checkbox"
+                    checked={operatorConsent}
+                    onChange={e => {
+                      setOperatorConsent(e.target.checked);
+                      if (!e.target.checked) setOperatorConsentAt(null);
+                    }}
+                    style={{ width: 'auto', marginTop: '3px' }}
+                  />
+                  {t('listItem.operatorConsent')}
+                </label>
               </>
             )}
           </div>
