@@ -22,7 +22,7 @@ import BookingStatusBadge from '../components/common/BookingStatusBadge'
 import { dateRange, money, shortName } from '../domain/push'
 import { pushLangOf } from '../lib/push'
 import { formatDay } from '../domain/dates'
-import { invokeEdge } from '../lib/edgeInvoke'
+import { useCreateRental } from '../hooks/mutations/useCreateRental'
 import { errorText, UserFacingError } from '../lib/errorText'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
@@ -121,7 +121,11 @@ export default function ItemDetail() {
   // добавленная в счёт услуга — это сумма, о которой человек узнаёт при
   // встрече.
   const [wantsDelivery, setWantsDelivery] = useState(false)
-  const [requestLoading, setRequestLoading] = useState(false)
+  // Заявка — мутацией, а не прямым вызовом функции: после неё брони
+  // перечитываются (invalidateBookingCaches). До 03.10 «Mes locations»,
+  // открытые меньше минуты назад, показывали список без новой заявки.
+  const createRental = useCreateRental()
+  const requestLoading = createRental.isPending
   const [error, setError] = useState('')
   const [loadError, setLoadError] = useState(false)
   const [requestSent, setRequestSent] = useState(false)
@@ -308,25 +312,24 @@ export default function ItemDetail() {
 
   const handleRequest = async () => {
     if (!user || !item || !startDate || !endDate) return
+    setError('')
     try {
-      setRequestLoading(true); setError('')
       // Цену доставки НЕ передаём — только сам выбор. Сумму сервер берёт
       // из вещи и кладёт в бронь снимком: доверять числу из браузера
       // здесь так же нельзя, как и в total_price.
       //
-      // Через invokeEdge, а не supabase.functions.invoke: при отказе тот
-      // прячет тело ответа, и до 23.09 человек читал здесь «Edge Function
-      // returned a non-2xx status code» вместо «эти даты уже заняты».
-      await invokeEdge('request-rental', {
+      // Хук зовёт функцию через invokeEdge, а не supabase.functions.invoke:
+      // при отказе тот прячет тело ответа, и до 23.09 человек читал здесь
+      // «Edge Function returned a non-2xx status code» вместо «эти даты
+      // уже заняты».
+      await createRental.mutateAsync({
         item_id: item.id, start_date: startDate, end_date: endDate,
-        message: requestMessage.trim() || null, delivery_requested: wantsDelivery,
+        message: requestMessage.trim() || undefined, delivery_requested: wantsDelivery,
       })
       setRequestSent(true)
     } catch (err) {
       console.error('[request-rental]', err)
       setError(errorText(t, err, 'itemDetail.requestError'))
-    } finally {
-      setRequestLoading(false)
     }
   }
 
