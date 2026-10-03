@@ -4,11 +4,14 @@
 // на storage.objects разбирают ПУТЬ файла, и ошибка в разборе даёт либо
 // дыру (чужой видит фото чужой квартиры), либо мёртвую кнопку.
 //
-// Уборка: supabase/tests/cleanup_test_accounts.sql
+// Уборка: вещь прогона снимается с витрины в конце прогона, даже упавшего;
+// учётки убирает supabase/tests/cleanup_test_accounts.sql
 import { readFileSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { createClient } from '@supabase/supabase-js';
+import { removeTestItems } from '../../scripts/close-live-bookings.mjs';
 
 const readEnvFile = () => {
   try {
@@ -36,6 +39,20 @@ let pass = 0, fail = 0;
 const check = (name, ok, extra = '') => {
   console.log(`${ok ? 'OK    ' : 'ПРОВАЛ'}  ${name}${extra ? '  — ' + extra : ''}`);
   ok ? pass++ : fail++;
+};
+
+// Вещь прогона живёт на публичной витрине, пока её не снимут (см.
+// state_machine.mjs: до 03.10 её снимала только ручная уборка учёток).
+let runItem = null;
+
+const retireRunItem = async ({ token, id }) => {
+  const owner = createClient(URL, KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { remaining, failures } = await removeTestItems(owner, [id]);
+  check('уборка: вещь прогона снята с витрины', remaining === 0 && failures.length === 0,
+        failures.join('; ') || `осталось ${remaining}`);
 };
 
 const api = async (path, opts = {}) => {
@@ -82,6 +99,7 @@ const main = async () => {
     }),
   });
   const itemId = item.body[0].id;
+  runItem = { token: owner.token, id: itemId };
 
   await jsonApi('/functions/v1/request-rental', {
     method: 'POST',
@@ -190,10 +208,17 @@ const main = async () => {
     headers: { Authorization: `Bearer ${owner.token}` },
     body: JSON.stringify({ prefixes: [ownPhoto] }),
   });
-
-  console.log(`\nИТОГ: ${pass} прошло, ${fail} провалено`);
-  console.log(`МЕТКА ДЛЯ УБОРКИ: ${tag}`);
-  if (fail > 0) process.exit(1);
 };
 
-main().catch((e) => { console.error('СБОЙ ПРОГОНА:', e.message); process.exit(1); });
+try {
+  await main();
+} catch (e) {
+  fail++;
+  console.error('СБОЙ ПРОГОНА:', e.message);
+} finally {
+  if (runItem) await retireRunItem(runItem);
+}
+
+console.log(`\nИТОГ: ${pass} прошло, ${fail} провалено`);
+console.log(`МЕТКА ДЛЯ УБОРКИ: ${tag}`);
+process.exit(fail > 0 ? 1 : 0);
