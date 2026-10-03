@@ -134,7 +134,12 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
     const extra = (devices ?? []).slice(MAX_DEVICES).map((d: { endpoint: string }) => d.endpoint)
-    if (extra.length) await supabase.from('push_subscriptions').delete().in('endpoint', extra)
+    // Удаляются только СВОИ устройства. Между выборкой и удалением адрес
+    // мог перейти к другому человеку (подписка на том же устройстве, upsert
+    // выше) — фильтр по user_id не даёт снять чужую подписку.
+    if (extra.length) {
+      await supabase.from('push_subscriptions').delete().in('endpoint', extra).eq('user_id', user.id)
+    }
 
     return json({ ok: true })
   }
