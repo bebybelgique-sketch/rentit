@@ -144,6 +144,9 @@
   "joinRentIt": "Rejoindre RentIt",
   "listFirstTool": "Déposer votre premier outil →",
   "listItem": {
+    "packageWeekend": "Le forfait week-end",
+    "packageWeekendLabel": "Forfait week-end (€)",
+    "packageWeekendHint": "du vendredi au lundi",
     "geolocationDenied": "Accès à la localisation refusé. Veuillez saisir votre adresse manuellement.",
     "titleRequired": "Le titre est requis.",
     "priceMustBePositive": "Le prix doit être supérieur à 0.",
@@ -528,6 +531,8 @@
     "terms": "CGU"
   },
   "common": {
+    "weekends_one": "{{count}} week-end",
+    "weekends_other": "{{count}} week-ends",
     "days_one": "{{count}} jour",
     "days_other": "{{count}} jours",
     "weeks_one": "{{count}} semaine",
@@ -539,6 +544,7 @@
     "refundableAtReturn": "— remboursable au retour"
   },
   "itemDetail": {
+    "perWeekend": "/ week-end (ven. → lun.)",
     "perThreeDays": "/ 3 jours",
     "perWeek": "/ semaine",
     "rangeFrom": "Du",
@@ -585,6 +591,7 @@
     "visibleBadge": "Visible"
   },
   "editItem": {
+    "packageWeekend": "Forfait week-end (€)",
     "loginToEdit": "Se connecter pour modifier un outil",
     "loading": "Chargement de l'outil...",
     "notFound": "Outil introuvable",

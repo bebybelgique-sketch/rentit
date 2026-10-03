@@ -78,7 +78,7 @@ serve(async (req) => {
     const { data: item, error: itemErr } = await supabase
       // Столбцы перечислены поимённо: новая колонка, забытая здесь, не
       // приедет вовсе, и снимок цены доставки записался бы из пустоты.
-      .from('items').select('id,owner_id,price_per_day,price_3days,price_week,deposit,available,delivery_fee').eq('id', item_id).single()
+      .from('items').select('id,owner_id,price_per_day,price_3days,price_week,price_weekend,deposit,available,delivery_fee').eq('id', item_id).single()
     if (itemErr || !item) {
       return json({ error: 'item_not_found' }, 404)
     }
@@ -122,12 +122,14 @@ serve(async (req) => {
     // Тарифы на срок. Формула одна на клиента и сервер — файл
     // `_shared/pricing.ts`, из него же читает страница вещи. Считать здесь
     // «примерно так же» нельзя: человек увидел бы одну сумму, а в брони
-    // оказалась бы другая.
+    // оказалась бы другая. Дата начала нужна пакету выходных: он привязан к
+    // дням недели (миграция 53).
     const { total: rentalPrice } = computeRentalPrice({
       pricePerDay,
       price3Days: item.price_3days,
       priceWeek: item.price_week,
-    }, totalDays)
+      priceWeekend: item.price_weekend,
+    }, totalDays, start_date)
     const deposit = Number(item.deposit) || 0
 
     // Доставка. Цену берём ИЗ ВЕЩИ, а не из тела запроса: браузер сообщает

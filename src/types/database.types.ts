@@ -379,6 +379,7 @@ export type Database = {
           price_3days: number | null
           price_per_day: number
           price_week: number | null
+          price_weekend: number | null
           quantity: number
           title: string
         }
@@ -405,6 +406,7 @@ export type Database = {
           price_3days?: number | null
           price_per_day: number
           price_week?: number | null
+          price_weekend?: number | null
           quantity?: number
           title: string
         }
@@ -431,6 +433,7 @@ export type Database = {
           price_3days?: number | null
           price_per_day?: number
           price_week?: number | null
+          price_weekend?: number | null
           quantity?: number
           title?: string
         }

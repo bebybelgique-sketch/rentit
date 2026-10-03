@@ -14,13 +14,27 @@
 // не удастся импортировать в браузерный бандл.
 //
 // ПРАВИЛО РАСЧЁТА. Владелец задаёт цену за день и, по желанию, цену за
-// пакет «3 дня» и «неделя». Мы подбираем самое дешёвое сочетание пакетов и
-// одиночных дней — перебором по дням, а не жадно: жадный выбор на наборе
-// 12/40/70 даёт для 9 дней 70+40 = 110, тогда как 70+2×12 = 94.
+// пакет «3 дня», «неделя» и «выходные». Мы подбираем самое дешёвое сочетание
+// пакетов и одиночных дней — перебором по дням, а не жадно: жадный выбор на
+// наборе 12/40/70 даёт для 9 дней 70+40 = 110, тогда как 70+2×12 = 94.
 //
 // Из правила следует свойство, которое и нужно человеку: арендатор НИКОГДА
 // не платит больше, чем по дневной цене, и пакет короче срока не мешает —
 // пятидневная аренда возьмёт недельный пакет, если он дешевле пяти дней.
+//
+// ВЫХОДНЫЕ — ПО ПРАВИЛАМ ПРОКАТЧИКОВ (сверено 03.10.2026):
+//   Boels (Бельгия): «samedi – lundi», до 48 часов — один дневной тариф;
+//     «vendredi – lundi», до 72 часов — два.
+//   Kiloutou: retrait vendredi 14–16 h, retour lundi 10–12 h — «louez 3
+//     jours, payez 1 jour et demi».
+// Общее у них: окно с пятницы по понедельник, в которое ОБЯЗАТЕЛЬНО входят
+// суббота и воскресенье, оплачивается пакетом. Часов в брони у нас нет —
+// только даты, — поэтому пакет «выходные» закрывает отрезок брони внутри
+// одного окна пт–пн, содержащий субботу и воскресенье: сб–вс, пт–вс, сб–пн,
+// пт–пн. Цену пакета назначает владелец (у одного это «один день», у другого
+// «полтора»), мы ничего не умножаем за него. В отличие от недели и
+// трёхдневки, пакет выходных привязан к календарю и за пределы брони не
+// выходит: аренда на одну субботу — это один день, а не «выходные».
 
 export type RentalRates = {
   pricePerDay: number
@@ -28,6 +42,8 @@ export type RentalRates = {
   price3Days?: number | null
   /** Цена за пакет из семи дней. */
   priceWeek?: number | null
+  /** Цена за выходные: отрезок внутри пт–пн, содержащий сб и вс. */
+  priceWeekend?: number | null
 }
 
 export type PriceBreakdown = {
@@ -37,6 +53,8 @@ export type PriceBreakdown = {
   weeks: number
   /** Сколько трёхдневных пакетов вошло в итог. */
   packs3: number
+  /** Сколько пакетов «выходные» вошло в итог. */
+  weekends: number
   /** Сколько дней осталось по дневной цене. */
   days: number
 }
@@ -45,16 +63,39 @@ export type PriceBreakdown = {
 const toCents = (v: number) => Math.round(v * 100)
 const fromCents = (c: number) => c / 100
 
-const EMPTY: PriceBreakdown = { total: 0, weeks: 0, packs3: 0, days: 0 }
+const EMPTY: PriceBreakdown = { total: 0, weeks: 0, packs3: 0, weekends: 0, days: 0 }
+
+const SUNDAY = 0
+const MONDAY = 1
+
+/**
+ * День недели для `offset`-го дня брони: 0 — воскресенье … 6 — суббота.
+ * Через Date.UTC — без часов и поясов: «какой это день» не зависит от того,
+ * где открыта страница.
+ */
+const weekdayAt = (startISO: string, offset: number): number => {
+  const [y, m, d] = startISO.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d + offset)).getUTCDay()
+}
+
+/**
+ * Длины отрезков «выходные», которые кончаются в этот день недели.
+ * Воскресенье: сб–вс (2) и пт–вс (3). Понедельник: сб–пн (3) и пт–пн (4).
+ */
+const weekendLengthsEndingOn = (weekday: number): number[] =>
+  weekday === SUNDAY ? [2, 3] : weekday === MONDAY ? [3, 4] : []
 
 /**
  * Возвращает самое дешёвое сочетание тарифов на `totalDays` дней.
+ *
+ * `startISO` — первый день брони (YYYY-MM-DD). Без него пакет выходных не
+ * рассматривается: неизвестно, на какие дни недели падает срок.
  *
  * Некорректная дневная цена (ноль, отрицательная, NaN) — не наше дело
  * поправлять: возвращаем нули, а отказ выдаёт вызывающая сторона, у которой
  * есть чем ответить человеку.
  */
-export function computeRentalPrice(rates: RentalRates, totalDays: number): PriceBreakdown {
+export function computeRentalPrice(rates: RentalRates, totalDays: number, startISO?: string): PriceBreakdown {
   const days = Math.floor(totalDays)
   if (!Number.isFinite(days) || days <= 0) return EMPTY
 
@@ -69,9 +110,15 @@ export function computeRentalPrice(rates: RentalRates, totalDays: number): Price
   const three = toCents(Number(rates.price3Days ?? 0))
   if (Number.isFinite(three) && three > 0) packs.push({ size: 3, cost: three, kind: 'pack3' })
 
-  // best[d] — минимальная стоимость ровно d дней; from[d] — чем закрыли хвост.
+  const weekendCost = toCents(Number(rates.priceWeekend ?? 0))
+  const weekends = Number.isFinite(weekendCost) && weekendCost > 0 &&
+    typeof startISO === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(startISO)
+
+  // best[d] — минимальная стоимость первых d дней брони; from[d] — чем
+  // закрыли хвост, span[d] — сколько дней закрыл пакет выходных.
   const best = new Array<number>(days + 1).fill(Number.POSITIVE_INFINITY)
-  const from = new Array<'day' | 'week' | 'pack3'>(days + 1).fill('day')
+  const from = new Array<'day' | 'week' | 'pack3' | 'weekend'>(days + 1).fill('day')
+  const span = new Array<number>(days + 1).fill(0)
   best[0] = 0
 
   for (let d = 1; d <= days; d++) {
@@ -88,17 +135,32 @@ export function computeRentalPrice(rates: RentalRates, totalDays: number): Price
         from[d] = p.kind
       }
     }
+
+    if (weekends) {
+      // d-й день брони — это день с отступом d − 1 от начала.
+      for (const len of weekendLengthsEndingOn(weekdayAt(startISO!, d - 1))) {
+        if (d - len < 0) continue
+        const candidate = best[d - len] + weekendCost
+        if (candidate < best[d]) {
+          best[d] = candidate
+          from[d] = 'weekend'
+          span[d] = len
+        }
+      }
+    }
   }
 
-  let weeks = 0
+  let weeksUsed = 0
   let packs3 = 0
+  let weekendsUsed = 0
   let singleDays = 0
   for (let d = days; d > 0; ) {
     const step = from[d]
-    if (step === 'week') { weeks++; d = Math.max(0, d - 7) }
+    if (step === 'week') { weeksUsed++; d = Math.max(0, d - 7) }
     else if (step === 'pack3') { packs3++; d = Math.max(0, d - 3) }
+    else if (step === 'weekend') { weekendsUsed++; d -= span[d] }
     else { singleDays++; d -= 1 }
   }
 
-  return { total: fromCents(best[days]), weeks, packs3, days: singleDays }
+  return { total: fromCents(best[days]), weeks: weeksUsed, packs3, weekends: weekendsUsed, days: singleDays }
 }
