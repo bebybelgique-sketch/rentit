@@ -2,6 +2,8 @@
 import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { bookingKeys } from '../lib/queryKeys';
 import { useRentals } from '../hooks/useRentals';
 import BookingStatusBadge from '../components/common/BookingStatusBadge';
 import EmptyState from '../components/common/EmptyState';
@@ -72,6 +74,39 @@ const MyRentals: React.FC = () => {
   // нет» поверх существующей брони. Поэтому без явного ?role сторону
   // выбирает та, в чьём списке бронь действительно лежит.
   const ownerHasFocus = !!focusId && !!ownerRentals?.some(r => r.id === focusId);
+  const focusFound = ownerHasFocus || (!!focusId && !!userRentals?.some(r => r.id === focusId));
+
+  // ССЫЛКА НА БРОНЬ — ПОЧТИ ВСЕГДА О ТОМ, ЧТО СДЕЛАЛА ВТОРАЯ СТОРОНА.
+  //
+  // Она приходит из ленты, из push и из письма. Списки на этой странице
+  // могли быть прочитаны за полминуты до того и считаться свежими: новой
+  // заявки в них ещё нет, нового сообщения — тоже. Поэтому на каждую
+  // ссылку списки, переписка и фото этой брони перечитываются один раз;
+  // уже идущее чтение (первый заход на страницу) не отменяется, а
+  // дожидается.
+  const queryClient = useQueryClient();
+  const [checkedFocus, setCheckedFocus] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!focusId) return;
+    let cancelled = false;
+    void Promise.all([
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all }, { cancelRefetch: false }),
+      queryClient.invalidateQueries({ queryKey: bookingKeys.messages(focusId) }),
+      queryClient.invalidateQueries({ queryKey: bookingKeys.photos(focusId) }),
+    ]).finally(() => {
+      if (!cancelled) setCheckedFocus(focusId);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [focusId, queryClient]);
+
+  // Перечитали — а брони нет ни в одном списке: ссылка не из этой учётки
+  // (письмо пришло на другой адрес) или бронь удалена вместе с вещью.
+  // Молча показать списки без неё значило бы оставить человека искать.
+  const focusMissing =
+    !!focusId && checkedFocus === focusId && !focusFound &&
+    !userRentalsLoading && !ownerRentalsLoading && !userRentalsError && !ownerRentalsError;
 
   // НЕПРОЧИТАННОЕ У БРОНИ (лента событий, миграция 42).
   //
@@ -80,16 +115,20 @@ const MyRentals: React.FC = () => {
   // бронь. Теперь у такой брони — метка «Nouveau».
   //
   // Пришёл по ссылке на бронь (из ленты или из push) — значит смотрит на
-  // неё: её непрочитанное гаснет само. Метка у остальных гаснет по нажатию.
+  // неё: её непрочитанное гаснет само. Но только когда она перечитана и
+  // действительно на экране: до 03.10 метка гасла сразу, и событие о
+  // брони, которой в устаревшем списке ещё не было, считалось увиденным.
+  // Метка у остальных гаснет по нажатию.
   const unread = useUnreadActivity(user?.id);
   const markRead = useMarkActivityRead(user?.id);
   const unreadBookings = unread.data?.bookingIds;
   const focusUnread = !!focusId && !!unreadBookings?.has(focusId);
+  const focusShown = focusFound && checkedFocus === focusId;
   React.useEffect(() => {
-    if (focusId && focusUnread) markRead.mutate({ bookingId: focusId });
+    if (focusId && focusUnread && focusShown) markRead.mutate({ bookingId: focusId });
     // markRead — стабильный объект мутации.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusId, focusUnread]);
+  }, [focusId, focusUnread, focusShown]);
 
   const newMark = (bookingId: string) =>
     unreadBookings?.has(bookingId) ? (
@@ -245,6 +284,18 @@ const MyRentals: React.FC = () => {
     <div className="page">
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '20px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px' }}>{t('myRentalsTitle')}</h1>
+
+        {focusMissing && (
+          <div
+            role="status"
+            style={{
+              background: 'var(--surface-sunken)', border: '1px solid var(--line)',
+              borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: '16px', fontSize: '14px',
+            }}
+          >
+            {t('myRentals.focusMissing')}
+          </div>
+        )}
 
         {/* Полоса C пакета Design: уведомления заблокированы в браузере,
             а ответ как раз ждут — по своей заявке или по заявке на свою

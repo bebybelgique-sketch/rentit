@@ -21,6 +21,7 @@ import { useOwnerTasks } from './hooks/useOwnerTasks'
 import TaskBadge from './components/common/TaskBadge'
 import ActivityBell from './components/common/ActivityBell'
 import { usePushSync } from './hooks/usePushSync'
+import { useActivityRefreshesBookings } from './hooks/useActivity'
 import { releaseThisDevice } from './lib/push'
 import { createMutationCache } from './lib/mutationErrors'
 
@@ -319,6 +320,8 @@ function AppChrome() {
   const { pathname } = useLocation()
   const { user } = useAuth()
   usePushSync(user?.id ?? null)
+  // Новое событие в ленте — брони и переписка перечитываются (useActivity.ts).
+  useActivityRefreshesBookings(user?.id)
 
 
   // ПОСЛЕДНЯЯ ПРЕГРАДА между поломкой и белым экраном.

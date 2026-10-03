@@ -9,9 +9,10 @@
 // завести второй источник истины. В UPDATE он есть: пустой фильтр
 // PostgREST бы отверг, а «все мои» — это и есть user_id.
 
+import { useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { activityKeys } from '../lib/queryKeys'
+import { activityKeys, invalidateCounterpartyChanges } from '../lib/queryKeys'
 import type { ActivityRow } from '../domain/activity'
 
 /** Больше в ленте не показываем: за 90 дней хранения — с запасом. */
@@ -46,9 +47,11 @@ export interface UnreadActivity {
   readonly count: number
   /** Брони, у которых есть непрочитанное, — для меток в «Mes locations». */
   readonly bookingIds: ReadonlySet<string>
+  /** Самое новое непрочитанное событие (мс) — сигнал для useActivityRefreshesBookings. */
+  readonly latestAt: number | null
 }
 
-const EMPTY: UnreadActivity = { count: 0, bookingIds: new Set() }
+const EMPTY: UnreadActivity = { count: 0, bookingIds: new Set(), latestAt: null }
 
 /**
  * Непрочитанное: число для колокольчика и брони для меток. Один запрос на
@@ -61,14 +64,21 @@ export const useUnreadActivity = (userId: string | undefined) =>
   useQuery<UnreadActivity, Error>({
     queryKey: activityKeys.unread(userId),
     queryFn: async () => {
+      // Новые — первыми: при потолке в 500 строк самое новое событие
+      // обязано попасть в выборку, иначе latestAt его не увидит.
       const { data, error } = await supabase
         .from('notifications')
-        .select('booking_id')
+        .select('booking_id, created_at')
         .is('read_at', null)
+        .order('created_at', { ascending: false })
         .limit(500)
       if (error) throw error
-      const rows = (data ?? []) as Array<{ booking_id: string }>
-      return { count: rows.length, bookingIds: new Set(rows.map((r) => r.booking_id)) }
+      const rows = (data ?? []) as Array<{ booking_id: string; created_at: string }>
+      return {
+        count: rows.length,
+        bookingIds: new Set(rows.map((r) => r.booking_id)),
+        latestAt: rows.length ? Date.parse(rows[0].created_at) : null,
+      }
     },
     enabled: !!userId,
     placeholderData: EMPTY,
@@ -76,6 +86,39 @@ export const useUnreadActivity = (userId: string | undefined) =>
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
   })
+
+/**
+ * ЛЕНТА ДВИГАЕТ БРОНИ.
+ *
+ * Новое событие в ленте значит, что вторая сторона что-то сделала с бронью:
+ * прислала заявку, ответила, отменила, написала. Списки броней и переписка
+ * сами этого не узнают: устаревший кэш перечитывается только при открытии
+ * страницы или возвращении на вкладку, а ни одна наша мутация его не тронет.
+ * До 03.10 колокольчик говорил «новое сообщение», а открытая переписка его
+ * не показывала, пока человек не уйдёт со страницы.
+ *
+ * Сигнал — самое новое непрочитанное событие: оно приходит раз в минуту
+ * (опрос), сразу по push (usePushSync гасит ключ) и при возвращении на
+ * вкладку. Стало новее виденного — устаревает всё, что пишет вторая
+ * сторона; перечитывается сразу только открытое на экране.
+ *
+ * Первое чтение после входа ничего не гасит: списки и так грузятся.
+ * Прочитанное уходит из выборки и сдвигает сигнал назад — это не событие.
+ */
+export const useActivityRefreshesBookings = (userId: string | undefined): void => {
+  const queryClient = useQueryClient()
+  const { data, isSuccess, isPlaceholderData } = useUnreadActivity(userId)
+  // Самое новое событие, виденное этим входом.
+  const seen = useRef<{ userId: string; at: number } | null>(null)
+
+  useEffect(() => {
+    if (!userId || !isSuccess || isPlaceholderData) return
+    const at = data.latestAt ?? 0
+    const prev = seen.current?.userId === userId ? seen.current.at : null
+    seen.current = { userId, at: Math.max(prev ?? 0, at) }
+    if (prev !== null && at > prev) invalidateCounterpartyChanges(queryClient)
+  }, [userId, isSuccess, isPlaceholderData, data, queryClient])
+}
 
 /**
  * «Прочитано»: всё сразу или всё по одной брони. Уже прочитанное не
