@@ -314,7 +314,9 @@ export default function ItemDetail() {
   // сервер), но в то, что арендатор отдаст при встрече, — входит.
   const deliveryFee = item && wantsDelivery && item.delivery_fee != null ? Number(item.delivery_fee) : 0
   // Оператор — тоже отдельная услуга: в bookings.total_price не входит, но
-  // на месте платится. За каждый день аренды, как и считает сервер.
+  // на месте платится. За дни работы, которые назвал арендатор (по
+  // умолчанию — вся бронь), как и считает сервер (миграция 56). От пакетов
+  // аренды не зависит: выходные за 150 € не делают оператора дешевле.
   // Не больше длины брони: сменил даты на более короткие — дни подрезаются.
   const operatorDays = Math.max(1, Math.min(operatorDaysInput ?? totalDays, totalDays))
   const operatorFee = item && wantsOperator && item.operator_fee_per_day != null && totalDays > 0
