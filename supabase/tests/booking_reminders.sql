@@ -6,8 +6,11 @@
 -- Ждём в отчёте:
 --   anon_exec=false auth_exec=false service_exec=true  kind_checks=1
 --   request_due=1 request_not_due=0 request_repeat=0 request_rows=1
---   return_before_18=0 return_due=1 return_single_day=0
+--   return_before_18=0 return_due=1 return_single_day=0 cross_kind_due=1 cross_kind_rows=2
 --   unconfirmed_before_9=0 unconfirmed_due=1 unconfirmed_completed=0
+--
+-- Часы выбраны так, чтобы ошибка «час по UTC вместо Брюсселя» краснела:
+-- 18:30 и 9:30 по Брюсселю — это 16:30–17:30 и 7:30–8:30 по UTC.
 --   bogus_kind=denied
 -- request_other и return/unconfirmed чужих броней — сколько живых броней
 -- попало в окно у «сейчас», заданного тестом; на пустой базе 0.
@@ -23,8 +26,9 @@ DECLARE
   p_r timestamptz := now() + interval '3 days';
   at_d_1700 timestamptz := ((current_date + 60)::timestamp + time '17:00') AT TIME ZONE 'Europe/Brussels';
   at_d_1830 timestamptz := ((current_date + 60)::timestamp + time '18:30') AT TIME ZONE 'Europe/Brussels';
-  at_u_0800 timestamptz := ((current_date + 83)::timestamp + time '08:00') AT TIME ZONE 'Europe/Brussels';
-  at_u_1000 timestamptz := ((current_date + 83)::timestamp + time '10:00') AT TIME ZONE 'Europe/Brussels';
+  at_t_next_0930 timestamptz := ((current_date + 62)::timestamp + time '09:30') AT TIME ZONE 'Europe/Brussels';
+  at_u_0830 timestamptz := ((current_date + 83)::timestamp + time '08:30') AT TIME ZONE 'Europe/Brussels';
+  at_u_0930 timestamptz := ((current_date + 83)::timestamp + time '09:30') AT TIME ZONE 'Europe/Brussels';
 BEGIN
 
   INSERT INTO auth.users (id, email, aud, role, raw_user_meta_data) VALUES
@@ -85,6 +89,14 @@ BEGIN
            count(*) FILTER (WHERE q.booking_id = b_t2)
       INTO n, n2 FROM public.queue_booking_reminders(at_d_1830) q;
     r := r || ' return_due=' || n || ' return_single_day=' || n2;
+    -- Та же бронь на следующий день после конца: владельцу «не отмечен».
+    -- Разные виды одной брони друг друга не гасят.
+    SELECT count(*) INTO n FROM public.queue_booking_reminders(at_t_next_0930) q
+     WHERE q.booking_id = b_t1 AND q.user_id = v_owner AND q.kind = 'return_unconfirmed';
+    r := r || ' cross_kind_due=' || n;
+    SELECT count(DISTINCT kind) INTO n FROM public.notifications
+     WHERE booking_id = b_t1 AND kind IN ('return_tomorrow', 'return_unconfirmed');
+    r := r || ' cross_kind_rows=' || n;
   EXCEPTION WHEN OTHERS THEN r := r || ' return=FAIL:' || SQLERRM; END;
 
   -- Возврат не отмечен: до 9:00 рано; завершённая бронь — без напоминания.
@@ -93,11 +105,11 @@ BEGIN
     VALUES (v_item_u, v_renter, d + 20, d + 22, 90, 'active', now()) RETURNING id INTO b_u1;
     INSERT INTO public.bookings (item_id, renter_id, start_date, end_date, total_price, status, created_at)
     VALUES (v_item_u2, v_renter, d + 20, d + 22, 90, 'completed', now()) RETURNING id INTO b_u2;
-    SELECT count(*) INTO n FROM public.queue_booking_reminders(at_u_0800) q WHERE q.booking_id IN (b_u1, b_u2);
+    SELECT count(*) INTO n FROM public.queue_booking_reminders(at_u_0830) q WHERE q.booking_id IN (b_u1, b_u2);
     r := r || ' unconfirmed_before_9=' || n;
     SELECT count(*) FILTER (WHERE q.booking_id = b_u1 AND q.user_id = v_owner AND q.kind = 'return_unconfirmed'),
            count(*) FILTER (WHERE q.booking_id = b_u2)
-      INTO n, n2 FROM public.queue_booking_reminders(at_u_1000) q;
+      INTO n, n2 FROM public.queue_booking_reminders(at_u_0930) q;
     r := r || ' unconfirmed_due=' || n || ' unconfirmed_completed=' || n2;
   EXCEPTION WHEN OTHERS THEN r := r || ' unconfirmed=FAIL:' || SQLERRM; END;
 
