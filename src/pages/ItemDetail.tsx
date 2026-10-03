@@ -23,7 +23,7 @@ import { dateRange, money, shortName } from '../domain/push'
 import { pushLangOf } from '../lib/push'
 import { formatDay } from '../domain/dates'
 import { invokeEdge } from '../lib/edgeInvoke'
-import { errorText } from '../lib/errorText'
+import { errorText, UserFacingError } from '../lib/errorText'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
 // power_tools был 🔌, а на витрине ⚡ — одна и та же категория с двумя
@@ -154,6 +154,7 @@ export default function ItemDetail() {
   const [reviewComment, setReviewComment] = useState('')
   const [reviewLoading, setReviewLoading] = useState(false)
   const [reviewSuccess, setReviewSuccess] = useState(false)
+  const [reviewError, setReviewError] = useState<string | null>(null)
 
   useEffect(() => { if (itemId) fetchItem() }, [itemId])
 
@@ -206,8 +207,12 @@ export default function ItemDetail() {
 
   const checkCanReview = async (iId: string, ownerId: string) => {
     if (!user || user.id === ownerId) return
+    // Последняя завершённая аренда, а не «единственная»: maybeSingle() на
+    // двух строках отдаёт ошибку, и арендатор, бравший вещь дважды, не мог
+    // её оценить — форма просто не появлялась.
     const [{ data: booking }, { data: existing }] = await Promise.all([
-      supabase.from('bookings').select('id').eq('item_id', iId).eq('renter_id', user.id).eq('status', 'completed').maybeSingle(),
+      supabase.from('bookings').select('id').eq('item_id', iId).eq('renter_id', user.id).eq('status', 'completed')
+        .order('end_date', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('reviews').select('id').eq('item_id', iId).eq('from_user_id', user.id).eq('review_type', 'item').maybeSingle(),
     ])
     setCanReview(!!booking && !existing)
@@ -309,11 +314,13 @@ export default function ItemDetail() {
     e.preventDefault()
     if (!user || !item) return
     setReviewLoading(true)
+    setReviewError(null)
     try {
-      const { data: booking } = await supabase
+      const { data: booking, error: bookingError } = await supabase
         .from('bookings').select('id').eq('item_id', item.id).eq('renter_id', user.id)
-        .eq('status', 'completed').maybeSingle()
-      if (!booking) return
+        .eq('status', 'completed').order('end_date', { ascending: false }).limit(1).maybeSingle()
+      if (bookingError) throw bookingError
+      if (!booking) throw new UserFacingError(t('booking.reviewFailed'))
       const { error } = await supabase.from('reviews').insert([{
         booking_id: booking.id,
         from_user_id: user.id,
@@ -323,11 +330,17 @@ export default function ItemDetail() {
         rating: reviewStars,
         comment: reviewComment.trim() || null,
       }])
+      // 23505 — отзыв на эту аренду уже есть (уникальный ключ брони, автора
+      // и типа): человеку это «вы уже оценили», а не «ошибка базы».
+      if (error?.code === '23505') throw new UserFacingError(t('review.alreadyLeft'))
       if (error) throw error
       setReviewSuccess(true); setCanReview(false)
       fetchItem()
     } catch (err) {
       console.error(err)
+      // До 03.10 сбой здесь проглатывался: кнопка возвращалась в
+      // «Envoyer», и человек не узнавал, что отзыв не записан.
+      setReviewError(errorText(t, err, 'booking.reviewFailed'))
     } finally {
       setReviewLoading(false)
     }
@@ -957,6 +970,7 @@ export default function ItemDetail() {
                   <label htmlFor="review-comment">{t('review.commentLabel')}</label>
                   <textarea id="review-comment" value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder={t('itemDetail.shareExperience')} rows={3} />
                 </div>
+                {reviewError && <p role="alert" className="error-msg">{reviewError}</p>}
                 <button type="submit" className="btn btn-primary" disabled={reviewLoading} style={{ minHeight: '44px' }}>
                   {reviewLoading ? t('common.loading') : t('itemDetail.submitReview')}
                 </button>
