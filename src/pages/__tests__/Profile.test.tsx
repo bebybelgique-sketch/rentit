@@ -15,15 +15,29 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 
 // AuthProvider на монтировании зовёт supabase.auth.getSession() и подписку —
 // без заглушек рендер падает ещё до самой страницы.
-vi.mock('../../lib/supabase', () => ({
-  supabase: {
-    auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
-      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
-      signOut: vi.fn().mockResolvedValue({ error: null }),
+//
+// Профиль из таблицы users читается по-настоящему (useProfile). До 03.10
+// заглушки `from` здесь не было: чтение падало, и проверка сохранения шла
+// по форме на запасных значениях — ровно по тому пути, который теперь
+// закрыт (сохранять до прочтения профиля нельзя).
+vi.mock('../../lib/supabase', () => {
+  const profileRow = { id: 'user-1', full_name: 'John Doe', avatar_url: null, village: null };
+  // Цепочка PostgREST: одна строка — maybeSingle, список — await самой цепочки.
+  const chain: Record<string, unknown> = {};
+  for (const m of ['select', 'eq', 'order', 'limit']) chain[m] = () => chain;
+  chain.maybeSingle = async () => ({ data: profileRow, error: null });
+  chain.then = (resolve: (v: unknown) => unknown) => resolve({ data: [], error: null });
+  return {
+    supabase: {
+      auth: {
+        getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+        onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+        signOut: vi.fn().mockResolvedValue({ error: null }),
+      },
+      from: () => chain,
     },
-  },
-}));
+  };
+});
 import Profile from '../Profile';
 import { useUpdateProfile } from '../../hooks/mutations/useUpdateProfile'; // Import hook to mock
 import { useDeleteAccount } from '../../hooks/mutations/useDeleteAccount'; // Import hook to mock
@@ -91,9 +105,13 @@ describe('Profile Page', () => {
     render(<Profile />, { wrapper });
 
     const newNameInput = screen.getByDisplayValue('John Doe');
+    // Поле оживает, когда профиль прочитан: набранное раньше затёр бы он.
+    await waitFor(() => expect(newNameInput).toBeEnabled());
     fireEvent.change(newNameInput, { target: { value: 'Jane Doe' } });
 
     const submitButton = screen.getByText(/Mettre à jour le profil/i);
+    // Кнопка оживает, когда профиль прочитан.
+    await waitFor(() => expect(submitButton).toBeEnabled());
     fireEvent.click(submitButton);
 
     await waitFor(() => {

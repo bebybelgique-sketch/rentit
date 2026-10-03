@@ -12,6 +12,7 @@ import MessageList from '../common/MessageList';
 import MessageComposer from '../common/MessageComposer';
 import PhotoGrid from '../common/PhotoGrid';
 import ReviewForm from '../common/ReviewForm';
+import ErrorState from '../common/ErrorState';
 import { useBookingMessages } from '../../hooks/useBookingMessages';
 import { useSendMessage } from '../../hooks/mutations/useSendMessage';
 import { useBookingPhotos, type BookingPhotoPhase } from '../../hooks/useBookingPhotos';
@@ -62,8 +63,14 @@ const BookingThread: React.FC<BookingThreadProps> = ({
   const { t } = useTranslation();
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const { data: messages, isLoading: messagesLoading } = useBookingMessages(bookingId);
-  const { data: photos } = useBookingPhotos(bookingId);
+  // НЕ ЗАГРУЗИЛОСЬ — НЕ ЗНАЧИТ «ПУСТО». До 03.10 сбой чтения показывался
+  // как «Aucun message» и «Aucune photo»: человек читал, что собеседник
+  // молчит, а снимков передачи — доказательства состояния вещи — нет, хотя
+  // они лежали в базе. Пустота — только когда чтение удалось.
+  const {
+    data: messages, isLoading: messagesLoading, isError: messagesFailed, refetch: refetchMessages,
+  } = useBookingMessages(bookingId);
+  const { data: photos, isError: photosFailed, refetch: refetchPhotos } = useBookingPhotos(bookingId);
   const sendMessage = useSendMessage();
   const uploadPhoto = useUploadBookingPhoto();
   const createReview = useCreateUserReview();
@@ -123,6 +130,10 @@ const BookingThread: React.FC<BookingThreadProps> = ({
     canRemove: false,
   }));
 
+  // Снимков не узнали — раздел показывается и у закрытой сделки: там
+  // они единственный след того, в каком виде вещь ушла и вернулась.
+  const photosUnknown = photosFailed && !photos;
+
   return (
     <div>
       {localError && (
@@ -133,6 +144,8 @@ const BookingThread: React.FC<BookingThreadProps> = ({
         <h4 style={heading}>{t('booking.messagesTitle')}</h4>
         {messagesLoading ? (
           <p style={{ fontSize: '13px', color: '#666' }}>{t('booking.messagesLoading')}</p>
+        ) : messagesFailed && !messages ? (
+          <ErrorState compact message={t('booking.messagesLoadFailed')} onRetry={() => { void refetchMessages(); }} />
         ) : (
           <MessageList
             messages={(messages || []).map((m) => ({
@@ -154,7 +167,7 @@ const BookingThread: React.FC<BookingThreadProps> = ({
         />
       </div>
 
-      {(photoPhase || photoItems.length > 0) && (
+      {(photoPhase || photoItems.length > 0 || photosUnknown) && (
         <div style={box}>
           <h4 style={heading}>
             {photoPhase === 'handover'
@@ -164,10 +177,14 @@ const BookingThread: React.FC<BookingThreadProps> = ({
                 : t('booking.photosTitle')}
           </h4>
 
-          <PhotoGrid
-            photos={photoItems}
-            emptyLabel={t('booking.photosEmpty')}
-          />
+          {photosUnknown ? (
+            <ErrorState compact message={t('booking.photosLoadFailed')} onRetry={() => { void refetchPhotos(); }} />
+          ) : (
+            <PhotoGrid
+              photos={photoItems}
+              emptyLabel={t('booking.photosEmpty')}
+            />
+          )}
 
           {photoPhase && (
             <input

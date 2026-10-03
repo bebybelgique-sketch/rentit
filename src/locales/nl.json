@@ -64,6 +64,8 @@
   "alreadyAccount": "Al een account?",
   "approve": "Goedkeuren",
   "booking": {
+    "messagesLoadFailed": "De berichten konden niet worden geladen.",
+    "photosLoadFailed": "De foto’s konden niet worden geladen.",
     "messagesTitle": "Berichten",
     "messagesLoading": "Laden...",
     "messagesEmpty": "Nog geen berichten. Spreek hier plaats en tijd af.",
@@ -318,6 +320,7 @@
   "perDay": "/dag",
   "phoneVerified": "✓ Telefoon geverifieerd",
   "profile": {
+    "loadFailed": "Uw profiel kon niet worden geladen: opslaan wacht tot dat lukt, zodat er niets wordt overschreven.",
     "title": "Mijn Profiel",
     "fullName": "Volledige naam",
     "avatarLabel": "Profielfoto",
