@@ -133,13 +133,15 @@ export default function Admin() {
         </div>
       )}
 
+      {/* Не прочитали — «—», а не 0: ноль на плитке — утверждение о площадке,
+          и после сбоя оно было бы ложным. */}
       {tab === 'stats' && (
         <div className="grid grid-2">
           {[
-            { label: 'Users', value: stats.isLoading ? '…' : stats.data?.users ?? 0 },
-            { label: 'Listings', value: stats.isLoading ? '…' : stats.data?.items ?? 0 },
-            { label: 'Bookings', value: stats.isLoading ? '…' : stats.data?.bookings ?? 0 },
-            { label: 'Completed rentals', value: stats.isLoading ? '…' : stats.data?.completed ?? 0 },
+            { label: 'Users', value: stats.isLoading ? '…' : stats.data?.users ?? '—' },
+            { label: 'Listings', value: stats.isLoading ? '…' : stats.data?.items ?? '—' },
+            { label: 'Bookings', value: stats.isLoading ? '…' : stats.data?.bookings ?? '—' },
+            { label: 'Completed rentals', value: stats.isLoading ? '…' : stats.data?.completed ?? '—' },
           ].map(s => (
             <div key={s.label} className="card" style={{ textAlign: 'center' }}>
               {/* Здесь стояли 👥📦📅✅ в 36 px. Эмодзи над числом в 32 px

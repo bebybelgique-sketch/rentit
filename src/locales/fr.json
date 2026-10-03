@@ -64,6 +64,8 @@
   "alreadyAccount": "Déjà un compte ?",
   "approve": "Accepter",
   "booking": {
+    "messagesLoadFailed": "Les messages n’ont pas pu être chargés.",
+    "photosLoadFailed": "Les photos n’ont pas pu être chargées.",
     "messagesTitle": "Messages",
     "messagesLoading": "Chargement...",
     "messagesEmpty": "Aucun message. Convenez ici du lieu et de l'heure.",
@@ -317,6 +319,7 @@
   "perDay": "/jour",
   "phoneVerified": "✓ Téléphone vérifié",
   "profile": {
+    "loadFailed": "Votre profil n’a pas pu être chargé : l’enregistrement attend qu’il le soit, pour ne rien écraser.",
     "title": "Mon Profil",
     "fullName": "Nom complet",
     "avatarLabel": "Photo de profil",

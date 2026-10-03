@@ -64,6 +64,8 @@
   "alreadyAccount": "Already have an account?",
   "approve": "Approve",
   "booking": {
+    "messagesLoadFailed": "The messages couldn’t be loaded.",
+    "photosLoadFailed": "The photos couldn’t be loaded.",
     "messagesTitle": "Messages",
     "messagesLoading": "Loading...",
     "messagesEmpty": "No messages yet. Agree on place and time here.",
@@ -317,6 +319,7 @@
   "perDay": "/day",
   "phoneVerified": "✓ Phone verified",
   "profile": {
+    "loadFailed": "Your profile couldn’t be loaded: saving waits until it is, so nothing gets overwritten.",
     "title": "My Profile",
     "fullName": "Full Name",
     "avatarLabel": "Profile photo",

@@ -11,6 +11,7 @@ import { useDeleteAccount } from '../hooks/mutations/useDeleteAccount';
 import { useUploadAvatar } from '../hooks/mutations/useUploadAvatar';
 import { useUserReviews, type UserReview } from '../hooks/useUserReviews';
 import ReviewList, { type ReviewListItem } from '../components/common/ReviewList';
+import ErrorState from '../components/common/ErrorState';
 import ChangeEmail from '../components/common/ChangeEmail';
 import PhoneVerification from '../components/common/PhoneVerification';
 import ChangePassword from '../components/common/ChangePassword';
@@ -48,7 +49,13 @@ const Profile: React.FC = () => {
   const { upload: uploadAvatar, uploading: avatarUploading } = useUploadAvatar();
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: storedProfile } = useProfile(user?.id);
+  const { data: storedProfile, isError: profileFailed, refetch: refetchProfile } = useProfile(user?.id);
+  // Пока профиль не прочитан, сохранять нечем сравнивать: форма стоит на
+  // запасных значениях из user_metadata, и «Enregistrer» записал бы их
+  // поверх настоящих. До 03.10 так и было — и при загрузке, и при сбое
+  // чтения кнопка была доступна. undefined — не прочитан; null — строки
+  // нет, и это ответ.
+  const profileLoaded = storedProfile !== undefined;
 
   // Две репутации врозь: «хорошо сдаёт» и «хорошо берёт». Разделение уже
   // заложено в схеме (review_type), хук только его читает.
@@ -144,7 +151,7 @@ const Profile: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isUnchanged) return;
+    if (isUnchanged || !profileLoaded) return;
 
     try {
       await updateProfileMutation.mutateAsync({
@@ -183,6 +190,10 @@ const Profile: React.FC = () => {
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px' }}>{t('profile.title')}</h1> {/* Новая строка в i18n */}
 
+        {profileFailed && !profileLoaded && (
+          <ErrorState compact message={t('profile.loadFailed')} onRetry={() => { void refetchProfile(); }} />
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="full_name">{t('profile.fullName')}</label> {/* Новая строка в i18n */}
@@ -192,6 +203,9 @@ const Profile: React.FC = () => {
               type="text"
               value={profileData.full_name}
               onChange={handleChange}
+              // Прочитанный профиль заменит поле целиком: набранное до этого
+              // пропало бы молча. Править можно то, что прочитано.
+              disabled={!profileLoaded}
               required
               style={{ width: '100%' }}
             />
@@ -252,7 +266,7 @@ const Profile: React.FC = () => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={updateProfileMutation.isPending || isUnchanged}
+            disabled={updateProfileMutation.isPending || isUnchanged || !profileLoaded}
             style={{ width: '100%', minHeight: '44px' }}
           >
             {updateProfileMutation.isPending ? t('profile.updating') : t('profile.updateButton')} {/* Новые строки в i18n */}
