@@ -1,6 +1,6 @@
 // src/hooks/mutations/useAdminAction.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { itemKeys, profileKeys } from '../../lib/queryKeys';
+import { invalidateItemCaches, profileKeys } from '../../lib/queryKeys';
 import { invokeEdge } from '../../lib/edgeInvoke';
 
 // Единственный путь для действий администратора над чужими строками.
@@ -41,11 +41,9 @@ export const useAdminAction = () => {
       // со своей страницы — иначе человек откроет ссылку из поиска и
       // увидит вещь, которой в каталоге уже нет.
       if (action.type === 'set_item_available') {
-        void queryClient.invalidateQueries({ queryKey: itemKeys.all });
-        void queryClient.invalidateQueries({ queryKey: itemKeys.one(action.item_id) });
-        return;
+        return invalidateItemCaches(queryClient, action.item_id);
       }
-      void queryClient.invalidateQueries({ queryKey: profileKeys.one(action.user_id) });
+      return queryClient.invalidateQueries({ queryKey: profileKeys.one(action.user_id) });
     },
   });
 };

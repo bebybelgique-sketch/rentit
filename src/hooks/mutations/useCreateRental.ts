@@ -36,7 +36,7 @@ export const useCreateRental = () => {
       // Новая заявка меняет и свои брони, и вещи владельца: до 06.09 здесь
       // не было ни ['rentalsAsOwner'], ни ключа «Моих вещей» — владелец
       // видел заявку только после перезагрузки страницы.
-      invalidateBookingCaches(queryClient);
+      return invalidateBookingCaches(queryClient);
     },
   });
 };

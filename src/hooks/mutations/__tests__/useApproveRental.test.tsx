@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { bookingKeys, itemKeys } from '../../../lib/queryKeys';
 import { useApproveRental } from '../useApproveRental';
 
@@ -65,6 +65,28 @@ describe('useApproveRental', () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
+  // Успех — когда экран уже показывает новое. До 03.10 перечитывание шло
+  // в фоне: тост «demande acceptée» висел над карточкой, которая ещё
+  // показывала заявку с живыми кнопками, и второе нажатие получало 409.
+  it('мутация завершается, когда открытый список броней уже перечитан', async () => {
+    mockInvokeResponseData = mockSuccessResponse;
+    let version = 0;
+    const { result } = renderHook(() => ({
+      list: useQuery({
+        queryKey: bookingKeys.asOwner('owner-1'),
+        queryFn: () => new Promise<string>((resolve) => { const v = ++version; setTimeout(() => resolve(`v${v}`), 20); }),
+      }),
+      approve: useApproveRental(),
+    }), { wrapper });
+    await waitFor(() => expect(result.current.list.data).toBe('v1'));
+
+    await act(async () => {
+      await result.current.approve.mutateAsync({ bookingId: 'booking-1' });
+      // Прямо в момент успеха список уже новый, а не «скоро будет».
+      expect(queryClient.getQueryData(bookingKeys.asOwner('owner-1'))).toBe('v2');
+    });
   });
 
   // Отказ функции приходит НЕ в `data`, а телом внутри error.context —

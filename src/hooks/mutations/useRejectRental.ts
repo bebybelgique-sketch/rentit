@@ -31,7 +31,7 @@ export const useRejectRental = () => {
       // вещах», а занятость дат — на витрине. Набор ключей один на все
       // мутации броней (src/lib/queryKeys.ts); мёртвый ключ занятых дат из
       // него удалён — такой запрос не объявлял никто.
-      invalidateBookingCaches(queryClient);
+      return invalidateBookingCaches(queryClient);
     },
   });
 };

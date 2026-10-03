@@ -44,7 +44,7 @@ export const useSendMessage = () => {
     // Сбой показывает место вызова — BookingThread: причина под перепиской, текст возвращается в поле.
     meta: { errorShownBy: 'caller' },
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: bookingKeys.messages(variables.bookingId) });
+      return queryClient.invalidateQueries({ queryKey: bookingKeys.messages(variables.bookingId) });
     },
   });
 };

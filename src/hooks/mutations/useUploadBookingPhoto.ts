@@ -70,7 +70,7 @@ export const useUploadBookingPhoto = () => {
     // Сбой показывает место вызова — BookingThread: причина под перепиской.
     meta: { errorShownBy: 'caller' },
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: bookingKeys.photos(variables.bookingId) });
+      return queryClient.invalidateQueries({ queryKey: bookingKeys.photos(variables.bookingId) });
     },
   });
 };
