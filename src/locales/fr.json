@@ -154,7 +154,9 @@
     "packageWeekend": "Le forfait week-end",
     "packageWeekendLabel": "Forfait week-end (€)",
     "packageWeekendHint": "du samedi au lundi",
-    "geolocationDenied": "Accès à la localisation refusé. Veuillez saisir votre adresse manuellement.",
+    "geoDenied": "Le navigateur a refusé la localisation. Autorisez-la pour ce site (cadenas à gauche de l’adresse), puis réessayez.",
+    "geoUnavailable": "Position introuvable : la localisation est peut-être désactivée sur cet appareil.",
+    "geoTimeout": "La position n’est pas arrivée à temps. Réessayez.",
     "titleRequired": "Le titre est requis.",
     "priceMustBePositive": "Le prix doit être supérieur à 0.",
     "depositNonNegative": "La caution ne peut pas être négative.",
@@ -645,7 +647,8 @@
     "viewMap": "Carte",
     "viewLabel": "Affichage",
     "resetFilters": "Réinitialiser",
-    "availableTo": "au"
+    "availableTo": "au",
+    "youAreHere": "Vous êtes ici"
   },
   "photoGrid": {
     "titleHandover": "État de l'outil à la remise",
