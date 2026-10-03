@@ -32,6 +32,8 @@ export const useCreateRental = () => {
 
   return useMutation({
     mutationFn: createRental,
+    // Сбой показывает место вызова — ItemDetail: причина у кнопки заявки.
+    meta: { errorShownBy: 'caller' },
     onSuccess: () => {
       // Новая заявка меняет и свои брони, и вещи владельца: до 06.09 здесь
       // не было ни ['rentalsAsOwner'], ни ключа «Моих вещей» — владелец
