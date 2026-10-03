@@ -160,7 +160,9 @@ function TermsEN() {
         <p><strong>Operator option.</strong> The Owner may offer to come and operate the machine at the Renter's site, at a price per working day shown on the listing. The Renter chooses this option, and the number of days with the operator, when requesting the rental; the amount is settled directly between them, on site. This is the Owner's own service: RentIt does not provide or organise it and receives nothing for it.</p>
         <ul style={listStyle}>
           <li>While the Owner operates the machine or keeps it with them, the machine remains the Owner's responsibility. The rest of the time, the rental rules above apply.</li>
-          <li>Damage caused by the work itself — to the ground, to cables and pipes, to the property of the Renter or of third parties — is the Owner's responsibility, unless it results from an instruction or inaccurate information given by the Renter. Before work starts, the Renter tells the Owner what they know about the site.</li>
+          <li>Agree in writing, in the booking conversation, on the work to be done: what it is, where and when.</li>
+          <li>The Renter provides safe access to the site and, before work starts, tells the Owner what they know about the ground: cables, pipes, obstacles.</li>
+          <li>Damage caused by the work itself — to the ground, to cables and pipes, to the property of the Renter or of third parties — is the Owner's responsibility, unless it results from an instruction or inaccurate information given by the Renter.</li>
           <li>By offering this option, the Owner confirms being insured for this activity and taking responsibility for their work at the Renter's site.</li>
           <li>The option is intended for an occasional service between private individuals. An Owner who provides it professionally or on a regular basis alone answers for the obligations attached to that activity.</li>
         </ul>
@@ -337,7 +339,9 @@ function TermsFR() {
         <p><strong>Option avec opérateur.</strong> Le Propriétaire peut proposer de venir conduire lui-même son engin chez le Locataire, pour un prix par jour de travail affiché sur l'annonce. Le Locataire choisit cette option, et le nombre de jours avec opérateur, en faisant sa demande ; le montant se règle directement entre eux, sur place. Ce service est celui du Propriétaire : RentIt ne le fournit pas, ne l'organise pas et n'en perçoit rien.</p>
         <ul style={listStyle}>
           <li>Tant que le Propriétaire conduit l'engin ou le garde avec lui, l'engin reste sous sa responsabilité. Le reste du temps, les règles de la location ci-dessus s'appliquent.</li>
-          <li>Les dommages causés par le travail lui-même — au terrain, aux câbles et conduites, aux biens du Locataire ou de tiers — relèvent du Propriétaire, sauf s'ils résultent d'une consigne ou d'une information inexacte du Locataire. Avant le début du travail, le Locataire signale au Propriétaire ce qu'il sait du terrain.</li>
+          <li>Convenez par écrit, dans la conversation de réservation, du travail à faire : sa nature, le lieu et les horaires.</li>
+          <li>Le Locataire donne un accès sûr au terrain et signale au Propriétaire, avant le début du travail, ce qu'il sait du sol : câbles, conduites, obstacles.</li>
+          <li>Les dommages causés par le travail lui-même — au terrain, aux câbles et conduites, aux biens du Locataire ou de tiers — relèvent du Propriétaire, sauf s'ils résultent d'une consigne ou d'une information inexacte du Locataire.</li>
           <li>En proposant cette option, le Propriétaire confirme être assuré pour cette activité et assumer la responsabilité de son intervention chez le Locataire.</li>
           <li>L'option est prévue pour un service ponctuel entre particuliers. Le Propriétaire qui l'exerce à titre professionnel ou de façon régulière répond seul des obligations liées à cette activité.</li>
         </ul>
@@ -512,7 +516,9 @@ function TermsNL() {
         <p><strong>Optie met bediener.</strong> De Verhuurder kan aanbieden zelf met de machine mee te komen en ze bij de Huurder te bedienen, tegen een prijs per werkdag die in de advertentie staat. De Huurder kiest deze optie, en het aantal dagen met bediener, bij de aanvraag; het bedrag wordt rechtstreeks tussen beiden ter plaatse betaald. Dit is een eigen dienst van de Verhuurder: RentIt levert of organiseert die niet en ontvangt er niets voor.</p>
         <ul style={listStyle}>
           <li>Zolang de Verhuurder de machine bedient of bij zich houdt, blijft ze onder de verantwoordelijkheid van de Verhuurder. De rest van de tijd gelden de regels van de verhuur hierboven.</li>
-          <li>Schade door het werk zelf — aan de grond, aan kabels en leidingen, aan goederen van de Huurder of van derden — is voor rekening van de Verhuurder, tenzij ze het gevolg is van een instructie of onjuiste informatie van de Huurder. Vóór het werk begint, meldt de Huurder aan de Verhuurder wat over het terrein bekend is.</li>
+          <li>Spreek schriftelijk, in het reserveringsgesprek, het uit te voeren werk af: wat, waar en wanneer.</li>
+          <li>De Huurder zorgt voor een veilige toegang tot het terrein en meldt de Verhuurder vóór het werk begint wat over de grond bekend is: kabels, leidingen, obstakels.</li>
+          <li>Schade door het werk zelf — aan de grond, aan kabels en leidingen, aan goederen van de Huurder of van derden — is voor rekening van de Verhuurder, tenzij ze het gevolg is van een instructie of onjuiste informatie van de Huurder.</li>
           <li>Door deze optie aan te bieden bevestigt de Verhuurder voor deze activiteit verzekerd te zijn en de verantwoordelijkheid te dragen voor het werk bij de Huurder.</li>
           <li>De optie is bedoeld voor een occasionele dienst tussen particulieren. Een Verhuurder die ze beroepsmatig of regelmatig aanbiedt, staat zelf in voor de verplichtingen die aan die activiteit verbonden zijn.</li>
         </ul>
