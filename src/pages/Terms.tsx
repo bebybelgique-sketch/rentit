@@ -150,16 +150,17 @@ function TermsEN() {
       </Section>
 
       <Section title="8. Liability">
-        <p><strong>RentIt provides no insurance.</strong> There is no damage cover, no guarantee fund and no compensation scheme. The item is lent between private individuals, under their own responsibility.</p>
+        <p><strong>RentIt provides no insurance.</strong> There is no damage cover, no guarantee fund and no compensation scheme. The item is rented out between private individuals, under their own responsibility.</p>
         <ul style={listStyle}>
           <li>The Renter is liable to the Owner for damage, loss or theft of the item.</li>
           <li>The Owner is responsible for the item being safe and fit for its stated use.</li>
           <li>Both parties are strongly advised to <strong>photograph the item at handover and at return</strong> — the platform provides this for each booking, and the photos remain visible to both.</li>
-          <li>Check whether your home insurance (<em>responsabilité civile familiale</em>) covers this type of loan.</li>
+          <li>Check whether your home insurance (<em>responsabilité civile familiale</em>) covers this type of rental.</li>
         </ul>
-        <p><strong>Operator option.</strong> The Owner may offer to come and operate the machine at the Renter's site, at a price per working day shown on the listing. The Renter chooses this option, and the number of days with the operator, when requesting the rental; the amount is settled directly between them, on site. This is the Owner's own service: RentIt does not provide or organise it and receives nothing for it.</p>
+        <p><strong>Operator option.</strong> The Owner may offer to come and operate the machine at the Renter's site, at a price per working day shown on the listing. The Renter chooses this option, and the number of days with the operator, when requesting the rental; the amount is settled directly between them, on site. This is the Owner's own service: RentIt does not provide it and receives nothing for it. The platform only lets the Owner offer it and the Renter request it, and keeps a record of what was agreed (price per day, number of days).</p>
         <ul style={listStyle}>
           <li>While the Owner operates the machine or keeps it with them, the machine remains the Owner's responsibility. The rest of the time, the rental rules above apply.</li>
+          <li>If the machine stays at the Renter's site outside working hours, the Renter keeps it safe and does not use it unless the parties have agreed otherwise. The parties agree in the booking conversation on who keeps the keys.</li>
           <li>Agree in writing, in the booking conversation, on the work to be done: what it is, where and when.</li>
           <li>The Renter provides safe access to the site and, before work starts, tells the Owner what they know about the ground: cables, pipes, obstacles.</li>
           <li>Damage caused by the work itself — to the ground, to cables and pipes, to the property of the Renter or of third parties — is the Owner's responsibility, unless it results from an instruction or inaccurate information given by the Renter.</li>
@@ -329,16 +330,17 @@ function TermsFR() {
       </Section>
 
       <Section title="8. Responsabilité">
-        <p><strong>RentIt ne fournit aucune assurance.</strong> Il n'existe ni couverture des dommages, ni fonds de garantie, ni indemnisation. L'outil est prêté entre particuliers, sous leur propre responsabilité.</p>
+        <p><strong>RentIt ne fournit aucune assurance.</strong> Il n'existe ni couverture des dommages, ni fonds de garantie, ni indemnisation. L'outil est loué entre particuliers, sous leur propre responsabilité.</p>
         <ul style={listStyle}>
           <li>Le Locataire répond envers le Propriétaire des dommages, de la perte ou du vol de l'outil.</li>
           <li>Le Propriétaire répond de la sécurité de l'outil et de son aptitude à l'usage annoncé.</li>
           <li>Il est vivement conseillé aux deux parties de <strong>photographier l'outil à la remise et au retour</strong> — la plateforme le permet pour chaque réservation, et les photos restent visibles des deux côtés.</li>
-          <li>Vérifiez si votre assurance <em>responsabilité civile familiale</em> couvre ce type de prêt.</li>
+          <li>Vérifiez si votre assurance <em>responsabilité civile familiale</em> couvre ce type de location.</li>
         </ul>
-        <p><strong>Option avec opérateur.</strong> Le Propriétaire peut proposer de venir conduire lui-même son engin chez le Locataire, pour un prix par jour de travail affiché sur l'annonce. Le Locataire choisit cette option, et le nombre de jours avec opérateur, en faisant sa demande ; le montant se règle directement entre eux, sur place. Ce service est celui du Propriétaire : RentIt ne le fournit pas, ne l'organise pas et n'en perçoit rien.</p>
+        <p><strong>Option avec opérateur.</strong> Le Propriétaire peut proposer de venir conduire lui-même son engin chez le Locataire, pour un prix par jour de travail affiché sur l'annonce. Le Locataire choisit cette option, et le nombre de jours avec opérateur, en faisant sa demande ; le montant se règle directement entre eux, sur place. Ce service est celui du Propriétaire : RentIt ne le fournit pas et n'en perçoit rien. La plateforme permet seulement au Propriétaire de le proposer et au Locataire de le demander, et garde la trace de ce qui a été convenu (prix par jour, nombre de jours).</p>
         <ul style={listStyle}>
           <li>Tant que le Propriétaire conduit l'engin ou le garde avec lui, l'engin reste sous sa responsabilité. Le reste du temps, les règles de la location ci-dessus s'appliquent.</li>
+          <li>Si l'engin reste chez le Locataire en dehors des heures de travail, le Locataire veille à sa sécurité et ne l'utilise pas, sauf accord des parties. Les parties conviennent dans la conversation de réservation de qui garde les clés.</li>
           <li>Convenez par écrit, dans la conversation de réservation, du travail à faire : sa nature, le lieu et les horaires.</li>
           <li>Le Locataire donne un accès sûr au terrain et signale au Propriétaire, avant le début du travail, ce qu'il sait du sol : câbles, conduites, obstacles.</li>
           <li>Les dommages causés par le travail lui-même — au terrain, aux câbles et conduites, aux biens du Locataire ou de tiers — relèvent du Propriétaire, sauf s'ils résultent d'une consigne ou d'une information inexacte du Locataire.</li>
@@ -506,16 +508,17 @@ function TermsNL() {
       </Section>
 
       <Section title="8. Aansprakelijkheid">
-        <p><strong>RentIt biedt geen verzekering.</strong> Er is geen schadedekking, geen waarborgfonds en geen vergoedingsregeling. Het gereedschap wordt tussen particulieren uitgeleend, onder hun eigen verantwoordelijkheid.</p>
+        <p><strong>RentIt biedt geen verzekering.</strong> Er is geen schadedekking, geen waarborgfonds en geen vergoedingsregeling. Het gereedschap wordt tussen particulieren verhuurd, onder hun eigen verantwoordelijkheid.</p>
         <ul style={listStyle}>
           <li>De Huurder is tegenover de Verhuurder aansprakelijk voor schade, verlies of diefstal van het gereedschap.</li>
           <li>De Verhuurder staat in voor de veiligheid van het gereedschap en de geschiktheid voor het aangekondigde gebruik.</li>
           <li>Beide partijen wordt sterk aangeraden het gereedschap <strong>te fotograferen bij de overhandiging en bij de teruggave</strong> — het platform voorziet dit per reservering, en de foto's blijven voor beide zichtbaar.</li>
-          <li>Ga na of uw <em>familiale burgerlijke aansprakelijkheidsverzekering</em> dit soort uitlening dekt.</li>
+          <li>Ga na of uw <em>familiale burgerlijke aansprakelijkheidsverzekering</em> dit soort verhuur dekt.</li>
         </ul>
-        <p><strong>Optie met bediener.</strong> De Verhuurder kan aanbieden zelf met de machine mee te komen en ze bij de Huurder te bedienen, tegen een prijs per werkdag die in de advertentie staat. De Huurder kiest deze optie, en het aantal dagen met bediener, bij de aanvraag; het bedrag wordt rechtstreeks tussen beiden ter plaatse betaald. Dit is een eigen dienst van de Verhuurder: RentIt levert of organiseert die niet en ontvangt er niets voor.</p>
+        <p><strong>Optie met bediener.</strong> De Verhuurder kan aanbieden zelf met de machine mee te komen en ze bij de Huurder te bedienen, tegen een prijs per werkdag die in de advertentie staat. De Huurder kiest deze optie, en het aantal dagen met bediener, bij de aanvraag; het bedrag wordt rechtstreeks tussen beiden ter plaatse betaald. Dit is een eigen dienst van de Verhuurder: RentIt levert die niet en ontvangt er niets voor. Het platform laat de Verhuurder alleen toe die aan te bieden en de Huurder om die te vragen, en bewaart wat werd afgesproken (prijs per dag, aantal dagen).</p>
         <ul style={listStyle}>
           <li>Zolang de Verhuurder de machine bedient of bij zich houdt, blijft ze onder de verantwoordelijkheid van de Verhuurder. De rest van de tijd gelden de regels van de verhuur hierboven.</li>
+          <li>Blijft de machine buiten de werkuren bij de Huurder, dan bewaart de Huurder ze veilig en gebruikt ze niet, tenzij de partijen anders overeenkomen. In het reserveringsgesprek spreken de partijen af wie de sleutels bewaart.</li>
           <li>Spreek schriftelijk, in het reserveringsgesprek, het uit te voeren werk af: wat, waar en wanneer.</li>
           <li>De Huurder zorgt voor een veilige toegang tot het terrein en meldt de Verhuurder vóór het werk begint wat over de grond bekend is: kabels, leidingen, obstakels.</li>
           <li>Schade door het werk zelf — aan de grond, aan kabels en leidingen, aan goederen van de Huurder of van derden — is voor rekening van de Verhuurder, tenzij ze het gevolg is van een instructie of onjuiste informatie van de Huurder.</li>
