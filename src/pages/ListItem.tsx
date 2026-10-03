@@ -310,10 +310,10 @@ function ListItemForm({ start }: { start: ListingStart }) {
     if (p3 > 0 && p3 >= day * 3) dead.push(`${t('listItem.package3Days')} (€${p3.toFixed(2)} ≥ 3 × €${day.toFixed(2)})`)
     const pw = parseFloat(form.price_week)
     if (pw > 0 && pw >= day * 7) dead.push(`${t('listItem.packageWeek')} (€${pw.toFixed(2)} ≥ 7 × €${day.toFixed(2)})`)
-    // Выходные длиннее четырёх дней не бывают (пт–пн): пакет не дешевле
-    // четырёх дней не выберется никогда.
+    // Пакет выходных закрывает самое большее три дня (сб–пн, правило Boels):
+    // не дешевле трёх дней по дневной цене — не выберется никогда.
     const pwe = parseFloat(form.price_weekend)
-    if (pwe > 0 && pwe >= day * 4) dead.push(`${t('listItem.packageWeekend')} (€${pwe.toFixed(2)} ≥ 4 × €${day.toFixed(2)})`)
+    if (pwe > 0 && pwe >= day * 3) dead.push(`${t('listItem.packageWeekend')} (€${pwe.toFixed(2)} ≥ 3 × €${day.toFixed(2)})`)
     if (dead.length === 0) return ''
     return t('listItem.packageWarning', { packages: dead.join(' ; ') })
   })()
