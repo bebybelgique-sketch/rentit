@@ -255,6 +255,7 @@
     "pendingRequests": "Pending requests"
   },
   "myRentals": {
+    "focusMissing": "This booking isn’t in this account. If the link came from an email, check that you’re signed in with the right address.",
     "approvalSuccess": "Request approved!",
     "rejectionSuccess": "Request rejected.",
     "loginRequired": "Log in to view your rentals",

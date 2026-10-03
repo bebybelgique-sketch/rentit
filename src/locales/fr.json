@@ -255,6 +255,7 @@
     "pendingRequests": "Demandes en attente"
   },
   "myRentals": {
+    "focusMissing": "Cette réservation n’apparaît pas dans ce compte. Si le lien vient d’un e-mail, vérifiez que vous êtes connecté avec la bonne adresse.",
     "approvalSuccess": "La demande a été acceptée !",
     "rejectionSuccess": "La demande a été refusée.",
     "loginRequired": "Se connecter pour voir vos locations",

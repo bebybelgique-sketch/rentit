@@ -255,6 +255,7 @@
     "pendingRequests": "Aanvragen in behandeling"
   },
   "myRentals": {
+    "focusMissing": "Deze reservering staat niet in dit account. Komt de link uit een e-mail, controleer dan of u met het juiste adres bent ingelogd.",
     "approvalSuccess": "Verzoek goedgekeurd!",
     "rejectionSuccess": "Verzoek geweigerd.",
     "loginRequired": "Log in om uw verhuren te bekijken",

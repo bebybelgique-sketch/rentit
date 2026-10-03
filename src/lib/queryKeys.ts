@@ -76,8 +76,12 @@ export const bookingKeys = {
   asOwner: (userId: string | undefined) => ['bookings', 'asOwner', userId],
   /** Переписка по брони (useBookingMessages). */
   messages: (bookingId: string | undefined) => ['bookingMessages', bookingId],
+  /** Префикс переписки всех броней. */
+  allMessages: ['bookingMessages'],
   /** Фотографии передачи (useBookingPhotos). */
   photos: (bookingId: string | undefined) => ['bookingPhotos', bookingId],
+  /** Префикс фотографий всех броней. */
+  allPhotos: ['bookingPhotos'],
 } as const;
 
 /** Профиль (строка users). */
@@ -129,6 +133,17 @@ export const adminKeys = {
 export function invalidateBookingCaches(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: bookingKeys.all });
   void queryClient.invalidateQueries({ queryKey: itemKeys.all });
+}
+
+/**
+ * Вторая сторона что-то сделала с бронью (новое событие в ленте): кроме
+ * броней и вещей устарели переписка и фото — их пишет она, а не мы, и ни
+ * одна наша мутация их не тронет.
+ */
+export function invalidateCounterpartyChanges(queryClient: QueryClient): void {
+  invalidateBookingCaches(queryClient);
+  void queryClient.invalidateQueries({ queryKey: bookingKeys.allMessages });
+  void queryClient.invalidateQueries({ queryKey: bookingKeys.allPhotos });
 }
 
 /**

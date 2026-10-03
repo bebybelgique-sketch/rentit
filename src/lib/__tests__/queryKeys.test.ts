@@ -5,6 +5,7 @@ import {
   adminKeys,
   bookingKeys,
   invalidateBookingCaches,
+  invalidateCounterpartyChanges,
   invalidateItemCaches,
   itemKeys,
   profileKeys,
@@ -47,6 +48,12 @@ describe('queryKeys: префиксы ловят свои запросы', () =>
     expect(partialMatchKey(itemKeys.one('item-1'), itemKeys.all)).toBe(false);
   });
 
+  it('префиксы переписки и фото ловят свою бронь — и не ловят списки броней', () => {
+    expect(partialMatchKey(bookingKeys.messages('b-1'), bookingKeys.allMessages)).toBe(true);
+    expect(partialMatchKey(bookingKeys.photos('b-1'), bookingKeys.allPhotos)).toBe(true);
+    expect(partialMatchKey(bookingKeys.asOwner('user-1'), bookingKeys.allMessages)).toBe(false);
+  });
+
   it('профиль и админ-счётчики не пересекаются с вещами и бронями', () => {
     expect(partialMatchKey(profileKeys.one('user-1'), itemKeys.all)).toBe(false);
     expect(partialMatchKey(adminKeys.stats, bookingKeys.all)).toBe(false);
@@ -86,5 +93,20 @@ describe('queryKeys: что именно инвалидируют помощни
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: itemKeys.all });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: itemKeys.one('item-1') });
+  });
+
+  // Событие от второй стороны: переписку и фото пишет она, и ни одна наша
+  // мутация их не тронет — их гасит только этот помощник.
+  it('invalidateCounterpartyChanges добавляет к броням и вещам переписку и фото', () => {
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    invalidateCounterpartyChanges(queryClient);
+
+    expect(invalidate).toHaveBeenCalledTimes(4);
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: bookingKeys.all });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: itemKeys.all });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: bookingKeys.allMessages });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: bookingKeys.allPhotos });
   });
 });

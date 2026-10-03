@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 let asRenter: Array<Record<string, unknown>> = [];
 let asOwner: Array<Record<string, unknown>> = [];
@@ -50,11 +51,14 @@ vi.mock('../../components/booking/BookingOwnerActions', () => ({ default: () => 
 
 import MyRentals from '../MyRentals';
 
+// Клиент react-query: страница перечитывает брони по ссылке на бронь.
 const renderAt = (path: string) =>
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <MyRentals />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter initialEntries={[path]}>
+        <MyRentals />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 
 const booking = (id: string, extra: Record<string, unknown> = {}) => ({

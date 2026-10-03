@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 /**
  * «Mes locations» и лента: метка «Nouveau» у брони с непрочитанным, и
@@ -57,7 +58,14 @@ vi.mock('../../hooks/useActivity', () => ({
 
 import MyRentals from '../MyRentals';
 
-const renderAt = (path: string) => render(<MemoryRouter initialEntries={[path]}><MyRentals /></MemoryRouter>);
+const renderAt = (path: string, client = new QueryClient()) => render(
+  <QueryClientProvider client={client}>
+    <MemoryRouter initialEntries={[path]}><MyRentals /></MemoryRouter>
+  </QueryClientProvider>,
+);
+
+// Перечитывание по ссылке — обещание: даём ему завершиться.
+const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -81,14 +89,44 @@ describe('«Mes locations»: непрочитанное у брони', () => {
     expect(mocks.mutate).toHaveBeenCalledWith({ bookingId: 'mine-2' });
   });
 
-  it('пришёл по ссылке на бронь (лента, push) — её непрочитанное гаснет само', () => {
+  // Гаснет после перечитывания списков, когда бронь на экране.
+  it('пришёл по ссылке на бронь (лента, push) — её непрочитанное гаснет само', async () => {
     mocks.unread = new Set(['mine-1']);
     renderAt('/my-rentals?booking=mine-1');
-    expect(mocks.mutate).toHaveBeenCalledWith({ bookingId: 'mine-1' });
+    await waitFor(() => expect(mocks.mutate).toHaveBeenCalledWith({ bookingId: 'mine-1' }));
   });
 
-  it('по ссылке на бронь без непрочитанного — запроса нет', () => {
+  it('по ссылке на бронь без непрочитанного — запроса нет', async () => {
     renderAt('/my-rentals?booking=mine-1');
+    await settle();
     expect(mocks.mutate).not.toHaveBeenCalled();
+  });
+
+  // Ссылка — почти всегда о том, что сделала вторая сторона: свежие по
+  // часам списки могли ещё не знать о новой заявке или сообщении.
+  it('по ссылке перечитываются списки, переписка и фото этой брони', async () => {
+    const client = new QueryClient();
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    renderAt('/my-rentals?booking=mine-1', client);
+    await settle();
+    const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(keys).toEqual(expect.arrayContaining([
+      ['bookings'], ['bookingMessages', 'mine-1'], ['bookingPhotos', 'mine-1'],
+    ]));
+  });
+
+  // До 03.10 метка гасла сразу: событие о брони, которой в устаревшем
+  // списке ещё не было, считалось увиденным, а человек её так и не видел.
+  it('брони нет и после перечитывания — метка не гаснет, страница говорит почему', async () => {
+    mocks.unread = new Set(['ghost']);
+    renderAt('/my-rentals?booking=ghost');
+    expect(await screen.findByRole('status')).toHaveTextContent('Cette réservation n’apparaît pas dans ce compte');
+    expect(mocks.mutate).not.toHaveBeenCalled();
+  });
+
+  it('бронь нашлась — строки «нет в этой учётке» нет', async () => {
+    renderAt('/my-rentals?booking=mine-1');
+    await settle();
+    expect(screen.queryByText(/n’apparaît pas dans ce compte/)).not.toBeInTheDocument();
   });
 });
