@@ -90,7 +90,7 @@ function Navbar({ taskCount }: NavbarProps) {
   // Только t: язык переключается через setLanguage, который сперва
   // подвозит словарь, — экземпляр i18n для этого больше не нужен.
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const { user, sessionUnknown } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -194,7 +194,7 @@ function Navbar({ taskCount }: NavbarProps) {
                 {t('logout')}
               </button>
             </>
-          ) : (
+          ) : sessionUnknown ? null : (
             <>
               <Link to="/login" state={authState} className="navbar-link" onClick={close}>{t('login')}</Link>
               <Link to="/register" state={authState} className="btn btn-primary btn-sm" onClick={close}>{t('signup')}</Link>
@@ -285,9 +285,20 @@ function Navbar({ taskCount }: NavbarProps) {
  * человек шёл, чтобы после входа отправить его именно туда.
  */
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth()
+  const { user, loading, sessionUnknown } = useAuth()
+  const { t } = useTranslation()
   const location = useLocation()
   if (loading) return null
+  // Сеть не дала проверить сессию (src/context/AuthContext.tsx): уводить на
+  // вход значит сказать «вы вышли», а человек не выходил. Вернётся сеть —
+  // AuthContext спросит снова, и страница откроется сама.
+  if (sessionUnknown) {
+    return (
+      <div className="page">
+        <div className="loading" role="status">{t('sessionOffline')}</div>
+      </div>
+    )
+  }
   // С адресом и строкой запроса: push ведёт на /my-rentals?booking=…, и
   // без неё после входа терялась нужная бронь.
   if (!user) return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />

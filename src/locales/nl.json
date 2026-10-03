@@ -664,6 +664,7 @@
   },
   "routeError": "Deze pagina kon niet laden. Een nieuwere versie van de site is misschien beschikbaar.",
   "routeRetry": "Pagina herladen",
+  "sessionOffline": "Geen verbinding: uw sessie gaat verder zodra het netwerk terug is.",
   "routeOffline": "Deze pagina is offline niet beschikbaar. Maak opnieuw verbinding en probeer het dan nog eens.",
   "loadFailed": "Je advertenties konden niet worden geladen.",
   "retry": "Opnieuw proberen",

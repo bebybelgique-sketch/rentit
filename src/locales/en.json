@@ -664,6 +664,7 @@
   },
   "routeError": "This page could not load. A newer version of the site may be available.",
   "routeRetry": "Reload the page",
+  "sessionOffline": "No connection: your session will resume as soon as you’re back online.",
   "routeOffline": "This page is not available offline. Reconnect, then try again.",
   "loadFailed": "Your listings could not be loaded.",
   "retry": "Try again",
