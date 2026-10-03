@@ -40,6 +40,7 @@ const EditItem: React.FC = () => {
     late_fee_per_day: string;
     delivery_fee: string;
     delivery_radius_km: string;
+    operator_fee_per_day: string;
     deposit: number;
     category: string;
     condition: Database['public']['Enums']['item_condition'];
@@ -62,6 +63,7 @@ const EditItem: React.FC = () => {
     // Доставка держится строками по той же причине, что и тарифы: пустое
     // поле — «услуги нет», и это не ноль.
     delivery_fee: '' as string,
+    operator_fee_per_day: '' as string,
     delivery_radius_km: '' as string,
     deposit: 0,
     category: '',
@@ -82,6 +84,7 @@ const EditItem: React.FC = () => {
   // ровно один, непустая delivery_fee. Второй колонки «включено» нет
   // намеренно, иначе она разойдётся с ценой.
   const [delivers, setDelivers] = useState(false);
+  const [operates, setOperates] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -97,6 +100,7 @@ const EditItem: React.FC = () => {
         late_fee_per_day: item.late_fee_per_day == null ? '' : String(item.late_fee_per_day),
         delivery_fee: item.delivery_fee == null ? '' : String(item.delivery_fee),
         delivery_radius_km: item.delivery_radius_km == null ? '' : String(item.delivery_radius_km),
+        operator_fee_per_day: item.operator_fee_per_day == null ? '' : String(item.operator_fee_per_day),
         deposit: item.deposit ?? 0,
         category: item.category ?? '',
         condition: ((item.condition as Database['public']['Enums']['item_condition']) ?? 'good'),
@@ -110,6 +114,7 @@ const EditItem: React.FC = () => {
       // Галка восстанавливается из единственного признака услуги — цены.
       // Отдельного «включено» в базе нет, и хранить его негде.
       setDelivers(item.delivery_fee != null);
+      setOperates(item.operator_fee_per_day != null);
     }
   }, [item]);
 
@@ -194,7 +199,7 @@ const EditItem: React.FC = () => {
         return v;
       };
 
-      const { price_3days, price_week, price_weekend, late_fee_per_day, delivery_fee, delivery_radius_km, ...rest } = formData;
+      const { price_3days, price_week, price_weekend, late_fee_per_day, delivery_fee, delivery_radius_km, operator_fee_per_day, ...rest } = formData;
 
       // Включённая доставка без цены — обещание услуги, условий которой
       // никто не знает. Пустое поле здесь НЕ приводим молча к «услуги нет»:
@@ -203,6 +208,8 @@ const EditItem: React.FC = () => {
         throw new UserFacingError(t('listItem.deliveryFeeRequired'));
       if (delivers && delivery_radius_km.trim() !== '' && !(parseInt(delivery_radius_km, 10) > 0))
         throw new UserFacingError(t('listItem.deliveryRadiusMustBePositive'));
+      if (operates && !(parseFloat(operator_fee_per_day) > 0))
+        throw new UserFacingError(t('listItem.operatorFeeRequired'));
 
       const updates: ItemUpdate = {
         ...rest,
@@ -214,6 +221,7 @@ const EditItem: React.FC = () => {
         // означать «не вожу», а не «вожу, но цену больше не показываю».
         delivery_fee: delivers ? parseFloat(delivery_fee) : null,
         delivery_radius_km: delivers && delivery_radius_km.trim() !== '' ? parseInt(delivery_radius_km, 10) : null,
+        operator_fee_per_day: operates ? parseFloat(operator_fee_per_day) : null,
       };
 
       // Файл и база меняются В ПОРЯДКЕ, который ничего не теряет:
@@ -466,6 +474,44 @@ const EditItem: React.FC = () => {
                 />
                 <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '5px', lineHeight: 1.5 }}>
                   {t('listItem.deliveryNote')}
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* С оператором — как доставка: тумблер поверх одного поля. */}
+          <div className="form-group">
+            <label htmlFor="operates" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                id="operates"
+                name="operates"
+                type="checkbox"
+                checked={operates}
+                onChange={e => {
+                  const on = e.target.checked;
+                  setOperates(on);
+                  if (!on) setFormData(prev => ({ ...prev, operator_fee_per_day: '' }));
+                }}
+                style={{ width: 'auto' }}
+              />
+              {t('listItem.operatorToggle')}
+            </label>
+            {operates && (
+              <>
+                <label htmlFor="operator_fee_per_day" style={{ marginTop: '10px', display: 'block' }}>{t('listItem.operatorFeeLabel')}</label>
+                <input
+                  id="operator_fee_per_day"
+                  name="operator_fee_per_day"
+                  type="number"
+                  value={formData.operator_fee_per_day}
+                  onChange={e => setFormData(prev => ({ ...prev, operator_fee_per_day: e.target.value }))}
+                  min="0.50"
+                  step="0.50"
+                  placeholder={t('listItem.operatorFeeHint')}
+                  style={{ width: '100%' }}
+                />
+                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '5px', lineHeight: 1.5 }}>
+                  {t('listItem.operatorNote')}
                 </p>
               </>
             )}

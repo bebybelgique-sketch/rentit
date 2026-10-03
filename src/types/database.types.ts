@@ -144,6 +144,8 @@ export type Database = {
           created_at: string
           delivery_fee: number | null
           delivery_requested: boolean
+          operator_fee: number | null
+          operator_requested: boolean
           deposit_amount: number
           deposit_returned: boolean
           end_date: string
@@ -169,6 +171,8 @@ export type Database = {
           created_at?: string
           delivery_fee?: number | null
           delivery_requested?: boolean
+          operator_fee?: number | null
+          operator_requested?: boolean
           deposit_amount?: number
           deposit_returned?: boolean
           end_date: string
@@ -194,6 +198,8 @@ export type Database = {
           created_at?: string
           delivery_fee?: number | null
           delivery_requested?: boolean
+          operator_fee?: number | null
+          operator_requested?: boolean
           deposit_amount?: number
           deposit_returned?: boolean
           end_date?: string
@@ -365,6 +371,7 @@ export type Database = {
           created_at: string
           delivery_fee: number | null
           delivery_radius_km: number | null
+          operator_fee_per_day: number | null
           deposit: number
           description: string | null
           id: string
@@ -392,6 +399,7 @@ export type Database = {
           created_at?: string
           delivery_fee?: number | null
           delivery_radius_km?: number | null
+          operator_fee_per_day?: number | null
           deposit?: number
           description?: string | null
           id?: string
@@ -419,6 +427,7 @@ export type Database = {
           created_at?: string
           delivery_fee?: number | null
           delivery_radius_km?: number | null
+          operator_fee_per_day?: number | null
           deposit?: number
           description?: string | null
           id?: string

@@ -51,6 +51,8 @@ interface Item {
   // пусто, и вторая сторона не видит про доставку ни строчки.
   delivery_fee: number | null
   delivery_radius_km: number | null
+  // Оператор: надбавка за день, если владелец сам ведёт технику (миграция 54).
+  operator_fee_per_day: number | null
   deposit: number
   photos: string[]
   lat: number | null
@@ -122,6 +124,7 @@ export default function ItemDetail() {
   // добавленная в счёт услуга — это сумма, о которой человек узнаёт при
   // встрече.
   const [wantsDelivery, setWantsDelivery] = useState(false)
+  const [wantsOperator, setWantsOperator] = useState(false)
   // Заявка — мутацией, а не прямым вызовом функции: после неё брони
   // перечитываются (invalidateBookingCaches). До 03.10 «Mes locations»,
   // открытые меньше минуты назад, показывали список без новой заявки.
@@ -308,7 +311,12 @@ export default function ItemDetail() {
   // bookings.total_price она не входит (там цена по тарифам, её считает
   // сервер), но в то, что арендатор отдаст при встрече, — входит.
   const deliveryFee = item && wantsDelivery && item.delivery_fee != null ? Number(item.delivery_fee) : 0
-  const totalPrice = totalDays > 0 && item ? rental.total + item.deposit + insuranceFee + deliveryFee : 0
+  // Оператор — тоже отдельная услуга: в bookings.total_price не входит, но
+  // на месте платится. За каждый день аренды, как и считает сервер.
+  const operatorFee = item && wantsOperator && item.operator_fee_per_day != null
+    ? Math.round(Number(item.operator_fee_per_day) * totalDays * 100) / 100
+    : 0
+  const totalPrice = totalDays > 0 && item ? rental.total + item.deposit + insuranceFee + deliveryFee + operatorFee : 0
   const hasTiers = !!item && (!!item.price_3days || !!item.price_week || !!item.price_weekend)
   // Экономия против дневной цены. Показываем, только если она есть: иначе
   // строка «вы экономите 0 €» превращается в насмешку.
@@ -331,6 +339,7 @@ export default function ItemDetail() {
       await createRental.mutateAsync({
         item_id: item.id, start_date: startDate, end_date: endDate,
         message: requestMessage.trim() || undefined, delivery_requested: wantsDelivery,
+        operator_requested: wantsOperator,
       })
       setRequestSent(true)
     } catch (err) {
@@ -574,6 +583,11 @@ export default function ItemDetail() {
                 <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>
                   {t('itemDetail.deliveryOffer', { fee: Number(item.delivery_fee).toFixed(2) })}
                   {item.delivery_radius_km != null && ' ' + t('itemDetail.deliveryRadius', { km: item.delivery_radius_km })}
+                </div>
+              )}
+              {item.operator_fee_per_day != null && (
+                <div style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-1)' }}>
+                  {t('itemDetail.operatorOffer', { fee: Number(item.operator_fee_per_day).toFixed(2) })}
                 </div>
               )}
               {item.late_fee_per_day != null && (
@@ -831,6 +845,12 @@ export default function ItemDetail() {
                             <span>€{item.deposit.toFixed(2)}</span>
                           </div>
                         )}
+                        {operatorFee > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ color: 'var(--muted)' }}>{t('itemDetail.operatorLine', { fee: Number(item.operator_fee_per_day).toFixed(2), days: totalDays })}</span>
+                            <span>€{operatorFee.toFixed(2)}</span>
+                          </div>
+                        )}
                         {deliveryFee > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                             <span style={{ color: 'var(--muted)' }}>{t('itemDetail.delivery')}</span>
@@ -847,6 +867,26 @@ export default function ItemDetail() {
                     {/* Выбор доставки. Стоит перед сообщением владельцу и
                         после итога: человек видит, как меняется сумма, до
                         того как отправит заявку. */}
+                    {/* Оператор — как доставка: выбор до сообщения, итог
+                        меняется на глазах. */}
+                    {totalDays > 0 && item.operator_fee_per_day != null && (
+                      <div className="form-group" style={{ marginBottom: '16px' }}>
+                        <label htmlFor="wants-operator" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' }}>
+                          <input
+                            id="wants-operator"
+                            type="checkbox"
+                            checked={wantsOperator}
+                            onChange={e => setWantsOperator(e.target.checked)}
+                            style={{ width: 'auto', minHeight: 0 }}
+                          />
+                          {t('itemDetail.operatorAsk', { fee: Number(item.operator_fee_per_day).toFixed(2) })}
+                        </label>
+                        <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '6px', lineHeight: 1.5 }}>
+                          {t('itemDetail.operatorNote')}
+                        </p>
+                      </div>
+                    )}
+
                     {totalDays > 0 && item.delivery_fee != null && (
                       <div className="form-group" style={{ marginBottom: '16px' }}>
                         <label htmlFor="wants-delivery" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' }}>

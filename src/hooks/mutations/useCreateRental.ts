@@ -16,6 +16,8 @@ interface CreateRentalParams {
   // Только сам выбор: цену доставки сервер берёт из вещи и кладёт в бронь
   // снимком — по той же причине, по какой не принимает total_price.
   delivery_requested?: boolean;
+  // Оператор — так же: только выбор, сумму сервер берёт из вещи.
+  operator_requested?: boolean;
 }
 
 const createRental = async (params: CreateRentalParams): Promise<{ booking_id: string }> => {

@@ -98,6 +98,17 @@ describe('«Mes locations»: вкладки должны быть вкладка
   // ГЛАВНЫЙ ИНВАРИАНТ. Прежде эти две кнопки лишь ПРОКРУЧИВАЛИ страницу:
   // обе секции всегда лежали стопкой, ни одна кнопка никогда не была
   // подсвечена. Орган управления выглядел как выбор и выбором не был.
+  // Оператор (миграция 54) — из СНИМКА в брони, как доставка: владелец мог
+  // поменять цену, а договорённость была на этой.
+  it('оператор из снимка брони виден обеим сторонам', () => {
+    asRenter = [booking('b-r', { status: 'confirmed', operator_requested: true, operator_fee: 320 })];
+    asOwner = [booking('b-o', { status: 'confirmed', operator_requested: true, operator_fee: 320 })];
+    renderAt('/my-rentals');
+    expect(screen.getAllByText(/€320\.00/).length).toBeGreaterThan(0);
+    fireEvent.click(tabOwner());
+    expect(screen.getAllByText('Opérateur:').length).toBeGreaterThan(0);
+  });
+
   it('показана ровно одна сторона сделки, а не обе стопкой', () => {
     renderAt('/my-rentals');
     const renterPanel = document.getElementById('as-renter')!;

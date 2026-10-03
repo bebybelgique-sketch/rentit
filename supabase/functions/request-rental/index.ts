@@ -41,8 +41,8 @@ serve(async (req) => {
 
     // Нечитаемое тело — ошибка запроса, а не сервера: прежде оно падало в
     // общий catch и отвечало 500.
-    const body = await req.json().catch(() => null) as { item_id?: string; start_date?: string; end_date?: string; message?: string; delivery_requested?: boolean } | null
-    const { item_id, start_date, end_date, message, delivery_requested } = body ?? {}
+    const body = await req.json().catch(() => null) as { item_id?: string; start_date?: string; end_date?: string; message?: string; delivery_requested?: boolean; operator_requested?: boolean } | null
+    const { item_id, start_date, end_date, message, delivery_requested, operator_requested } = body ?? {}
     if (!item_id || !start_date || !end_date) {
       return json({ error: 'bad_request' }, 400)
     }
@@ -78,7 +78,7 @@ serve(async (req) => {
     const { data: item, error: itemErr } = await supabase
       // Столбцы перечислены поимённо: новая колонка, забытая здесь, не
       // приедет вовсе, и снимок цены доставки записался бы из пустоты.
-      .from('items').select('id,owner_id,price_per_day,price_3days,price_week,price_weekend,deposit,available,delivery_fee').eq('id', item_id).single()
+      .from('items').select('id,owner_id,price_per_day,price_3days,price_week,price_weekend,deposit,available,delivery_fee,operator_fee_per_day').eq('id', item_id).single()
     if (itemErr || !item) {
       return json({ error: 'item_not_found' }, 404)
     }
@@ -144,6 +144,16 @@ serve(async (req) => {
     // брони. В total_price доставка НЕ входит — там цена аренды.
     const deliveryFee = deliveryRequested ? itemDeliveryFee : null
 
+    // Оператор (миграция 54) — по тем же правилам, что доставка: цена из
+    // вещи, отказ, если услуги нет, снимок суммы на всю бронь (цена за день
+    // × дни). В total_price НЕ входит — отдельная услуга, расчёт на месте.
+    const operatorRequested = operator_requested === true
+    const itemOperatorFee = item.operator_fee_per_day == null ? null : Number(item.operator_fee_per_day)
+    if (operatorRequested && !(itemOperatorFee != null && itemOperatorFee > 0)) {
+      return json({ error: 'operator_unavailable' }, 400)
+    }
+    const operatorFee = operatorRequested ? Math.round(itemOperatorFee! * totalDays * 100) / 100 : null
+
     // Create booking with pending_approval
     const { data: booking, error: bookingErr } = await supabase
       .from('bookings')
@@ -159,6 +169,8 @@ serve(async (req) => {
         request_message: message?.trim() || null,
         delivery_requested: deliveryRequested,
         delivery_fee: deliveryFee,
+        operator_requested: operatorRequested,
+        operator_fee: operatorFee,
       }])
       .select('id')
       .single()

@@ -144,6 +144,11 @@
   "joinRentIt": "Sluit je aan bij RentIt",
   "listFirstTool": "Plaats je eerste gereedschap →",
   "listItem": {
+    "operatorToggle": "Ik kan meekomen met de machine (bediener)",
+    "operatorFeeLabel": "Prijs van de bediener (€ / dag)",
+    "operatorFeeHint": "bovenop de huur, per dag",
+    "operatorFeeRequired": "Vul de prijs van de bediener in, of vink het vakje uit.",
+    "operatorNote": "U bedient de machine zelf bij de huurder. De huurder kiest deze optie bij zijn aanvraag; het bedrag wordt ter plaatse betaald.",
     "packageWeekend": "Het weekendpakket",
     "packageWeekendLabel": "Weekendpakket (€)",
     "packageWeekendHint": "van vrijdag tot maandag",
@@ -355,6 +360,7 @@
   "publishListing": "Plaats advertentie",
   "reject": "Afwijzen",
   "rental": {
+    "labelOperator": "Bediener",
     "labelItem": "Item",
     "labelOwner": "Eigenaar",
     "labelRenter": "Huurder",
@@ -544,6 +550,10 @@
     "refundableAtReturn": "— terugbetaalbaar bij teruggave"
   },
   "itemDetail": {
+    "operatorOffer": "Met bediener: +€{{fee}} / dag",
+    "operatorAsk": "Met bediener (+€{{fee}} / dag)",
+    "operatorNote": "De eigenaar bedient de machine zelf. Ter plaatse te betalen, samen met de huur.",
+    "operatorLine": "Bediener €{{fee}} × {{days}} d",
     "perWeekend": "/ weekend (vr. → ma.)",
     "perThreeDays": "/ 3 dagen",
     "perWeek": "/ week",
@@ -793,6 +803,7 @@
     }
   },
   "serverErrors": {
+    "operator_unavailable": "De eigenaar biedt geen bediener aan voor dit gereedschap.",
     "phone_invalid": "Ongeldig nummer. Internationaal formaat verwacht, bijvoorbeeld +32470123456.",
     "sms_not_configured": "Verificatie via sms is nog niet actief. Het ligt niet aan jou: het kanaal is niet open.",
     "sms_send_failed": "De sms kon niet worden verzonden. Probeer het zo meteen opnieuw.",

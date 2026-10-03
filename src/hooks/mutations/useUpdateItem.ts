@@ -39,6 +39,7 @@ export type ItemUpdate = Partial<Pick<
   | 'min_notice_days'
   | 'delivery_fee'
   | 'delivery_radius_km'
+  | 'operator_fee_per_day'
 >>;
 
 interface UpdateItemParams {
