@@ -124,15 +124,11 @@ jobs:
 
       # Чего здесь НЕТ и почему:
       #
-      # • Playwright — сценарии нацелены на ЖИВОЙ прод через E2E_BASE_URL
-      #   и создают там учётки и объявления. Витрина пуста намеренно;
-      #   мусор на ней — не «мелочь в тестовой базе», а неверная витрина
-      #   (11.08 шесть тестовых вещей доехали до живой). Прогонять руками
-      #   с уборкой после.
-      # • npm run test:edge — бьёт по РАЗВЁРНУТЫМ функциям живого проекта
-      #   Supabase и требует ключей. В CI это значит либо секреты боевой
-      #   базы в публичном репозитории, либо мутации прода на каждый PR.
-      #   Ни то ни другое.
+      # • Playwright — сценарии заводят учётки и объявления в настоящей
+      #   базе. Они идут после мержа, на стенде: задание browser ниже.
+      # • npm run test:edge — бьёт по РАЗВЁРНУТЫМ функциям проекта Supabase
+      #   и требует ключей. На каждый PR это мутации базы и секреты в
+      #   публичном репозитории. Гонять руками, на стенде.
 
   # ──────────────────────────────────────────────────────────────────────
   # Прогон браузером. ПОСЛЕ мержа в main, не на PR.
@@ -145,28 +141,44 @@ jobs:
   # делает обещанного. Шесть дней этого никто не видел, потому что
   # браузерный прогон не входил ни в хук перед push, ни сюда.
   #
-  # ПОЧЕМУ НЕ НА PR. Сценарии бьют по РАЗВЁРНУТОМУ адресу. На PR это было
-  # бы preview-развёртывание, чей адрес надо ещё вытащить из Vercel и
-  # передать заданию. После мержа адрес известен и постоянен — это прод.
-  # Цена решения названа честно: сломанное успевает попасть в main, и
-  # прогон сообщает об этом через минуту после, а не до.
+  # ГДЕ — НА СТЕНДЕ rentit-staging, с 03.10.2026. До того прогон шёл по
+  # живому проду, и 03.10 шестой за сутки прогон уронил прод на четыре
+  # часа. У экземпляра NANO 0,5 ГБ памяти, а сервисам нужно больше:
+  # остаток уходит в swap, под нагрузкой swap рос, и к вечеру всё встало
+  # (CPU 0 %, swap больше 300 МБ, статус Unhealthy). Заодно прогоны
+  # перестали заводить объявления на живой витрине.
+  #
+  # Сайт для прогона собирается здесь же с ключами стенда и поднимается
+  # локально (vite preview). Ждать развёртывания и вытаскивать адрес
+  # preview из Vercel не нужно. Код тот же, что уходит в прод; отличаются
+  # только адрес базы и ключ. Прод после мержа проверяет задание
+  # prod-smoke ниже: только чтение, без входа и без записи.
+  #
+  # ПОЧЕМУ НЕ НА PR. Стенд один: два прогона одновременно затопчут друг
+  # друга. А PR со своей миграцией шёл бы против базы, где её ещё нет.
+  # После мержа код main и стенд совпадают: миграции сначала ложатся на
+  # стенд, потом на прод. Цена решения названа честно: сломанное успевает
+  # попасть в main, и прогон сообщает об этом через минуты после, а не до.
   #
   # ПОЧЕМУ БЕЗ ТРАСС И БЕЗ ВЫГРУЗКИ АРТЕФАКТОВ. Репозиторий ПУБЛИЧНЫЙ, а
   # артефакты Actions в публичном репозитории скачивает кто угодно. Трасса
   # Playwright содержит снимки страницы входа вместе с введённым паролем
   # тестовой учётки. Разбирать падение по журналу — небольшая цена за то,
   # чтобы не публиковать доступ.
+  #
+  # Секреты — на шагах, а не на задании: `npm ci` и установка браузера
+  # исполняют чужие скрипты, и паролям учёток там делать нечего.
   browser:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: gates
     runs-on: ubuntu-24.04
     timeout-minutes: 25
 
-    # Сценарии создают и удаляют НАСТОЯЩИЕ строки в единственной базе
-    # проекта. Два прогона одновременно затопчут друг друга, поэтому
-    # очередь, а не отмена: отменённый прогон оставил бы за собой мусор.
+    # Сценарии создают и удаляют настоящие строки в базе стенда. Два
+    # прогона одновременно затопчут друг друга, поэтому очередь, а не
+    # отмена: отменённый прогон оставил бы за собой мусор.
     concurrency:
-      group: e2e-prod
+      group: e2e-staging
       cancel-in-progress: false
 
     steps:
@@ -182,8 +194,117 @@ jobs:
       - name: Браузер
         run: npx playwright install --with-deps chromium
 
-      # Прод разворачивается асинхронно: без ожидания прогон проверял бы
-      # ПРЕДЫДУЩУЮ сборку и валился на изменениях, которые только что въехали.
+      # Без учёток каждый сценарий сам себя ПРОПУСКАЕТ (test.skip в файлах),
+      # и прогон зеленеет, не проверив ничего. Без адреса стенда сайт
+      # собрался бы с пустой базой. Зелёный гейт, который не мог увидеть
+      # работу, хуже отсутствующего: на него полагаются.
+      - name: Учётки и стенд на месте
+        env:
+          TEST_OWNER_EMAIL: ${{ secrets.TEST_OWNER_EMAIL }}
+          TEST_OWNER_PASSWORD: ${{ secrets.TEST_OWNER_PASSWORD }}
+          TEST_RENTER_EMAIL: ${{ secrets.TEST_RENTER_EMAIL }}
+          TEST_RENTER_PASSWORD: ${{ secrets.TEST_RENTER_PASSWORD }}
+          STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+        run: |
+          missing=""
+          for v in TEST_OWNER_EMAIL TEST_OWNER_PASSWORD TEST_RENTER_EMAIL TEST_RENTER_PASSWORD STAGING_SUPABASE_URL STAGING_SUPABASE_ANON_KEY; do
+            if [ -z "${!v}" ]; then missing="$missing $v"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::нет секретов:$missing — без них сценарии пропускаются или бьют не туда"
+            exit 1
+          fi
+          echo "учётки и стенд заданы"
+
+      # Только сборка: проверку типов уже прошло задание gates.
+      - name: Сайт с ключами стенда
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+        run: |
+          npx vite build
+          if ! grep -qF "$VITE_SUPABASE_URL" dist/assets/*.js; then
+            echo "::error::в сборке нет адреса стенда — прогон проверил бы не ту базу"
+            exit 1
+          fi
+
+      - name: Поднять сайт локально
+        run: |
+          npx vite preview --port 4173 --strictPort > preview.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4173/ > /dev/null; then echo "сайт отвечает"; exit 0; fi
+            sleep 1
+          done
+          echo "::error::vite preview не ответил за 30 секунд"
+          cat preview.log
+          exit 1
+
+      - name: Сценарии
+        env:
+          E2E_BASE_URL: http://localhost:4173
+          TEST_OWNER_EMAIL: ${{ secrets.TEST_OWNER_EMAIL }}
+          TEST_OWNER_PASSWORD: ${{ secrets.TEST_OWNER_PASSWORD }}
+          TEST_RENTER_EMAIL: ${{ secrets.TEST_RENTER_EMAIL }}
+          TEST_RENTER_PASSWORD: ${{ secrets.TEST_RENTER_PASSWORD }}
+          # Уборка вещи закрывает её живые брони по API до удаления
+          # (tests/helpers/fixtures.ts → scripts/close-live-bookings.mjs).
+          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+        # --trace=off и --reporter=line: см. про публичный репозиторий выше.
+        run: npx playwright test --trace=off --reporter=line
+
+      # Уборка на случай, если прогон оборвался посередине и оставил вещь.
+      #
+      # 🔴 До 19.09.2026 этот шаг НЕ УДАЛЯЛ НИЧЕГО: скрипт звался без
+      # `--apply`, печатал список и выходил с нулём, а `|| true` глушил и
+      # настоящие отказы. Единственным объявлением на живой витрине тогда
+      # оказалась вещь «E2E безкоординат», оставленная оборвавшимся прогоном.
+      #
+      # Шаг УРОНИТ прогон, если уборка не отработала: мусор на стенде копится
+      # молча и однажды начнёт ронять сами сценарии.
+      - name: Убрать остатки прогона
+        if: always()
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          TEST_OWNER_EMAIL: ${{ secrets.TEST_OWNER_EMAIL }}
+          TEST_OWNER_PASSWORD: ${{ secrets.TEST_OWNER_PASSWORD }}
+        run: |
+          if ! node scripts/cleanup-e2e-items.mjs --apply; then
+            echo "::error::уборка не отработала — объявления могли остаться на стенде. Добить: node scripts/cleanup-e2e-items.mjs --apply"
+            exit 1
+          fi
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Прод после мержа: развернулся ли и открывается ли. Только чтение.
+  #
+  # Полный прогон ушёл на стенд, но стенд не видит прод-развёртывания:
+  # сломанная сборка Vercel или пропавшая переменная окружения в проде
+  # прошли бы мимо. Пять проверок лендинга (tests/landing.spec.ts) не
+  # входят в учётку и ничего не пишут. Учёток заданию не дают вовсе, так
+  # что сценарий с записью здесь не запустится даже по ошибке.
+  prod-smoke:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Браузер
+        run: npx playwright install --with-deps chromium
+
+      # Прод разворачивается асинхронно: без ожидания проверка смотрела бы
+      # ПРЕДЫДУЩУЮ сборку.
       - name: Дождаться прод-развёртывания этого коммита
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -206,66 +327,8 @@ jobs:
           echo "::error::прод не развернулся за 10 минут"
           exit 1
 
-      # Без учёток каждый сценарий сам себя ПРОПУСКАЕТ (test.skip в файлах),
-      # и прогон зеленеет, не проверив ничего. Зелёный гейт, который не мог
-      # увидеть работу, хуже отсутствующего: на него полагаются.
-      - name: Учётки на месте
+      - name: Лендинг прода
         env:
-          TEST_OWNER_EMAIL: ${{ secrets.TEST_OWNER_EMAIL }}
-          TEST_OWNER_PASSWORD: ${{ secrets.TEST_OWNER_PASSWORD }}
-          TEST_RENTER_EMAIL: ${{ secrets.TEST_RENTER_EMAIL }}
-          TEST_RENTER_PASSWORD: ${{ secrets.TEST_RENTER_PASSWORD }}
-        run: |
-          missing=""
-          if [ -z "$TEST_OWNER_EMAIL" ];    then missing="$missing TEST_OWNER_EMAIL"; fi
-          if [ -z "$TEST_OWNER_PASSWORD" ]; then missing="$missing TEST_OWNER_PASSWORD"; fi
-          if [ -z "$TEST_RENTER_EMAIL" ];   then missing="$missing TEST_RENTER_EMAIL"; fi
-          if [ -z "$TEST_RENTER_PASSWORD" ];then missing="$missing TEST_RENTER_PASSWORD"; fi
-          if [ -n "$missing" ]; then
-            echo "::error::нет секретов:$missing — без них сценарии пропускаются, и прогон позеленел бы вхолостую"
-            exit 1
-          fi
-          echo "учётки заданы"
-
-      - name: Сценарии
-        env:
-          TEST_OWNER_EMAIL: ${{ secrets.TEST_OWNER_EMAIL }}
-          TEST_OWNER_PASSWORD: ${{ secrets.TEST_OWNER_PASSWORD }}
-          TEST_RENTER_EMAIL: ${{ secrets.TEST_RENTER_EMAIL }}
-          TEST_RENTER_PASSWORD: ${{ secrets.TEST_RENTER_PASSWORD }}
-          # Уборка вещи закрывает её живые брони по API до удаления
-          # (tests/helpers/fixtures.ts → scripts/close-live-bookings.mjs).
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          E2E_READ_ONLY: '1'
         # --trace=off и --reporter=line: см. про публичный репозиторий выше.
-        run: npx playwright test --trace=off --reporter=line
-
-      # Уборка на случай, если прогон оборвался посередине и оставил вещь.
-      # Витрину держат пустой намеренно — мусор, о котором никто не узнаёт,
-      # копится всегда.
-      #
-      # 🔴 ЭТОТ ШАГ НЕ УДАЛЯЛ НИЧЕГО. До 19.09.2026 он звал скрипт БЕЗ
-      # `--apply`, то есть в режиме показа: печатал «Это список, а не
-      # удаление. Повторите с --apply», выходил с нулём и выглядел
-      # отработавшим. Плюс `|| true` глушил и настоящие отказы.
-      #
-      # Цена замерена в тот же день: единственным объявлением на живой
-      # витрине оказалась вещь «E2E безкоординат», оставленная оборвавшимся
-      # прогоном. Весь публичный шоурум продукта — мусор оснастки.
-      #
-      # Шаг УРОНИТ прогон, если уборка не отработала. Это сознательно:
-      # тесты своё уже сказали предыдущим шагом, а мусор на витрине —
-      # такой же отказ продукта, как красный тест, только молчаливый. Гейт,
-      # который знает о своей слепой зоне и не падает, — не гейт.
-      - name: Убрать остатки прогона
-        if: always()
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          TEST_OWNER_EMAIL: ${{ secrets.TEST_OWNER_EMAIL }}
-          TEST_OWNER_PASSWORD: ${{ secrets.TEST_OWNER_PASSWORD }}
-        run: |
-          if ! node scripts/cleanup-e2e-items.mjs --apply; then
-            echo "::error::уборка не отработала — объявления могли остаться на живой витрине. Добить: node scripts/cleanup-e2e-items.mjs --apply"
-            exit 1
-          fi
+        run: npx playwright test tests/landing.spec.ts --trace=off --reporter=line
