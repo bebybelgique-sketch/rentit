@@ -13,6 +13,7 @@ import { useSetItemAvailability } from '../hooks/mutations/useSetItemAvailabilit
 import { useDeleteItem } from '../hooks/mutations/useDeleteItem'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { errorText } from '../lib/errorText'
+import ErrorState from '../components/common/ErrorState'
 import { dateRange, money } from '../domain/push'
 import { pushLangOf } from '../lib/push'
 
@@ -44,7 +45,8 @@ export default function MyItems() {
   const { t, i18n } = useTranslation()
   usePageTitle(t('myItems.title'))
   const { user } = useAuth()
-  const { data: items = [], isLoading: loading, isError } = useOwnerItems(user?.id)
+  const { data, isLoading: loading, isError, refetch } = useOwnerItems(user?.id)
+  const items = data ?? []
   const setAvailability = useSetItemAvailability()
   const removeItem = useDeleteItem()
   const [tab, setTab] = useState<'active' | 'all'>('active')
@@ -90,6 +92,22 @@ export default function MyItems() {
 
   if (loading) return <div className="page"><div className="loading">{t('common.loading')}</div></div>
 
+  // ОШИБКА ≠ ПУСТОТА. До 04.10 при сбое загрузки над списком стояла красная
+  // строка, а под ней всё равно строилось пустое состояние — «Aucun outil
+  // pour l'instant» и призыв выставить первую вещь: сетевой сбой выглядел
+  // как пустой аккаунт. Пустое состояние рисуется только после УСПЕШНОЙ
+  // загрузки; сбой без данных — отдельный экран с повтором. Если данные уже
+  // были (не удалось только перечитать), список остаётся, над ним — строка
+  // с повтором ниже.
+  if (isError && !data) {
+    return (
+      <div className="page">
+        <h1 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '24px' }}>{t('myItems.title')}</h1>
+        <ErrorState message={t('loadFailed')} onRetry={() => { void refetch() }} />
+      </div>
+    )
+  }
+
   return (
     <div className="page">
       {actionError && <div role="alert" className="error-msg" style={{ marginBottom: '16px' }}>{actionError}</div>}
@@ -98,6 +116,7 @@ export default function MyItems() {
       {loadError && (
         <div className="error-msg" style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>{loadError}</span>
+          <button className="btn btn-secondary btn-sm" onClick={() => { void refetch() }}>{t('retry')}</button>
         </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>

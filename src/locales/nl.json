@@ -799,6 +799,28 @@
   },
   "nearbyUnavailable": "Locatie niet beschikbaar: de browser gaf geen toestemming. Sta het toe, of typ een gemeente in de filters.",
   "admin": {
+    "title": "Beheer",
+    "tabStats": "Statistieken",
+    "tabItems": "Advertenties",
+    "tabUsers": "Gebruikers",
+    "statUsers": "Gebruikers",
+    "statItems": "Advertenties",
+    "statBookings": "Reserveringen",
+    "statCompleted": "Afgeronde verhuringen",
+    "listsFailed": "De lijsten konden niet worden geladen.",
+    "itemLine": "door {{owner}} · €{{price}}/dag · {{category}}",
+    "itemVisible": "Zichtbaar",
+    "itemHidden": "Verborgen",
+    "hide": "Verbergen",
+    "show": "Tonen",
+    "noName": "(geen naam)",
+    "phoneVerified": "✓ Telefoon",
+    "revokeAdmin": "Beheerdersrol intrekken",
+    "grantAdmin": "Beheerder maken",
+    "roles": {
+      "admin": "beheerder",
+      "user": "gebruiker"
+    },
     "confirmGrant": "Adminrechten geven aan {{name}}? Deze persoon krijgt toegang tot alle gegevens.",
     "confirmRevoke": "Adminrechten van {{name}} intrekken?",
     "errors": {

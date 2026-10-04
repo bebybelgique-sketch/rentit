@@ -8,6 +8,8 @@ import { useAdminStats } from '../hooks/useAdminStats'
 import { serverErrorKey } from '../domain/serverErrors'
 import { usePageTitle } from '../hooks/usePageTitle'
 import AdminErrors from '../components/admin/AdminErrors'
+import ErrorState from '../components/common/ErrorState'
+import { categoryLabelKey } from '../domain/catalog'
 
 // Действия над ЧУЖИМИ строками идут через edge-функцию admin-action.
 //
@@ -36,6 +38,7 @@ export default function Admin() {
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [adminError, setAdminError] = useState('')
+  const [listsFailed, setListsFailed] = useState(false)
 
   useEffect(() => {
     if (!user) { navigate('/login'); return }
@@ -59,13 +62,23 @@ export default function Admin() {
   // разрешают, а телефон и координаты уже закрыты колоночными грантами
   // (20260811000014). Заводить ради этого серверное list_*-действие
   // значило бы переписать RLS во второй раз в коде функции.
+  //
+  // Сбой чтения — это сбой, а не «данных нет». До 04.10 поле error здесь
+  // не читалось, и отказ превращался в пустые списки: для служебного экрана
+  // это хуже, чем для человека, — оператор поверит «объявлений нет» и
+  // примет по этому решение.
   const fetchAll = async () => {
-    const [{ data: itemData }, { data: userData }] = await Promise.all([
-      supabase.from('items').select('*, users!owner_id(full_name)').order('created_at', { ascending: false }).limit(50),
-      supabase.from('users').select('id, full_name, role, created_at, phone_verified').order('created_at', { ascending: false }).limit(100),
-    ])
-    setItems(itemData || [])
-    setUsers(userData || [])
+    try {
+      const [itemRes, userRes] = await Promise.all([
+        supabase.from('items').select('*, users!owner_id(full_name)').order('created_at', { ascending: false }).limit(50),
+        supabase.from('users').select('id, full_name, role, created_at, phone_verified').order('created_at', { ascending: false }).limit(100),
+      ])
+      setListsFailed(!!(itemRes.error || userRes.error))
+      setItems(itemRes.data || [])
+      setUsers(userRes.data || [])
+    } catch {
+      setListsFailed(true)
+    }
     setLoading(false)
   }
 
@@ -107,13 +120,13 @@ export default function Admin() {
 
   return (
     <div className="page">
-      <h1 style={{ marginBottom: '24px', fontSize: '24px', fontWeight: '800' }}>Admin</h1>
+      <h1 style={{ marginBottom: '24px', fontSize: '24px', fontWeight: '800' }}>{t('admin.title')}</h1>
       {adminError && <div role="alert" className="error-msg" style={{ marginBottom: '16px' }}>{adminError}</div>}
 
       <div className="tabs">
-        <button className={`tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')}>Stats</button>
-        <button className={`tab ${tab === 'items' ? 'active' : ''}`} onClick={() => setTab('items')}>Items</button>
-        <button className={`tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>Users</button>
+        <button className={`tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')}>{t('admin.tabStats')}</button>
+        <button className={`tab ${tab === 'items' ? 'active' : ''}`} onClick={() => setTab('items')}>{t('admin.tabItems')}</button>
+        <button className={`tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>{t('admin.tabUsers')}</button>
         <button className={`tab ${tab === 'errors' ? 'active' : ''}`} onClick={() => setTab('errors')}>{t('admin.errors.tab')}</button>
       </div>
 
@@ -138,10 +151,10 @@ export default function Admin() {
       {tab === 'stats' && (
         <div className="grid grid-2">
           {[
-            { label: 'Users', value: stats.isLoading ? '…' : stats.data?.users ?? '—' },
-            { label: 'Listings', value: stats.isLoading ? '…' : stats.data?.items ?? '—' },
-            { label: 'Bookings', value: stats.isLoading ? '…' : stats.data?.bookings ?? '—' },
-            { label: 'Completed rentals', value: stats.isLoading ? '…' : stats.data?.completed ?? '—' },
+            { label: t('admin.statUsers'), value: stats.isLoading ? '…' : stats.data?.users ?? '—' },
+            { label: t('admin.statItems'), value: stats.isLoading ? '…' : stats.data?.items ?? '—' },
+            { label: t('admin.statBookings'), value: stats.isLoading ? '…' : stats.data?.bookings ?? '—' },
+            { label: t('admin.statCompleted'), value: stats.isLoading ? '…' : stats.data?.completed ?? '—' },
           ].map(s => (
             <div key={s.label} className="card" style={{ textAlign: 'center' }}>
               {/* Здесь стояли 👥📦📅✅ в 36 px. Эмодзи над числом в 32 px
@@ -155,7 +168,11 @@ export default function Admin() {
         </div>
       )}
 
-      {tab === 'items' && (
+      {(tab === 'items' || tab === 'users') && listsFailed && (
+        <ErrorState message={t('admin.listsFailed')} onRetry={() => { void fetchAll() }} />
+      )}
+
+      {tab === 'items' && !listsFailed && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {items.map(item => (
             <div key={item.id} className="card" style={{ padding: '14px 18px' }}>
@@ -163,18 +180,22 @@ export default function Admin() {
                 <div>
                   <strong>{item.title}</strong>
                   <div style={{ fontSize: '13px', color: '#666' }}>
-                    by {item.users?.full_name} · €{item.price_per_day}/day · {item.category}
+                    {t('admin.itemLine', {
+                      owner: item.users?.full_name ?? t('admin.noName'),
+                      price: item.price_per_day,
+                      category: categoryLabelKey(item.category) ? t(categoryLabelKey(item.category)!) : item.category,
+                    })}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <span className={`tag ${item.available ? 'tag-green' : 'tag-gray'}`}>
-                    {item.available ? 'Active' : 'Hidden'}
+                    {item.available ? t('admin.itemVisible') : t('admin.itemHidden')}
                   </span>
                   <button
                     onClick={() => toggleItem(item.id, item.available)}
                     className="btn btn-secondary btn-sm"
                   >
-                    {item.available ? 'Hide' : 'Show'}
+                    {item.available ? t('admin.hide') : t('admin.show')}
                   </button>
                 </div>
               </div>
@@ -183,28 +204,28 @@ export default function Admin() {
         </div>
       )}
 
-      {tab === 'users' && (
+      {tab === 'users' && !listsFailed && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {users.map(u => (
             <div key={u.id} className="card" style={{ padding: '14px 18px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 <div>
-                  <strong>{u.full_name || '(no name)'}</strong>
-                  {u.phone_verified && <span className="tag tag-green" style={{ marginLeft: '8px', fontSize: '11px' }}>✓ Phone</span>}
+                  <strong>{u.full_name || t('admin.noName')}</strong>
+                  {u.phone_verified && <span className="tag tag-green" style={{ marginLeft: '8px', fontSize: '11px' }}>{t('admin.phoneVerified')}</span>}
                   <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>
                     {new Date(u.created_at).toLocaleDateString()}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <span className={`tag ${u.role === 'admin' ? 'tag-purple' : 'tag-gray'}`}>
-                    {u.role}
+                    {t(`admin.roles.${u.role}`, { defaultValue: u.role })}
                   </span>
                   {u.id !== user?.id && (
                     <button
                       onClick={() => toggleAdmin(u.id, u.role === 'admin')}
                       className="btn btn-secondary btn-sm"
                     >
-                      {u.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                      {u.role === 'admin' ? t('admin.revokeAdmin') : t('admin.grantAdmin')}
                     </button>
                   )}
                 </div>
