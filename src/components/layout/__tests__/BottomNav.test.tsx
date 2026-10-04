@@ -46,10 +46,11 @@ describe('нижняя панель', () => {
 
   // «Accueil» ведёт в «Mes outils»: экрана-дашборда владельца, который канва
   // рисует под этим ярлыком, в продукте нет — по «/» открывается лендинг.
-  it('«Accueil» ведёт к своим вещам, а не на лендинг', () => {
+  it('первая вкладка — «Mes outils»: ведёт к своим вещам, а не на лендинг', () => {
     renderAt('/my-items');
-    expect(screen.getByRole('link', { name: /Accueil/ })).toHaveAttribute('href', '/my-items');
-    expect(screen.getByRole('link', { name: /Accueil/ })).toHaveClass('is-on');
+    expect(screen.getByRole('link', { name: /Mes outils/ })).toHaveAttribute('href', '/my-items');
+    expect(screen.getByRole('link', { name: /Mes outils/ })).toHaveClass('is-on');
+    expect(screen.queryByRole('link', { name: /Accueil/ })).not.toBeInTheDocument();
   });
 
   // Три раздела из четырёх требуют учётки. Панель, где большинство кнопок

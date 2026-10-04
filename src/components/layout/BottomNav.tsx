@@ -72,15 +72,21 @@ export default function BottomNav({ taskCount = 0 }: BottomNavProps) {
           Ближайшее существующее к замыслу канвы — список своих вещей с
           заявками, он же чинит второй отнятый вход.
           Настоящий owner-first дашборд — отдельная работа; когда он появится,
-          меняется один href. */}
+          меняется один href.
+
+          ИМЯ — ПО СОДЕРЖИМОМУ (аудит 04.10). До этого вкладка называлась
+          «Accueil» и рисовала домик, а открывала «Mes outils»: одно слово
+          «главная» значило лендинг по `/` и список вещей здесь. Теперь
+          подпись и значок говорят то, что откроется. Экран «Сегодня»
+          появится, когда будет что на нём сводить, — живые брони. */}
       <NavLink to="/my-items" className={tab}>
         <span className="bottom-nav-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-            <path d="M4 11l8-7 8 7" /><path d="M6 10v9h12v-9" />
+            <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
           </svg>
           <TaskBadge count={taskCount} placement="tab" />
         </span>
-        <span>{t('nav.home')}</span>
+        <span>{t('nav.myItems')}</span>
       </NavLink>
 
       <NavLink to="/browse" className={tab}>

@@ -1,4 +1,9 @@
 {
+  "region": {
+    "name": "Waals-Brabant en regio Namen",
+    "in": "in Waals-Brabant en de regio Namen",
+    "of": "uit Waals-Brabant en de regio Namen"
+  },
   "authErrors": {
     "email_invalid": "Dit e-mailadres is niet geldig.",
     "user_already_exists": "Dit adres is al in gebruik. Log in of vraag een nieuw wachtwoord aan.",
@@ -458,7 +463,7 @@
   "shops": {
     "eyebrow": "Voor professionals",
     "title": "Verhuurt u materiaal? Uw gereedschap kan hier ook staan.",
-    "lede": "RentIt is een etalage voor gereedschap in Waals-Brabant. De klant kiest een stuk gereedschap en data, u aanvaardt of weigert, en u regelt de rest rechtstreeks. Niets meer — en vooral niets anders.",
+    "lede": "RentIt is een etalage voor gereedschap $t(region.in). De klant kiest een stuk gereedschap en data, u aanvaardt of weigert, en u regelt de rest rechtstreeks. Niets meer — en vooral niets anders.",
     "haveTitle": "Wat u vandaag krijgt",
     "have1": "Uw advertenties meteen online, kosteloos.",
     "have2": "De klant kiest zijn data; reeds bezette data worden niet meer aangeboden.",
@@ -471,7 +476,7 @@
     "not3": "Vandaag geen commissie. Komen er ooit betalende opties, dan worden ze aangekondigd, niet stilletjes ingevoerd.",
     "not4": "Geen beloofd bezoek. Een advertentie is zichtbaar; ze verkoopt zichzelf niet.",
     "stateTitle": "Waar we echt staan",
-    "stateBody": "De etalage is nieuw: de demonstratie-advertenties zijn verwijderd, want een verzonnen catalogus zegt niets waars. We zoeken de eerste verhuurders van Waals-Brabant. Eerste zijn betekent weinig concurrentie en een luisterend oor — geen rij wachtende klanten.",
+    "stateBody": "De etalage is nieuw: de demonstratie-advertenties zijn verwijderd, want een verzonnen catalogus zegt niets waars. We zoeken de eerste verhuurders $t(region.of). Eerste zijn betekent weinig concurrentie en een luisterend oor — geen rij wachtende klanten.",
     "ctaPrimary": "Account aanmaken",
     "ctaSecondary": "Bekijk de etalage"
   },
@@ -497,7 +502,7 @@
   "addPhotoLater": "Later — mijn gereedschap plaatsen",
   "landing": {
     "footerCountry": "België",
-    "eyebrow": "Waals-Brabant — onder buren",
+    "eyebrow": "$t(region.name) — onder buren",
     "h1a": "Je gereedschap slaapt.",
     "h1b": "Dat van je buur ook.",
     "lede": "Plaats gereedschap: je advertentie staat meteen online, gratis. Een buur neemt contact op, jij beslist, je wordt persoonlijk betaald.",
@@ -506,7 +511,7 @@
     "liveCount_one": "{{count}} stuk gereedschap vandaag online.",
     "liveCount_other": "{{count}} stuks gereedschap vandaag online.",
     "liveBody": "Je buren zijn al begonnen. Dat van jou staat er in vijf minuten bij.",
-    "zeroBody": "RentIt begint net in Waals-Brabant, en we doen niet alsof het anders is. Dat van jou zou het eerste zijn dat buren zien.",
+    "zeroBody": "RentIt begint net $t(region.in), en we doen niet alsof het anders is. Dat van jou zou het eerste zijn dat buren zien.",
     "photoAlt": "Een oude houten gereedschapskist met een beitel en een trekmes ervoor.",
     "photoCaption": "Illustratie — het gereedschap in het aanbod is dat van je buren.",
     "stepsLabel": "Wat er gebeurt als je plaatst",
@@ -531,9 +536,9 @@
     "renterLabel": "Je zoekt, je plaatst niet?",
     "renterTitle": "Er staat vandaag niets online — we verbergen dat niet.",
     "renterBody": "Kijk gerust, of kom terug wanneer een buur het eerste gereedschap heeft geplaatst.",
-    "finalTitle": "Het eerste gereedschap van Waals-Brabant staat nog niet online.",
+    "finalTitle": "Het eerste gereedschap $t(region.of) staat nog niet online.",
     "renterTitleLive": "Gereedschap nodig? Misschien heeft een buur het.",
-    "renterBodyLive": "Elk gereedschap in de etalage is van iemand uit Waals-Brabant. Jij kiest de data, de eigenaar beslist, je betaalt bij de overhandiging.",
+    "renterBodyLive": "Elk gereedschap in de etalage is van iemand $t(region.of). Jij kiest de data, de eigenaar beslist, je betaalt bij de overhandiging.",
     "finalTitleLive": "Gereedschap dat in je garage ligt, kan dit weekend een buur helpen.",
     "finalBody": "Vijf minuten, gratis, en elke aanvraag blijft jouw beslissing.",
     "finalCta": "Gereedschap plaatsen",
