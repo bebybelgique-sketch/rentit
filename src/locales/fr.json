@@ -555,6 +555,8 @@
   },
   "itemDetail": {
     "operatorDaysLabel": "Jours avec opérateur",
+    "prevMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
     "operatorDaysOf": "sur {{days}} j de location",
     "operatorOffer": "Avec opérateur : +€{{fee}} / jour",
     "operatorAsk": "Avec opérateur (+€{{fee}} / jour)",
