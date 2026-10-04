@@ -10,6 +10,12 @@
 # Нужен вход в Supabase CLI (`npx supabase login`) — ключа из .env для
 # этого недостаточно: gen types ходит в Management API, а не в базу.
 #
+#   SUPABASE_DB_URL=<url> npm run generate-types
+#
+# Второй путь — прямо в базу, ролью schema_reader (миграция 60), без входа в
+# CLI; так ходит сторож .github/workflows/schema-drift.yml. Нужен Docker:
+# генератор (postgres-meta) CLI запускает контейнером.
+#
 # ЧТО ИЗМЕНИЛОСЬ ПРОТИВ ПРЕЖНЕЙ ВЕРСИИ. Она требовала ВПИСАТЬ ref в сам
 # файл (`PROJECT_ID="<YOUR_SUPABASE_PROJECT_ID>"`), то есть закоммитить
 # идентификатор проекта в публичный репозиторий, и писала результат в
@@ -47,18 +53,26 @@ if [ -z "$REF" ] && [ -f "$ROOT/supabase/.temp/project-ref" ]; then
   REF="$(tr -d '[:space:]' < "$ROOT/supabase/.temp/project-ref")"
 fi
 
-if [ -z "$REF" ]; then
+if [ -z "$REF" ] && [ -z "${SUPABASE_DB_URL:-}" ]; then
   echo "SUPABASE_PROJECT_REF не задан: ни в окружении, ни в .env" >&2
   echo "Найти его можно в адресе проекта: https://<ref>.supabase.co" >&2
   exit 1
 fi
 
 OUT_REL="${OUT#$ROOT/}"
-echo "Генерация типов из проекта $REF → $OUT_REL"
+if [ -n "${SUPABASE_DB_URL:-}" ]; then
+  echo "Генерация типов по SUPABASE_DB_URL → $OUT_REL"
+else
+  echo "Генерация типов из проекта $REF → $OUT_REL"
+fi
 TMP_OUT="$(mktemp)"
 trap 'rm -f "$TMP_OUT"' EXIT
 
-npx supabase gen types typescript --project-id "$REF" --schema public > "$TMP_OUT"
+if [ -n "${SUPABASE_DB_URL:-}" ]; then
+  npx supabase gen types typescript --db-url "$SUPABASE_DB_URL" --schema public > "$TMP_OUT"
+else
+  npx supabase gen types typescript --project-id "$REF" --schema public > "$TMP_OUT"
+fi
 
 # Перекодировка делается НА NODE, а не на python.
 #
