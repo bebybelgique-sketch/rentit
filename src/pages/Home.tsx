@@ -29,6 +29,7 @@ import type { BrowseRow } from '../types'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { mapStart, MAP_POINT_ZOOM } from '../domain/region'
 
 function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: number; lng: number } | null }) {
   const { t } = useTranslation()
@@ -43,9 +44,21 @@ function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: numbe
     if (!containerRef.current) return
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
 
-    const center: [number, number] = userPos ? [userPos.lat, userPos.lng] : [50.85, 4.35]
-    const map = L.map(containerRef.current).setView(center, 13)
+    // Предикат, а не просто фильтр: без него TypeScript не сужает
+    // number | null и ругается на L.marker. Проверка та же самая,
+    // просто теперь она видна и типам.
+    const placed = items.filter(
+      (i): i is BrowseRow & { lat: number; lng: number } => i.lat != null && i.lng != null
+    )
+
+    // Вид при открытии решает домен (src/domain/region.ts): человек → на нём,
+    // вещи → рамка по ним, иначе — вся зона пилота. До 04.10 здесь стоял
+    // Брюссель с масштабом 13: в 40 км от зоны и без единой вещи в кадре.
+    const map = L.map(containerRef.current)
     mapRef.current = map
+    const start = mapStart(placed.map(i => [i.lat, i.lng] as [number, number]), userPos)
+    if (start.kind === 'point') map.setView(start.center, start.zoom)
+    else map.fitBounds(start.corners, { padding: [40, 40], maxZoom: MAP_POINT_ZOOM })
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -53,12 +66,6 @@ function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: numbe
     }).addTo(map)
 
     const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-    // Предикат, а не просто фильтр: без него TypeScript не сужает
-    // number | null и ругается на L.marker. Проверка та же самая,
-    // просто теперь она видна и типам.
-    const placed = items.filter(
-      (i): i is BrowseRow & { lat: number; lng: number } => i.lat != null && i.lng != null
-    )
 
     placed.forEach(item => {
       const icon = L.divIcon({

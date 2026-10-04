@@ -71,6 +71,32 @@ test.describe('поиск по близости', () => {
     await expect(card).toContainText(/à (moins d.1 km|≈ \d+([.,]\d+)? km)/, { timeout: 20000 })
   })
 
+  // Карта без «À proximité» открывается на вещах (src/domain/region.ts).
+  // До 04.10 она стояла на Брюсселе с масштабом 13, и вещь из Вавра была за
+  // краем кадра: карта витрины показывала пустую местность.
+  test('карта открывается на вещах, а не на Брюсселе', async ({ page }) => {
+    await login(page, OWNER_EMAIL, OWNER_PASSWORD)
+    item = await createItem(page, { title: uniqueTitle('E2E карта'), withPosition: true })
+
+    await skipModals(page)
+    await page.goto('/browse', { waitUntil: 'load' })
+    await expect(page.locator('.item-card').filter({ hasText: item.title })).toBeVisible({ timeout: 20000 })
+
+    await page.getByRole('button', { name: /Carte/ }).click()
+    const map = page.locator('.leaflet-container')
+    await expect(map).toBeVisible({ timeout: 15000 })
+    const marker = map.locator('.leaflet-marker-icon').first()
+    await expect(marker).toBeVisible({ timeout: 15000 })
+    // toBeVisible не знает про overflow карты — проверяем, что метка в кадре.
+    await expect(async () => {
+      const [m, c] = await Promise.all([marker.boundingBox(), map.boundingBox()])
+      expect(m, 'нет рамки метки').not.toBeNull()
+      expect(c, 'нет рамки карты').not.toBeNull()
+      const inside = m!.x >= c!.x && m!.x + m!.width <= c!.x + c!.width && m!.y >= c!.y && m!.y + m!.height <= c!.y + c!.height
+      expect(inside, 'метка за краем карты').toBeTruthy()
+    }).toPass({ timeout: 10000 })
+  })
+
   test('вещь вне радиуса отсекает база — до браузера она не доезжает', async ({ page, context }) => {
     await login(page, OWNER_EMAIL, OWNER_PASSWORD)
     item = await createItem(page, { title: uniqueTitle('E2E далеко'), withPosition: true })
