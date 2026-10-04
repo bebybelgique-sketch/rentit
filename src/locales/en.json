@@ -154,7 +154,9 @@
     "packageWeekend": "The weekend package",
     "packageWeekendLabel": "Weekend package (€)",
     "packageWeekendHint": "Saturday to Monday",
-    "geolocationDenied": "Location access denied. Please enter your address manually.",
+    "geoDenied": "The browser refused location. Allow it for this site (padlock left of the address), then try again.",
+    "geoUnavailable": "Position not found: location may be turned off on this device.",
+    "geoTimeout": "The position didn’t arrive in time. Try again.",
     "titleRequired": "Title is required.",
     "priceMustBePositive": "Price must be greater than 0.",
     "depositNonNegative": "Deposit cannot be negative.",
@@ -645,7 +647,8 @@
     "viewMap": "Map",
     "viewLabel": "View",
     "resetFilters": "Reset",
-    "availableTo": "to"
+    "availableTo": "to",
+    "youAreHere": "You are here"
   },
   "photoGrid": {
     "titleHandover": "Tool condition at handover",

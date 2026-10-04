@@ -31,6 +31,13 @@ import { fileURLToPath } from 'node:url'
  * красный итог из-за уборки спрятал бы их собственный результат.
  */
 export default function globalTeardown() {
+  // Прогон только на чтение (задание prod-smoke в CI) ничего не заводил, и
+  // учёток у него нет: уборка лишь напечатала бы ложную тревогу.
+  if (process.env.E2E_READ_ONLY === '1') {
+    console.log('\n▸ Прогон только на чтение — убирать нечего')
+    return
+  }
+
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const script = resolve(root, 'scripts', 'cleanup-e2e-items.mjs')
 

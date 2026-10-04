@@ -89,6 +89,16 @@ function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: numbe
       `)
     })
 
+    // Где ты сам. После «À proximité» карта центрировалась на тебе, но точки
+    // не ставила: человек искал себя глазами и не находил (замер 03.10).
+    // Цвет — «действие» из палитры (--action), кромка белая, чтобы точка
+    // читалась на любой подложке.
+    if (userPos) {
+      L.circleMarker([userPos.lat, userPos.lng], {
+        radius: 8, color: '#FFFFFF', weight: 2, fillColor: '#C8102E', fillOpacity: 1,
+      }).addTo(map).bindTooltip(t('home.youAreHere'))
+    }
+
     return () => { map.remove(); mapRef.current = null }
   }, [items, userPos, t])
 
@@ -323,9 +333,9 @@ export default function Home() {
       // работает», и человеку неоткуда узнать, что решение принял его
       // браузер, а не продукт.
       //
-      // В форме выкладки тот же вызов сделан правильно с 12.08
-      // (ListItem.tsx, listItem.geolocationDenied + таймаут) — два
-      // обработчика одного и того же разошлись молча.
+      // В форме выкладки тот же вызов с отказом и таймаутом (ListItem.tsx;
+      // с 03.10 отказ там стоит у кнопки и называет причину) — два
+      // обработчика одного и того же когда-то разошлись молча.
       //
       // Таймаут обязателен по второй причине: без него getCurrentPosition
       // на части устройств не отвечает вовсе, и кнопка остаётся навсегда

@@ -97,6 +97,27 @@ describe('форма выкладки: что известно до показа
     expect(screen.queryByText(/annonce précédente/)).toBeNull();
   });
 
+  // Замер 03.10 владельцем с ноутбука: кнопка «молчала». Отказ уходил в
+  // шапку формы, далеко над ней, и называл «запрет» даже там, где система
+  // просто не знает позиции (местоположение выключено в Windows).
+  it.each([
+    [1, 'Le navigateur a refusé la localisation'],
+    [2, 'Position introuvable'],
+    [3, 'La position n’est pas arrivée à temps'],
+  ])('отказ с кодом %i — у самой кнопки и с причиной', (code, text) => {
+    ready({ needsPhoto: false, lastPlace: null });
+    const getCurrentPosition = vi.fn((_ok: PositionCallback, fail?: PositionErrorCallback | null) =>
+      fail?.({ code } as GeolocationPositionError));
+    Object.defineProperty(navigator, 'geolocation', { value: { getCurrentPosition }, configurable: true });
+
+    renderPage();
+    const button = screen.getByRole('button', { name: 'Utiliser ma position' });
+    fireEvent.click(button);
+    const alert = screen.getAllByRole('alert').find((a) => a.textContent?.includes(text));
+    expect(alert).toBeDefined();
+    expect(alert!.closest('.form-group')).toBe(button.closest('.form-group'));
+  });
+
   it('новая позиция с телефона заменяет прошлую, и ссылка на прошлое объявление уходит', () => {
     ready({ needsPhoto: false, lastPlace: { lat: 50.717, lng: 4.601, address: null } });
     const getCurrentPosition = vi.fn((ok: PositionCallback) =>
