@@ -5,15 +5,21 @@
 --
 -- Ждём в отчёте:
 --   login=t super=f bypassrls=f connlimit=2 readonly=on
---   data_rel=0 hidden_rel=0 exec_beyond_anon=0 create_schema=0 create_db=f
+--   data_rel=0 hidden_rel=0 exec_beyond_anon=0 create_schema=0 create_db=f pg_net=t
 --
--- data_rel         — отношений в любой несистемной схеме, где роли дан SELECT,
---                    INSERT, UPDATE, DELETE или TRUNCATE (на таблицу или колонку).
+-- data_rel         — отношений, до которых роль ДОТЯНЕТСЯ (USAGE на схему) и где
+--                    ей дан SELECT, INSERT, UPDATE, DELETE или TRUNCATE. Схема net
+--                    не в счёт — она отдельным полем pg_net, см. ниже.
 -- hidden_rel       — отношений public, которых генератор типов НЕ увидит (нет
 --                    REFERENCES). Не 0 — сторож дрейфа соврёт «таблица пропала».
 -- exec_beyond_anon — функций, которые роль может вызвать, а anon нет. Через
 --                    PUBLIC она вызывает ровно то же, что любой аноним с ключом
 --                    из бандла, и сверх этого ничего.
+-- pg_net=t         — ИЗВЕСТНЫЙ ОСТАТОК, не цель. Supabase выдаёт схему net
+--                    роли PUBLIC: любая роль со входом может слать HTTP из базы
+--                    (net.http_post) и читать очередь и ответы pg_net. Отозвать
+--                    право PUBLIC у одной роли Postgres не умеет. Если однажды
+--                    станет f — остаток закрыт, обновить ожидание.
 DO $test$
 DECLARE
   r      record;
@@ -43,6 +49,8 @@ BEGIN
    WHERE c.relkind IN ('r', 'v', 'm', 'f', 'p')
      AND ns.nspname NOT IN ('pg_catalog', 'information_schema')
      AND ns.nspname NOT LIKE 'pg_toast%'
+     AND ns.nspname <> 'net'
+     AND has_schema_privilege('schema_reader', ns.oid, 'USAGE')
      AND (has_table_privilege('schema_reader', c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE')
           OR has_any_column_privilege('schema_reader', c.oid, 'SELECT, INSERT, UPDATE'));
 
@@ -61,9 +69,11 @@ BEGIN
     FROM pg_namespace ns
    WHERE has_schema_privilege('schema_reader', ns.oid, 'CREATE');
 
-  RAISE EXCEPTION 'REPORT: login=% super=% bypassrls=% connlimit=% readonly=% data_rel=% hidden_rel=% exec_beyond_anon=% create_schema=% create_db=%',
+  RAISE EXCEPTION 'REPORT: login=% super=% bypassrls=% connlimit=% readonly=% data_rel=% hidden_rel=% exec_beyond_anon=% create_schema=% create_db=% pg_net=%',
     r.rolcanlogin, r.rolsuper, r.rolbypassrls, r.rolconnlimit, ro,
     n_data, n_hid, n_exec, n_csch,
-    has_database_privilege('schema_reader', current_database(), 'CREATE');
+    has_database_privilege('schema_reader', current_database(), 'CREATE'),
+    coalesce((SELECT has_schema_privilege('schema_reader', oid, 'USAGE')
+                FROM pg_namespace WHERE nspname = 'net'), false);
 END
 $test$;
