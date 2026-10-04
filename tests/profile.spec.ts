@@ -56,11 +56,27 @@ test.describe('профиль', () => {
     await dismissCookies(page)
 
     const name = page.locator('#full_name')
+    const submit = page.getByRole('button', { name: UI.profileSubmit })
     await expect(name).toBeVisible({ timeout: 20000 })
+    // Поле видно раньше, чем в него ляжет имя из базы: прочитанное сразу
+    // оказывалось пустым, и тест «возвращал» пустое имя, которое форма не
+    // даёт сохранить. Ждём настоящее значение.
+    await expect(name).not.toHaveValue('', { timeout: 20000 })
     const before = await name.inputValue()
 
-    await page.getByRole('button', { name: UI.profileSubmit }).click()
+    // Кнопка неактивна, пока в форме ничего не изменено. Поэтому меняем
+    // имя, сохраняем, потом возвращаем прежнее — два настоящих сохранения.
+    const changed = before.endsWith(' E2E') ? before.slice(0, -4) : `${before} E2E`
+    await name.fill(changed)
+    await submit.click()
     await expect(page.getByText(UI.profileSaved)).toBeVisible({ timeout: 20000 })
+
+    await name.fill(before)
+    await submit.click()
+    // Сохранённое снова совпало с формой — кнопка гаснет. Если второе
+    // сохранение не прошло, в базе осталось изменённое имя, и кнопка
+    // осталась бы активной.
+    await expect(submit).toBeDisabled({ timeout: 20000 })
     await expect(name).toHaveValue(before)
   })
 })
