@@ -60,6 +60,16 @@ describe('кто назван в строке', () => {
     expect(toEntry(unknown, 'fr').title).toBe('Un voisin a annulé')
   })
 
+  // Напоминания (миграция 57): владельцу называется арендатор, арендатору —
+  // владелец. Строку ставит база по времени, текст тот же, что у push.
+  it('напоминания — с именем второй стороны', () => {
+    expect(toEntry(row({ kind: 'request_reminder' }), 'fr').body)
+      .toBe('Rachel L. · 26 → 27 sept. Sans réponse, elle expire dans quelques heures.')
+    expect(toEntry(row({ kind: 'return_tomorrow' }), 'fr').body)
+      .toBe("À rendre à Ramzan B. Convenez de l'heure dans la conversation.")
+    expect(toEntry(row({ kind: 'return_unconfirmed' }), 'en').title).toBe('Confirm the return: "Perceuse"')
+  })
+
   it('бронь недоступна (удалённая учётка) — запасные слова, не пустота', () => {
     const e = toEntry(row({ kind: 'accepted', booking: null }), 'fr')
     expect(e.title).toBe('Votre voisin a accepté')

@@ -863,6 +863,14 @@ export type Database = {
           joined: number
         }[]
       }
+      queue_booking_reminders: {
+        Args: { p_now?: string }
+        Returns: {
+          booking_id: string
+          kind: string
+          user_id: string
+        }[]
+      }
       recompute_user_rating_for: {
         Args: { p_user_id: string }
         Returns: undefined

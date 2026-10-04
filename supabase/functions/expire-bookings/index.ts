@@ -6,6 +6,13 @@
 //   active            срок истёк + 7 дней   → completed  (+ auto_closed_at)
 //   confirmed         срок истёк + 7 дней   → cancelled  (+ auto_closed_at)
 //
+// О ЧЁМ НАПОМИНАЕТ (миграция 57) — после закрытий, чтобы не напоминать о
+// заявке, которая только что сгорела:
+//   заявка ждёт 18–22 ч                     → владельцу
+//   многодневная аренда кончается завтра    → арендатору, с 18:00
+//   срок кончился вчера, возврат не отмечен → владельцу, с 9:00
+// Время — брюссельское.
+//
 // Два последних — потому что выход из `active` и `confirmed` был только у
 // владельца. Забыл нажать — бронь жила вечно, а `delete-account` из-за неё
 // навсегда отказывал обеим сторонам в удалении учётной записи.
@@ -28,6 +35,8 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { notifyRental, type RentalEvent } from '../_shared/notify.ts'
+import { supabaseDeps } from '../_shared/push.ts'
+import { pushReminders, type QueuedReminder, type ReminderBooking } from '../_shared/reminders.ts'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -120,6 +129,42 @@ serve(async (req) => {
 
   await notify((closedConfirmed ?? []).map((b: { id: string }) => b.id), 'cancelled')
 
+  // 3. Напоминания.
+  //
+  // Кому и о чём — решает база: queue_booking_reminders пишет строки
+  // ленты и возвращает только поставленные сейчас. Повторный вызов в том
+  // же окне вернёт пусто, поэтому второго push не будет. Сбой здесь не
+  // роняет закрытия выше: они уже записаны, а напоминание поставится
+  // следующим вызовом, пока окно открыто.
+  const { data: queuedRows, error: queueError } = await supabase.rpc('queue_booking_reminders')
+  if (queueError) console.error(`[reminders] queue_booking_reminders: ${queueError.message}`)
+  const queued = (queuedRows ?? []) as QueuedReminder[]
+
+  let reminders = { attempted: 0, delivered: 0, skipped: 0 }
+  if (queued.length > 0) {
+    const ids = [...new Set(queued.map((r) => r.booking_id))]
+    const { data: rows, error: readError } = await supabase
+      .from('bookings')
+      .select('id, start_date, end_date, total_price, items(title, users!owner_id(full_name)), users!renter_id(full_name)')
+      .in('id', ids)
+    if (readError) console.error(`[reminders] брони не прочитались: ${readError.message}`)
+
+    const bookings = new Map<string, ReminderBooking>()
+    // deno-lint-ignore no-explicit-any
+    for (const b of (rows ?? []) as any[]) {
+      bookings.set(b.id, {
+        id: b.id,
+        start_date: b.start_date,
+        end_date: b.end_date,
+        total_price: b.total_price,
+        itemTitle: b.items?.title ?? null,
+        ownerName: b.items?.users?.full_name ?? null,
+        renterName: b.users?.full_name ?? null,
+      })
+    }
+    reminders = await pushReminders(supabaseDeps(supabase), queued, bookings)
+  }
+
   // Прежде здесь истекали брони, не оплаченные в течение 2 часов после
   // одобрения. Платежей в платформе больше нет: одобрение сразу переводит
   // бронь в confirmed, поэтому истекать нечему. Статус payment_expired
@@ -131,6 +176,8 @@ serve(async (req) => {
     expired_payments: expiredPayment?.length ?? 0,
     closed_active: closedActive?.length ?? 0,
     closed_confirmed: closedConfirmed?.length ?? 0,
+    reminders_queued: queued.length,
+    reminders_push_devices: reminders.delivered,
     grace_days: GRACE_DAYS,
   }), { headers: { ...CORS, 'Content-Type': 'application/json' } })
 })
