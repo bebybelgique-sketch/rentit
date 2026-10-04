@@ -6,6 +6,7 @@ import { useItemById } from '../hooks/useItemById';
 import { useUpdateItem, type ItemUpdate } from '../hooks/mutations/useUpdateItem';
 import { useTranslation } from 'react-i18next';
 import { CATEGORIES, CONDITIONS } from '../domain/catalog';
+import { OPERATOR_TERMS_VERSION } from '../domain/operatorTerms';
 import { useUploadImage } from '../hooks/useUploadImage';
 import { supabase } from '../lib/supabase';
 import { ITEM_PHOTOS_BUCKET, itemPhotoPath } from '../lib/itemPhotos';
@@ -85,9 +86,8 @@ const EditItem: React.FC = () => {
   // намеренно, иначе она разойдётся с ценой.
   const [delivers, setDelivers] = useState(false);
   const [operates, setOperates] = useState(false);
-  // Согласие владельца (миграция 56). Уже данное хранит свой момент — при
-  // правке цены не обновляется.
-  const [operatorConsentAt, setOperatorConsentAt] = useState<string | null>(null);
+  // Согласие владельца (миграция 56). Момент ставит сервер (миграция 61):
+  // уже данное согласие при правке цены свою дату сохраняет.
   const [operatorConsent, setOperatorConsent] = useState(false);
 
   useEffect(() => {
@@ -119,7 +119,6 @@ const EditItem: React.FC = () => {
       // Отдельного «включено» в базе нет, и хранить его негде.
       setDelivers(item.delivery_fee != null);
       setOperates(item.operator_fee_per_day != null);
-      setOperatorConsentAt(item.operator_terms_accepted_at ?? null);
       setOperatorConsent(item.operator_terms_accepted_at != null);
     }
   }, [item]);
@@ -230,7 +229,7 @@ const EditItem: React.FC = () => {
         delivery_fee: delivers ? parseFloat(delivery_fee) : null,
         delivery_radius_km: delivers && delivery_radius_km.trim() !== '' ? parseInt(delivery_radius_km, 10) : null,
         operator_fee_per_day: operates ? parseFloat(operator_fee_per_day) : null,
-        operator_terms_accepted_at: operates ? (operatorConsentAt ?? new Date().toISOString()) : null,
+        operator_terms_version: operates ? OPERATOR_TERMS_VERSION : null,
       };
 
       // Файл и база меняются В ПОРЯДКЕ, который ничего не теряет:
@@ -527,10 +526,7 @@ const EditItem: React.FC = () => {
                     id="operator_consent"
                     type="checkbox"
                     checked={operatorConsent}
-                    onChange={e => {
-                      setOperatorConsent(e.target.checked);
-                      if (!e.target.checked) setOperatorConsentAt(null);
-                    }}
+                    onChange={e => setOperatorConsent(e.target.checked)}
                     style={{ width: 'auto', marginTop: '3px' }}
                   />
                   {t('listItem.operatorConsent')}

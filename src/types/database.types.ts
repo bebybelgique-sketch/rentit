@@ -380,6 +380,7 @@ export type Database = {
           min_notice_days: number
           operator_fee_per_day: number | null
           operator_terms_accepted_at: string | null
+          operator_terms_version: string | null
           owner_id: string
           photos: NonNullable<Json>
           price_3days: number | null
@@ -409,6 +410,7 @@ export type Database = {
           min_notice_days?: number
           operator_fee_per_day?: number | null
           operator_terms_accepted_at?: string | null
+          operator_terms_version?: string | null
           owner_id: string
           photos?: NonNullable<Json>
           price_3days?: number | null
@@ -438,6 +440,7 @@ export type Database = {
           min_notice_days?: number
           operator_fee_per_day?: number | null
           operator_terms_accepted_at?: string | null
+          operator_terms_version?: string | null
           owner_id?: string
           photos?: NonNullable<Json>
           price_3days?: number | null
