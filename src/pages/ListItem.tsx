@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useBeforeUnload, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CATEGORIES, CONDITIONS, categoryPriceHintKey } from '../domain/catalog'
+import { OPERATOR_TERMS_VERSION } from '../domain/operatorTerms'
 import StateIcon from '../components/icons/StateIcon'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -436,7 +437,9 @@ function ListItemForm({ start }: { start: ListingStart }) {
         delivery_fee:       delivers && form.delivery_fee !== '' ? parseFloat(form.delivery_fee) : null,
         delivery_radius_km: delivers && form.delivery_radius_km !== '' ? parseInt(form.delivery_radius_km, 10) : null,
         operator_fee_per_day: operates && form.operator_fee_per_day !== '' ? parseFloat(form.operator_fee_per_day) : null,
-        operator_terms_accepted_at: operates ? new Date().toISOString() : null,
+        // Момент согласия ставит сервер (миграция 61); отсюда — только
+        // редакция текста, под которым стоит галка.
+        operator_terms_version: operates ? OPERATOR_TERMS_VERSION : null,
         deposit:       parseFloat(form.deposit) || 0,
         photos:        photoUrls,
         lat,
