@@ -11,7 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const edge = vi.hoisted(() => ({ invoke: vi.fn() }));
 const toastError = vi.hoisted(() => vi.fn());
-// Снимок брони, который страница читает после заявки (readSent). null — не
+// Снимок брони, который хук заявки читает после неё (useCreateRental). null — не
 // прочитался, и сводка остаётся на расчёте браузера.
 const db = vi.hoisted(() => ({ bookingSnap: null as Record<string, unknown> | null }));
 

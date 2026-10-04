@@ -22,7 +22,7 @@ import BookingStatusBadge from '../components/common/BookingStatusBadge'
 import { dateRange, money, shortName } from '../domain/push'
 import { pushLangOf } from '../lib/push'
 import { formatDay } from '../domain/dates'
-import { useCreateRental } from '../hooks/mutations/useCreateRental'
+import { useCreateRental, type SentBooking } from '../hooks/mutations/useCreateRental'
 import { errorText, UserFacingError } from '../lib/errorText'
 
 // Здесь лежали три собственные карты. Одна из них разошлась с витриной:
@@ -141,13 +141,10 @@ export default function ItemDetail() {
   // перечитываются (invalidateBookingCaches). До 03.10 «Mes locations»,
   // открытые меньше минуты назад, показывали список без новой заявки.
   const createRental = useCreateRental()
-  // Пока читается снимок брони, кнопка тоже занята: заявка уже ушла, и
-  // второе нажатие было бы второй заявкой.
-  const [readingSent, setReadingSent] = useState(false)
-  const requestLoading = createRental.isPending || readingSent
+  const requestLoading = createRental.isPending
   const [error, setError] = useState('')
   const [loadError, setLoadError] = useState(false)
-  // Что ушло в заявке — суммы из брони, которую записал сервер (readSent).
+  // Что ушло в заявке — суммы из брони, которую записал сервер (sentOf).
   const [sent, setSent] = useState<SentRequest | null>(null)
   const requestSent = sent !== null
 
@@ -345,36 +342,27 @@ export default function ItemDetail() {
     ? Math.round((item.price_per_day * totalDays - rental.total) * 100) / 100
     : 0
 
-  // Сводка «Demande envoyée» — по снимку, который сервер записал в бронь:
-  // именно его увидит и примет владелец. Браузер считает по той же формуле
-  // (_shared/pricing.ts), но владелец мог сменить цену, пока страница была
-  // открыта, — и экран назвал бы сумму, которой в брони нет. Снимок не
-  // прочитался — остаётся расчёт браузера: заявка-то ушла, и «ошибка»
-  // здесь была бы враньём в другую сторону.
-  const readSent = async (bookingId: string | undefined): Promise<SentRequest> => {
-    const estimate: SentRequest = {
-      rental: rental.total, deposit: item?.deposit ?? 0,
-      delivery: deliveryFee > 0 ? deliveryFee : null,
-      operatorFee: operatorFee > 0 ? operatorFee : null,
-      operatorDays: operatorFee > 0 ? operatorDays : null,
-    }
-    if (!bookingId) return estimate
-    try {
-      const { data } = await supabase.from('bookings')
-        .select('total_price, deposit_amount, delivery_requested, delivery_fee, operator_requested, operator_fee, operator_days')
-        .eq('id', bookingId).maybeSingle()
-      if (!data) return estimate
-      return {
-        rental: Number(data.total_price),
-        deposit: Number(data.deposit_amount ?? 0),
-        delivery: data.delivery_requested && data.delivery_fee != null ? Number(data.delivery_fee) : null,
-        operatorFee: data.operator_requested && data.operator_fee != null ? Number(data.operator_fee) : null,
-        operatorDays: data.operator_requested ? data.operator_days : null,
+  // Сводка «Demande envoyée» — по снимку, который сервер записал в бронь
+  // (useCreateRental читает его сразу после заявки): именно его увидит и
+  // примет владелец. Браузер считает по той же формуле (_shared/pricing.ts),
+  // но владелец мог сменить цену, пока страница была открыта, — и экран
+  // назвал бы сумму, которой в брони нет. Снимок не прочитался — остаётся
+  // расчёт браузера: заявка-то ушла, и «ошибка» здесь была бы враньём в
+  // другую сторону.
+  const sentOf = (snap: SentBooking | null): SentRequest => snap
+    ? {
+        rental: Number(snap.total_price),
+        deposit: Number(snap.deposit_amount ?? 0),
+        delivery: snap.delivery_requested && snap.delivery_fee != null ? Number(snap.delivery_fee) : null,
+        operatorFee: snap.operator_requested && snap.operator_fee != null ? Number(snap.operator_fee) : null,
+        operatorDays: snap.operator_requested ? snap.operator_days : null,
       }
-    } catch {
-      return estimate
-    }
-  }
+    : {
+        rental: rental.total, deposit: item?.deposit ?? 0,
+        delivery: deliveryFee > 0 ? deliveryFee : null,
+        operatorFee: operatorFee > 0 ? operatorFee : null,
+        operatorDays: operatorFee > 0 ? operatorDays : null,
+      }
 
   const handleRequest = async () => {
     if (!user || !item || !startDate || !endDate) return
@@ -388,14 +376,13 @@ export default function ItemDetail() {
       // при отказе тот прячет тело ответа, и до 23.09 человек читал здесь
       // «Edge Function returned a non-2xx status code» вместо «эти даты
       // уже заняты».
-      const { booking_id } = await createRental.mutateAsync({
+      const { sent: snap } = await createRental.mutateAsync({
         item_id: item.id, start_date: startDate, end_date: endDate,
         message: requestMessage.trim() || undefined, delivery_requested: wantsDelivery,
         operator_requested: wantsOperator,
         operator_days: wantsOperator ? operatorDays : undefined,
       })
-      setReadingSent(true)
-      try { setSent(await readSent(booking_id)) } finally { setReadingSent(false) }
+      setSent(sentOf(snap))
     } catch (err) {
       console.error('[request-rental]', err)
       setError(errorText(t, err, 'itemDetail.requestError'))
@@ -714,7 +701,7 @@ export default function ItemDetail() {
               // Суммы — ВЕСЬ выбор, а не только аренда и залог: до 04.10 после
               // отправки пропадали оператор, доставка и итог, то есть экран
               // называл меньше, чем человек отдаст при встрече. Строки — из
-              // брони (readSent), итог — их сумма, как «Total estimé» до
+              // брони (sentOf), итог — их сумма, как «Total estimé» до
               // отправки.
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <h3 style={{ fontWeight: 800, margin: 0 }}>{t('itemDetail.requestSent')}</h3>
