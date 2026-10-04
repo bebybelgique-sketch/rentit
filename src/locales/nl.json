@@ -601,6 +601,8 @@
     "handoverTimeHint": "Dagen worden per dag geboekt: spreek hier het uur van ophalen en terugbrengen af.",
     "nothingCharged": "Er wordt niets afgerekend. {{owner}} heeft 24 u om te antwoorden.",
     "depositShort": "{{amount}} borg",
+    "sentRental": "Huur",
+    "sentTotal": "Totaal ter plaatse te betalen",
     "lateFeeLine": "Te late teruggave: {{amount}} / dag",
     "publishedTitle": "Advertentie gepubliceerd",
     "publishedLine": "{{price}}/dag · nu zichtbaar",

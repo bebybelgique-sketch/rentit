@@ -601,6 +601,8 @@
     "handoverTimeHint": "Les dates se réservent à la journée : convenez ici de l’heure de remise et de retour.",
     "nothingCharged": "Rien n'est prélevé. {{owner}} a 24 h pour répondre.",
     "depositShort": "{{amount}} caution",
+    "sentRental": "Location",
+    "sentTotal": "Total à régler sur place",
     "lateFeeLine": "Retard : {{amount}} / jour",
     "publishedTitle": "Annonce publiée",
     "publishedLine": "{{price}}/jour · visible maintenant",

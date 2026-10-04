@@ -68,7 +68,10 @@ describe('useCreateRental', () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual(mockRentalResponse); // Expect { booking_id: ... }
+    // booking_id — как прежде; sent — снимок сумм брони для экрана «Demande
+    // envoyée». Здесь supabase.from не замокан, снимок не читается — и это
+    // null, а не упавшая мутация: заявка к этому моменту уже создана.
+    expect(result.current.data).toEqual({ ...mockRentalResponse, sent: null });
   });
 
   it('should handle error on create rental failure', async () => {
