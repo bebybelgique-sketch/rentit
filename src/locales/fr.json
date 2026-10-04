@@ -1,4 +1,9 @@
 {
+  "region": {
+    "name": "Brabant wallon et Namurois",
+    "in": "en Brabant wallon et dans le Namurois",
+    "of": "du Brabant wallon et du Namurois"
+  },
   "authErrors": {
     "email_invalid": "Cette adresse e-mail n'est pas valide.",
     "user_already_exists": "Cette adresse est déjà utilisée. Connectez-vous ou demandez un nouveau mot de passe.",
@@ -458,7 +463,7 @@
   "shops": {
     "eyebrow": "Pour les professionnels",
     "title": "Vous louez du matériel ? Vos outils peuvent aussi vivre ici.",
-    "lede": "RentIt est une vitrine d'outils en Brabant wallon. Le client choisit un outil et des dates, vous acceptez ou refusez, et vous vous arrangez directement. Rien de plus, et surtout rien d'autre.",
+    "lede": "RentIt est une vitrine d'outils $t(region.in). Le client choisit un outil et des dates, vous acceptez ou refusez, et vous vous arrangez directement. Rien de plus, et surtout rien d'autre.",
     "haveTitle": "Ce que vous avez aujourd'hui",
     "have1": "Vos annonces en ligne immédiatement, sans frais.",
     "have2": "Le client choisit ses dates ; celles déjà prises ne lui sont plus proposées.",
@@ -471,7 +476,7 @@
     "not3": "Aucune commission aujourd'hui. Si des options payantes arrivent un jour, elles seront annoncées, pas glissées.",
     "not4": "Aucun trafic promis. Une annonce est visible, elle ne se vend pas toute seule.",
     "stateTitle": "Où nous en sommes, sans arrondi",
-    "stateBody": "La vitrine est neuve : les annonces de démonstration ont été retirées, parce qu'un catalogue inventé ne dit rien de vrai. Nous cherchons les premiers loueurs du Brabant wallon. Être le premier, c'est peu de concurrence et une oreille attentive — pas une file d'attente de clients.",
+    "stateBody": "La vitrine est neuve : les annonces de démonstration ont été retirées, parce qu'un catalogue inventé ne dit rien de vrai. Nous cherchons les premiers loueurs $t(region.of). Être le premier, c'est peu de concurrence et une oreille attentive — pas une file d'attente de clients.",
     "ctaPrimary": "Créer un compte",
     "ctaSecondary": "Voir la vitrine"
   },
@@ -497,7 +502,7 @@
   "addPhotoLater": "Plus tard — déposer mon outil",
   "landing": {
     "footerCountry": "Belgique",
-    "eyebrow": "Brabant Wallon — entre voisins",
+    "eyebrow": "$t(region.name) — entre voisins",
     "h1a": "Vos outils dorment.",
     "h1b": "Ceux du voisin aussi.",
     "lede": "Déposez un outil : votre annonce est visible immédiatement, gratuitement. Un voisin vous contacte, vous décidez, vous êtes payé en main propre.",
@@ -506,7 +511,7 @@
     "liveCount_one": "{{count}} outil en ligne aujourd’hui.",
     "liveCount_other": "{{count}} outils en ligne aujourd’hui.",
     "liveBody": "Vos voisins ont déjà commencé. Le vôtre rejoindrait la liste en cinq minutes.",
-    "zeroBody": "RentIt démarre en Brabant Wallon, et nous ne prétendons pas le contraire. Le vôtre serait le premier que verront les voisins.",
+    "zeroBody": "RentIt démarre $t(region.in), et nous ne prétendons pas le contraire. Le vôtre serait le premier que verront les voisins.",
     "photoAlt": "Vieille caisse à outils en bois, un ciseau à bois et une plane posés devant.",
     "photoCaption": "Photo d’illustration — les outils de la vitrine sont ceux de vos voisins.",
     "stepsLabel": "Ce qui se passe quand vous déposez",
@@ -531,9 +536,9 @@
     "renterLabel": "Vous cherchez, vous ne déposez pas ?",
     "renterTitle": "La vitrine est vide aujourd’hui — nous ne le cachons pas.",
     "renterBody": "Regardez ce qu’il y a, ou revenez quand un voisin aura déposé le premier outil.",
-    "finalTitle": "Le premier outil du Brabant Wallon n’est pas encore en ligne.",
+    "finalTitle": "Le premier outil $t(region.of) n’est pas encore en ligne.",
     "renterTitleLive": "Besoin d’un outil ? Un voisin l’a peut-être.",
-    "renterBodyLive": "Chaque outil de la vitrine appartient à quelqu’un du Brabant wallon. Vous choisissez les dates, il décide, vous réglez en main propre.",
+    "renterBodyLive": "Chaque outil de la vitrine appartient à quelqu’un $t(region.of). Vous choisissez les dates, il décide, vous réglez en main propre.",
     "finalTitleLive": "Un outil qui dort dans votre garage peut servir à un voisin ce week-end.",
     "finalBody": "Cinq minutes, gratuit, et vous restez maître de chaque demande.",
     "finalCta": "Déposer un outil",

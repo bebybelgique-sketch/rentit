@@ -1,4 +1,9 @@
 {
+  "region": {
+    "name": "Walloon Brabant and the Namur area",
+    "in": "in Walloon Brabant and the Namur area",
+    "of": "from Walloon Brabant and the Namur area"
+  },
   "authErrors": {
     "email_invalid": "This email address is not valid.",
     "user_already_exists": "This address is already in use. Log in or ask for a new password.",
@@ -458,7 +463,7 @@
   "shops": {
     "eyebrow": "For professionals",
     "title": "You rent out equipment? Your tools can live here too.",
-    "lede": "RentIt is a tool showcase in Walloon Brabant. A customer picks a tool and dates, you accept or decline, and you arrange the rest directly. Nothing more — and nothing else.",
+    "lede": "RentIt is a tool showcase $t(region.in). A customer picks a tool and dates, you accept or decline, and you arrange the rest directly. Nothing more — and nothing else.",
     "haveTitle": "What you get today",
     "have1": "Your listings online immediately, at no cost.",
     "have2": "Customers pick their dates; dates already taken are no longer offered.",
@@ -471,7 +476,7 @@
     "not3": "No commission today. If paid options ever arrive, they will be announced, not slipped in.",
     "not4": "No traffic promised. A listing is visible; it does not sell itself.",
     "stateTitle": "Where we actually stand",
-    "stateBody": "The showcase is new: the demo listings were removed, because an invented catalogue tells you nothing true. We are looking for the first rental businesses in Walloon Brabant. Being first means little competition and a listening ear — not a queue of customers.",
+    "stateBody": "The showcase is new: the demo listings were removed, because an invented catalogue tells you nothing true. We are looking for the first rental businesses $t(region.in). Being first means little competition and a listening ear — not a queue of customers.",
     "ctaPrimary": "Create an account",
     "ctaSecondary": "See the showcase"
   },
@@ -497,7 +502,7 @@
   "addPhotoLater": "Later — list my tool",
   "landing": {
     "footerCountry": "Belgium",
-    "eyebrow": "Walloon Brabant — between neighbours",
+    "eyebrow": "$t(region.name) — between neighbours",
     "h1a": "Your tools are asleep.",
     "h1b": "So are your neighbour’s.",
     "lede": "List a tool: your ad goes live immediately, free of charge. A neighbour gets in touch, you decide, you are paid in person.",
@@ -506,7 +511,7 @@
     "liveCount_one": "{{count}} tool online today.",
     "liveCount_other": "{{count}} tools online today.",
     "liveBody": "Your neighbours have already started. Yours would join the list in five minutes.",
-    "zeroBody": "RentIt is just starting in Walloon Brabant, and we are not pretending otherwise. Yours would be the first one neighbours see.",
+    "zeroBody": "RentIt is just starting $t(region.in), and we are not pretending otherwise. Yours would be the first one neighbours see.",
     "photoAlt": "An old wooden toolbox with a chisel and a drawknife laid in front of it.",
     "photoCaption": "Illustration — the tools in the listings belong to your neighbours.",
     "stepsLabel": "What happens when you list",
@@ -531,9 +536,9 @@
     "renterLabel": "Looking to borrow, not to lend?",
     "renterTitle": "There is nothing listed today — we are not hiding it.",
     "renterBody": "Have a look anyway, or come back once a neighbour has listed the first tool.",
-    "finalTitle": "The first tool in Walloon Brabant is not online yet.",
+    "finalTitle": "The first tool $t(region.in) is not online yet.",
     "renterTitleLive": "Need a tool? A neighbour may have it.",
-    "renterBodyLive": "Every tool in the showcase belongs to someone in Walloon Brabant. You pick the dates, the owner decides, you pay in person at handover.",
+    "renterBodyLive": "Every tool in the showcase belongs to someone $t(region.in). You pick the dates, the owner decides, you pay in person at handover.",
     "finalTitleLive": "A tool sleeping in your garage could help a neighbour this weekend.",
     "finalBody": "Five minutes, free, and every request stays your call.",
     "finalCta": "List a tool",
