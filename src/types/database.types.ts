@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       admin_audit_log: {
@@ -20,7 +15,7 @@ export type Database = {
           actor_id: string | null
           created_at: string
           id: number
-          payload: Json
+          payload: NonNullable<Json>
           target_id: string
           target_table: string
         }
@@ -29,7 +24,7 @@ export type Database = {
           actor_id?: string | null
           created_at?: string
           id?: never
-          payload?: Json
+          payload?: NonNullable<Json>
           target_id: string
           target_table: string
         }
@@ -38,7 +33,7 @@ export type Database = {
           actor_id?: string | null
           created_at?: string
           id?: never
-          payload?: Json
+          payload?: NonNullable<Json>
           target_id?: string
           target_table?: string
         }
@@ -144,15 +139,15 @@ export type Database = {
           created_at: string
           delivery_fee: number | null
           delivery_requested: boolean
-          operator_days: number | null
-          operator_fee: number | null
-          operator_requested: boolean
           deposit_amount: number
           deposit_returned: boolean
           end_date: string
           id: string
           insurance_amount: number
           item_id: string
+          operator_days: number | null
+          operator_fee: number | null
+          operator_requested: boolean
           platform_fee: number
           renter_id: string
           request_message: string | null
@@ -172,22 +167,22 @@ export type Database = {
           created_at?: string
           delivery_fee?: number | null
           delivery_requested?: boolean
-          operator_days?: number | null
-          operator_fee?: number | null
-          operator_requested?: boolean
           deposit_amount?: number
           deposit_returned?: boolean
           end_date: string
           id?: string
           insurance_amount?: number
           item_id: string
+          operator_days?: number | null
+          operator_fee?: number | null
+          operator_requested?: boolean
           platform_fee?: number
           renter_id: string
           request_message?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_payment_intent_id?: string | null
-          total_days?: number
+          total_days?: never
           total_price: number
         }
         Update: {
@@ -200,22 +195,22 @@ export type Database = {
           created_at?: string
           delivery_fee?: number | null
           delivery_requested?: boolean
-          operator_days?: number | null
-          operator_fee?: number | null
-          operator_requested?: boolean
           deposit_amount?: number
           deposit_returned?: boolean
           end_date?: string
           id?: string
           insurance_amount?: number
           item_id?: string
+          operator_days?: number | null
+          operator_fee?: number | null
+          operator_requested?: boolean
           platform_fee?: number
           renter_id?: string
           request_message?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_payment_intent_id?: string | null
-          total_days?: number
+          total_days?: never
           total_price?: number
         }
         Relationships: [
@@ -374,8 +369,6 @@ export type Database = {
           created_at: string
           delivery_fee: number | null
           delivery_radius_km: number | null
-          operator_fee_per_day: number | null
-          operator_terms_accepted_at: string | null
           deposit: number
           description: string | null
           id: string
@@ -385,8 +378,10 @@ export type Database = {
           lng: number | null
           location: unknown
           min_notice_days: number
+          operator_fee_per_day: number | null
+          operator_terms_accepted_at: string | null
           owner_id: string
-          photos: Json
+          photos: NonNullable<Json>
           price_3days: number | null
           price_per_day: number
           price_week: number | null
@@ -403,8 +398,6 @@ export type Database = {
           created_at?: string
           delivery_fee?: number | null
           delivery_radius_km?: number | null
-          operator_fee_per_day?: number | null
-          operator_terms_accepted_at?: string | null
           deposit?: number
           description?: string | null
           id?: string
@@ -412,10 +405,12 @@ export type Database = {
           lat?: number | null
           late_fee_per_day?: number | null
           lng?: number | null
-          location?: unknown
+          location?: never
           min_notice_days?: number
+          operator_fee_per_day?: number | null
+          operator_terms_accepted_at?: string | null
           owner_id: string
-          photos?: Json
+          photos?: NonNullable<Json>
           price_3days?: number | null
           price_per_day: number
           price_week?: number | null
@@ -432,8 +427,6 @@ export type Database = {
           created_at?: string
           delivery_fee?: number | null
           delivery_radius_km?: number | null
-          operator_fee_per_day?: number | null
-          operator_terms_accepted_at?: string | null
           deposit?: number
           description?: string | null
           id?: string
@@ -441,10 +434,12 @@ export type Database = {
           lat?: number | null
           late_fee_per_day?: number | null
           lng?: number | null
-          location?: unknown
+          location?: never
           min_notice_days?: number
+          operator_fee_per_day?: number | null
+          operator_terms_accepted_at?: string | null
           owner_id?: string
-          photos?: Json
+          photos?: NonNullable<Json>
           price_3days?: number | null
           price_per_day?: number
           price_week?: number | null
@@ -857,7 +852,7 @@ export type Database = {
         }[]
       }
       my_invite: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           code: string
           joined: number
@@ -963,8 +958,7 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
@@ -988,8 +982,7 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
@@ -1013,8 +1006,7 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
