@@ -555,6 +555,8 @@
   },
   "itemDetail": {
     "operatorDaysLabel": "Dagen met bediener",
+    "prevMonth": "Vorige maand",
+    "nextMonth": "Volgende maand",
     "operatorDaysOf": "van {{days}} d huur",
     "operatorOffer": "Met bediener: +€{{fee}} / dag",
     "operatorAsk": "Met bediener (+€{{fee}} / dag)",

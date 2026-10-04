@@ -793,6 +793,8 @@ export default function ItemDetail() {
                     {/* Calendar nav */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                       <button
+                        type="button"
+                        aria-label={t('itemDetail.prevMonth')}
                         onClick={() => setCalMonth(p => {
                           const d = new Date(p.year, p.month - 1)
                           return { year: d.getFullYear(), month: d.getMonth() }
@@ -803,6 +805,8 @@ export default function ItemDetail() {
                       </button>
                       <strong style={{ fontWeight: '700', fontSize: '14px' }}>{monthLabel}</strong>
                       <button
+                        type="button"
+                        aria-label={t('itemDetail.nextMonth')}
                         onClick={() => setCalMonth(p => {
                           const d = new Date(p.year, p.month + 1)
                           return { year: d.getFullYear(), month: d.getMonth() }
@@ -838,12 +842,19 @@ export default function ItemDetail() {
                           : tooSoon ? t('itemDetail.dayTooSoon')
                           : past ? t('itemDetail.dayPast')
                           : undefined
+                        // День — настоящая кнопка (аудит 04.10). Был <div> с
+                        // onClick: ни фокуса, ни Enter, ни роли — даты брони
+                        // без мыши было не выбрать. Недоступный день — disabled:
+                        // вне порядка Tab, но диктор читает его вместе с
+                        // причиной из aria-label. Выбранные — aria-pressed.
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={day}
                             className={`cal-day ${off ? 'booked' : 'available'}${isToday ? ' today' : ''}`}
                             title={why}
-                            aria-disabled={off || undefined}
+                            disabled={off}
+                            aria-pressed={!off ? !!(isStart || isEnd || inRange) : undefined}
                             aria-label={why ? `${day} — ${why}` : undefined}
                             style={{
                               background: isStart || isEnd ? '#080808'
@@ -860,7 +871,7 @@ export default function ItemDetail() {
                             onClick={() => !off && handleDayClick(day)}
                           >
                             {day}
-                          </div>
+                          </button>
                         )
                       })}
                     </div>

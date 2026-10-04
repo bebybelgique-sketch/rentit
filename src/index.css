@@ -675,6 +675,13 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 /* ── CALENDAR ────────────────────────────────────────────────── */
 .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .cal-day {
+  /* День — <button>: снять оформление кнопки по умолчанию. */
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  font-family: inherit;
+  color: inherit;
   aspect-ratio: 1;
   display: flex;
   align-items: center;
@@ -687,6 +694,7 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 .cal-day.selected { background: var(--primary); color: var(--text-on-dark); }
 .cal-day.available:hover { background: #eee; cursor: pointer; }
 .cal-day.today { font-weight: 800; }
+.cal-day:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .cal-header { font-size: 10px; font-weight: 500; font-family: var(--font-mono); color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: 0.06em; }
 
 @media (max-width: 600px) {

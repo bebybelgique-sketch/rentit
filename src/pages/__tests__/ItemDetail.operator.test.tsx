@@ -76,6 +76,22 @@ describe('оператор на странице вещи', () => {
     vi.useRealTimers();
   });
 
+  // Дни календаря — настоящие кнопки (аудит 04.10): Tab, Enter, роль и
+  // состояние. Недоступный день — disabled, причина — в имени.
+  it('дни календаря — кнопки: выбранные нажаты, прошедшие недоступны', async () => {
+    renderPage();
+    await screen.findByText('Mini-pelle 1 t');
+    const d13 = screen.getByRole('button', { name: '13' });
+    const d14 = screen.getByRole('button', { name: '14' });
+    fireEvent.click(d13);
+    fireEvent.click(d14);
+    expect(d13).toHaveAttribute('aria-pressed', 'true');
+    expect(d14).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '20' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: 'Mois précédent' }));
+    expect(screen.getByRole('button', { name: '15 — Date passée' })).toBeDisabled();
+  });
+
   it('предложение видно среди условий', async () => {
     renderPage();
     expect(await screen.findByText('Avec opérateur : +€160.00 / jour')).toBeInTheDocument();
