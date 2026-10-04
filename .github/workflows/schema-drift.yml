@@ -5,6 +5,9 @@ on:
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 # Образ и версии действий закреплены так же, как в gates.yml, — причина там.
 jobs:
   drift:
@@ -22,11 +25,28 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
         run: npm ci
 
+      # В базу ходит роль schema_reader (миграция 60): структура public видна,
+      # данные нет. Личный токен Supabase здесь НЕ используется — он управляет
+      # всеми проектами учётки. Пустой секрет — падение с понятной причиной, а
+      # не «дрейф» и не молчаливое «всё сошлось».
       - name: Regenerate database types
-        run: npm run generate-types
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Секрет SCHEMA_READER_DB_URL не задан"
+            exit 1
+          fi
+          npm run generate-types
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_URL: ${{ secrets.SCHEMA_READER_DB_URL }}
 
       - name: Fail when generated types drift
         run: git diff --exit-code -- src/types/database.types.ts
+
+      # При дрейфе свежий файл лежит в артефакте: скачать и закоммитить, если
+      # изменение схемы намеренное. Содержимое — те же типы, что в репозитории.
+      - name: Upload regenerated types
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-types
+          path: src/types/database.types.ts
