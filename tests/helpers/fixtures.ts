@@ -155,6 +155,11 @@ export async function createItem(
      * сперва решает, возит он или нет.
      */
     delivery?: { fee: string; radiusKm?: string }
+    /**
+     * Объявить оператора: галка, цена за день и отметка о страховке — без
+     * отметки форма объявление с оператором не примет.
+     */
+    operator?: { feePerDay: string }
   } = {},
 ): Promise<CreatedItem> {
   const title = opts.title ?? uniqueTitle()
@@ -168,10 +173,17 @@ export async function createItem(
   if (opts.category) {
     await page.locator('select').first().selectOption(opts.category)
   }
+  // Раскрытие нативное (<details>): пока оно закрыто, поля не видны и
+  // Playwright по ним не кликнет — открываем так же, как человек. Второй клик
+  // по summary его ЗАКРЫЛ бы, поэтому сперва спрашиваем, открыто ли оно.
+  const openOptional = async () => {
+    const details = page.locator('details.form-details')
+    if (!(await details.evaluate((d) => (d as HTMLDetailsElement).open))) {
+      await details.locator('summary').click()
+    }
+  }
   if (opts.delivery) {
-    // Раскрытие нативное (<details>): пока оно закрыто, поля не видны и
-    // Playwright по ним не кликнет — открываем так же, как человек.
-    await page.locator('details.form-details summary').click()
+    await openOptional()
     const toggle = page.locator('#li-delivers')
     await expect(toggle).toBeVisible({ timeout: 10000 })
     await toggle.check()
@@ -181,6 +193,16 @@ export async function createItem(
     await expect(fee).toBeVisible({ timeout: 10000 })
     await fee.fill(opts.delivery.fee)
     if (opts.delivery.radiusKm) await page.locator('#li-delivery-radius').fill(opts.delivery.radiusKm)
+  }
+  if (opts.operator) {
+    await openOptional()
+    const toggle = page.locator('#li-operates')
+    await expect(toggle).toBeVisible({ timeout: 10000 })
+    await toggle.check()
+    const fee = page.locator('#li-operator-fee')
+    await expect(fee).toBeVisible({ timeout: 10000 })
+    await fee.fill(opts.operator.feePerDay)
+    await page.locator('#li-operator-consent').check()
   }
   if (opts.withPosition) {
     await page.getByRole('button', { name: /Utiliser ma position/i }).click()
