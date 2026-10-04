@@ -154,7 +154,9 @@
     "packageWeekend": "Het weekendpakket",
     "packageWeekendLabel": "Weekendpakket (€)",
     "packageWeekendHint": "van zaterdag tot maandag",
-    "geolocationDenied": "Locatietoegang geweigerd. Voer uw adres handmatig in.",
+    "geoDenied": "De browser weigerde de locatie. Sta ze toe voor deze site (slotje links van het adres) en probeer opnieuw.",
+    "geoUnavailable": "Locatie niet gevonden: locatie staat op dit toestel misschien uit.",
+    "geoTimeout": "De locatie kwam niet op tijd. Probeer opnieuw.",
     "titleRequired": "Titel is vereist.",
     "priceMustBePositive": "Prijs moet groter zijn dan 0.",
     "depositNonNegative": "Borg kan niet negatief zijn.",
@@ -645,7 +647,8 @@
     "viewMap": "Kaart",
     "viewLabel": "Weergave",
     "resetFilters": "Wissen",
-    "availableTo": "tot"
+    "availableTo": "tot",
+    "youAreHere": "U bent hier"
   },
   "photoGrid": {
     "titleHandover": "Staat gereedschap bij overdracht",

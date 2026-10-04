@@ -37,9 +37,19 @@ export type PushKind =
   // А в ленте «что случилось, пока меня не было» отмена — первое, что
   // человек должен увидеть. Тексты — мои, не из пакета.
   | 'cancelled'
+  // Напоминания (миграция 57). Их ставит не событие, а время: строку ленты
+  // пишет queue_booking_reminders по расписанию, push — expire-bookings
+  // (_shared/reminders.ts). В пакете Design их не было, тексты мои:
+  //   request_reminder   владельцу — заявка ждёт 18–22 ч, сгорит через 24 ч;
+  //   return_tomorrow    арендатору — накануне конца многодневной аренды;
+  //   return_unconfirmed владельцу — срок кончился вчера, возврат не отмечен.
+  | 'request_reminder'
+  | 'return_tomorrow'
+  | 'return_unconfirmed'
 
 export const PUSH_KINDS: readonly PushKind[] = [
   'new_request', 'accepted', 'declined', 'expired_renter', 'expired_owner', 'new_message', 'cancelled',
+  'request_reminder', 'return_tomorrow', 'return_unconfirmed',
 ]
 
 interface Copy {
@@ -97,6 +107,18 @@ const COPY: Record<PushLang, Record<PushKind, Copy>> = {
       title: '{name} a annulé',
       body: "{item}, {dates}. La réservation n'aura pas lieu.",
     },
+    request_reminder: {
+      title: 'Demande en attente : « {item} »',
+      body: '{name} · {dates}. Sans réponse, elle expire dans quelques heures.',
+    },
+    return_tomorrow: {
+      title: 'Retour demain : « {item} »',
+      body: "À rendre à {owner}. Convenez de l'heure dans la conversation.",
+    },
+    return_unconfirmed: {
+      title: 'Retour à confirmer : « {item} »',
+      body: "La location avec {name} s'est terminée hier. Outil récupéré ? Appuyez sur « Marquer retourné ».",
+    },
   },
   nl: {
     new_request: {
@@ -127,6 +149,18 @@ const COPY: Record<PushLang, Record<PushKind, Copy>> = {
       title: '{name} heeft geannuleerd',
       body: '{item}, {dates}. De reservering gaat niet door.',
     },
+    request_reminder: {
+      title: 'Aanvraag wacht: „{item}"',
+      body: '{name} · {dates}. Zonder antwoord vervalt ze binnen enkele uren.',
+    },
+    return_tomorrow: {
+      title: 'Morgen terug: „{item}"',
+      body: 'Terug naar {owner}. Spreek het uur af in het gesprek.',
+    },
+    return_unconfirmed: {
+      title: 'Teruggave bevestigen: „{item}"',
+      body: 'De verhuur met {name} eindigde gisteren. Gereedschap terug? Tik op „Markeer als teruggegeven".',
+    },
   },
   en: {
     new_request: {
@@ -156,6 +190,18 @@ const COPY: Record<PushLang, Record<PushKind, Copy>> = {
     cancelled: {
       title: '{name} cancelled',
       body: "{item}, {dates}. The booking won't go ahead.",
+    },
+    request_reminder: {
+      title: 'Request waiting: "{item}"',
+      body: '{name} · {dates}. Without a reply it expires in a few hours.',
+    },
+    return_tomorrow: {
+      title: 'Return tomorrow: "{item}"',
+      body: 'Due back to {owner}. Agree on the time in the conversation.',
+    },
+    return_unconfirmed: {
+      title: 'Confirm the return: "{item}"',
+      body: 'The rental with {name} ended yesterday. Got the tool back? Tap "Mark returned".',
     },
   },
 }
@@ -352,6 +398,11 @@ export const DELIVERY: Record<PushKind, { ttl: number; urgency: 'normal' | 'high
   // Push для отмены не уходит (только лента) — запись здесь ради полноты
   // таблицы: без неё тип не сошёлся бы.
   cancelled: { ttl: 24 * 3600, urgency: 'normal' },
+  // Напоминание о заявке срочное и короткое: через несколько часов заявка
+  // сгорит, и доставлять его позже незачем.
+  request_reminder: { ttl: 6 * 3600, urgency: 'high' },
+  return_tomorrow: { ttl: 12 * 3600, urgency: 'normal' },
+  return_unconfirmed: { ttl: 24 * 3600, urgency: 'normal' },
 }
 
 /**
