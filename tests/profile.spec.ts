@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { login, dismissCookies } from './helpers/app'
+import { login, dismissCookies, UI } from './helpers/app'
 
 const OWNER_EMAIL = process.env.TEST_OWNER_EMAIL ?? ''
 const OWNER_PASSWORD = process.env.TEST_OWNER_PASSWORD ?? ''
@@ -42,5 +42,25 @@ test.describe('профиль', () => {
 
     const body = await page.locator('body').innerText()
     expect(body).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/)
+  })
+
+  // Сохранение профиля — дважды за два месяца оно ломалось у ВСЕХ, и оба
+  // раза молча: в августе на RETURNING *, с 24.09 по 03.10 — на политике,
+  // сверявшей колонку, которую вошедшему запретили читать (миграция 58).
+  // Без фото профиля выкладка закрыта, так что новый человек не мог выложить
+  // вещь. Сквозные проверки не видели этого: у их учёток фото и имя давно
+  // стоят, и путь сохранения не проходил ни один сценарий. Этот проходит.
+  test('сохранение профиля проходит', async ({ page }) => {
+    await login(page, OWNER_EMAIL, OWNER_PASSWORD)
+    await page.goto('/profile', { waitUntil: 'load' })
+    await dismissCookies(page)
+
+    const name = page.locator('#full_name')
+    await expect(name).toBeVisible({ timeout: 20000 })
+    const before = await name.inputValue()
+
+    await page.getByRole('button', { name: UI.profileSubmit }).click()
+    await expect(page.getByText(UI.profileSaved)).toBeVisible({ timeout: 20000 })
+    await expect(name).toHaveValue(before)
   })
 })
