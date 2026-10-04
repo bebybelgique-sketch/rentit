@@ -560,6 +560,8 @@
     "operatorAsk": "With operator (+€{{fee}} / day)",
     "operatorNote": "The owner operates the machine. Paid on site, together with the rental.",
     "operatorLine": "Operator €{{fee}} × {{days}} d",
+    "operatorLinePending": "Operator: days to be set",
+    "operatorDaysMissing": "Enter the days with operator",
     "perWeekend": "/ weekend (Sat → Mon)",
     "perThreeDays": "/ 3 days",
     "perWeek": "/ week",

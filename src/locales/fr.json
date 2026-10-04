@@ -560,6 +560,8 @@
     "operatorAsk": "Avec opérateur (+€{{fee}} / jour)",
     "operatorNote": "Le propriétaire conduit lui-même l’engin. À régler sur place, avec la location.",
     "operatorLine": "Opérateur €{{fee}} × {{days}} j",
+    "operatorLinePending": "Opérateur : jours à préciser",
+    "operatorDaysMissing": "Indiquez les jours avec opérateur",
     "perWeekend": "/ week-end (sam. → lun.)",
     "perThreeDays": "/ 3 jours",
     "perWeek": "/ semaine",

@@ -135,7 +135,8 @@ export default function ItemDetail() {
   // встрече.
   const [wantsDelivery, setWantsDelivery] = useState(false)
   const [wantsOperator, setWantsOperator] = useState(false)
-  // Дни работы оператора — не дни аренды (миграция 56). Пусто — вся бронь.
+  // Дни работы оператора — не дни аренды (миграция 56). Пусто — не выбрано:
+  // заявку с оператором без дней не отправить (см. operatorDays).
   const [operatorDaysInput, setOperatorDaysInput] = useState<number | null>(null)
   // Заявка — мутацией, а не прямым вызовом функции: после неё брони
   // перечитываются (invalidateBookingCaches). До 03.10 «Mes locations»,
@@ -326,12 +327,19 @@ export default function ItemDetail() {
   // сервер), но в то, что арендатор отдаст при встрече, — входит.
   const deliveryFee = item && wantsDelivery && item.delivery_fee != null ? Number(item.delivery_fee) : 0
   // Оператор — тоже отдельная услуга: в bookings.total_price не входит, но
-  // на месте платится. За дни работы, которые назвал арендатор (по
-  // умолчанию — вся бронь), как и считает сервер (миграция 56). От пакетов
-  // аренды не зависит: выходные за 150 € не делают оператора дешевле.
-  // Не больше длины брони: сменил даты на более короткие — дни подрезаются.
-  const operatorDays = Math.max(1, Math.min(operatorDaysInput ?? totalDays, totalDays))
-  const operatorFee = item && wantsOperator && item.operator_fee_per_day != null && totalDays > 0
+  // на месте платится. За дни работы, которые назвал арендатор, как и
+  // считает сервер (миграция 56). От пакетов аренды не зависит: выходные за
+  // 150 € не делают оператора дешевле. Не больше длины брони: сменил даты на
+  // более короткие — дни подрезаются.
+  //
+  // Значения по умолчанию НЕТ (до 04.10 им была вся бронь). Сколько дней
+  // нужен оператор, знает только арендатор, а сумма фиксируется в заявке:
+  // сб–пн — три дня брони, но работы, как правило, два. Молча подставленное
+  // число ошибается в обе стороны, поэтому поле пустое, и пока оно пустое,
+  // заявка не уходит (operatorDaysMissing).
+  const operatorDays = operatorDaysInput == null ? null : Math.max(1, Math.min(operatorDaysInput, totalDays))
+  const operatorDaysMissing = wantsOperator && totalDays > 0 && operatorDays == null
+  const operatorFee = item && wantsOperator && item.operator_fee_per_day != null && totalDays > 0 && operatorDays != null
     ? Math.round(Number(item.operator_fee_per_day) * operatorDays * 100) / 100
     : 0
   const totalPrice = totalDays > 0 && item ? rental.total + item.deposit + insuranceFee + deliveryFee + operatorFee : 0
@@ -380,7 +388,7 @@ export default function ItemDetail() {
         item_id: item.id, start_date: startDate, end_date: endDate,
         message: requestMessage.trim() || undefined, delivery_requested: wantsDelivery,
         operator_requested: wantsOperator,
-        operator_days: wantsOperator ? operatorDays : undefined,
+        operator_days: wantsOperator ? operatorDays ?? undefined : undefined,
       })
       setSent(sentOf(snap))
     } catch (err) {
@@ -918,6 +926,14 @@ export default function ItemDetail() {
                             <span>€{operatorFee.toFixed(2)}</span>
                           </div>
                         )}
+                        {/* Оператор выбран, дни — нет: итог ниже пока без него,
+                            и строка говорит об этом прямо, а не молчит. */}
+                        {operatorDaysMissing && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ color: 'var(--muted)' }}>{t('itemDetail.operatorLinePending')}</span>
+                            <span style={{ color: 'var(--muted)' }}>—</span>
+                          </div>
+                        )}
                         {deliveryFee > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                             <span style={{ color: 'var(--muted)' }}>{t('itemDetail.delivery')}</span>
@@ -943,7 +959,12 @@ export default function ItemDetail() {
                             id="wants-operator"
                             type="checkbox"
                             checked={wantsOperator}
-                            onChange={e => setWantsOperator(e.target.checked)}
+                            onChange={e => {
+                              setWantsOperator(e.target.checked)
+                              // Сняли оператора — выбор дней сброшен: при новом
+                              // выборе их снова называют явно.
+                              if (!e.target.checked) setOperatorDaysInput(null)
+                            }}
                             style={{ width: 'auto', minHeight: 0 }}
                           />
                           {t('itemDetail.operatorAsk', { fee: Number(item.operator_fee_per_day).toFixed(2) })}
@@ -957,8 +978,14 @@ export default function ItemDetail() {
                               min={1}
                               max={totalDays}
                               step={1}
-                              value={operatorDays}
-                              onChange={e => setOperatorDaysInput(parseInt(e.target.value, 10) || 1)}
+                              value={operatorDays ?? ''}
+                              aria-invalid={operatorDaysMissing || undefined}
+                              // Стёртое поле — снова «не выбрано», а не 1: `|| 1`
+                              // было вторым молчаливым значением.
+                              onChange={e => {
+                                const v = parseInt(e.target.value, 10)
+                                setOperatorDaysInput(Number.isFinite(v) ? v : null)
+                              }}
                               style={{ width: '72px', minHeight: 0 }}
                             />
                             <span style={{ color: 'var(--muted)' }}>{t('itemDetail.operatorDaysOf', { days: totalDays })}</span>
@@ -1023,11 +1050,14 @@ export default function ItemDetail() {
                     {error && <div className="error-msg" role="alert" style={{ marginBottom: '10px' }}>{error}</div>}
                     <button
                       onClick={handleRequest}
-                      disabled={!startDate || !endDate || requestLoading}
+                      disabled={!startDate || !endDate || requestLoading || operatorDaysMissing}
                       className="btn btn-primary"
                       style={{ width: '100%', minHeight: '44px', fontSize: '15px' }}
                     >
-                      {requestLoading ? t('common.loading') : !startDate || !endDate ? t('selectDatesHint') : t('itemDetail.sendRequest')}
+                      {requestLoading ? t('common.loading')
+                        : !startDate || !endDate ? t('selectDatesHint')
+                        : operatorDaysMissing ? t('itemDetail.operatorDaysMissing')
+                        : t('itemDetail.sendRequest')}
                     </button>
                     <p style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--font-mono)', textAlign: 'center', marginTop: '8px' }}>
                       {/* Ключ намеренно назван по факту, а не по отрицанию:

@@ -88,12 +88,34 @@ describe('оператор на странице вещи', () => {
     fireEvent.click(day(13));
     fireEvent.click(day(14));
     fireEvent.click(screen.getByLabelText('Avec opérateur (+€160.00 / jour)'));
+    fireEvent.change(screen.getByLabelText('Jours avec opérateur'), { target: { value: '2' } });
     expect(await screen.findByText('Opérateur €160.00 × 2 j')).toBeInTheDocument();
     expect(screen.getByText('€320.00')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Envoyer une demande de réservation' }));
     await screen.findByText('Demande envoyée !');
-    expect(edge.invoke).toHaveBeenCalledWith('request-rental', expect.objectContaining({ operator_requested: true }));
+    expect(edge.invoke).toHaveBeenCalledWith('request-rental', expect.objectContaining({ operator_requested: true, operator_days: 2 }));
+  });
+
+  // Значения по умолчанию у дней оператора нет (аудит 04.10): до этого им
+  // была вся бронь, и сб–пн молча считались тремя днями работы.
+  it('оператор без дней — суммы нет, заявка не уходит', async () => {
+    renderPage();
+    await screen.findByText('Mini-pelle 1 t');
+    fireEvent.click(day(10));
+    fireEvent.click(day(12));
+    fireEvent.click(screen.getByLabelText('Avec opérateur (+€160.00 / jour)'));
+    expect(await screen.findByText('Opérateur : jours à préciser')).toBeInTheDocument();
+    expect(screen.queryByText(/^Opérateur €160\.00 × \d+ j$/)).toBeNull();
+    expect((screen.getByLabelText('Jours avec opérateur') as HTMLInputElement).value).toBe('');
+    const send = screen.getByRole('button', { name: 'Indiquez les jours avec opérateur' });
+    expect(send).toBeDisabled();
+    fireEvent.click(send);
+    expect(edge.invoke).not.toHaveBeenCalled();
+    // Стёртое поле — снова «не выбрано», а не 1.
+    fireEvent.change(screen.getByLabelText('Jours avec opérateur'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText('Jours avec opérateur'), { target: { value: '' } });
+    expect(screen.getByRole('button', { name: 'Indiquez les jours avec opérateur' })).toBeDisabled();
   });
 
   // Дни оператора — не дни аренды (миграция 56): сб–пн — пакет выходных с
@@ -105,7 +127,7 @@ describe('оператор на странице вещи', () => {
     fireEvent.click(day(10));
     fireEvent.click(day(12));
     fireEvent.click(screen.getByLabelText('Avec opérateur (+€160.00 / jour)'));
-    expect(await screen.findByText('Opérateur €160.00 × 3 j')).toBeInTheDocument();
+    expect(screen.queryByText('Opérateur €160.00 × 3 j')).toBeNull();
     fireEvent.change(screen.getByLabelText('Jours avec opérateur'), { target: { value: '2' } });
     expect(await screen.findByText('Opérateur €160.00 × 2 j')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Envoyer une demande de réservation' }));
@@ -152,18 +174,19 @@ describe('оператор и пакеты аренды не смешивают�
     rates.price_week = null;
   });
 
-  const pick = async (from: number, to: number) => {
+  const pick = async (from: number, to: number, operatorDays: number) => {
     renderPage();
     await screen.findByText('Mini-pelle 1 t');
     fireEvent.click(day(from));
     fireEvent.click(day(to));
     fireEvent.click(screen.getByLabelText('Avec opérateur (+€160.00 / jour)'));
+    fireEvent.change(screen.getByLabelText('Jours avec opérateur'), { target: { value: String(operatorDays) } });
   };
   // Сумма строки разбора стоит справа от подписи.
   const amount = (label: string) => screen.getByText(label).nextElementSibling?.textContent;
 
   it('сб–вс: пакет выходных 150 и оператор 2 × 160', async () => {
-    await pick(10, 11);
+    await pick(10, 11, 2);
     expect(await screen.findByText('Opérateur €160.00 × 2 j')).toBeInTheDocument();
     expect(amount('€150.00 × 1 week-end')).toBe('€150.00');
     expect(amount('Opérateur €160.00 × 2 j')).toBe('€320.00');
@@ -171,7 +194,7 @@ describe('оператор и пакеты аренды не смешивают�
   });
 
   it('пт–пн: день и пакет сб–пн; дней оператора — сколько назовёт арендатор', async () => {
-    await pick(9, 12);
+    await pick(9, 12, 4);
     expect(await screen.findByText('Opérateur €160.00 × 4 j')).toBeInTheDocument();
     expect(amount('€90.00 × 1 jour')).toBe('€90.00');
     expect(amount('€150.00 × 1 week-end')).toBe('€150.00');
@@ -182,14 +205,14 @@ describe('оператор и пакеты аренды не смешивают�
   });
 
   it('три будних дня: аренда по дням, оператор 3 × 160', async () => {
-    await pick(13, 15);
+    await pick(13, 15, 3);
     expect(await screen.findByText('Opérateur €160.00 × 3 j')).toBeInTheDocument();
     expect(amount('€90.00 × 3 jours')).toBe('€270.00');
     expect(amount('Total estimé')).toBe('€750.00');
   });
 
   it('семь дней: неделя 350, оператор по своим дням', async () => {
-    await pick(12, 18);
+    await pick(12, 18, 7);
     expect(await screen.findByText('Opérateur €160.00 × 7 j')).toBeInTheDocument();
     expect(amount('€350.00 × 1 semaine')).toBe('€350.00');
     expect(amount('Total estimé')).toBe('€1470.00');
