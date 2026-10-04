@@ -105,6 +105,15 @@ test.describe('доставка', () => {
     await page.getByRole('button', { name: /Envoyer une demande de réservation/i }).click()
     await expect(page.getByText(/[Dd]emande envoyée/)).toBeVisible({ timeout: 20000 })
 
+    // Экран после заявки повторяет выбор: доставка — строкой, и итог на
+    // месте равен «Total estimé» до отправки. До 04.10 доставка здесь
+    // пропадала.
+    const summary = page.getByTestId('sent-summary')
+    await expect(summary.getByText('Livraison', { exact: true })).toBeVisible({ timeout: 10000 })
+    await expect(summary.getByText('€15', { exact: true })).toBeVisible()
+    const sentTotal = await page.getByTestId('sent-total').innerText()
+    expect(Number(sentTotal.replace(/[^\d.,]/g, '').replace(',', '.')), `итог на месте: "${sentTotal}"`).toBeCloseTo(after, 2)
+
     // И в брони — то же число. Показывается оно из снимка, а не из вещи.
     await page.goto('/my-rentals', { waitUntil: 'load' })
     await dismissCookies(page)

@@ -35,6 +35,16 @@ import { errorText, UserFacingError } from '../lib/errorText'
 // он описывал модель, от которой отказались.
 const INSURANCE_PER_DAY = 0
 
+// Отправленная заявка — для экрана «Demande envoyée». Доставка и оператор —
+// null, если их не выбрали.
+interface SentRequest {
+  rental: number
+  deposit: number
+  delivery: number | null
+  operatorFee: number | null
+  operatorDays: number | null
+}
+
 interface Item {
   id: string
   owner_id: string
@@ -131,10 +141,15 @@ export default function ItemDetail() {
   // перечитываются (invalidateBookingCaches). До 03.10 «Mes locations»,
   // открытые меньше минуты назад, показывали список без новой заявки.
   const createRental = useCreateRental()
-  const requestLoading = createRental.isPending
+  // Пока читается снимок брони, кнопка тоже занята: заявка уже ушла, и
+  // второе нажатие было бы второй заявкой.
+  const [readingSent, setReadingSent] = useState(false)
+  const requestLoading = createRental.isPending || readingSent
   const [error, setError] = useState('')
   const [loadError, setLoadError] = useState(false)
-  const [requestSent, setRequestSent] = useState(false)
+  // Что ушло в заявке — суммы из брони, которую записал сервер (readSent).
+  const [sent, setSent] = useState<SentRequest | null>(null)
+  const requestSent = sent !== null
 
   // «Annonce publiée» — сюда приводит ListItem после публикации
   // (/item/<id>?published=1). До 23.09 параметр не читал никто: владелец
@@ -330,6 +345,37 @@ export default function ItemDetail() {
     ? Math.round((item.price_per_day * totalDays - rental.total) * 100) / 100
     : 0
 
+  // Сводка «Demande envoyée» — по снимку, который сервер записал в бронь:
+  // именно его увидит и примет владелец. Браузер считает по той же формуле
+  // (_shared/pricing.ts), но владелец мог сменить цену, пока страница была
+  // открыта, — и экран назвал бы сумму, которой в брони нет. Снимок не
+  // прочитался — остаётся расчёт браузера: заявка-то ушла, и «ошибка»
+  // здесь была бы враньём в другую сторону.
+  const readSent = async (bookingId: string | undefined): Promise<SentRequest> => {
+    const estimate: SentRequest = {
+      rental: rental.total, deposit: item?.deposit ?? 0,
+      delivery: deliveryFee > 0 ? deliveryFee : null,
+      operatorFee: operatorFee > 0 ? operatorFee : null,
+      operatorDays: operatorFee > 0 ? operatorDays : null,
+    }
+    if (!bookingId) return estimate
+    try {
+      const { data } = await supabase.from('bookings')
+        .select('total_price, deposit_amount, delivery_requested, delivery_fee, operator_requested, operator_fee, operator_days')
+        .eq('id', bookingId).maybeSingle()
+      if (!data) return estimate
+      return {
+        rental: Number(data.total_price),
+        deposit: Number(data.deposit_amount ?? 0),
+        delivery: data.delivery_requested && data.delivery_fee != null ? Number(data.delivery_fee) : null,
+        operatorFee: data.operator_requested && data.operator_fee != null ? Number(data.operator_fee) : null,
+        operatorDays: data.operator_requested ? data.operator_days : null,
+      }
+    } catch {
+      return estimate
+    }
+  }
+
   const handleRequest = async () => {
     if (!user || !item || !startDate || !endDate) return
     setError('')
@@ -342,13 +388,14 @@ export default function ItemDetail() {
       // при отказе тот прячет тело ответа, и до 23.09 человек читал здесь
       // «Edge Function returned a non-2xx status code» вместо «эти даты
       // уже заняты».
-      await createRental.mutateAsync({
+      const { booking_id } = await createRental.mutateAsync({
         item_id: item.id, start_date: startDate, end_date: endDate,
         message: requestMessage.trim() || undefined, delivery_requested: wantsDelivery,
         operator_requested: wantsOperator,
         operator_days: wantsOperator ? operatorDays : undefined,
       })
-      setRequestSent(true)
+      setReadingSent(true)
+      try { setSent(await readSent(booking_id)) } finally { setReadingSent(false) }
     } catch (err) {
       console.error('[request-rental]', err)
       setError(errorText(t, err, 'itemDetail.requestError'))
@@ -663,6 +710,12 @@ export default function ItemDetail() {
               // отправил, — ни дат, ни суммы. Сводка — та же, что потом
               // придёт владельцу и вернётся уведомлением: даты и имя
               // собирает общий с сервером модуль (src/domain/push.ts).
+              //
+              // Суммы — ВЕСЬ выбор, а не только аренда и залог: до 04.10 после
+              // отправки пропадали оператор, доставка и итог, то есть экран
+              // называл меньше, чем человек отдаст при встрече. Строки — из
+              // брони (readSent), итог — их сумма, как «Total estimé» до
+              // отправки.
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <h3 style={{ fontWeight: 800, margin: 0 }}>{t('itemDetail.requestSent')}</h3>
                 <span style={{ alignSelf: 'flex-start' }}><BookingStatusBadge status="pending_approval" /></span>
@@ -672,12 +725,32 @@ export default function ItemDetail() {
                     {[
                       shortName(item.users?.full_name),
                       dateRange(startDate, endDate, pushLangOf(i18n.language)),
-                      [money(rental.total), item.deposit > 0 ? t('itemDetail.depositShort', { amount: money(item.deposit) }) : null]
-                        .filter(Boolean).join(' + '),
                     ].filter(Boolean).join(' · ')}
                   </div>
+                  {sent && (
+                    <div data-testid="sent-summary" style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '14px' }}>
+                      {([
+                        [t('itemDetail.sentRental'), sent.rental],
+                        sent.deposit > 0 ? [t('itemDetail.deposit'), sent.deposit] : null,
+                        sent.operatorFee != null
+                          ? [`${t('rental.labelOperator')} (${t('common.days', { count: sent.operatorDays ?? 0 })})`, sent.operatorFee]
+                          : null,
+                        sent.delivery != null ? [t('itemDetail.delivery'), sent.delivery] : null,
+                      ].filter(Boolean) as [string, number][]).map(([label, amount]) => (
+                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--muted)' }}>{label}</span>
+                          <span>{money(amount)}</span>
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, borderTop: '1px solid var(--border)', paddingTop: '6px', marginTop: '2px' }}>
+                        <span>{t('itemDetail.sentTotal')}</span>
+                        <span data-testid="sent-total">{money(sent.rental + sent.deposit + (sent.operatorFee ?? 0) + (sent.delivery ?? 0))}</span>
+                      </div>
+                    </div>
+                  )}
                   <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', fontSize: '13px', lineHeight: 1.5, color: 'var(--muted)' }}>
-                    {t('itemDetail.nothingCharged', { owner: ownerFirstName ?? t('push.offer.ownerFallback') })}
+                    <div>{t('itemDetail.cashAtHandover')}</div>
+                    <div>{t('itemDetail.nothingCharged', { owner: ownerFirstName ?? t('push.offer.ownerFallback') })}</div>
                   </div>
                 </div>
                 <PushOfferCard trigger="request" ownerFirstName={ownerFirstName} />

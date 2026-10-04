@@ -601,6 +601,8 @@
     "handoverTimeHint": "Dates are booked by the day: agree here on the pickup and return time.",
     "nothingCharged": "Nothing is charged. {{owner}} has 24 h to reply.",
     "depositShort": "{{amount}} deposit",
+    "sentRental": "Rental",
+    "sentTotal": "Total to pay on the spot",
     "lateFeeLine": "Late return: {{amount}} / day",
     "publishedTitle": "Listing published",
     "publishedLine": "{{price}}/day · visible now",
