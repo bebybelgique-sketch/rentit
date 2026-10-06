@@ -862,12 +862,6 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 }
 .lp-band-line { border-top: 1px solid var(--line); }
 
-.lp-h1 {
-  font-family: var(--font-sans); font-weight: 700;
-  font-size: clamp(34px, 5.6vw, 62px); line-height: 1.12;
-  letter-spacing: -0.025em; margin: 0 0 var(--space-5);
-  max-width: 15ch; text-wrap: balance;
-}
 .lp-h2 {
   font-family: var(--font-sans); font-weight: 700;
   font-size: clamp(26px, 3.8vw, 40px); line-height: 1.12;
@@ -904,28 +898,176 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 .lp-band-dark .lp-btn-alt { background: transparent; color: var(--text-on-dark); border-color: var(--silver-hair); }
 .lp-btn:focus-visible { outline: 3px solid var(--signal); outline-offset: 3px; }
 
-.lp-hero { padding-block: clamp(44px, 7vw, 88px); }
-.lp-hero-grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
-@media (max-width: 940px) { .lp-hero-grid { grid-template-columns: minmax(0, 1fr); } }
-
-/* Сообщение про ноль объявлений. Была жёлтая полоса слева на 5px — самый
-   узнаваемый шаблон машинного оформления, и детектор ловит его по делу.
-   Заменено тем же приёмом, что у отказов в формах (`.form-notice`):
-   утопленная поверхность плюс волосяная рамка. У всех заметок продукта
-   один вид вместо трёх разных способов сказать «обрати внимание».
-   Жёлтый при этом ничего не теряет: его настоящая роль — маркировка на
-   чёрном, а на светлом он давал 1.46:1 и текстом быть не мог. */
-.lp-zero {
-  margin-top: var(--space-6); padding: var(--space-4) var(--space-5);
-  background: var(--surface-sunken); border: 1px solid var(--line);
-  border-radius: var(--radius); max-width: 54ch;
-  font-family: var(--font-text); font-size: 15.5px; line-height: 1.55; color: var(--text);
+/* ── Первый экран: поиск «что, где, когда» (05.10, макет Atelier v2) ──
+   Скругления здесь крупнее, чем в приложении (--radius 6px): таблетка
+   поиска, чипы и плавающие карточки — язык витрины, как у Airbnb и Uber,
+   на которые Рамзан указал сам. Внутри приложения радиус прежний. */
+.lp-hero, .lp-latest {
+  --lp-r: 18px; --lp-r-l: 28px;
+  --lp-shadow: 0 1px 2px rgba(18,20,23,.06), 0 14px 34px -10px rgba(18,20,23,.22);
 }
-.lp-zero b { font-weight: 600; }
+.lp-hero { padding-block: clamp(36px, 6vw, 80px) clamp(44px, 6vw, 88px); }
+.lp-hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
+.lp-hero-main { position: relative; z-index: 2; }
 
-.lp-shot { margin: 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: var(--primary); box-shadow: 0 1px 2px rgba(18,20,23,.06), 0 12px 28px rgba(18,20,23,.08); }
-.lp-shot img { display: block; width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4 / 3; }
-.lp-shot figcaption { font-family: var(--font-text); font-size: 12px; color: var(--text-on-dark-muted); padding: 10px var(--space-4); border-top: 1px solid var(--silver-hair); }
+.lp-where {
+  display: inline-flex; align-items: center; gap: var(--space-2); margin: 0;
+  font-family: var(--font-sans); font-weight: 500; font-size: 14px; color: var(--muted);
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 14px 6px 6px;
+}
+.lp-where-pin { width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: var(--signal); display: grid; place-items: center; }
+
+.lp-h1 {
+  font-family: var(--font-sans); font-weight: 700;
+  font-size: clamp(38px, 5vw, 76px); line-height: 1; letter-spacing: -0.045em;
+  margin: 22px 0 18px; text-wrap: balance; color: var(--text);
+}
+/* Жёлтая черта маркером под второй строкой. Вторая строка не рвётся —
+   «près de / chez vous.» читалось бы как три мысли; рвётся только уже
+   360px, где целиком она не помещается. Черта — фоном строки, а не
+   ::after: при переносе она идёт за каждым куском. */
+.lp-h1 em {
+  font-style: normal; white-space: nowrap;
+  background-image: linear-gradient(var(--signal), var(--signal));
+  background-repeat: no-repeat; background-size: 100% 0.2em; background-position: 0 88%;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+
+.lp-search {
+  margin-top: var(--space-6); position: relative;
+  display: grid; grid-template-columns: 1.25fr 1fr 0.95fr auto; align-items: center;
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+  box-shadow: var(--lp-shadow); padding: 8px;
+}
+@media (max-width: 359px) { .lp-h1 em { white-space: normal; } }
+.lp-field { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 10px 22px; border-radius: 999px; min-width: 0; }
+/* Разделитель — отдельной чертой, а не рамкой поля: рамка у скруглённого
+   поля гнулась скобкой. На наведении и фокусе черта уходит, как у Airbnb. */
+.lp-field + .lp-field::before { content: ""; position: absolute; left: 0; top: 24%; bottom: 24%; width: 1px; background: var(--line); }
+.lp-field:hover::before, .lp-field:focus-within::before,
+.lp-field:hover + .lp-field::before, .lp-field:focus-within + .lp-field::before { opacity: 0; }
+.lp-field:hover { background: var(--bg); }
+.lp-field:focus-within { background: var(--bg); box-shadow: inset 0 0 0 2px var(--primary); }
+.lp-field label { font-family: var(--font-sans); font-weight: 600; font-size: 13px; color: var(--text); cursor: pointer; }
+.lp-field input, .lp-field select {
+  border: 0; background: transparent; padding: 0; margin: 0; outline: none;
+  width: 100%; min-width: 0; font-family: var(--font-text); font-size: 16px; color: var(--text);
+}
+.lp-field input::placeholder { color: var(--text-faint); }
+.lp-field input::-webkit-search-cancel-button { display: none; }
+.lp-field select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+.lp-go {
+  width: 58px; height: 58px; border-radius: 50%; border: 0; cursor: pointer;
+  background: var(--action); color: var(--text-on-accent);
+  display: grid; place-items: center;
+  box-shadow: 0 6px 16px -6px rgba(200,16,46,.6);
+  transition: background 200ms;
+}
+.lp-go:hover { background: var(--action-deep); }
+.lp-go:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.lp-go-label { display: none; }
+
+.lp-live {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: var(--space-4) 0 0;
+  font-family: var(--font-text); font-size: 14.5px; color: var(--muted);
+}
+.lp-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+.lp-live-dot.is-zero { background: var(--silver-edge); }
+.lp-live a { color: var(--action); font-weight: 600; text-decoration: none; }
+.lp-live a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.lp-tasks { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: 20px; }
+.lp-task {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-sans); font-weight: 500; font-size: 14.5px; color: var(--text);
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+  padding: 7px 13px 7px 9px; text-decoration: none; transition: border-color 200ms;
+}
+.lp-task:hover { border-color: var(--primary); color: var(--text); text-decoration: none; }
+.lp-task:focus-visible { outline: 3px solid var(--action); outline-offset: 2px; }
+.lp-task svg { flex: none; color: var(--primary); }
+
+/* На широком экране поиск и чипы заходят на коллаж — слой, а не две
+   колонки рядом. Коллаж ниже по слою (.lp-hero-main z-index 2). */
+@media (min-width: 901px) { .lp-search, .lp-tasks { width: calc(100% + 150px); } }
+
+.lp-art { position: relative; min-height: 540px; }
+.lp-art-slab { position: absolute; inset: 36px 0 0 56px; background: var(--primary); border-radius: var(--lp-r-l); overflow: hidden; }
+/* Полосы маркировки — тот же жёлтый на чёрном, что у предупредительной
+   таблички ниже по странице. */
+.lp-art-slab::before {
+  content: ""; position: absolute; right: -40px; top: 28px; width: 220px; height: 44px;
+  background: repeating-linear-gradient(-45deg, var(--signal) 0 12px, transparent 12px 24px);
+}
+.lp-art-photo { position: absolute; left: 0; top: 0; width: 78%; height: 78%; border-radius: var(--lp-r-l); overflow: hidden; box-shadow: var(--lp-shadow); background: var(--surface-sunken); }
+.lp-art-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 60% 50%; display: block; }
+.lp-float { position: absolute; background: var(--card); border-radius: var(--lp-r); box-shadow: var(--lp-shadow); animation: lp-rise .7s cubic-bezier(.16,1,.3,1) both; }
+.lp-float-cash {
+  right: 24px; top: 12px; padding: 10px 14px; border-radius: 999px;
+  background: var(--primary); color: var(--text-on-dark);
+  font-family: var(--font-sans); font-weight: 500; font-size: 14px;
+  display: flex; align-items: center; gap: var(--space-2); animation-delay: .6s;
+}
+.lp-float-cash i { width: 8px; height: 8px; border-radius: 50%; background: var(--signal); }
+.lp-float-listing { right: 0; bottom: 130px; width: 300px; padding: 10px; display: grid; grid-template-columns: 84px 1fr; gap: var(--space-3); align-items: center; animation-delay: .25s; }
+.lp-float-listing img { width: 84px; height: 84px; object-fit: cover; border-radius: 12px; display: block; }
+.lp-float-listing b { display: block; font-family: var(--font-sans); font-weight: 600; font-size: 15.5px; letter-spacing: -0.01em; color: var(--text); }
+.lp-ex { display: block; margin-bottom: 3px; font-family: var(--font-sans); font-weight: 600; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.lp-float-meta { display: block; margin-top: 2px; font-family: var(--font-text); font-size: 13.5px; color: var(--muted); }
+.lp-float-price { display: block; margin-top: 6px; font-family: var(--font-sans); font-weight: 700; font-size: 17px; color: var(--text); }
+.lp-float-price small { font-weight: 500; font-size: 13px; color: var(--muted); }
+.lp-float-dates { right: 24px; bottom: 20px; width: 290px; padding: 14px 16px; display: flex; gap: var(--space-3); align-items: center; color: var(--text); animation-delay: .45s; }
+.lp-float-dates svg { flex: none; }
+.lp-float-dates b { display: block; font-family: var(--font-sans); font-weight: 600; font-size: 14.5px; }
+.lp-float-dates span { display: block; margin-top: 2px; font-family: var(--font-text); font-size: 13.5px; line-height: 1.4; color: var(--muted); }
+@keyframes lp-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .lp-float { animation: none; } }
+
+@media (max-width: 900px) {
+  .lp-hero-grid { grid-template-columns: minmax(0, 1fr); }
+  .lp-art { min-height: 440px; }
+  .lp-search { grid-template-columns: minmax(0, 1fr); border-radius: var(--lp-r-l); padding: 10px; }
+  .lp-field { padding: 12px 14px; border-radius: 14px; }
+  .lp-field + .lp-field::before { left: 14px; right: 14px; top: 0; bottom: auto; width: auto; height: 1px; }
+  .lp-go { width: 100%; height: 52px; border-radius: 999px; margin-top: 6px; display: flex; gap: 10px; justify-content: center; align-items: center; font-family: var(--font-sans); font-weight: 600; font-size: 16px; }
+  .lp-go-label { display: inline; }
+}
+@media (max-width: 520px) {
+  .lp-art { min-height: 380px; }
+  .lp-art-slab { inset: 30px 0 0 30px; }
+  .lp-float-cash { right: 12px; }
+  .lp-float-listing { width: 270px; bottom: 0; right: auto; left: 16px; }
+  .lp-float-dates { display: none; }
+}
+
+/* ── Лента настоящих объявлений под первым экраном ── */
+.lp-latest { padding-bottom: clamp(56px, 7vw, 96px); }
+.lp-latest-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-5); }
+.lp-sub { margin: var(--space-2) 0 0; font-family: var(--font-text); font-size: 16px; color: var(--muted); }
+.lp-more { font-family: var(--font-sans); font-weight: 600; font-size: 15px; color: var(--action); text-decoration: none; }
+.lp-more:hover { text-decoration: underline; text-underline-offset: 3px; }
+.lp-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; }
+.lp-card { display: block; color: var(--text); text-decoration: none; }
+.lp-card:hover { color: var(--text); text-decoration: none; }
+.lp-card:focus-visible { outline: 3px solid var(--action); outline-offset: 4px; border-radius: var(--lp-r); }
+.lp-card-ph { aspect-ratio: 1 / 1; border-radius: var(--lp-r); overflow: hidden; background: var(--surface-sunken); color: var(--silver-edge); display: grid; place-items: center; }
+.lp-card-ph img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s cubic-bezier(.16,1,.3,1); }
+.lp-card:hover .lp-card-ph img { transform: scale(1.04); }
+.lp-card h3 { margin: 12px 0 2px; font-family: var(--font-sans); font-weight: 600; font-size: 16px; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.lp-card-where { font-family: var(--font-text); font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-card-p { margin-top: 6px; font-family: var(--font-text); font-size: 15px; color: var(--muted); }
+.lp-card-p b { font-family: var(--font-sans); font-weight: 700; color: var(--text); }
+@media (max-width: 1100px) {
+  .lp-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lp-cards > li:nth-child(n+4) { display: none; }
+}
+@media (max-width: 900px) {
+  .lp-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 14px; padding-bottom: 6px; }
+  .lp-cards > li { flex: 0 0 72%; scroll-snap-align: start; }
+  .lp-cards > li:nth-child(n+4) { display: block; }
+}
+@media (prefers-reduced-motion: reduce) { .lp-card-ph img { transition: none; } }
 
 .lp-cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-7); }
 @media (max-width: 880px) { .lp-cols3 { grid-template-columns: minmax(0, 1fr); } }

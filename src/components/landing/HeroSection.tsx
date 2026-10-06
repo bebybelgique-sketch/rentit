@@ -1,96 +1,183 @@
-import { Link } from 'react-router-dom'
+import { useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useCatalogHasItems } from '../../hooks/useCatalogHasItems'
+import { CATEGORIES } from '../../domain/catalog'
+import { formatDay } from '../../domain/dates'
+import { money } from '../../domain/push'
+import { weekendRange } from '../../domain/weekend'
+import CategoryIcon from '../icons/CategoryIcon'
+import { browseHref, type WhenChoice } from './browseHref'
 
 /**
- * Первый экран лендинга.
+ * Первый экран лендинга — ПОИСК: «что, где, когда».
  *
- * Обращён к ВЛАДЕЛЬЦУ инструмента, а не к арендатору. Довод замеренный:
- * объявлений в базе ноль, броней ноль. В двустороннем рынке с нулём
- * предложения узкое место одно, и это не способность посетителя искать —
- * искать нечего. Каждый посетитель, которого страница уводила в
- * арендаторы, был потрачен впустую.
+ * С 12.08 до 05.10 экран был обращён к владельцу («Vos outils dorment»,
+ * главная кнопка — выкладка). Довод был замеренный: вещей ноль, искать
+ * нечего, и каждый посетитель, уведённый в поиск, попадал в тупик.
  *
- * Что стояло здесь до 12.08: поисковая строка «QUOI / OÙ» первым делом,
- * значок «0 outil disponible en Brabant Wallon», строка статистики
- * «0 / OUTILS DISPO» и главная кнопка «Voir les outils →» на пустую
- * витрину. Страница трижды объявляла собственную пустоту и вела в тупик.
+ * Почему развернули — две вещи изменились:
+ * 1. Тупика больше нет. Пустой поиск на витрине кончается формой «Dites-le»
+ *    (ToolDemandForm): человек оставляет, что искал и где. Это спрос, и его
+ *    видят владельцы. Поиск без результата теперь приносит сигнал, а не
+ *    теряет посетителя.
+ * 2. Первый экран выбрал Рамзан (04.10, ответ на вопрос с превью): поиск
+ *    «что + где». Макет — холст Claude Design «Atelier v2».
  *
- * Ноль остался, но сменил роль: не отчёт о провале, а довод «ваш будет
- * первым». Это единственная валюта, которая у продукта сейчас есть, —
- * позиция первого.
+ * Путь владельца с первого экрана не убран, а стал тише: ссылка в строке
+ * счётчика, при пустом каталоге — «Déposez le premier».
  *
- * ЧИСЛО СЧИТАЕТСЯ, А НЕ НАПИСАНО. До 19.09.2026 строка «0 outil en ligne
- * aujourd'hui» лежала в словаре как есть. Пока витрина пуста, она верна —
- * и перестаёт быть верной в ту самую минуту, когда кто-то выложит первый
- * инструмент. Причём соврала бы она в первую очередь ТОМУ, кто только что
- * выложил: он возвращается на главную и читает, что вещей ноль, а его
- * была бы первой.
- *
- * Хуже всего, что подводило бы это именно честность — единственное, ради
- * чего блок и написан. Правда, которую надо не забыть переписать руками,
- * не правда, а отложенная ложь: ручной шаг, который однажды не сделают,
- * это дефект замысла, а не забывчивость.
+ * ЧЕСТНОСТЬ, которую держат тесты:
+ * — число объявлений считается (useCatalogHasItems), а не пишется словами;
+ *   пока ответа нет, о числе не говорится ничего;
+ * — карточка в коллаже подписана «Exemple d’annonce»: это иллюстрация, а не
+ *   вещь с витрины;
+ * — даты в коллаже — ближайшие выходные, посчитанные сегодня. Строка
+ *   «sam. 11 → dim. 12 oct.» в словаре была бы верна одну неделю.
  */
 export default function HeroSection() {
-  const { t } = useTranslation()
-
-  // Тот же счёт, что у витрины: доступные вещи БЕЗ фильтров, head-запрос,
-  // одна запись в кэше на минуту. `catalogIsEmpty === undefined` означает
-  // «ответа нет» — намеренно не «пусто».
+  const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const { data: liveCount, catalogIsEmpty } = useCatalogHasItems()
 
+  const [what, setWhat] = useState('')
+  const [where, setWhere] = useState('')
+  const [when, setWhen] = useState<WhenChoice>('')
+
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    navigate(browseHref(what, where, when, new Date()))
+  }
+
   return (
-    <header className="lp-wrap lp-hero">
-      <div className="lp-hero-grid">
-        <div>
-          <p className="lp-label">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" />
-              <circle cx="12" cy="10" r="2.4" />
-            </svg>
+    <header className="lp-hero">
+      <div className="lp-wrap lp-hero-grid">
+        <div className="lp-hero-main">
+          <p className="lp-where">
+            <span className="lp-where-pin" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" />
+                <circle cx="12" cy="10" r="2.6" />
+              </svg>
+            </span>
             {t('landing.eyebrow')}
           </p>
 
           <h1 className="lp-h1">
-            {t('landing.h1a')}<br />{t('landing.h1b')}
+            {t('landing.h1a')} <em>{t('landing.h1b')}</em>
           </h1>
 
-          <p className="lp-lede" style={{ marginBottom: 'var(--space-6)' }}>
-            {t('landing.lede')}
+          <p className="lp-lede">{t('landing.lede')}</p>
+
+          <form role="search" aria-label={t('landing.searchLabel')} className="lp-search" onSubmit={onSubmit}>
+            <div className="lp-field">
+              <label htmlFor="lp-what">{t('landing.searchWhat')}</label>
+              <input id="lp-what" type="search" enterKeyHint="search" autoComplete="off"
+                placeholder={t('landing.searchWhatPh')}
+                value={what} onChange={e => setWhat(e.target.value)} />
+            </div>
+            <div className="lp-field">
+              <label htmlFor="lp-where">{t('landing.searchWhere')}</label>
+              <input id="lp-where" type="text" autoComplete="address-level2"
+                placeholder={t('landing.searchWherePh')}
+                value={where} onChange={e => setWhere(e.target.value)} />
+            </div>
+            <div className="lp-field">
+              <label htmlFor="lp-when">{t('landing.searchWhen')}</label>
+              <select id="lp-when" value={when} onChange={e => setWhen(e.target.value as WhenChoice)}>
+                <option value="">{t('landing.whenAny')}</option>
+                <option value="this">{t('landing.whenThis')}</option>
+                <option value="next">{t('landing.whenNext')}</option>
+              </select>
+            </div>
+            {/* Имя кнопке — атрибутом: на широком экране подпись скрыта
+                (display: none), и без него кнопка была бы безымянной для
+                чтения с экрана. Поймал E2E, а не юнит: jsdom не грузит CSS. */}
+            <button type="submit" className="lp-go" aria-label={t('landing.searchGo')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" />
+              </svg>
+              <span className="lp-go-label">{t('landing.searchGo')}</span>
+            </button>
+          </form>
+
+          {/* Число — из каталога, и пока его нет, строка о нём молчит:
+              утверждение, показанное до ответа, — заявка наугад. Ссылка для
+              владельца стоит при любом ответе. */}
+          <p className="lp-live">
+            {catalogIsEmpty !== undefined && (
+              <>
+                <span className={catalogIsEmpty ? 'lp-live-dot is-zero' : 'lp-live-dot'} aria-hidden="true" />
+                <span>{t('landing.liveCount', { count: liveCount ?? 0 })}</span>
+                <span aria-hidden="true">·</span>
+              </>
+            )}
+            <Link to="/list-item">{catalogIsEmpty ? t('landing.ownerFirst') : t('landing.ownerLink')}</Link>
           </p>
 
-          <div className="lp-btns">
-            <Link to="/list-item" className="lp-btn lp-btn-do">{t('landing.ctaPrimary')}</Link>
-            <Link to="/browse" className="lp-btn lp-btn-alt">{t('landing.ctaSecondary')}</Link>
-          </div>
-
-          {/* Пустота названа прямо. Скрывать её нечестно, а объяснять
-              нужно так, чтобы она работала на человека, а не на нас.
-              Число берётся из каталога; довод под ним меняется вместе с ним:
-              на нуле «ваш будет первым», дальше — «соседи уже начали».
-
-              Пока ответа нет, блок НЕ РИСУЕТСЯ вовсе. Это стоит небольшого
-              сдвига вёрстки, и стоит того: утверждение о числе, показанное
-              до того, как число известно, — заявка наугад. Отсутствие
-              утверждения честнее неверного, а сбой сети тут обычное дело. */}
-          {catalogIsEmpty !== undefined && (
-            <p className="lp-zero">
-              <b>{t('landing.liveCount', { count: liveCount ?? 0 })}</b>{' '}
-              {catalogIsEmpty ? t('landing.zeroBody') : t('landing.liveBody')}
-            </p>
-          )}
+          <nav aria-label={t('landing.tasksLabel')} className="lp-tasks">
+            {CATEGORIES.map(c => (
+              <Link key={c.value} to={`/browse?category=${c.value}`} className="lp-task">
+                <CategoryIcon category={c.value} size={20} />
+                {t(c.taskKey)}
+              </Link>
+            ))}
+          </nav>
         </div>
 
-        {/* Снимок иллюстративный, и подпись говорит это вслух: кадр чужой
-            и красивый, без оговорки он читался бы как инструмент, уже
-            лежащий на витрине. Витрина пуста. Лицензия — public/hero-tools.txt */}
-        <figure className="lp-shot">
-          <img src="/hero-tools.jpg" alt={t('landing.photoAlt')} width={1000} height={840} />
-          <figcaption>{t('landing.photoCaption')}</figcaption>
-        </figure>
+        <HeroArt lang={i18n.language} />
       </div>
     </header>
+  )
+}
+
+/** «sam. 10 → dim. 11 oct.»; месяц у первого дня — только если он другой. */
+function weekendLabel(lang: string): string {
+  const { from, to } = weekendRange(new Date(), 'this')
+  const last = formatDay(to, lang, { weekday: 'short', day: 'numeric', month: 'short' })
+  if (from === to) return last
+  const sameMonth = from.slice(0, 7) === to.slice(0, 7)
+  const first = formatDay(from, lang, sameMonth
+    ? { weekday: 'short', day: 'numeric' }
+    : { weekday: 'short', day: 'numeric', month: 'short' })
+  return `${first} → ${last}`
+}
+
+/**
+ * Коллаж справа — оформление, а не содержание: скрыт от чтения с экрана
+ * целиком. Всё, что похоже на данные, подписано как пример или посчитано.
+ * Снимки — CC0, источники в public/landing-photos.txt.
+ */
+function HeroArt({ lang }: { lang: string }) {
+  const { t } = useTranslation()
+  return (
+    <div className="lp-art" aria-hidden="true">
+      <div className="lp-art-slab" />
+      <div className="lp-art-photo">
+        <img src="/hero-drill.jpg" alt="" width={960} height={640} />
+      </div>
+      <div className="lp-float lp-float-cash"><i />{t('landing.artCash')}</div>
+      <div className="lp-float lp-float-listing">
+        <img src="/example-washer.jpg" alt="" width={200} height={200} />
+        <div>
+          <span className="lp-ex">{t('landing.artExample')}</span>
+          <b>{t('landing.artExampleTitle')}</b>
+          <span className="lp-float-meta">{t('landing.artExamplePlace')}</span>
+          <span className="lp-float-price">{money(25)} <small>{t('home.perDay')}</small></span>
+        </div>
+      </div>
+      <div className="lp-float lp-float-dates">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" />
+        </svg>
+        <div>
+          <b>{weekendLabel(lang)}</b>
+          <span>{t('landing.artDatesBody')}</span>
+        </div>
+      </div>
+    </div>
   )
 }

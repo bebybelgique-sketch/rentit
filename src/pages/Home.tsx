@@ -30,6 +30,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { mapStart, MAP_POINT_ZOOM } from '../domain/region'
+import { isIsoDay } from '../domain/weekend'
 
 function MapView({ items, userPos }: { items: BrowseRow[], userPos: { lat: number; lng: number } | null }) {
   const { t } = useTranslation()
@@ -270,8 +271,19 @@ export default function Home() {
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
   const [geoLoading, setGeoLoading] = useState(false)
   const [maxPrice, setMaxPrice] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  // Поле «Quand ?» на лендинге кладёт в адрес ?from=…&to=…. Без чтения здесь
+  // оно повторило бы историю ?where= и ?category=: выглядит рабочим, молча
+  // не делает ничего. Чужое значение («demain», 2026-02-31) не принимается —
+  // иначе витрина отфильтровалась бы по дате, которой нет.
+  const [startDate, setStartDate] = useState(() => {
+    const from = searchParams.get('from')
+    return isIsoDay(from) ? from : ''
+  })
+  const [endDate, setEndDate] = useState(() => {
+    const from = searchParams.get('from')
+    const to = searchParams.get('to')
+    return isIsoDay(from) && isIsoDay(to) && to >= from ? to : ''
+  })
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
   const [filtersOpen, setFiltersOpen] = useState(false)
 

@@ -1,25 +1,26 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 
 /**
- * Проверяем не «есть ли французский текст», а то, ради чего первый экран
- * переписан 12.08: он обращён к ВЛАДЕЛЬЦУ инструмента и говорит правду о
- * витрине.
+ * Первый экран лендинга.
  *
- * Прежний тест держался за строку «Les outils de votre voisin, à portée
- * de main» — заголовок арендатора. Он упал вместе со сменой адресата, и
- * это правильное падение: тест зафиксировал старое решение, а решение
- * поменяли. Подгонять строку молча было бы хуже — тогда тест перестал бы
- * что-либо охранять.
+ * 05.10 решение о первом экране поменялось: был владелец («Vos outils
+ * dorment», главная кнопка — выкладка), стал поиск «что, где, когда» — его
+ * выбрал Рамзан 04.10. Тесты на прежнее решение упали правильно; ниже —
+ * что стало с каждым инвариантом, а не молчаливая подгонка строк.
  *
- * 19.09 изменилась ещё одна посылка, и тоже осознанно. Проверка «пустота
- * названа прямо» искала ДОСЛОВНО «0 outil en ligne» — потому что число
- * лежало в словаре строкой. Инвариант был и остаётся тот же: лендинг
- * говорит о витрине правду. Но правда о числе, записанная руками, верна
- * ровно до первой выложенной вещи, и врёт она в первую очередь тому, кто
- * эту вещь и выложил. Поэтому число теперь считается, а тест проверяет
- * СООТВЕТСТВИЕ числа каталогу — в обе стороны.
+ * «Главное действие ведёт на выкладку» → СНЯТ вместе с решением. Вместо
+ *   него два: поиск ведёт на витрину РАБОЧИМИ параметрами (их читает
+ *   Home.tsx), и путь владельца остаётся на первом экране при любом ответе
+ *   каталога.
+ * «Витрина — вторым действием» → снят тем же решением.
+ * «Пустота названа прямо» и «число считается, а не пишется» → ДЕРЖИМ без
+ *   изменений: 0, 1, 7 и «ответа нет».
+ * «Снимок подписан как иллюстративный» → инвариант тот же, носитель другой:
+ *   на витрину похожа не фотография с дрелью, а карточка объявления в
+ *   коллаже. Она и подписана «Exemple d’annonce», а коллаж скрыт от чтения
+ *   с экрана.
  */
 
 let count: number | undefined = 0
@@ -33,42 +34,78 @@ vi.mock('../../../hooks/useCatalogHasItems', () => ({
 
 import HeroSection from '../HeroSection'
 
-describe('первый экран лендинга', () => {
-  const renderHero = () => render(<MemoryRouter><HeroSection /></MemoryRouter>)
+function Where() {
+  const loc = useLocation()
+  return <p data-testid="where">{loc.pathname + loc.search}</p>
+}
 
+const renderHero = () => render(
+  <MemoryRouter initialEntries={['/']}>
+    <Routes>
+      <Route path="/" element={<HeroSection />} />
+      <Route path="*" element={<Where />} />
+    </Routes>
+  </MemoryRouter>,
+)
+
+const submit = () => fireEvent.click(screen.getByRole('button', { name: /rechercher/i }))
+
+describe('первый экран лендинга', () => {
   beforeEach(() => { count = 0 })
 
-  it('главное действие ведёт на выкладку, а не на витрину', () => {
+  it('поиск ведёт на витрину с тем, что человек ввёл', () => {
     renderHero()
-    const primary = screen.getByRole('link', { name: /déposer un outil/i })
-    expect(primary).toHaveAttribute('href', '/list-item')
+    fireEvent.change(screen.getByLabelText('Quoi ?'), { target: { value: 'perceuse' } })
+    fireEvent.change(screen.getByLabelText('Où ?'), { target: { value: 'Walhain' } })
+    submit()
+    expect(screen.getByTestId('where')).toHaveTextContent('/browse?q=perceuse&where=Walhain')
   })
 
-  it('витрина предложена вторым действием, а не первым', () => {
+  it('«Ce week-end» превращается в настоящие даты витрины', () => {
     renderHero()
-    expect(screen.getByRole('link', { name: /voir la vitrine/i })).toHaveAttribute('href', '/browse')
+    fireEvent.change(screen.getByLabelText('Quand ?'), { target: { value: 'this' } })
+    submit()
+    expect(screen.getByTestId('where').textContent).toMatch(/^\/browse\?from=\d{4}-\d{2}-\d{2}&to=\d{4}-\d{2}-\d{2}$/)
   })
 
-  it('пустота витрины названа прямо, а не скрыта', () => {
+  it('пустой поиск — просто витрина, без пустых параметров', () => {
+    renderHero()
+    submit()
+    expect(screen.getByTestId('where').textContent).toBe('/browse')
+  })
+
+  it('чипы задач ведут на категории каталога, и подписи не сырые ключи', () => {
+    renderHero()
+    const nav = screen.getByRole('navigation', { name: /par usage/i })
+    const links = Array.from(nav.querySelectorAll('a'))
+    expect(links).toHaveLength(6)
+    expect(links[0]).toHaveAttribute('href', '/browse?category=power_tools')
+    expect(links[0]).toHaveTextContent('Percer, visser')
+    for (const a of links) expect(a.textContent).not.toMatch(/categoryTasks\./)
+  })
+
+  it('путь владельца на первом экране: при пустом каталоге — «le premier»', () => {
+    renderHero()
+    expect(screen.getByRole('link', { name: /déposez le premier/i })).toHaveAttribute('href', '/list-item')
+  })
+
+  it('путь владельца остаётся и без ответа каталога', () => {
+    count = undefined
+    renderHero()
+    expect(screen.getByRole('link', { name: /déposez-le/i })).toHaveAttribute('href', '/list-item')
+  })
+
+  it('пустота витрины названа прямо', () => {
     renderHero()
     expect(screen.getByText(/0 outil en ligne/i)).toBeInTheDocument()
-    expect(screen.getByText(/le premier que verront les voisins/i)).toBeInTheDocument()
   })
 
-  // ГЛАВНОЕ. «Ваш будет первым» — обещание, и оно перестаёт быть правдой
-  // с первой же выложенной вещью.
-  it('на непустом каталоге показывает настоящее число, а не ноль', () => {
+  it('на непустом каталоге — настоящее число, и «le premier» снимается', () => {
     count = 7
     renderHero()
     expect(screen.getByText(/7 outils en ligne/i)).toBeInTheDocument()
     expect(screen.queryByText(/0 outil en ligne/i)).not.toBeInTheDocument()
-  })
-
-  it('и обещание «ваш будет первым» при этом снимается', () => {
-    count = 7
-    renderHero()
-    expect(screen.queryByText(/le premier que verront les voisins/i)).not.toBeInTheDocument()
-    expect(screen.getByText(/vos voisins ont déjà commencé/i)).toBeInTheDocument()
+    expect(screen.queryByText(/déposez le premier/i)).not.toBeInTheDocument()
   })
 
   // Множественное число считает библиотека: во французском «one» покрывает
@@ -76,24 +113,23 @@ describe('первый экран лендинга', () => {
   it('одна вещь — единственное число', () => {
     count = 1
     renderHero()
-    expect(screen.getByText(/1 outil en ligne/i)).toBeInTheDocument()
+    expect(screen.getByText(/^1 outil en ligne/i)).toBeInTheDocument()
   })
 
-  // Утверждение о числе, показанное до того, как число известно, — заявка
-  // наугад. Отсутствие утверждения честнее неверного.
   it('пока ответа нет, о числе не говорится ничего', () => {
     count = undefined
     renderHero()
     expect(screen.queryByText(/en ligne aujourd/i)).not.toBeInTheDocument()
-    // Остальной экран при этом на месте: скрыт один блок, а не страница.
-    expect(screen.getByRole('link', { name: /déposer un outil/i })).toBeInTheDocument()
+    // Остальной экран на месте: скрыт один блок, а не страница.
+    expect(screen.getByRole('search')).toBeInTheDocument()
   })
 
-  it('снимок подписан как иллюстративный и имеет альтернативный текст', () => {
-    renderHero()
-    const img = screen.getByRole('img')
-    expect(img).toHaveAttribute('alt')
-    expect(img.getAttribute('alt')!.length).toBeGreaterThan(10)
-    expect(screen.getByText(/photo d’illustration/i)).toBeInTheDocument()
+  it('карточка в коллаже подписана как пример, коллаж скрыт от чтения', () => {
+    const { container } = renderHero()
+    const art = container.querySelector('.lp-art')!
+    expect(art).toHaveAttribute('aria-hidden', 'true')
+    expect(art).toHaveTextContent(/exemple d’annonce/i)
+    // Снимки коллажа — оформление: пустой alt, а не описание «вещи».
+    for (const img of Array.from(art.querySelectorAll('img'))) expect(img).toHaveAttribute('alt', '')
   })
 })

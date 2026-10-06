@@ -36,7 +36,7 @@ const EXPECTED = new Map([
   ['sw.js', 'собирается из src/sw.template.js плагином'],
   ['robots.txt', 'собирается на сборке из routeIndexing'],
   ['sitemap.xml', 'то же'],
-  ['hero-tools.txt', 'лицензия на снимок, лежит рядом с ним'],
+  ['landing-photos.txt', 'лицензии на снимки лендинга, лежат рядом с ними'],
 ])
 
 const walk = (dir) => readdirSync(dir).flatMap((f) => {

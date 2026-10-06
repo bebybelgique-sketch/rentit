@@ -40,13 +40,16 @@ import type { BookingStatusValue, ItemConditionValue } from '../types'
 // «Мои инструменты» продолжали ставить ⚡🔧🌿. Человек видел смену языка
 // на первом же переходе с лендинга.
 // Иконки живут в `src/components/icons/CategoryIcon.tsx`, ключи те же.
+// taskKey — та же категория, названная ДЕЛОМ («Percer, visser»): так ищут
+// на первом экране лендинга. Чип задачи ведёт на витрину с этой категорией,
+// поэтому задач ровно столько, сколько категорий, и своего списка у них нет.
 export const CATEGORIES = [
-  { value: 'power_tools',  labelKey: 'categories.power_tools',  hintKey: 'categoryHints.power_tools',  priceHintKey: 'categoryPrices.power_tools'  },
-  { value: 'hand_tools',   labelKey: 'categories.hand_tools',   hintKey: 'categoryHints.hand_tools',   priceHintKey: 'categoryPrices.hand_tools'   },
-  { value: 'garden',       labelKey: 'categories.garden',       hintKey: 'categoryHints.garden',       priceHintKey: 'categoryPrices.garden'       },
-  { value: 'construction', labelKey: 'categories.construction', hintKey: 'categoryHints.construction', priceHintKey: 'categoryPrices.construction' },
-  { value: 'cleaning',     labelKey: 'categories.cleaning',     hintKey: 'categoryHints.cleaning',     priceHintKey: 'categoryPrices.cleaning'     },
-  { value: 'measuring',    labelKey: 'categories.measuring',    hintKey: 'categoryHints.measuring',    priceHintKey: 'categoryPrices.measuring'    },
+  { value: 'power_tools',  labelKey: 'categories.power_tools',  hintKey: 'categoryHints.power_tools',  priceHintKey: 'categoryPrices.power_tools',  taskKey: 'categoryTasks.power_tools'  },
+  { value: 'hand_tools',   labelKey: 'categories.hand_tools',   hintKey: 'categoryHints.hand_tools',   priceHintKey: 'categoryPrices.hand_tools',   taskKey: 'categoryTasks.hand_tools'   },
+  { value: 'garden',       labelKey: 'categories.garden',       hintKey: 'categoryHints.garden',       priceHintKey: 'categoryPrices.garden',       taskKey: 'categoryTasks.garden'       },
+  { value: 'construction', labelKey: 'categories.construction', hintKey: 'categoryHints.construction', priceHintKey: 'categoryPrices.construction', taskKey: 'categoryTasks.construction' },
+  { value: 'cleaning',     labelKey: 'categories.cleaning',     hintKey: 'categoryHints.cleaning',     priceHintKey: 'categoryPrices.cleaning',     taskKey: 'categoryTasks.cleaning'     },
+  { value: 'measuring',    labelKey: 'categories.measuring',    hintKey: 'categoryHints.measuring',    priceHintKey: 'categoryPrices.measuring',    taskKey: 'categoryTasks.measuring'    },
 ] as const
 
 export type CategoryValue = (typeof CATEGORIES)[number]['value']
