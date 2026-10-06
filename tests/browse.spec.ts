@@ -93,5 +93,10 @@ test.describe('витрина', () => {
     // ограничение и выбрасывала вещи без координат.
     await expect(page.getByRole('button', { name: /Effacer les filtres/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /Élargir à 50 km/i })).toHaveCount(0)
+
+    // И ненайденное можно назвать. До 06.10 форма жила только при пустом
+    // каталоге и с первой вещью на проде исчезла у всех. Не отправляем:
+    // проверка о том, что вопрос задан, а не о записи спроса.
+    await expect(page.getByLabel('Quel outil cherchiez-vous ?')).toBeVisible()
   })
 })
