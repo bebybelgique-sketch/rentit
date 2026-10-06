@@ -13,6 +13,7 @@ import { formatNumber } from '../domain/dates'
 import { useBrowseItems } from '../hooks/useBrowseItems'
 import { useCatalogHasItems } from '../hooks/useCatalogHasItems'
 import ToolDemandForm from '../components/common/ToolDemandForm'
+import { countUsage } from '../lib/usage'
 import type { BrowseRow } from '../types'
 
 // Leaflet берётся из зависимостей проекта, а не с unpkg.
@@ -330,6 +331,18 @@ export default function Home() {
   // ответу витрины это неразличимо, а от различия зависит и заголовок пустого
   // экрана, и наличие кнопки «расширить» — см. useCatalogHasItems.ts.
   const { catalogIsEmpty } = useCatalogHasItems()
+
+  // Счётчики (src/lib/usage.ts). Пустая выдача — ОДИН раз за заход, сколько
+  // бы фильтров человек ни перебрал: считаем заходы, упёршиеся в пустоту, а
+  // не нажатия клавиш в поле поиска.
+  useEffect(() => { countUsage('browse_view') }, [])
+  const showsEmpty = !isPending && !isError && items.length === 0
+  const emptyCounted = useRef(false)
+  useEffect(() => {
+    if (!showsEmpty || emptyCounted.current) return
+    emptyCounted.current = true
+    countUsage('browse_empty')
+  }, [showsEmpty])
 
   // ЗОНА ФИЛЬТРУЕТ ТОЛЬКО ЗДЕСЬ. `useBrowseItems` шлёт в базу `p_radius_km`
   // исключительно при `nearby && hasPoint` — без этого запрос глобальный, и

@@ -2,10 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-
-type Consent = { necessary: true; functional: boolean; analytics: boolean }
-
-const STORAGE_KEY = 'rentit_cookie_consent'
+import { CONSENT_KEY as STORAGE_KEY, OPEN_COOKIE_PREFERENCES, readConsent, type Consent } from '../lib/consent'
+import { usageConsentDecided } from '../lib/usage'
 
 /**
  * Что в окне можно взять фокусом.
@@ -72,8 +70,26 @@ export default function CookieBanner() {
     }
   }, [])
 
+  // Выбор можно изменить: подвал и политика конфиденциальности открывают
+  // баннер сразу на настройках, с тем, что выбрано сейчас. Без этого
+  // согласие на счётчики (usage.ts) было бы данным навсегда — отозвать его
+  // можно было только чисткой данных сайта (GDPR, ст. 7(3)).
+  useEffect(() => {
+    const open = () => {
+      const saved = readConsent()
+      setFunctional(saved?.functional ?? true)
+      setAnalytics(saved?.analytics ?? false)
+      setExpanded(true)
+      setVisible(true)
+    }
+    window.addEventListener(OPEN_COOKIE_PREFERENCES, open)
+    return () => window.removeEventListener(OPEN_COOKIE_PREFERENCES, open)
+  }, [])
+
   const save = (consent: Consent) => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(consent)) } catch { /* blocked */ }
+    // Счётчики, накопленные до выбора, уходят или выбрасываются здесь.
+    usageConsentDecided(consent.analytics)
     setVisible(false)
   }
 
@@ -327,7 +343,7 @@ export default function CookieBanner() {
                         </div>
                         <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>{row.desc}</div>
                       </div>
-                      <Toggle checked={row.checked} onChange={row.onChange} disabled={row.disabled} />
+                      <Toggle label={row.label} checked={row.checked} onChange={row.onChange} disabled={row.disabled} />
                     </div>
                   ))}
                 </div>
@@ -358,10 +374,14 @@ export default function CookieBanner() {
 }
 
 
-function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange?: (v: boolean) => void; disabled?: boolean }) {
+// label — имя переключателя. Без него программа чтения объявляла «кнопка,
+// нажата» и не говорила, ЧТО нажато; а через этот переключатель теперь
+// отзывают согласие на счётчики.
+function Toggle({ label, checked, onChange, disabled }: { label: string; checked: boolean; onChange?: (v: boolean) => void; disabled?: boolean }) {
   return (
     <button
       type="button"
+      aria-label={label}
       onClick={() => !disabled && onChange?.(!checked)}
       style={{
         flexShrink: 0, width: '44px', height: '24px', borderRadius: '12px',

@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import type { Database } from '../types/database.types'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { errorText } from '../lib/errorText'
+import { countUsage } from '../lib/usage'
 import { useListingStart, NO_START, type ListingStart } from '../hooks/useListingStart'
 
 // Категории и состояния — из src/domain/catalog.ts. Здесь была четвёртая
@@ -52,6 +53,8 @@ export default function ListItem() {
   usePageTitle(t('pageTitle.listItem'))
   const { user } = useAuth()
   const start = useListingStart(user?.id)
+  // Дошёл до формы выкладки — «начало выкладки» (src/lib/usage.ts).
+  useEffect(() => { countUsage('listing_start') }, [])
   if (start.isPending) return <div className="page"><div className="loading">{t('common.loading')}</div></div>
   return <ListItemForm start={start.data ?? NO_START} />
 }

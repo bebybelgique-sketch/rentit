@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 import CookieBanner from '../CookieBanner';
+import { openCookiePreferences } from '../../lib/consent';
 
 const STORAGE_KEY = 'rentit_cookie_consent';
 
@@ -79,5 +80,29 @@ describe('баннер согласия: отказ должен быть так
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ necessary: true, functional: false, analytics: false }));
     renderBanner();
     expect(screen.queryByRole('button', { name: 'Accepter tous les cookies' })).not.toBeInTheDocument();
+  });
+});
+
+// С дневными счётчиками (src/lib/usage.ts) переключатель «Analytique»
+// впервые что-то решает — значит его можно и отозвать, так же просто, как
+// дать (GDPR, ст. 7(3)). Подвал и политика открывают баннер на настройках.
+describe('выбор можно изменить', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('настройки открываются с тем, что выбрано сейчас, и отзыв сохраняется', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ necessary: true, functional: true, analytics: true }));
+    renderBanner();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    act(() => openCookiePreferences());
+
+    const analytics = screen.getByRole('button', { name: 'Analytique' });
+    expect(analytics).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(analytics);
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!))
+      .toEqual({ necessary: true, functional: true, analytics: false });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
