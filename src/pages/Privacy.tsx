@@ -5,6 +5,7 @@ import {
 } from '../domain/operator'
 import { useTranslation } from 'react-i18next'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { openCookiePreferences } from '../lib/consent'
 
 // Дата правится ВМЕСТЕ с текстом документа. 11.08 оба документа были
 // переписаны по существу (убраны страховка, Stripe, раздел платежей,
@@ -15,9 +16,9 @@ import { usePageTitle } from '../hooks/usePageTitle'
 // По языкам раздельно: строка показывается в трёх разделах, и
 // английское «March 20, 2026» стояло под французским «Dernière mise
 // à jour :» и нидерландским «Laatste update:».
-const LAST_UPDATED_EN = 'September 24, 2026'
-const LAST_UPDATED_FR = '24 septembre 2026'
-const LAST_UPDATED_NL = '24 september 2026'
+const LAST_UPDATED_EN = 'October 6, 2026'
+const LAST_UPDATED_FR = '6 octobre 2026'
+const LAST_UPDATED_NL = '6 oktober 2026'
 // Ответственный за обработку — физическое лицо, а не «RentIt». До 14.08
 // здесь стояли COMPANY = 'RentIt', ADDRESS = 'Belgium' и ящик
 // privacy@rentit.be: контроллер вымышлен, страна вместо адреса, а домен
@@ -84,6 +85,7 @@ function PrivacyEN() {
             <Tr data={['Session cookie (Supabase auth)', 'Keep you logged in — functional cookies only, no tracking', 'Art. 6(1)(b) — necessary for service']} />
             <Tr data={['Error reports: error text (phone numbers and email addresses masked), page path without parameters, app version, browser, language — no name, no account, no IP address', 'Find and fix bugs that happen on your device', 'Art. 6(1)(f) — legitimate interest']} />
             <Tr data={['Push notification subscription (optional): the address of your browser\'s push service for this device, its encryption keys, the app language', 'Notify this device about your bookings (new request, reply, expiry, new message); stored only if you turn notifications on', 'Art. 6(1)(a) — your consent']} />
+            <Tr data={['Usage statistics (only if you accept "Analytics" in the banner): one daily total for each of six actions — opening the home page, searching from the home page, opening the catalogue, a search with no results, a tool request, starting a listing. No cookie, no name, no account, no IP address, no search text', 'Find out whether the home page helps people find a tool and list one', 'Art. 6(1)(a) — your consent']} />
           </tbody>
         </table>
         <p style={{ marginTop: '12px', fontSize: '13px', color: '#666' }}>
@@ -133,6 +135,7 @@ function PrivacyEN() {
           <li><strong>Photos:</strong> deleted within 30 days of listing removal</li>
           <li><strong>Session cookies:</strong> expire when you log out or after 7 days of inactivity</li>
           <li><strong>Error reports:</strong> deleted automatically after 30 days</li>
+          <li><strong>Usage statistics:</strong> daily totals that relate to no one — kept without time limit</li>
           <li><strong>Activity feed</strong> (the list of events about your bookings shown in the app): deleted automatically after 90 days, or with your account</li>
           <li><strong>Notification subscriptions:</strong> deleted when you turn notifications off, log out on that device or delete your account, and automatically when the push service reports the subscription expired</li>
         </ul>
@@ -147,7 +150,7 @@ function PrivacyEN() {
           <li><strong>Restriction</strong> — ask us to temporarily stop processing your data</li>
           <li><strong>Portability</strong> — receive your data in a machine-readable format</li>
           <li><strong>Object</strong> — object to processing based on legitimate interest</li>
-          <li><strong>Withdraw consent</strong> — for geolocation data and notifications, withdraw at any time without penalty (notifications: Profile → Notifications → Turn off)</li>
+          <li><strong>Withdraw consent</strong> — for geolocation data, notifications and usage statistics, withdraw at any time without penalty (notifications: Profile → Notifications → Turn off; statistics: "Manage cookies" at the bottom of the page or in section 7)</li>
         </ul>
         <p>To exercise any right, email <a href={`mailto:${EMAIL}`}>{EMAIL}</a>. We will respond within <strong>30 days</strong> as required by GDPR Art. 12.</p>
         <p>If you believe we have violated your rights, you may lodge a complaint with the <strong>Belgian Data Protection Authority (APD/GBA)</strong>:</p>
@@ -162,6 +165,8 @@ function PrivacyEN() {
           <li>Is classified as "strictly necessary" under the ePrivacy Directive — no consent banner is required</li>
         </ul>
         <p>If we add analytics or marketing cookies in the future, we will update this policy and implement a consent mechanism before doing so.</p>
+        <p>Usage statistics (section 2) use <strong>no cookie</strong>. Your choice in the banner is kept in your browser (local storage) so that we do not ask again on every visit. You can change it at any time:</p>
+        <CookieChoiceButton label="Manage cookies" />
       </Section>
 
       <Section title="8. Data Security">
@@ -231,6 +236,7 @@ function PrivacyFR() {
             <Tr data={['Cookie de session (Supabase auth)', 'Maintenir votre connexion — cookie fonctionnel uniquement, sans traçage', 'Art. 6(1)(b) — nécessaire au service']} />
             <Tr data={['Rapports d\'erreur : texte de l\'erreur (numéros de téléphone et adresses e-mail masqués), chemin de la page sans paramètres, version de l\'app, navigateur, langue — ni nom, ni compte, ni adresse IP', 'Trouver et corriger les bugs survenus sur votre appareil', 'Art. 6(1)(f) — intérêt légitime']} />
             <Tr data={['Abonnement aux notifications (facultatif) : l\'adresse du service de notification de votre navigateur pour cet appareil, ses clés de chiffrement, la langue de l\'app', 'Prévenir cet appareil au sujet de vos réservations (nouvelle demande, réponse, expiration, nouveau message) ; enregistré seulement si vous activez les notifications', 'Art. 6(1)(a) — votre consentement']} />
+            <Tr data={['Statistiques d\'usage (seulement si vous acceptez « Analytique » dans la bannière) : un total par jour pour chacune de six actions — ouverture de l\'accueil, recherche depuis l\'accueil, ouverture du catalogue, recherche sans résultat, outil demandé, début de dépôt d\'annonce. Ni cookie, ni nom, ni compte, ni adresse IP, ni texte de recherche', 'Savoir si la page d\'accueil aide à trouver un outil et à en déposer un', 'Art. 6(1)(a) — votre consentement']} />
           </tbody>
         </table>
         <p style={{ marginTop: '12px', fontSize: '13px', color: '#666' }}>
@@ -280,6 +286,7 @@ function PrivacyFR() {
           <li><strong>Photos :</strong> supprimées dans les 30 jours suivant le retrait de l'annonce</li>
           <li><strong>Cookies de session :</strong> expirent à la déconnexion ou après 7 jours d'inactivité</li>
           <li><strong>Rapports d'erreur :</strong> supprimés automatiquement après 30 jours</li>
+          <li><strong>Statistiques d'usage :</strong> des totaux par jour qui ne se rattachent à personne — conservés sans limite de durée</li>
           <li><strong>Fil d'activité</strong> (la liste des événements sur vos réservations affichée dans l'app) : supprimé automatiquement après 90 jours, ou avec votre compte</li>
           <li><strong>Abonnements aux notifications :</strong> supprimés quand vous désactivez les notifications, vous déconnectez de l'appareil ou supprimez votre compte, et automatiquement quand le service de notification signale l'abonnement expiré</li>
         </ul>
@@ -294,7 +301,7 @@ function PrivacyFR() {
           <li><strong>de limitation</strong> — nous demander de cesser temporairement le traitement de vos données</li>
           <li><strong>de portabilité</strong> — recevoir vos données dans un format lisible par machine</li>
           <li><strong>d'opposition</strong> — vous opposer au traitement fondé sur un intérêt légitime</li>
-          <li><strong>de retirer votre consentement</strong> — pour la géolocalisation et les notifications, à tout moment et sans pénalité (notifications : Profil → Notifications → Désactiver)</li>
+          <li><strong>de retirer votre consentement</strong> — pour la géolocalisation, les notifications et les statistiques d'usage, à tout moment et sans pénalité (notifications : Profil → Notifications → Désactiver ; statistiques : « Gérer les cookies » en bas de page ou dans la section 7)</li>
         </ul>
         <p>Pour exercer ces droits : <a href={`mailto:${EMAIL}`}>{EMAIL}</a>. Réponse dans les <strong>30 jours</strong> (RGPD Art. 12).</p>
         <p>Réclamation auprès de l'<strong>Autorité de protection des données (APD/GBA)</strong> :<br />
@@ -310,6 +317,8 @@ function PrivacyFR() {
           <li>Est classé comme « strictement nécessaire » au titre de la directive ePrivacy — aucune bannière de consentement n'est requise</li>
         </ul>
         <p>Si nous ajoutons des cookies d'analyse ou marketing à l'avenir, nous mettrons à jour cette politique et mettrons en place un mécanisme de consentement avant de le faire.</p>
+        <p>Les statistiques d'usage (section 2) n'utilisent <strong>aucun cookie</strong>. Votre choix dans la bannière est gardé dans votre navigateur (stockage local) pour ne pas vous le redemander à chaque visite. Vous pouvez le changer à tout moment :</p>
+        <CookieChoiceButton label="Gérer les cookies" />
       </Section>
 
       <Section title="8. Sécurité des données">
@@ -378,6 +387,7 @@ function PrivacyNL() {
             <Tr data={['Sessiecookie (Supabase auth)', 'U ingelogd houden — functionele cookie, geen tracking', 'Art. 6(1)(b) — noodzakelijk voor de dienst']} />
             <Tr data={['Foutrapporten: fouttekst (telefoonnummers en e-mailadressen gemaskeerd), paginapad zonder parameters, app-versie, browser, taal — geen naam, geen account, geen IP-adres', 'Bugs op uw toestel opsporen en verhelpen', 'Art. 6(1)(f) — gerechtvaardigd belang']} />
             <Tr data={['Abonnement op meldingen (optioneel): het adres van de meldingendienst van uw browser voor dit toestel, de versleutelingssleutels, de taal van de app', 'Dit toestel verwittigen over uw reserveringen (nieuwe aanvraag, antwoord, verval, nieuw bericht); enkel bewaard als u meldingen aanzet', 'Art. 6(1)(a) — uw toestemming']} />
+            <Tr data={['Gebruiksstatistieken (enkel als u „Analytics" aanvaardt in de banner): één dagtotaal voor elk van zes handelingen — de startpagina openen, zoeken vanaf de startpagina, de catalogus openen, een zoekopdracht zonder resultaat, een gevraagd gereedschap, een advertentie beginnen. Geen cookie, geen naam, geen account, geen IP-adres, geen zoektekst', 'Weten of de startpagina helpt om gereedschap te vinden en aan te bieden', 'Art. 6(1)(a) — uw toestemming']} />
           </tbody>
         </table>
         <p style={{ marginTop: '12px', fontSize: '13px', color: '#666' }}>
@@ -427,6 +437,7 @@ function PrivacyNL() {
           <li><strong>Foto's:</strong> verwijderd binnen 30 dagen na verwijdering van de advertentie</li>
           <li><strong>Sessiecookies:</strong> verlopen bij uitloggen of na 7 dagen inactiviteit</li>
           <li><strong>Foutrapporten:</strong> automatisch verwijderd na 30 dagen</li>
+          <li><strong>Gebruiksstatistieken:</strong> dagtotalen die naar niemand verwijzen — zonder termijn bewaard</li>
           <li><strong>Activiteitenoverzicht</strong> (de lijst met gebeurtenissen over uw reserveringen in de app): automatisch verwijderd na 90 dagen, of samen met uw account</li>
           <li><strong>Abonnementen op meldingen:</strong> verwijderd wanneer u meldingen uitzet, op dat toestel uitlogt of uw account verwijdert, en automatisch wanneer de meldingendienst het abonnement als verlopen meldt</li>
         </ul>
@@ -441,7 +452,7 @@ function PrivacyNL() {
           <li><strong>Beperking</strong> — ons vragen de verwerking van uw gegevens tijdelijk te staken</li>
           <li><strong>Overdraagbaarheid</strong> — uw gegevens ontvangen in een machineleesbaar formaat</li>
           <li><strong>Bezwaar</strong> — bezwaar maken tegen verwerking op basis van gerechtvaardigd belang</li>
-          <li><strong>Toestemming intrekken</strong> — voor geolocatiegegevens en meldingen, te allen tijde en zonder gevolgen (meldingen: Profiel → Meldingen → Uitzetten)</li>
+          <li><strong>Toestemming intrekken</strong> — voor geolocatiegegevens, meldingen en gebruiksstatistieken, te allen tijde en zonder gevolgen (meldingen: Profiel → Meldingen → Uitzetten; statistieken: „Beheer cookies" onderaan de pagina of in sectie 7)</li>
         </ul>
         <p>Verzoek indienen: <a href={`mailto:${EMAIL}`}>{EMAIL}</a>. Reactie binnen <strong>30 dagen</strong> (AVG Art. 12).</p>
         <p>Klacht indienen bij de <strong>Gegevensbeschermingsautoriteit (GBA)</strong>:<br />
@@ -457,6 +468,8 @@ function PrivacyNL() {
           <li>Is geclassificeerd als "strikt noodzakelijk" onder de ePrivacy-richtlijn — er is geen toestemmingsbanner vereist</li>
         </ul>
         <p>Als wij in de toekomst analyse- of marketingcookies toevoegen, zullen wij dit beleid bijwerken en een toestemmingsmechanisme implementeren voordat wij dit doen.</p>
+        <p>Gebruiksstatistieken (sectie 2) gebruiken <strong>geen cookie</strong>. Uw keuze in de banner wordt in uw browser bewaard (lokale opslag), zodat wij ze niet bij elk bezoek opnieuw vragen. U kunt ze op elk moment wijzigen:</p>
+        <CookieChoiceButton label="Beheer cookies" />
       </Section>
 
       <Section title="8. Gegevensbeveiliging">
@@ -509,6 +522,16 @@ function Tr({ data }: { data: string[] }) {
         <td key={i} style={{ padding: '8px 12px', fontSize: '13px', verticalAlign: 'top' }}>{d}</td>
       ))}
     </tr>
+  )
+}
+
+// Изменить выбор баннера прямо из политики: здесь человек читает, на что
+// согласился, — здесь же он должен мочь это отозвать (GDPR, ст. 7(3)).
+function CookieChoiceButton({ label }: { label: string }) {
+  return (
+    <button type="button" className="btn btn-secondary" style={{ minHeight: '44px' }} onClick={openCookiePreferences}>
+      {label}
+    </button>
   )
 }
 

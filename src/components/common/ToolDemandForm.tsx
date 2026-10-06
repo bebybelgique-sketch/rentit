@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRecordToolDemand } from '../../hooks/mutations/useRecordToolDemand';
+import { countUsage } from '../../lib/usage';
 
 interface ToolDemandFormProps {
   /**
@@ -64,7 +65,14 @@ const ToolDemandForm: React.FC<ToolDemandFormProps> = ({ initialTool = '' }) => 
     setEmptyError(false);
     mutate(
       { tool: named, searchedQuery: initialTool, locale: i18n.language },
-      { onSuccess: () => setSavedTool(named) },
+      {
+        onSuccess: () => {
+          setSavedTool(named);
+          // Сама запись лежит в tool_demands у всех; счётчик — у согласившихся,
+          // в той же выборке, что и «пустая выдача», чтобы долю было с чем делить.
+          countUsage('demand_sent');
+        },
+      },
     );
   };
 

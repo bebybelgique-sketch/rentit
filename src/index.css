@@ -1110,6 +1110,9 @@ button { cursor: pointer; font-family: inherit; font-size: 14px; border: none; }
 .lp-foot { border-top: 1px solid var(--line); padding-block: var(--space-6); display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-6); justify-content: space-between; align-items: center; }
 .lp-foot-l { display: flex; flex-wrap: wrap; gap: var(--space-5); }
 .lp-foot-l a { font-family: var(--font-text); font-size: 14px; color: var(--muted); }
+/* «Gérer les cookies» — кнопка (открывает окно, а не страницу), но в ряду ссылок выглядит ссылкой. */
+.lp-foot-btn { font-family: var(--font-text); font-size: 14px; color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; }
+.lp-foot-btn:hover { text-decoration: underline; }
 
 /* ── НИЖНЯЯ ПАНЕЛЬ (узкие экраны) ─────────────────────────────
    Порог 640px — тот же, на котором `.navbar-link.hide-mobile` прячет

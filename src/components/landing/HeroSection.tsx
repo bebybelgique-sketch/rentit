@@ -7,6 +7,7 @@ import { money } from '../../domain/push'
 import { weekendLabel } from '../../domain/weekend'
 import CategoryIcon from '../icons/CategoryIcon'
 import { browseHref, type WhenChoice } from './browseHref'
+import { countUsage } from '../../lib/usage'
 
 /**
  * Первый экран лендинга — ПОИСК: «что, где, когда».
@@ -45,6 +46,8 @@ export default function HeroSection() {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
+    // Поиск и чип задачи — одно событие: оба значат «первый экран сработал».
+    countUsage('hero_search')
     navigate(browseHref(what, where, when, new Date()))
   }
 
@@ -118,7 +121,7 @@ export default function HeroSection() {
 
           <nav aria-label={t('landing.tasksLabel')} className="lp-tasks">
             {CATEGORIES.map(c => (
-              <Link key={c.value} to={`/browse?category=${c.value}`} className="lp-task">
+              <Link key={c.value} to={`/browse?category=${c.value}`} className="lp-task" onClick={() => countUsage('hero_search')}>
                 <CategoryIcon category={c.value} size={20} />
                 {t(c.taskKey)}
               </Link>

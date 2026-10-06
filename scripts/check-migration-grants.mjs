@@ -140,6 +140,12 @@ export const RULES = {
     forbid: WRITE_PRIVS,
     why: 'ленту событий пишет только база — триггерами на booking_messages и bookings (миграции 42, 46); клиенту — SELECT и колоночный UPDATE (read_at)',
   },
+  // Миграция 62: клиент умеет только +1 через count_usage (SECURITY
+  // DEFINER). Табличный UPDATE позволил бы вписать любое число.
+  'public.usage_counts': {
+    forbid: ALL_PRIVS,
+    why: 'дневные счётчики пишет только функция count_usage (+1), читает admin-action под service_role (миграция 62): табличная запись позволила бы вписать любое число',
+  },
 }
 
 /**

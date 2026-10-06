@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
+import { countUsage } from '../lib/usage'
+import { openCookiePreferences } from '../lib/consent'
 import HeroSection from '../components/landing/HeroSection'
 import LatestListings from '../components/landing/LatestListings'
 import OwnerSection from '../components/landing/OwnerSection'
@@ -43,6 +46,9 @@ export default function Landing() {
   // поисковика и для превью. Завести здесь вторую копию той же
   // маркетинговой строки значило бы развести их при первой же правке.
   useDefaultPageTitle()
+
+  // Открытие главной — знаменатель всего остального (src/lib/usage.ts).
+  useEffect(() => { countUsage('home_view') }, [])
 
   const weekend = weekendLabel(new Date(), i18n.language)
 
@@ -140,6 +146,9 @@ export default function Landing() {
             <Link to="/rental-shops">{t('forRentalShops')}</Link>
             <Link to="/privacy">{t('landing.privacy')}</Link>
             <Link to="/terms">{t('landing.terms')}</Link>
+            <button type="button" className="lp-foot-btn" onClick={openCookiePreferences}>
+              {t('cookies.preferences.title')}
+            </button>
           </div>
         </footer>
       </div>

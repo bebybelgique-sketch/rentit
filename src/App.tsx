@@ -11,6 +11,7 @@ import { useDocumentLanguage } from './hooks/useDocumentLanguage'
 import { useAuth } from './context/AuthContext'
 import { supabase } from './lib/supabase'
 import CookieBanner from './components/CookieBanner'
+import { openCookiePreferences } from './lib/consent'
 import BottomNav from './components/layout/BottomNav'
 import RouteBoundary from './components/common/RouteBoundary'
 import RouteAnnouncer from './components/common/RouteAnnouncer'
@@ -425,6 +426,12 @@ function AppChrome() {
             <Link to="/rental-shops" style={{ fontSize: 'var(--text-sm)', color: 'var(--muted)' }}>
               {t('forRentalShops')}
             </Link>
+            {/* Изменить выбор баннера — с любой страницы, не только с главной:
+                отозвать согласие должно быть так же просто, как дать. */}
+            {' · '}
+            <button type="button" className="lp-foot-btn" style={{ fontSize: 'var(--text-sm)' }} onClick={openCookiePreferences}>
+              {t('cookies.preferences.title')}
+            </button>
           </footer>
         )}
         {/* Произносит название нового экрана и уводит туда фокус:
