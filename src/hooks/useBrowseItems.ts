@@ -29,6 +29,9 @@ export type BrowseFilters = {
   /** Точка посетителя, если браузер её отдал. */
   lat?: number | null;
   lng?: number | null;
+  /** Сколько строк нужно экрану. Без него — потолок функции (200): витрине
+   *  нужны все, а ленте лендинга — пять, и тянуть ради них двести незачем. */
+  limit?: number;
 };
 
 // Всю выборку делает база одной функцией: радиус по GiST-индексу, категория,
@@ -42,7 +45,7 @@ export type BrowseFilters = {
 // близость. Так расстояние приходит и для показа на карточке, а отбор по
 // радиусу остаётся отдельным решением человека.
 const toArgs = (filters: BrowseFilters): BrowseArgs => {
-  const { search, category, maxPrice, place, startDate, endDate, nearby, radiusKm, lat, lng } = filters;
+  const { search, category, maxPrice, place, startDate, endDate, nearby, radiusKm, lat, lng, limit } = filters;
   const hasPoint = typeof lat === 'number' && typeof lng === 'number';
   // Диапазон имеет смысл только целиком и только в прямом порядке: половина
   // диапазона отправила бы в функцию условие, которого человек не задавал.
@@ -60,6 +63,7 @@ const toArgs = (filters: BrowseFilters): BrowseArgs => {
     p_lat: hasPoint ? lat : undefined,
     p_lng: hasPoint ? lng : undefined,
     p_radius_km: nearby && hasPoint ? radiusKm : undefined,
+    p_limit: typeof limit === 'number' && Number.isFinite(limit) ? limit : undefined,
   };
 };
 

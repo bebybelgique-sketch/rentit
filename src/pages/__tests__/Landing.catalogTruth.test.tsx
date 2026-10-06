@@ -23,6 +23,12 @@ vi.mock('../../hooks/useCatalogHasItems', () => ({
   }),
 }))
 
+// Лента объявлений под первым экраном спрашивает витрину отдельно; её
+// правду проверяет LatestListings.test.tsx, здесь она пуста.
+vi.mock('../../hooks/useBrowseItems', () => ({
+  useBrowseItems: () => ({ data: [] }),
+}))
+
 import Landing from '../Landing'
 
 const renderLanding = () => render(<MemoryRouter><Landing /></MemoryRouter>)

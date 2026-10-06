@@ -38,7 +38,7 @@ describe('регион пилота — одна настройка', () => {
     await i18n.init({ lng, resources: { [lng]: { translation: dict } }, interpolation: { escapeValue: false } })
     const region = (dict as { region: { name: string } }).region
     expect(i18n.t('landing.eyebrow')).toContain(region.name)
-    for (const key of ['landing.eyebrow', 'landing.zeroBody', 'landing.finalTitle', 'landing.renterBodyLive', 'shops.lede', 'shops.stateBody']) {
+    for (const key of ['landing.eyebrow', 'landing.finalTitle', 'landing.renterBodyLive', 'shops.lede', 'shops.stateBody']) {
       expect(i18n.t(key), key).not.toMatch(/\$t\(|region\./)
     }
   })

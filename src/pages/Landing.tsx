@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import HeroSection from '../components/landing/HeroSection'
 import CategoriesSection from '../components/landing/CategoriesSection'
+import LatestListings from '../components/landing/LatestListings'
 import { useDefaultPageTitle } from '../hooks/usePageTitle'
 import { useCatalogHasItems } from '../hooks/useCatalogHasItems'
 
@@ -14,6 +15,8 @@ import { useCatalogHasItems } from '../hooks/useCatalogHasItems'
  * 1. АДРЕСАТ. Страница обращается к владельцу инструмента, а не к
  *    арендатору. При нуле объявлений искать нечего, и поиск первым
  *    экраном тратил каждого посетителя впустую.
+ *    → 05.10 ПЕРЕСМОТРЕНО: первый экран снова поиск, под ним — лента
+ *    настоящих объявлений. Почему — в шапке HeroSection.tsx.
  *
  * 2. ПАЛИТРА. Лайм #ADFF2F на чёрном и пара Syne + DM Mono сняты
  *    целиком. Новый набор — красный, жёлтый, чёрный, серебро: язык
@@ -65,6 +68,7 @@ export default function Landing() {
   return (
     <div>
       <HeroSection />
+      <LatestListings />
 
       {/* Три шага со стороны владельца. Нумерация здесь не украшение:
           это настоящая последовательность, и порядок несёт смысл. */}
