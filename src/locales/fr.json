@@ -505,7 +505,7 @@
     "eyebrow": "$t(region.name)",
     "h1a": "Le bon outil,",
     "h1b": "près de chez vous.",
-    "lede": "Perceuse, nettoyeur, tondeuse, mini-pelle : chez des voisins à quelques kilomètres, pour les jours dont vous avez besoin.",
+    "lede": "Perceuse, nettoyeur, tondeuse, ponceuse : chez des voisins à quelques kilomètres, pour les jours dont vous avez besoin.",
     "liveCount_one": "{{count}} outil en ligne aujourd’hui",
     "liveCount_other": "{{count}} outils en ligne aujourd’hui",
     "stepsTitle": "Trouvez. Demandez. Convenez du retrait.",
@@ -567,7 +567,7 @@
     "protect2Body": "L’état de l’outil, visible par vous deux.",
     "protect3Title": "Le propriétaire choisit",
     "protect3Body": "Il accepte ou refuse chaque demande.",
-    "limitsLine": "RentIt ne touche pas à l’argent et ne fournit aucune assurance. Vérifiez si votre assurance responsabilité civile familiale s’applique."
+    "limitsLine": "RentIt ne touche pas à l’argent et ne fournit aucune assurance. La RC familiale exclut souvent les objets qu’on a sous sa garde, comme un outil emprunté : vérifiez votre contrat."
   },
   "common": {
     "weekends_one": "{{count}} week-end",

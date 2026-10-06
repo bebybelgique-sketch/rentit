@@ -505,7 +505,7 @@
     "eyebrow": "$t(region.name)",
     "h1a": "Het juiste gereedschap,",
     "h1b": "dicht bij huis.",
-    "lede": "Boormachine, hogedrukreiniger, grasmaaier, minigraver: bij buren op een paar kilometer, voor de dagen dat je het nodig hebt.",
+    "lede": "Boormachine, hogedrukreiniger, grasmaaier, schuurmachine: bij buren op een paar kilometer, voor de dagen dat je het nodig hebt.",
     "liveCount_one": "{{count}} stuk gereedschap vandaag online",
     "liveCount_other": "{{count}} stuks gereedschap vandaag online",
     "stepsTitle": "Zoek. Vraag aan. Spreek de overhandiging af.",
@@ -567,7 +567,7 @@
     "protect2Body": "De staat van het gereedschap, zichtbaar voor jullie beiden.",
     "protect3Title": "De eigenaar kiest",
     "protect3Body": "Die aanvaardt of weigert elke aanvraag.",
-    "limitsLine": "RentIt komt niet aan het geld en biedt geen verzekering. Kijk na of je familiale burgerlijke aansprakelijkheidsverzekering van toepassing is."
+    "limitsLine": "RentIt komt niet aan het geld en biedt geen verzekering. De familiale verzekering sluit vaak voorwerpen uit die je onder je hoede hebt, zoals geleend gereedschap: kijk je contract na."
   },
   "common": {
     "weekends_one": "{{count}} weekend",
