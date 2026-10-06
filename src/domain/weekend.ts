@@ -1,3 +1,5 @@
+import { formatDay } from './dates'
+
 /**
  * Выходные для поля «Quand ?» на первом экране.
  *
@@ -42,4 +44,20 @@ export function weekendRange(today: Date, which: WeekendChoice): { from: string;
   const toSaturday = dow === 0 ? 6 : 6 - dow
   const saturday = addDays(today, toSaturday + (which === 'next' && dow !== 0 ? 7 : 0))
   return { from: isoDay(saturday), to: isoDay(addDays(saturday, 1)) }
+}
+
+/**
+ * Подпись ближайших выходных для иллюстраций лендинга: «sam. 10 → dim. 11
+ * oct.». Месяц у первого дня — только если он другой; в воскресенье — один
+ * день.
+ */
+export function weekendLabel(today: Date, lang: string): string {
+  const { from, to } = weekendRange(today, 'this')
+  const last = formatDay(to, lang, { weekday: 'short', day: 'numeric', month: 'short' })
+  if (from === to) return last
+  const sameMonth = from.slice(0, 7) === to.slice(0, 7)
+  const first = formatDay(from, lang, sameMonth
+    ? { weekday: 'short', day: 'numeric' }
+    : { weekday: 'short', day: 'numeric', month: 'short' })
+  return `${first} → ${last}`
 }

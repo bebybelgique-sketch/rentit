@@ -31,9 +31,10 @@ import type { BookingStatusValue, ItemConditionValue } from '../types'
 
 /* ─────────────────────────── Категории ─────────────────────────── */
 
-// hintKey — примеры инструментов, нужны лендингу. Раньше он держал их у себя
-// вместе со своей копией названий, и названия разошлись: «Jardin & Extérieur»
-// против «Jardinage», «Mesure» против «Mesure & Détection».
+// Лендинг раньше держал свою копию названий, и они разошлись: «Jardin &
+// Extérieur» против «Jardinage», «Mesure» против «Mesure & Détection».
+// Поля `hintKey` (примеры инструментов для плиток лендинга) больше нет:
+// плитки категорий сняты 06.10, их место заняли чипы задач (taskKey ниже).
 // Поля `emoji` здесь больше нет. Оно было ОФОРМЛЕНИЕМ в справочнике
 // СТРУКТУРЫ — и держало продукт на двух визуальных языках сразу: лендинг
 // после #12 рисовал категории SVG-иконками, а витрина, страница вещи и
@@ -44,12 +45,12 @@ import type { BookingStatusValue, ItemConditionValue } from '../types'
 // на первом экране лендинга. Чип задачи ведёт на витрину с этой категорией,
 // поэтому задач ровно столько, сколько категорий, и своего списка у них нет.
 export const CATEGORIES = [
-  { value: 'power_tools',  labelKey: 'categories.power_tools',  hintKey: 'categoryHints.power_tools',  priceHintKey: 'categoryPrices.power_tools',  taskKey: 'categoryTasks.power_tools'  },
-  { value: 'hand_tools',   labelKey: 'categories.hand_tools',   hintKey: 'categoryHints.hand_tools',   priceHintKey: 'categoryPrices.hand_tools',   taskKey: 'categoryTasks.hand_tools'   },
-  { value: 'garden',       labelKey: 'categories.garden',       hintKey: 'categoryHints.garden',       priceHintKey: 'categoryPrices.garden',       taskKey: 'categoryTasks.garden'       },
-  { value: 'construction', labelKey: 'categories.construction', hintKey: 'categoryHints.construction', priceHintKey: 'categoryPrices.construction', taskKey: 'categoryTasks.construction' },
-  { value: 'cleaning',     labelKey: 'categories.cleaning',     hintKey: 'categoryHints.cleaning',     priceHintKey: 'categoryPrices.cleaning',     taskKey: 'categoryTasks.cleaning'     },
-  { value: 'measuring',    labelKey: 'categories.measuring',    hintKey: 'categoryHints.measuring',    priceHintKey: 'categoryPrices.measuring',    taskKey: 'categoryTasks.measuring'    },
+  { value: 'power_tools',  labelKey: 'categories.power_tools',  priceHintKey: 'categoryPrices.power_tools',  taskKey: 'categoryTasks.power_tools'  },
+  { value: 'hand_tools',   labelKey: 'categories.hand_tools',   priceHintKey: 'categoryPrices.hand_tools',   taskKey: 'categoryTasks.hand_tools'   },
+  { value: 'garden',       labelKey: 'categories.garden',       priceHintKey: 'categoryPrices.garden',       taskKey: 'categoryTasks.garden'       },
+  { value: 'construction', labelKey: 'categories.construction', priceHintKey: 'categoryPrices.construction', taskKey: 'categoryTasks.construction' },
+  { value: 'cleaning',     labelKey: 'categories.cleaning',     priceHintKey: 'categoryPrices.cleaning',     taskKey: 'categoryTasks.cleaning'     },
+  { value: 'measuring',    labelKey: 'categories.measuring',    priceHintKey: 'categoryPrices.measuring',    taskKey: 'categoryTasks.measuring'    },
 ] as const
 
 export type CategoryValue = (typeof CATEGORIES)[number]['value']
