@@ -36,32 +36,26 @@ test.describe('единый справочник', () => {
     await skipModals(page)
   })
 
-  test('лендинг и витрина зовут категории одинаково', async ({ page }) => {
+  // 06.10 плитки категорий с лендинга сняты: их место заняли чипы задач
+  // («Tondre, tailler»), и названий категорий на лендинге больше нет.
+  // Проверка «подписи совпадают» осталась без предмета. Инвариант за ней —
+  // лендинг и витрина говорят об ОДНИХ категориях — проверяется теперь
+  // адресами: каждый чип ведёт ровно на категорию витрины, и их шесть.
+  test('чипы задач лендинга — ровно категории витрины', async ({ page }) => {
     await page.goto('/', { waitUntil: 'load' })
-    await page.waitForLoadState('networkidle').catch(() => {})
 
-    // Подпись сравнивается ЦЕЛИКОМ. Раньше здесь стояло
-    // `label.replace(/^\S+\s/, '')` — срезать ведущий эмодзи, потому что на
-    // лендинге подпись шла без него, а на витрине с ним. Эмодзи из продукта
-    // сняты, и та же строка стала срезать первое СЛОВО: «Outillage manuel»
-    // превращалось в «manuel», которого на экране нет.
-    //
-    // Ровно этот приём уже подвёл один раз — в CategoriesSection, в тот же
-    // день и по той же причине. Расхождение подписей, ради которого тест и
-    // написан, теперь проверяется без всяких срезов: они совпадают.
-    for (const label of Object.values(CATEGORY_LABEL)) {
-      await expect(page.getByText(label, { exact: true }).first())
-        .toBeVisible({ timeout: 15000 })
-    }
+    const chips = page.getByRole('navigation', { name: /par usage/i }).getByRole('link')
+    await expect(chips).toHaveCount(Object.keys(CATEGORY_LABEL).length, { timeout: 15000 })
+    const targets = await chips.evaluateAll(links => links.map(a => a.getAttribute('href')))
+    expect(targets.sort()).toEqual(Object.keys(CATEGORY_LABEL).map(v => `/browse?category=${v}`).sort())
   })
 
-  test('плитка категории с лендинга действительно фильтрует витрину', async ({ page }) => {
+  test('чип задачи с лендинга действительно фильтрует витрину', async ({ page }) => {
     // Раньше плитки вели на /browse?category=…, а витрина этот параметр не
     // читала: человек нажимал «Électroportatif» и попадал в общий список.
     await page.goto('/', { waitUntil: 'load' })
-    await page.waitForLoadState('networkidle').catch(() => {})
 
-    const tile = page.getByRole('link', { name: /Jardinage/ }).first()
+    const tile = page.getByRole('link', { name: /Tondre, tailler/ }).first()
     await expect(tile).toBeVisible({ timeout: 15000 })
     await tile.click()
 

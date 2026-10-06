@@ -3,9 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useCatalogHasItems } from '../../hooks/useCatalogHasItems'
 import { CATEGORIES } from '../../domain/catalog'
-import { formatDay } from '../../domain/dates'
 import { money } from '../../domain/push'
-import { weekendRange } from '../../domain/weekend'
+import { weekendLabel } from '../../domain/weekend'
 import CategoryIcon from '../icons/CategoryIcon'
 import { browseHref, type WhenChoice } from './browseHref'
 
@@ -133,18 +132,6 @@ export default function HeroSection() {
   )
 }
 
-/** «sam. 10 → dim. 11 oct.»; месяц у первого дня — только если он другой. */
-function weekendLabel(lang: string): string {
-  const { from, to } = weekendRange(new Date(), 'this')
-  const last = formatDay(to, lang, { weekday: 'short', day: 'numeric', month: 'short' })
-  if (from === to) return last
-  const sameMonth = from.slice(0, 7) === to.slice(0, 7)
-  const first = formatDay(from, lang, sameMonth
-    ? { weekday: 'short', day: 'numeric' }
-    : { weekday: 'short', day: 'numeric', month: 'short' })
-  return `${first} → ${last}`
-}
-
 /**
  * Коллаж справа — оформление, а не содержание: скрыт от чтения с экрана
  * целиком. Всё, что похоже на данные, подписано как пример или посчитано.
@@ -174,7 +161,7 @@ function HeroArt({ lang }: { lang: string }) {
           <rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" />
         </svg>
         <div>
-          <b>{weekendLabel(lang)}</b>
+          <b>{weekendLabel(new Date(), lang)}</b>
           <span>{t('landing.artDatesBody')}</span>
         </div>
       </div>
