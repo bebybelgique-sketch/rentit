@@ -864,6 +864,30 @@
       "release": "build {{release}}",
       "stack": "Stack trace",
       "loadFailed": "Errors couldn't be loaded."
+    },
+    "usage": {
+      "title": "Usage",
+      "note": "Only visitors who accepted “Analytics” in the banner: refusals are not counted. Days in universal time (UTC).",
+      "empty": "No data yet.",
+      "loadFailed": "The counters couldn't be loaded.",
+      "colEvent": "Action",
+      "colWeek": "Last 7 days",
+      "colTotal": "Since {{date}}",
+      "colTotalEmpty": "Total",
+      "events": {
+        "home_view": "Home page opened",
+        "hero_search": "Searches from the home page",
+        "browse_view": "Catalogue opened",
+        "browse_empty": "Catalogue visits with no result",
+        "demand_sent": "Tools requested",
+        "listing_start": "Listings started"
+      },
+      "ratiosTitle": "Journey",
+      "ratioHomeToSearch": "Home → search",
+      "ratioBrowseEmpty": "Catalogue with no result",
+      "ratioEmptyToDemand": "No result → tool requested",
+      "review": "Review the first screen at {{target}} home page openings: {{count}} / {{target}}",
+      "reviewDue": "{{count}} home page openings: time to review the first screen."
     }
   },
   "serverErrors": {

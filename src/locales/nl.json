@@ -864,6 +864,30 @@
       "release": "versie {{release}}",
       "stack": "Trace",
       "loadFailed": "De fouten konden niet worden geladen."
+    },
+    "usage": {
+      "title": "Gebruik",
+      "note": "Enkel bezoekers die „Analytics” aanvaardden in de banner: weigeringen worden niet geteld. Dagen in universele tijd (UTC).",
+      "empty": "Nog geen gegevens.",
+      "loadFailed": "De tellers konden niet worden geladen.",
+      "colEvent": "Handeling",
+      "colWeek": "Laatste 7 dagen",
+      "colTotal": "Sinds {{date}}",
+      "colTotalEmpty": "Totaal",
+      "events": {
+        "home_view": "Startpagina geopend",
+        "hero_search": "Zoekopdrachten vanaf de startpagina",
+        "browse_view": "Catalogus geopend",
+        "browse_empty": "Catalogusbezoeken zonder resultaat",
+        "demand_sent": "Gevraagd gereedschap",
+        "listing_start": "Advertenties begonnen"
+      },
+      "ratiosTitle": "Traject",
+      "ratioHomeToSearch": "Startpagina → zoeken",
+      "ratioBrowseEmpty": "Catalogus zonder resultaat",
+      "ratioEmptyToDemand": "Zonder resultaat → gereedschap gevraagd",
+      "review": "Het eerste scherm herbekijken bij {{target}} keer startpagina geopend: {{count}} / {{target}}",
+      "reviewDue": "{{count}} keer startpagina geopend: tijd om het eerste scherm te herbekijken."
     }
   },
   "serverErrors": {

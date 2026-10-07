@@ -31,6 +31,11 @@ describe('parseAction', () => {
     expect(parseAction({ type: 'get_errors', table: 'users', patch: { role: 'admin' } })).toEqual({ type: 'get_errors' });
   });
 
+  it('принимает чтение счётчиков использования — без лишних полей', () => {
+    expect(parseAction({ type: 'get_usage' })).toEqual({ type: 'get_usage' });
+    expect(parseAction({ type: 'get_usage', event: 'home_view', count: 1000 })).toEqual({ type: 'get_usage' });
+  });
+
   it('отвергает неизвестное действие', () => {
     expect(parseAction({ type: 'delete_user', user_id: OTHER })).toBeNull();
     expect(parseAction({ type: 'set_user_role_v2', user_id: OTHER, role: 'admin' })).toBeNull();
@@ -91,6 +96,11 @@ describe('targetOf / patchOf', () => {
   it('чтение поломок — тоже чтение: цели нет, в журнал не идёт', () => {
     expect(targetOf({ type: 'get_errors' })).toBeNull();
     expect(patchOf({ type: 'get_errors' })).toEqual({});
+  });
+
+  it('чтение счётчиков — тоже чтение: цели нет, в журнал не идёт', () => {
+    expect(targetOf({ type: 'get_usage' })).toBeNull();
+    expect(patchOf({ type: 'get_usage' })).toEqual({});
   });
 
   it('роль пишется в users, доступность — в items', () => {

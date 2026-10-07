@@ -864,6 +864,30 @@
       "release": "version {{release}}",
       "stack": "Trace",
       "loadFailed": "Les erreurs n'ont pas pu être chargées."
+    },
+    "usage": {
+      "title": "Utilisation",
+      "note": "Seulement les visiteurs qui ont accepté « Analytique » dans la bannière : les refus ne sont pas comptés. Jours en temps universel (UTC).",
+      "empty": "Aucune donnée pour l’instant.",
+      "loadFailed": "Les compteurs n’ont pas pu être chargés.",
+      "colEvent": "Action",
+      "colWeek": "7 derniers jours",
+      "colTotal": "Depuis le {{date}}",
+      "colTotalEmpty": "Au total",
+      "events": {
+        "home_view": "Ouvertures de l’accueil",
+        "hero_search": "Recherches depuis l’accueil",
+        "browse_view": "Ouvertures du catalogue",
+        "browse_empty": "Visites du catalogue sans résultat",
+        "demand_sent": "Outils demandés",
+        "listing_start": "Débuts de dépôt d’annonce"
+      },
+      "ratiosTitle": "Parcours",
+      "ratioHomeToSearch": "Accueil → recherche",
+      "ratioBrowseEmpty": "Catalogue sans résultat",
+      "ratioEmptyToDemand": "Sans résultat → outil demandé",
+      "review": "Revoir le premier écran à {{target}} ouvertures de l’accueil : {{count}} / {{target}}",
+      "reviewDue": "{{count}} ouvertures de l’accueil : c’est le moment de revoir le premier écran."
     }
   },
   "serverErrors": {
