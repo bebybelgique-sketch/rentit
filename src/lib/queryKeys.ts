@@ -118,6 +118,7 @@ export const activityKeys = {
 export const adminKeys = {
   stats: ['admin', 'stats'],
   errors: ['admin', 'errors'],
+  usage: ['admin', 'usage'],
 } as const;
 
 /**

@@ -465,6 +465,13 @@ try {
     const statsForRenter = await callAdmin({ type: 'get_stats' }, renterJwt)
     check(statsForRenter.status === 403, 'get_stats закрыт для не-админа', `HTTP ${statsForRenter.status}`)
 
+    // --- get_usage: дневные счётчики (миграция 62) — только администратору ---
+    const usage = await callAdmin({ type: 'get_usage' }, adminJwt)
+    check(usage.status === 200 && Array.isArray(usage.json.usage),
+      'get_usage отвечает строками счётчиков', `HTTP ${usage.status} ${JSON.stringify(usage.json).slice(0, 200)}`)
+    const usageForRenter = await callAdmin({ type: 'get_usage' }, renterJwt)
+    check(usageForRenter.status === 403, 'get_usage закрыт для не-админа', `HTTP ${usageForRenter.status}`)
+
     // --- Журнал: по строке на каждое ИЗМЕНЯЮЩЕЕ действие ---
     if (!service) {
       skip('admin_audit_log: содержимое записей', 'в окружении нет SUPABASE_SERVICE_ROLE_KEY')

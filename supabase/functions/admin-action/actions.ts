@@ -26,6 +26,9 @@ export type AdminAction =
   // Таблица закрыта для всех, кроме служебной роли, — отчёт несёт текст
   // ошибки и путь страницы, и смотреть на это должен только тот, кто чинит.
   | { type: 'get_errors' }
+  // Чтение: дневные счётчики использования (таблица usage_counts, миграция
+  // 62). Клиенту таблица закрыта: пишет он только через count_usage (+1).
+  | { type: 'get_usage' }
 
 /** Куда пишет действие: таблица и строка, ради журнала и ради update. */
 export interface AdminTarget {
@@ -70,6 +73,9 @@ export function parseAction(raw: unknown): AdminAction | null {
     case 'get_errors':
       return { type: 'get_errors' }
 
+    case 'get_usage':
+      return { type: 'get_usage' }
+
     default:
       return null
   }
@@ -91,6 +97,7 @@ export function targetOf(action: AdminAction): AdminTarget | null {
       return { table: 'items', id: action.item_id }
     case 'get_stats':
     case 'get_errors':
+    case 'get_usage':
       return null
   }
 }
@@ -104,6 +111,7 @@ export function patchOf(action: AdminAction): Record<string, unknown> {
       return { available: action.available }
     case 'get_stats':
     case 'get_errors':
+    case 'get_usage':
       return {}
   }
 }

@@ -71,6 +71,7 @@ serve(async (req) => {
     // вкладке Stats как общие по площадке.
     if (action.type === 'get_stats') return await stats()
     if (action.type === 'get_errors') return await errors()
+    if (action.type === 'get_usage') return await usage()
 
     const target = targetOf(action)
     // Недостижимо: цель есть у каждого изменяющего действия, а
@@ -151,6 +152,33 @@ async function errors() {
     return json({ error: 'internal_error' }, 500)
   }
   return json({ ok: true, errors: data ?? [] })
+}
+
+/**
+ * Дневные счётчики использования (миграция 62) — все строки, свежие сверху.
+ * Сводку считает клиент (src/domain/usage.ts): строк не больше шести в день.
+ *
+ * Страницами по 1000: столько отдаёт PostgREST за раз, а «все строки»,
+ * молча обрезанные на тысяче, через полгода стали бы суммой без начала.
+ */
+async function usage() {
+  const PAGE = 1000
+  const rows: Array<{ day: string; event: string; count: number }> = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('usage_counts')
+      .select('day, event, count')
+      .order('day', { ascending: false })
+      .order('event', { ascending: true })
+      .range(from, from + PAGE - 1)
+    if (error) {
+      console.error('[admin-action] usage failed', { error })
+      return json({ error: 'internal_error' }, 500)
+    }
+    rows.push(...(data ?? []))
+    if (!data || data.length < PAGE) break
+  }
+  return json({ ok: true, usage: rows })
 }
 
 /**

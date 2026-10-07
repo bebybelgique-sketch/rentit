@@ -8,6 +8,7 @@ import { useAdminStats } from '../hooks/useAdminStats'
 import { serverErrorKey } from '../domain/serverErrors'
 import { usePageTitle } from '../hooks/usePageTitle'
 import AdminErrors from '../components/admin/AdminErrors'
+import AdminUsage from '../components/admin/AdminUsage'
 import ErrorState from '../components/common/ErrorState'
 import { categoryLabelKey } from '../domain/catalog'
 
@@ -123,7 +124,11 @@ export default function Admin() {
       <h1 style={{ marginBottom: '24px', fontSize: '24px', fontWeight: '800' }}>{t('admin.title')}</h1>
       {adminError && <div role="alert" className="error-msg" style={{ marginBottom: '16px' }}>{adminError}</div>}
 
-      <div className="tabs">
+      {/* Четыре вкладки не помещаются в 390px: «Erreurs» вылезала на 15px и
+          давала всей странице горизонтальную прокрутку (замер 07.10). Ряд
+          прокручивается сам, страница — нет. paddingBottom — под margin-bottom
+          -1px у .tab: без него прокрутка обрезала бы подчёркивание активной. */}
+      <div className="tabs" style={{ overflowX: 'auto', overflowY: 'hidden', paddingBottom: '1px' }}>
         <button className={`tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')}>{t('admin.tabStats')}</button>
         <button className={`tab ${tab === 'items' ? 'active' : ''}`} onClick={() => setTab('items')}>{t('admin.tabItems')}</button>
         <button className={`tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>{t('admin.tabUsers')}</button>
@@ -167,6 +172,10 @@ export default function Admin() {
           ))}
         </div>
       )}
+
+      {/* Дневные счётчики (миграция 62): дошёл ли человек от главной до
+          поиска, до пустоты, до вопроса «что искали». */}
+      {tab === 'stats' && <AdminUsage enabled={authorized === true} />}
 
       {(tab === 'items' || tab === 'users') && listsFailed && (
         <ErrorState message={t('admin.listsFailed')} onRetry={() => { void fetchAll() }} />
