@@ -54,10 +54,33 @@ test.describe('согласие на cookies', () => {
     await expect(page.getByRole('button', { name: UI.cookieManage })).toBeVisible({ timeout: 10000 })
     await page.getByRole('button', { name: UI.cookieManage }).click()
 
-    await expect(page.getByText(UI.cookiePrefsTitle)).toBeVisible({ timeout: 10000 })
-    await expect(page.getByText(UI.cookieTypeNecessary).first()).toBeVisible()
-    await expect(page.getByText(UI.cookieTypeFunctional).first()).toBeVisible()
-    await expect(page.getByText(UI.cookieTypeAnalytics).first()).toBeVisible()
-    await expect(page.getByRole('button', { name: UI.cookieSavePrefs })).toBeVisible()
+    // Внутри окна, а не по всей странице: с 06.10 те же слова носит кнопка
+    // подвала, которая это окно открывает (#174). Проверка — о заголовке
+    // панели, и подвал к ней отношения не имеет.
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.getByText(UI.cookiePrefsTitle)).toBeVisible({ timeout: 10000 })
+    await expect(dialog.getByText(UI.cookieTypeNecessary).first()).toBeVisible()
+    await expect(dialog.getByText(UI.cookieTypeFunctional).first()).toBeVisible()
+    await expect(dialog.getByText(UI.cookieTypeAnalytics).first()).toBeVisible()
+    await expect(dialog.getByRole('button', { name: UI.cookieSavePrefs })).toBeVisible()
+  })
+
+  // Отозвать согласие так же просто, как дать (GDPR, ст. 7(3)): с 06.10
+  // переключатель «Analytique» решает, уходят ли дневные счётчики.
+  test('выбор меняется из подвала: согласие на статистику отзывается', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' })
+    await page.getByRole('button', { name: UI.cookieAcceptAll }).click()
+    await expect(page.getByRole('dialog')).toBeHidden()
+
+    await page.getByRole('button', { name: UI.cookiePrefsTitle }).click()
+    const dialog = page.getByRole('dialog')
+    const analytics = dialog.getByRole('button', { name: UI.cookieTypeAnalytics })
+    await expect(analytics).toHaveAttribute('aria-pressed', 'true')
+    await analytics.click()
+    await dialog.getByRole('button', { name: UI.cookieSavePrefs }).click()
+
+    await expect(page.getByRole('dialog')).toBeHidden()
+    const saved = await page.evaluate(() => localStorage.getItem('rentit_cookie_consent'))
+    expect(JSON.parse(saved ?? '{}')).toMatchObject({ analytics: false })
   })
 })
