@@ -701,6 +701,24 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_counts: {
+        Row: {
+          count: number
+          day: string
+          event: string
+        }
+        Insert: {
+          count?: number
+          day?: string
+          event: string
+        }
+        Update: {
+          count?: number
+          day?: string
+          event?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           avatar_url: string | null
@@ -827,6 +845,7 @@ export type Database = {
           title: string
         }[]
       }
+      count_usage: { Args: { p_event: string }; Returns: undefined }
       get_booked_dates: {
         Args: { p_item_id: string }
         Returns: {
